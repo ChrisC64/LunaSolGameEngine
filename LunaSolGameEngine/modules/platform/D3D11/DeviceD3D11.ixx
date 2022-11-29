@@ -12,13 +12,20 @@ export namespace LS::Win32
         DeviceD3D11() = default;
         ~DeviceD3D11();
 
-        void CreateDevice();
+        void CreateDevice(bool isSingleThreaded = false);
         void CreateSwapchain(HWND winHandle, const LS::LSSwapchainInfo& swapchainInfo);
+        HRESULT CreateDeferredContext(ID3D11DeviceContext** pDeferredContext);
+        HRESULT CreateDeferredContext2(ID3D11DeviceContext2** ppDeferredContext);
+        HRESULT CreateDeferredContext3(ID3D11DeviceContext3** ppDeferredContext);
+
+        Microsoft::WRL::ComPtr<ID3D11Device5>           GetDevice();
+        Microsoft::WRL::ComPtr<ID3D11DeviceContext4>    GetImmediateContext();
+        Microsoft::WRL::ComPtr<IDXGISwapChain1>         GetSwapChain();
 
     private:
         bool                                            m_bIsInitialized = false;
         Microsoft::WRL::ComPtr<ID3D11Device5>           m_pDevice = nullptr;
-        Microsoft::WRL::ComPtr<ID3D11DeviceContext4>    m_pContext = nullptr;
+        Microsoft::WRL::ComPtr<ID3D11DeviceContext4>    m_pImmediateContext = nullptr;
         Microsoft::WRL::ComPtr<ID3D11Debug>             m_pDebug = nullptr;
         Microsoft::WRL::ComPtr<IDXGISwapChain1>         m_pSwapchain = nullptr;
         D3D_FEATURE_LEVEL						        m_featureLevel{};

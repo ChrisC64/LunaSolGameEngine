@@ -10,7 +10,8 @@ export namespace LS::Win32
 {
     // Generator Methods //
     // Rasterizer States //
-    LSOptional<ID3D11RasterizerState2*> CreateRasterizerState2(ID3D11Device5* pDevice, const LS::LSDrawState& drawState)
+    [[nodiscard]]
+    LSOptional<ID3D11RasterizerState2*> CreateRasterizerState2(ID3D11Device3* pDevice, const LS::LSDrawState& drawState)
     {
         assert(pDevice);
         if (!pDevice)
@@ -48,6 +49,7 @@ export namespace LS::Win32
     }
 
     // Depth Stencil States //
+    [[nodiscard]]
     LSOptional<ID3D11DepthStencilState*> CreateDepthStencilState(ID3D11Device5* pDevice, const D3D11_DEPTH_STENCIL_DESC depthDesc)
     {
         assert(pDevice);
@@ -63,6 +65,7 @@ export namespace LS::Win32
     }
 
     // Blend State //
+    [[nodiscard]]
     LSOptional<ID3D11BlendState1*> CreateBlendState1(ID3D11Device5* pDevice, const D3D11_BLEND_DESC1& blendDesc)
     {
         assert(pDevice);
@@ -78,6 +81,7 @@ export namespace LS::Win32
     }
 
     // Sampler State //
+    [[nodiscard]]
     LSOptional<ID3D11SamplerState*> CreateSamplerState(ID3D11Device5* pDevice, const D3D11_SAMPLER_DESC& samplerDesc)
     {
         assert(pDevice);

@@ -2,8 +2,8 @@ module;
 #include "LSEFramework.h"
 
 export module Engine.LSDevice;
-import Data.LSTextureDesc;
-import Util.StdUtils;
+export import Data.LSTextureDesc;
+export import Util.StdUtils;
 
 export namespace LS
 {
@@ -60,8 +60,8 @@ export namespace LS
 	struct LSDrawState
 	{
 		FILL_STATE Fill;
-		bool IsFrontCounterClockwise; // @brief Front Face drawn counterclockwise = true, false if not 
 		CULL_METHOD Cull;
+		bool IsFrontCounterClockwise; // @brief Front Face drawn counterclockwise = true, false if not 
 		bool IsDepthClipEnabled;
 
 		bool operator==(const LSDrawState& rhs) const
@@ -98,13 +98,13 @@ export namespace LS
 
 	struct LSSwapchainInfo
 	{
-		uint32_t BufferSize;
-		uint32_t Width;
-		uint32_t Height;
-		PIXEL_FORMAT PixelFormat;
-		bool	IsStereoScopic;
-		uint16_t MSCount;
-		uint16_t MSQuality;
+		uint32_t		BufferSize{ 2u };
+		uint32_t		Width;
+		uint32_t		Height;
+		PIXEL_FORMAT	PixelFormat{ PIXEL_FORMAT::RGBA_8 };
+		bool			IsStereoScopic{ false };
+		uint16_t		MSCount{ 1 };
+		uint16_t		MSQuality{ 0 };
 	};
 
 	struct LSDeviceInfo

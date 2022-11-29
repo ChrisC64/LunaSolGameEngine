@@ -9,7 +9,7 @@ using namespace std::chrono_literals;
 export namespace LS
 {
 	template<class Rep, int64_t Numerator, int64_t Denominator>
-	class Timer
+	class LSTimer
 	{
 		using Ratio = std::ratio<Numerator, Denominator>;
 		using TimerDuration = duration<Rep, Ratio>;
@@ -28,7 +28,7 @@ export namespace LS
 			if (m_bIsStopped)
 				return;
 			m_currentTP = steady_clock::now();
-			m_deltaTime = std::chrono::duration_cast<TimerDuration>(m_currentTP - m_previousTP);
+			m_deltaTime = duration_cast<TimerDuration>(m_currentTP - m_previousTP);
 			m_previousTP = m_currentTP;
 		}
 
@@ -38,7 +38,8 @@ export namespace LS
 			m_currentTP = steady_clock::now();
 			m_previousTP = m_currentTP;
 			m_startTP = m_currentTP;
-			m_deltaTime = std::chrono::duration_cast<TimerDuration>(0s);
+			m_deltaTime = duration_cast<TimerDuration>(0s);
+			m_totalTime = duration_cast<TimerDuration>(0s);
 		}
 
 		void Stop()
@@ -46,6 +47,7 @@ export namespace LS
 			if (m_bIsStopped)
 				return;
 			m_stopTP = steady_clock::now();
+			m_totalTime = m_stopTP - m_startTP;
 			m_bIsStopped = true;
 		}
 
@@ -54,7 +56,34 @@ export namespace LS
 		*/
 		[[nodiscard]] TimerDuration GetTotalTime() const
 		{
-			return std::chrono::duration_cast<TimerDuration>(steady_clock::now() - m_startTP);
+			return duration_cast<TimerDuration>(steady_clock::now() - m_startTP);
+		}
+
+		template<class DurationCast>
+		[[nodiscard]] DurationCast GetTotalTimeIn() const
+		{
+			return duration_cast<DurationCast>(steady_clock::now() - m_startTP);
+		}
+		
+		/**
+		 * @brief Returns the total time that has accumulated through ticks. 
+		 *
+		 * @link Timer::Tick() must be called frequently to get an accurate time. This 
+		 * usually is called during every "frame" or "update" cycle, and represents the total
+		 * amount of time interval in fixed steps. @link Timer::GetTotalTime() returns the current value
+		 * of passed time at the point of the call, which means every call is a new time value, and
+		 * can be inconsistent for aligning timing requirements.
+		 * @return 
+		*/
+		[[nodiscard]] TimerDuration GetTotalTimeTicked() const
+		{
+			return duration_cast<TimerDuration>(m_currentTP - m_startTP);
+		}
+		
+		template<class DurationCast>
+		[[nodiscard]] DurationCast GetTotalTimeTickedIn() const
+		{
+			return duration_cast<DurationCast>(m_currentTP - m_startTP);
 		}
 
 		[[nodiscard]] TimerDuration GetTotalTimeSinceStopped() const
@@ -80,8 +109,22 @@ export namespace LS
 		template<class R>
 		R DeltaTimeAs() const
 		{
-			return std::chrono::duration_cast<std::chrono::duration<R, Ratio>>(m_deltaTime).count();
+			return duration_cast<duration<R, Ratio>>(m_deltaTime).count();
 		}
+		
+		/**
+		 * @brief Returns the value of DeltaTime in a duration specified. For example if the timer
+		 * is set to represent 1000ms per tick, you could return the time as seconds by 
+		 * supplying std::chrono::seconds. 
+		 * @tparam D The duration type to return the time as
+		 * @return the delta time as a duration casted into another time
+		*/
+		template<class D>
+		D DeltaTimeIn() const
+		{
+			return duration_cast<D>(m_deltaTime);
+		}
+
 
 	private:
 		SteadyPoint m_startTP;// Time this timer was started
@@ -90,6 +133,7 @@ export namespace LS
 		SteadyPoint m_stopTP;// The time this timer was stopped
 
 		TimerDuration m_deltaTime;// The time between ticks
+		TimerDuration m_totalTime;// The time between ticks
 		bool m_bIsStopped = true;
 	};
 }

@@ -18,7 +18,7 @@ namespace LS::Win32
 #endif
     }
 
-    void DeviceD3D11::CreateDevice()
+    void DeviceD3D11::CreateDevice(bool isSingleThreaded /*= false*/)
     {
         using namespace Microsoft::WRL;
 
@@ -30,6 +30,8 @@ namespace LS::Win32
 #else
         creationFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
 #endif
+        if (isSingleThreaded)
+            creationFlags |= D3D11_CREATE_DEVICE_SINGLETHREADED;
 
         D3D_DRIVER_TYPE driverTypes[] =
         {
@@ -85,7 +87,7 @@ namespace LS::Win32
         assert(context);
         //TODO: Report an error or throw exception if device and context are not set
 
-        hr = context.As(&m_pContext);
+        hr = context.As(&m_pImmediateContext);
         Utils::ThrowIfFailed(hr, "Failed to create ID3D11DeviceContext5 object");
 
         // Try to initialzie the Device and Context
@@ -130,6 +132,42 @@ namespace LS::Win32
 
         Utils::ThrowIfFailed(hr, "Failed to create swap chain for HWND in DX11 Device");
         swapchain1.As(&m_pSwapchain);
+    }
+
+    HRESULT DeviceD3D11::CreateDeferredContext(ID3D11DeviceContext** ppDeferredContext)
+    {
+        if (!m_pDevice)
+            return E_NOT_SET; // Device is not set
+        return m_pDevice->CreateDeferredContext(0, ppDeferredContext);
+    }
+    
+    HRESULT DeviceD3D11::CreateDeferredContext2(ID3D11DeviceContext2** ppDeferredContext)
+    {
+        if (!m_pDevice)
+            return E_NOT_SET; // Device is not set
+        return m_pDevice->CreateDeferredContext2(0, ppDeferredContext);
+    }
+    
+    HRESULT DeviceD3D11::CreateDeferredContext3(ID3D11DeviceContext3** ppDeferredContext)
+    {
+        if (!m_pDevice)
+            return E_NOT_SET; // Device is not set
+        return m_pDevice->CreateDeferredContext3(0, ppDeferredContext);
+    }
+
+    Microsoft::WRL::ComPtr<ID3D11Device5> DeviceD3D11::GetDevice()
+    {
+        return m_pDevice;
+    }
+
+    Microsoft::WRL::ComPtr<ID3D11DeviceContext4> DeviceD3D11::GetImmediateContext()
+    {
+        return m_pImmediateContext;
+    }
+
+    Microsoft::WRL::ComPtr<IDXGISwapChain1> DeviceD3D11::GetSwapChain()
+    {
+        return m_pSwapchain;
     }
 
     DXGI_SWAP_CHAIN_DESC1 DeviceD3D11::BuildSwapchainDesc1(const LS::LSSwapchainInfo& info)
