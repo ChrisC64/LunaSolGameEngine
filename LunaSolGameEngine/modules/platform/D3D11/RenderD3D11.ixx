@@ -181,6 +181,7 @@ export namespace LS::Win32
         assert(shader);
         pContext->DSSetShader(shader, &classInstance, numInstances);
     }
+
     // Input Assembly //
     constexpr void SetTopology(ID3D11DeviceContext* pContext, D3D11_PRIMITIVE_TOPOLOGY topology)
     {
@@ -205,6 +206,4 @@ export namespace LS::Win32
         count = static_cast<uint32_t>(viewports.size());
         pContext->RSSetViewports(count, &viewports.front());
     }
-
-    //TODO: Add command list support for D3D11 
 }

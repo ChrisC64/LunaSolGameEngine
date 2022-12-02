@@ -175,10 +175,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="modules\data\LSCommonTypes.ixx" />
     <ClCompile Include="modules\data\LSConcepts.ixx" />
+    <ClCompile Include="modules\data\LSData.ixx" />
     <ClCompile Include="modules\data\LSShader.ixx" />
     <ClCompile Include="modules\data\LSTextureDesc.ixx" />
     <ClCompile Include="modules\data\LSWindowTypes.ixx" />
+    <ClCompile Include="modules\engine\EngineCommon.ixx" />
     <ClCompile Include="modules\engine\LSApp.ixx" />
     <ClCompile Include="modules\engine\LSCamera.ixx" />
     <ClCompile Include="modules\engine\LSDevice.ixx" />
@@ -187,11 +190,14 @@
     <ClCompile Include="modules\engine\LSWindow.ixx" />
     <ClCompile Include="modules\data\LSMathTypes.ixx" />
     <ClCompile Include="modules\platform\D3D11\D3D11HelperStates.ixx" />
+    <ClCompile Include="modules\platform\D3D11\D3D11Lib.ixx" />
     <ClCompile Include="modules\platform\D3D11\D3D11MemoryHelper.ixx" />
+    <ClCompile Include="modules\platform\D3D11\D3DUtils.ixx" />
     <ClCompile Include="modules\platform\D3D11\DeviceD3D11.ixx" />
     <ClCompile Include="modules\platform\D3D11\RenderD3D11.ixx" />
     <ClCompile Include="modules\platform\D3D12\DeviceD3D12.ixx" />
     <ClCompile Include="modules\platform\D3D12\RenderD3D12.ixx" />
+    <ClCompile Include="modules\platform\Windows\Win32Lib.ixx" />
     <ClCompile Include="modules\utils\MSUtils.ixx" />
     <ClCompile Include="modules\utils\StdUtils.ixx" />
     <ClCompile Include="modules\platform\Windows\Win32Window.ixx" />
@@ -216,6 +222,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\LSEFramework.h" />
+    <ClInclude Include="inc\LSTimer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

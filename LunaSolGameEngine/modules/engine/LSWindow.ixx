@@ -11,22 +11,22 @@ export namespace LS
     public:
         virtual ~LSWindowBase() = default;
 
-		bool IsRunning()
+		bool IsRunning() const
 		{
 			return m_bIsRunning;
 		}
 
-		uint32_t GetWidth()
+		uint32_t GetWidth() const
 		{
 			return m_width;
 		}
 
-		uint32_t GetHeight()
+		uint32_t GetHeight() const
 		{
 			return m_height;
 		}
 
-		const wchar_t* GetTitle()
+		const wchar_t* GetTitle() const
 		{
 			return m_title.data();
 		}

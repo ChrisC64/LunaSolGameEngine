@@ -134,6 +134,21 @@ namespace LS::Win32
         swapchain1.As(&m_pSwapchain);
     }
 
+    void DeviceD3D11::CreateSwapchain(const LS::LSWindowBase* window, LS::PIXEL_FORMAT format, uint32_t bufferSize)
+    {
+        LS::LSSwapchainInfo info{
+            .BufferSize = bufferSize,
+            .Width = window->GetWidth(),
+            .Height = window->GetHeight(),
+            .PixelFormat = format,
+            .IsStereoScopic = false,
+            .MSCount = 1,
+            .MSQuality = 0
+        };
+
+        CreateSwapchain(static_cast<HWND>(window->GetHandleToWindow()), info);
+    }
+
     HRESULT DeviceD3D11::CreateDeferredContext(ID3D11DeviceContext** ppDeferredContext)
     {
         if (!m_pDevice)

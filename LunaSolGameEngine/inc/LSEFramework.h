@@ -22,6 +22,7 @@
 #include <optional>
 #include <chrono>
 #include <iostream>
+#include <filesystem>
 
 #ifdef LS_WINDOWS_BUILD
 // Windows Headers

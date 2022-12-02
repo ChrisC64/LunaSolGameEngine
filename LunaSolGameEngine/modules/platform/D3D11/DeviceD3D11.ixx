@@ -3,6 +3,7 @@ module;
 
 export module D3D11.Device;
 import Engine.LSDevice;
+import Engine.LSWindow;
 
 export namespace LS::Win32
 {
@@ -14,6 +15,7 @@ export namespace LS::Win32
 
         void CreateDevice(bool isSingleThreaded = false);
         void CreateSwapchain(HWND winHandle, const LS::LSSwapchainInfo& swapchainInfo);
+        void CreateSwapchain(const LS::LSWindowBase* window, LS::PIXEL_FORMAT format = LS::PIXEL_FORMAT::RGBA_8, uint32_t bufferSize = 2);
         HRESULT CreateDeferredContext(ID3D11DeviceContext** pDeferredContext);
         HRESULT CreateDeferredContext2(ID3D11DeviceContext2** ppDeferredContext);
         HRESULT CreateDeferredContext3(ID3D11DeviceContext3** ppDeferredContext);
