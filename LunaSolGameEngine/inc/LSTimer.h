@@ -4,7 +4,7 @@
 using namespace std::chrono;
 using namespace std::chrono_literals;
 
-export namespace LS
+namespace LS
 {
 	template<class Rep, int64_t Numerator, int64_t Denominator>
 	class LSTimer

@@ -114,4 +114,5 @@ export namespace LS::Utils
             dxgiFactory = nullptr;
         return hr;
     }
+
 }

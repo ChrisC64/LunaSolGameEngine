@@ -2,11 +2,12 @@ module;
 #include "LSEFramework.h"
 
 export module Engine.LSDevice;
-export import Data.LSTextureDesc;
-export import Util.StdUtils;
+import Data.LSTextureDesc;
+import Util.StdUtils;
 
 export namespace LS
 {
+
 	enum class DEVICE_TYPE : int8_t
 	{
 		HARDWARE,
@@ -16,9 +17,9 @@ export namespace LS
 
 	enum class DEVICE_API
 	{
-		D3D11,
-		D3D12,
-		VULKAN
+		DIRECT_X,
+		VULKAN,
+		OPEN_GL
 	};
 
 	/**

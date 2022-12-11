@@ -1,6 +1,7 @@
 module;
 #include "LSEFramework.h"
 export module D3D11.Utils;
+import Data.LSShader;
 
 export namespace LS::Win32
 {
@@ -16,8 +17,9 @@ export namespace LS::Win32
      * an error will be returned along with a message in the ppErrorMsg object. If successful, ppData will be initialized
      * with the data of the compiled source file.
     */
+    [[nodiscard]]
     inline HRESULT CompileShaderFile(std::filesystem::path filepath, std::string_view entryPoint, std::string_view targetProfile,
-        uint64_t compilationFlags, ID3DBlob** ppData, ID3DBlob** ppErrorMsg)
+        UINT compilationFlags, ID3DBlob** ppData, ID3DBlob** ppErrorMsg)
     {
         if (!std::filesystem::exists(filepath))
         {
@@ -38,8 +40,9 @@ export namespace LS::Win32
      * @return Returns S_OK if successful, otherwise an error code will be returned with a message of why the compilation failed.
      * If the vector is empty, no message will be set. 
     */
+    [[nodiscard]]
     inline HRESULT CompileShaderFromData(std::vector<byte> sourceData, std::string_view entryPoint, std::string_view targetProfile,
-        uint64_t compilationFlags, ID3DBlob** ppData, ID3DBlob** ppErrorMsg)
+        UINT compilationFlags, ID3DBlob** ppData, ID3DBlob** ppErrorMsg)
     {
         if (sourceData.empty())
         {
@@ -48,5 +51,17 @@ export namespace LS::Win32
 
         return D3DCompile(sourceData.data(), sourceData.size(), nullptr, nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE,
             entryPoint.data(), targetProfile.data(), compilationFlags, 0, ppData, ppErrorMsg);
+    }
+
+    [[nodiscard]]
+    inline HRESULT CompileVertexShaderFromByteCode(ID3D11Device* pDevice, std::span<std::byte> byteCode, ID3D11VertexShader** ppShader)
+    {
+        return pDevice->CreateVertexShader(byteCode.data(), byteCode.size(), nullptr, ppShader);
+    }
+    
+    [[nodiscard]]
+    inline HRESULT CompilePixelShaderFromByteCode(ID3D11Device* pDevice, std::span<std::byte> byteCode, ID3D11PixelShader** ppShader)
+    {
+        return pDevice->CreatePixelShader(byteCode.data(), byteCode.size(), nullptr, ppShader);
     }
 }

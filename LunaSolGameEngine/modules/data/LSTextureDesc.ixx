@@ -82,7 +82,7 @@ export namespace LS
 		}
 	};
 
-	//TODO: All data ttypes should use a singluar engine wide data enum descriptor, see PIXEL_DATA_FORMAT
+	//TODO: All data types should use a singluar engine wide data enum descriptor, see PIXEL_DATA_FORMAT
 	enum class PIXEL_DATA_TYPE
 	{
 		TYPELESS = 0,
