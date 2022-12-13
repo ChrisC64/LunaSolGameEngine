@@ -133,46 +133,33 @@ export namespace LS::Utils
 	}
 
 
-	DXGI_FORMAT FindFormat(LS::ShaderElement vertex_element)
+	DXGI_FORMAT FindDXGIFormat(ShaderElement vertex_element)
 	{
-		using enum LS::SHADER_DATA_TYPE;
+		using SDT = LS::SHADER_DATA_TYPE;
 		auto type = vertex_element.ShaderData;
 
 		switch (type)
 		{
-		case FLOAT:
-			return DXGI_FORMAT_R32_FLOAT;
-		case FLOAT2:
-			return DXGI_FORMAT_R32G32_FLOAT;
-		case FLOAT3:
-			return DXGI_FORMAT_R32G32B32_FLOAT;
-		case FLOAT4:
-			return DXGI_FORMAT_R32G32B32A32_FLOAT;
-		case INT:
-			return DXGI_FORMAT_R32_SINT;
-		case INT2:
-			return DXGI_FORMAT_R32G32_SINT;
-		case INT3:
-			return DXGI_FORMAT_R32G32B32_SINT;
-		case INT4:
-			return DXGI_FORMAT_R32G32B32A32_SINT;
-		case UINT:
-			return DXGI_FORMAT_R32_UINT;
-		case UINT2:
-			return DXGI_FORMAT_R32G32_UINT;
-		case UINT3:
-			return DXGI_FORMAT_R32G32B32_UINT;
-		case UINT4:
-			return DXGI_FORMAT_R32G32B32A32_UINT;
-		case BOOL:
-			return DXGI_FORMAT_R32_SINT;// HLSL Bools are 4 bytes 
+		case SDT::FLOAT:		return DXGI_FORMAT_R32_FLOAT;
+		case SDT::FLOAT2:		return DXGI_FORMAT_R32G32_FLOAT;
+		case SDT::FLOAT3:		return DXGI_FORMAT_R32G32B32_FLOAT;
+		case SDT::FLOAT4:		return DXGI_FORMAT_R32G32B32A32_FLOAT;
+		case SDT::INT:			return DXGI_FORMAT_R32_SINT;
+		case SDT::INT2:			return DXGI_FORMAT_R32G32_SINT;
+		case SDT::INT3:			return DXGI_FORMAT_R32G32B32_SINT;
+		case SDT::INT4:			return DXGI_FORMAT_R32G32B32A32_SINT;
+		case SDT::UINT:			return DXGI_FORMAT_R32_UINT;
+		case SDT::UINT2:		return DXGI_FORMAT_R32G32_UINT;
+		case SDT::UINT3:		return DXGI_FORMAT_R32G32B32_UINT;
+		case SDT::UINT4:		return DXGI_FORMAT_R32G32B32A32_UINT;
+		case SDT::BOOL:			return DXGI_FORMAT_R32_SINT;// HLSL Bools are 4 bytes 
 		default:
 			throw std::runtime_error("Unsuported DXGI FORMAT for data type.\n");
 			break;
 		}
 	}
 
-	LSOptional<std::vector<D3D11_INPUT_ELEMENT_DESC>> BuildFromShaderElements(std::span<LS::ShaderElement> elements)
+	LSOptional<std::vector<D3D11_INPUT_ELEMENT_DESC>> BuildFromShaderElements(std::span<ShaderElement> elements)
 	{
 		if (elements.empty())
 			return std::nullopt;
@@ -199,7 +186,7 @@ export namespace LS::Utils
 			outStr = std::string{ semanticName };
 		};
 
-		std::vector<D3D11_INPUT_ELEMENT_DESC> inputs(elements.size());
+		std::vector<D3D11_INPUT_ELEMENT_DESC> inputs;
 
 		for (auto& se : elements)
 		{
@@ -208,11 +195,11 @@ export namespace LS::Utils
 			inputDesc.SemanticIndex = FindSemanticIndex(se.SemanticName);
 			trim(se.SemanticName, inputDesc.SemanticIndex, se.SemanticName);
 			inputDesc.SemanticName = se.SemanticName.data();
-			inputDesc.AlignedByteOffset = se.OffsetAligned == 0 ? D3D11_APPEND_ALIGNED_ELEMENT : se.OffsetAligned;
+			inputDesc.AlignedByteOffset = se.OffsetAligned;
 			inputDesc.InputSlot = se.InputSlot;
-			inputDesc.InputSlotClass = se.InputClass == LS::INPUT_CLASS::VERTEX ? D3D11_INPUT_PER_VERTEX_DATA
+			inputDesc.InputSlotClass = se.InputClass == INPUT_CLASS::VERTEX ? D3D11_INPUT_PER_VERTEX_DATA
 				: D3D11_INPUT_PER_INSTANCE_DATA;
-			inputDesc.Format = FindFormat(se);
+			inputDesc.Format = FindDXGIFormat(se);
 
 			inputs.emplace_back(inputDesc);
 		}

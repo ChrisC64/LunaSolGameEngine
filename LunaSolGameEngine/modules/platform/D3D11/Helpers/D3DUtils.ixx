@@ -1,7 +1,8 @@
 module;
 #include "LSEFramework.h"
 export module D3D11.Utils;
-import Data.LSShader;
+import LSData;
+import Util.HLSLUtils;
 
 export namespace LS::Win32
 {
@@ -64,4 +65,26 @@ export namespace LS::Win32
     {
         return pDevice->CreatePixelShader(byteCode.data(), byteCode.size(), nullptr, ppShader);
     }
+
+    /*std::vector<D3D11_INPUT_ELEMENT_DESC> BuildShaderInput(const LSShaderInputSignature& inputSignature)
+    {
+        std::vector<D3D11_INPUT_ELEMENT_DESC> elements;
+
+        auto& layout = inputSignature.GetInputLayout();
+
+        D3D11_INPUT_ELEMENT_DESC desc{};
+        for (auto& l : layout)
+        {
+            desc.SemanticName = l.SemanticName.c_str();
+            desc.SemanticIndex = l.SemanticIndex;
+            desc.InputSlot = l.InputSlot;
+            desc.AlignedByteOffset = l.OffsetAligned;
+            desc.InputSlotClass = l.InputClass == INPUT_CLASS::VERTEX ? D3D11_INPUT_PER_VERTEX_DATA : D3D11_INPUT_PER_INSTANCE_DATA;
+            desc.InstanceDataStepRate = l.InstanceStepRate;
+            desc.Format = Utils::FindDXGIFormat(l);
+            elements.emplace_back(desc);
+        }
+
+        return elements;
+    }*/
 }

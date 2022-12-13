@@ -5,6 +5,7 @@
 import Engine.Common;
 import D3D11Lib;
 import Win32Lib;
+import Util.HLSLUtils;
 
 using namespace LS;
 using namespace Microsoft::WRL;
@@ -36,8 +37,8 @@ int main()
     device.CreateDevice();
     device.CreateSwapchain(window.get());
 
-    auto rsSolidOptional = Win32::CreateRasterizerState2(device.GetDevice().Get(), LS::SolidFill_Front_CCW);
-    auto rsWireframeOptional = Win32::CreateRasterizerState2(device.GetDevice().Get(), LS::Wireframe_Back_CCW);
+    auto rsSolidOptional = Win32::CreateRasterizerState2(device.GetDevice().Get(), LS::SolidFill_NoneCull_CCWFront_DCE);
+    auto rsWireframeOptional = Win32::CreateRasterizerState2(device.GetDevice().Get(), LS::Wireframe_FrontCull_CCWFront_DCE);
 
     ComPtr<ID3D11RasterizerState2> rsSolid;
     rsSolid.Attach(rsSolidOptional.value_or(nullptr));
@@ -52,7 +53,7 @@ int main()
     ComPtr<ID3D11DeviceContext> pDeferredContext;
     auto result = device.CreateDeferredContext(pDeferredContext.ReleaseAndGetAddressOf());
     if (FAILED(result))
-        return -1;
+        return EXIT_FAILURE;
     /*
     ComPtr<ID3D11CommandList> pCommandList;
     pDeferredContext->ClearRenderTargetView(rtView.Get(), g_color.data());
@@ -100,23 +101,18 @@ int main()
     std::vector<std::byte> psData(sizePS);
     psStream.read(reinterpret_cast<char*>(psData.data()), psData.size());
     //Shader profile 5.1 is introduced in D3D12, so we need to make sure the shaders are compiled at 5.0 profile
-    ID3D11VertexShader* pVSShader;
-    auto vsResult = LS::Win32::CompileVertexShaderFromByteCode(device.GetDevice().Get(), vsData, &pVSShader);
+    ComPtr<ID3D11VertexShader> vsShader;
+    ComPtr<ID3D11PixelShader> psShader;
+    auto vsResult = LS::Win32::CompileVertexShaderFromByteCode(device.GetDevice().Get(), vsData, &vsShader);
     if (FAILED(vsResult))
     {
         LS::Utils::ThrowIfFailed(vsResult, "Failed to compile vertex shader!\n");
     }
-    ID3D11PixelShader* pPSShader;
-    auto psResult = LS::Win32::CompilePixelShaderFromByteCode(device.GetDevice().Get(), psData, &pPSShader);
+    auto psResult = LS::Win32::CompilePixelShaderFromByteCode(device.GetDevice().Get(), psData, &psShader);
     if (FAILED(psResult))
     {
         LS::Utils::ThrowIfFailed(psResult, "Failed to compile vertex shader!\n");
     }
-
-    ComPtr<ID3D11VertexShader> vsShader;
-    ComPtr<ID3D11PixelShader> psShader;
-    vsShader.Attach(pVSShader);
-    psShader.Attach(pPSShader);
 
     LS::Win32::BindVS(device.GetImmediateContext().Get(), vsShader.Get());
     LS::Win32::BindPS(device.GetImmediateContext().Get(), psShader.Get());
@@ -124,13 +120,37 @@ int main()
     //device.GetImmediateContext()->IASetInputLayout();
     vsStream.close();
     psStream.close();
+
+    LSShaderInputSignature vsSignature;
+    vsSignature.AddElement(SHADER_DATA_TYPE::UINT, "SV_InstanceID");
+    auto layout = vsSignature.GetInputLayout();
+    auto inputs = Utils::BuildFromShaderElements(layout);
+    if (!inputs)
+    {
+        throw std::runtime_error("Failed to create input layout from shader elements\n");
+    }
+
+    auto valInputs = inputs.value();
+    ComPtr<ID3D11InputLayout> pInputLayout;
+    if (FAILED(device.CreateInputLayout(valInputs, vsData, &pInputLayout)) )
+    {
+        throw std::runtime_error("Failed to create input layout from device\n");
+    }
+    //TODO: Implement missing setups below that don't have an appropriate function call
+    
+    Win32::SetViewport(device.GetImmediateContext().Get(), window->GetWidth(), window->GetHeight());
+    Win32::SetRenderTarget(device.GetImmediateContext().Get(), rtView.Get(), nullptr);
+    
+    //device.GetImmediateContext()->IASetInputLayout(pInputLayout.Get());
+    device.GetImmediateContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
     window->Show();
     g_timer.Start();
     while (window->IsRunning())
     {
         g_timer.Tick();
         LS::Win32::ClearRT(device.GetImmediateContext().Get(), rtView.Get(), g_color);
-        LS::Win32::DrawInstances(device.GetImmediateContext().Get(), 0, 3, 0, 0, 0);
+        LS::Win32::Draw(device.GetImmediateContext().Get(), 3, 0);
         LS::Win32::Present(device.GetSwapChain().Get());
         window->PollEvent();
         if (g_timer.GetTotalTimeTickedIn<std::chrono::seconds>().count() >= 5.0f)

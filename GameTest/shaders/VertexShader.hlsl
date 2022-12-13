@@ -7,8 +7,8 @@ struct VS_OUTPUT
 VS_OUTPUT vs(uint instanceId : SV_InstanceID)
 {
     VS_OUTPUT output;
-    output.Color = float4(instanceId, instanceId, instanceId, 1.0f);
-    output.Pos = float4(0.0f, 0.0f, 0.0f, 0.0f);
+    output.Color = float4(1.0f, 0.0f, 1.0f, 1.0f);
+    /*output.Pos = float4(0.0f, 0.0f, 0.0f, 0.0f);
     if (instanceId == 0)
     {
         output.Pos = float4(0.0f, 0.5f, 0.0f, 1.0f);
@@ -20,7 +20,9 @@ VS_OUTPUT vs(uint instanceId : SV_InstanceID)
     else if (instanceId == 2)
     {
         output.Pos = float4(-0.5f, 0.0f, 0.0f, 1.0f);
-    }
+    }*/
+    float2 texCoord = float2(instanceId & 1, instanceId >> 1);
+    output.Pos = float4((texCoord.x - 0.5f) * 2, -(texCoord.y - 0.5f) * 2, 0.0f, 1.0f);
 	return output;
 }
 

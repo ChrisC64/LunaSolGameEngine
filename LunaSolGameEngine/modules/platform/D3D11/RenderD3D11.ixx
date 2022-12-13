@@ -4,6 +4,8 @@ module;
 export module D3D11.RenderD3D11;
 import Util.MSUtils;
 
+namespace WRL = Microsoft::WRL;
+
 export namespace LS::Win32
 {
     // CLEAR //
@@ -59,13 +61,24 @@ export namespace LS::Win32
     {
         assert(pContext);
         assert(pRTView);
-        assert(pDSView);
         if (!pContext || !pDSView || !pRTView)
             return;
         pContext->OMSetRenderTargets(numViews, &pRTView, pDSView);
     }
 
     // DRAW CALLS //
+
+    /**
+     * @brief Draws the number of vertices supplied to the vertex buffer
+     * @param pContext The context to issue the draw call
+     * @param vertexCount Number of vertices to draw 
+     * @param vertexOffset Offset from the buffer to start from
+    */
+    constexpr void Draw(ID3D11DeviceContext* pContext, uint32_t vertexCount, uint32_t vertexOffset = 0)
+    {
+        assert(pContext);
+        pContext->Draw(vertexCount, vertexOffset);
+    }
 
     /**
      * @brief Draws a number of instances of an object
@@ -76,11 +89,40 @@ export namespace LS::Win32
      * @param baseOffset the offset to each index of the next starting point in the vertex buffer
      * @param instanceOffset an offset for the instance data in the indexed buffer
     */
-    constexpr void DrawInstances(ID3D11DeviceContext* pContext, uint32_t bufferSize, uint32_t instances, 
+    constexpr void DrawInstances(ID3D11DeviceContext* pContext, uint32_t indexBufferSize, uint32_t instances, 
         uint32_t indexOffset, uint32_t baseOffset, uint32_t instanceOffset)
     {
         assert(pContext);
-        pContext->DrawIndexedInstanced(bufferSize, instances, indexOffset, baseOffset, instanceOffset);
+        pContext->DrawIndexedInstanced(indexBufferSize, instances, indexOffset, baseOffset, instanceOffset);
+    }
+    
+    /**
+     * @brief Draws a number of instances from the set vertex buffer
+     * @param pContext the context to use in this draw call
+     * @param vertexCount number of vertices to drwa
+     * @param instances the number of instances
+     * @param vertexOffset the offset in the vertexBuffer to start reading from
+     * @param instanceOffset the offset value of each instance in the instanced buffer
+     */
+    constexpr void DrawInstances(ID3D11DeviceContext* pContext, uint32_t vertexCount, uint32_t instances, 
+        uint32_t vertexOffset, uint32_t instanceOffset)
+    {
+        assert(pContext);
+        pContext->DrawInstanced(vertexCount, instances, vertexOffset, instanceOffset);
+    }
+    
+    /**
+     * @brief Draws a vertex buffer with the associated index buffer provided
+     * @param pContext the context to draw with 
+     * @param indexCount the number of indices to read from
+     * @param indexOffset the offset from the index buffer to start at
+     * @param vertexOffset the number applied to the index count when reading (for non-interleaved types usually)
+     */
+    constexpr void DrawIndexed(ID3D11DeviceContext* pContext, uint32_t indexCount, uint32_t indexOffset, 
+        uint32_t vertexOffset)
+    {
+        assert(pContext);
+        pContext->DrawIndexed(indexCount, indexOffset, vertexOffset);
     }
 
     // PRESENT CALLS //
@@ -205,5 +247,13 @@ export namespace LS::Win32
             return;
         count = static_cast<uint32_t>(viewports.size());
         pContext->RSSetViewports(count, &viewports.front());
+    }
+
+    inline void SetInputlayout(ID3D11DeviceContext* pContext, ID3D11InputLayout* layout)
+    {
+        assert(pContext);
+        if (!pContext)
+            return;
+        pContext->IASetInputLayout(layout);
     }
 }
