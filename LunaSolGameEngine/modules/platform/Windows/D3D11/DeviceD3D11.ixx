@@ -30,7 +30,7 @@ export namespace LS::Win32
         HRESULT CreateDepthStencilViewForSwapchain(ID3D11RenderTargetView* pRenderTargetView, ID3D11DepthStencilView** ppDepthStencil, DXGI_FORMAT format = DXGI_FORMAT_D24_UNORM_S8_UINT) noexcept;
         HRESULT CreateDepthStencilState(const D3D11_DEPTH_STENCIL_DESC& depthStencilDesc, ID3D11DepthStencilState** ppDepthStencilState);
         HRESULT CreateBlendState(const D3D11_BLEND_DESC& blendDesc, ID3D11BlendState** ppBlendState);
-
+        HRESULT CreateBuffer(const D3D11_BUFFER_DESC* pDesc, const D3D11_SUBRESOURCE_DATA* pInitialData, ID3D11Buffer** ppBuffer);
 
         WRL::ComPtr<ID3D11Device5>           GetDevice();
         WRL::ComPtr<ID3D11DeviceContext4>    GetImmediateContext();

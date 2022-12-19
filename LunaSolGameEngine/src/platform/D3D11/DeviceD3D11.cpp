@@ -243,6 +243,19 @@ namespace LS::Win32
         return m_pDevice->CreateBlendState(&blendDesc, ppBlendState);
     }
 
+    HRESULT DeviceD3D11::CreateBuffer(const D3D11_BUFFER_DESC* pDesc, const D3D11_SUBRESOURCE_DATA* pInitialData, ID3D11Buffer** ppBuffer)
+    {
+        assert(m_pDevice);
+        assert(pDesc);
+
+        if (!pDesc)
+        {
+            return E_NOT_SET;
+        }
+
+        return m_pDevice->CreateBuffer(pDesc, pInitialData, ppBuffer);
+    }
+
     Microsoft::WRL::ComPtr<ID3D11Device5> DeviceD3D11::GetDevice()
     {
         return m_pDevice;

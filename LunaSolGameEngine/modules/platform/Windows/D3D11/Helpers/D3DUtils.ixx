@@ -1,5 +1,7 @@
 module;
 #include "LSEFramework.h"
+#include "LSBuffer.h"
+
 export module D3D11.Utils;
 import LSData;
 import Util.HLSLUtils;
@@ -65,6 +67,23 @@ export namespace LS::Win32
     {
         return pDevice->CreatePixelShader(byteCode.data(), byteCode.size(), nullptr, ppShader);
     }
+
+    /*[[nodiscard]]
+    inline D3D11_USAGE FindUsageFromLSBufferUsage(LS::BUFFER_USAGE bufferUsage)
+    {
+        using enum LS::BUFFER_USAGE;
+
+        switch (bufferUsage)
+        {
+        case DEFAULT_RW: return D3D11_USAGE::D3D11_USAGE_DEFAULT;
+        case CONSTANT: return D3D11_USAGE::D3D11_USAGE_DEFAULT;
+        case IMMUTABLE: return D3D11_USAGE::D3D11_USAGE_IMMUTABLE;
+        case DYNAMIC: return D3D11_USAGE::D3D11_USAGE_DYNAMIC;
+        case COPY_ONLY: return D3D11_USAGE::D3D11_USAGE_STAGING;
+        default:
+            throw std::runtime_error("Failed to find a suitable buffer usage type");
+        }
+    }*/
 
     /*std::vector<D3D11_INPUT_ELEMENT_DESC> BuildShaderInput(const LSShaderInputSignature& inputSignature)
     {
