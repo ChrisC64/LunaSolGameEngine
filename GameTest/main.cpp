@@ -56,6 +56,13 @@ int main()
     device.GetSwapChain()->GetBuffer(0, IID_PPV_ARGS(&buffer));
     ComPtr< ID3D11RenderTargetView1> rtView;
     rtView.Attach(Win32::CreateRenderTargetView1(device.GetDevice().Get(), buffer.Get()));
+
+    ComPtr<ID3D11DepthStencilView> dsView;
+    auto dsResult = device.CreateDepthStencilViewForSwapchain(rtView.Get(), &dsView);
+    if (FAILED(dsResult))
+        return -3;
+
+
     ComPtr<ID3D11DeviceContext> pDeferredContext;
     auto result = device.CreateDeferredContext(pDeferredContext.ReleaseAndGetAddressOf());
     if (FAILED(result))
@@ -165,24 +172,25 @@ int main()
     UINT stride = sizeof(float) * 4;
     UINT offset = 0;
 
-    Win32::SetViewport(device.GetImmediateContext().Get(), window->GetWidth(), window->GetHeight());
-    Win32::SetRenderTarget(device.GetImmediateContext().Get(), rtView.Get(), nullptr);
     LS::Win32::BindVS(device.GetImmediateContext().Get(), vsShader.Get());
     LS::Win32::BindPS(device.GetImmediateContext().Get(), psShader.Get());
     device.GetImmediateContext()->IASetInputLayout(pInputLayout.Get());
     device.GetImmediateContext()->IASetVertexBuffers(0, 1, pBuffer.GetAddressOf(), &stride, &offset);
     device.GetImmediateContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-    ID3D11Buffer* pArrs[1];
-    pArrs[0] = pBuffer.Get();
+    Win32::SetViewport(device.GetImmediateContext().Get(), window->GetWidth(), window->GetHeight());
+    ComPtr<ID3D11RenderTargetView> rtViewOg = rtView;
+    //Win32::SetRenderTarget(device.GetImmediateContext().Get(), rtView.Get(), nullptr);
+
     window->Show();
     g_timer.Start();
     while (window->IsRunning())
     {
         g_timer.Tick();
+        device.GetImmediateContext()->OMSetRenderTargets(1, rtViewOg.GetAddressOf(), nullptr);
         LS::Win32::ClearRT(device.GetImmediateContext().Get(), rtView.Get(), g_color);
         LS::Win32::Draw(device.GetImmediateContext().Get(), 3);
-        LS::Win32::Present(device.GetSwapChain().Get());
+        LS::Win32::Present1(device.GetSwapChain().Get(), 1);
         window->PollEvent();
         if (g_timer.GetTotalTimeTickedIn<std::chrono::seconds>().count() >= 5.0f)
         {

@@ -136,6 +136,16 @@ export namespace LS::Win32
     constexpr void Present1(IDXGISwapChain1* pSwapchain, uint32_t syncInterval = 0, uint32_t flags = 0, const DXGI_PRESENT_PARAMETERS* params = nullptr)
     {
         assert(pSwapchain);
+        constexpr DXGI_PRESENT_PARAMETERS presentParams{
+            .DirtyRectsCount = 0,
+            .pDirtyRects = nullptr,
+            .pScrollRect = nullptr,
+            .pScrollOffset = nullptr
+        };
+        if (!params)
+        {
+            params = &presentParams;
+        }
         pSwapchain->Present1(syncInterval, flags, params);
     }
 
