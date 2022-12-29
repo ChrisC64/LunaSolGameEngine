@@ -28,13 +28,14 @@ export namespace LS::Win32
         HRESULT CreateRenderTargetView1(ID3D11Resource* pResource, ID3D11RenderTargetView1** ppRTView, const D3D11_RENDER_TARGET_VIEW_DESC1* rtvDesc = nullptr) noexcept;
         HRESULT CreateDepthStencilView(ID3D11RenderTargetView* pRenderTargetView, ID3D11Resource* pResource, ID3D11DepthStencilView** ppDepthStencil, const D3D11_DEPTH_STENCIL_VIEW_DESC* pDesc = nullptr) noexcept;
         HRESULT CreateDepthStencilViewForSwapchain(ID3D11RenderTargetView* pRenderTargetView, ID3D11DepthStencilView** ppDepthStencil, DXGI_FORMAT format = DXGI_FORMAT_D24_UNORM_S8_UINT) noexcept;
-        HRESULT CreateDepthStencilState(const D3D11_DEPTH_STENCIL_DESC& depthStencilDesc, ID3D11DepthStencilState** ppDepthStencilState);
-        HRESULT CreateBlendState(const D3D11_BLEND_DESC& blendDesc, ID3D11BlendState** ppBlendState);
-        HRESULT CreateBuffer(const D3D11_BUFFER_DESC* pDesc, const D3D11_SUBRESOURCE_DATA* pInitialData, ID3D11Buffer** ppBuffer);
+        HRESULT CreateDepthStencilState(const D3D11_DEPTH_STENCIL_DESC& depthStencilDesc, ID3D11DepthStencilState** ppDepthStencilState) noexcept;
+        HRESULT CreateBlendState(const D3D11_BLEND_DESC& blendDesc, ID3D11BlendState** ppBlendState) noexcept;
+        HRESULT CreateBuffer(const D3D11_BUFFER_DESC* pDesc, const D3D11_SUBRESOURCE_DATA* pInitialData, ID3D11Buffer** ppBuffer) noexcept;
 
-        WRL::ComPtr<ID3D11Device5>           GetDevice();
-        WRL::ComPtr<ID3D11DeviceContext4>    GetImmediateContext();
-        WRL::ComPtr<IDXGISwapChain1>         GetSwapChain();
+        WRL::ComPtr<ID3D11Device5>           GetDevice() const noexcept;
+        WRL::ComPtr<ID3D11DeviceContext4>    GetImmediateContext() const noexcept;
+        ID3D11DeviceContext*                 GetImmediateContextPtr() const noexcept;
+        WRL::ComPtr<IDXGISwapChain1>         GetSwapChain() const noexcept;
 
     private:
         bool                                            m_bIsInitialized = false;
@@ -44,6 +45,6 @@ export namespace LS::Win32
         WRL::ComPtr<IDXGISwapChain1>                    m_pSwapchain = nullptr;
         D3D_FEATURE_LEVEL                               m_featureLevel{};
 
-        DXGI_SWAP_CHAIN_DESC1 BuildSwapchainDesc1(const LS::LSSwapchainInfo& info);
+        DXGI_SWAP_CHAIN_DESC1 BuildSwapchainDesc1(const LS::LSSwapchainInfo& info) const noexcept;
     };
 }

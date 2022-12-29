@@ -39,7 +39,9 @@
 // DXGI Interfaces
 #include <dxgi1_6.h>
 
+// DirectX Libraries //
 #include <DirectXMath.h>
+#include <directxtk/CommonStates.h>
 #include <DirectXColors.h>
 #include <d3dcompiler.h>
 

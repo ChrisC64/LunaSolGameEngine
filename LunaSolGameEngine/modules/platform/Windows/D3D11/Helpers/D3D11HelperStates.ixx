@@ -8,10 +8,15 @@ import Data.LSShader;
 
 export namespace LS::Win32
 {
+    // TODO:Consider Building a PIMPL method instead for these creation methods?
+    //TODO: The create methods from CommonStates return pointers to owned ComPtr objects in a shared resource pool.
+    // This factory class means that I cannot just take the pointers as given unless I have it release the ownership or copy
+    // the com pointers. I should re-evaluate how I would want to use them. 
+
     // Generator Methods //
     // Rasterizer States //
     [[nodiscard]]
-    LSOptional<ID3D11RasterizerState2*> CreateRasterizerState2(ID3D11Device3* pDevice, const LS::LSDrawState& drawState)
+    LSOptional<ID3D11RasterizerState2*> CreateRasterizerState2(ID3D11Device3* pDevice, const LS::LSDrawState& drawState) 
     {
         assert(pDevice);
         if (!pDevice)
@@ -48,6 +53,38 @@ export namespace LS::Win32
         return rsState;
     }
 
+    [[nodiscard]]
+    LSOptional<ID3D11RasterizerState*> CreateCullNoneState(ID3D11Device* pDevice) noexcept
+    {
+        DirectX::CommonStates common(pDevice);
+
+        return common.CullNone();
+    }
+    
+    [[nodiscard]]
+    LSOptional<ID3D11RasterizerState*> CreateCullClockwiseState(ID3D11Device* pDevice) noexcept
+    {
+        DirectX::CommonStates common(pDevice);
+
+        return common.CullClockwise();
+    }
+    
+    [[nodiscard]]
+    LSOptional<ID3D11RasterizerState*> CreateCullCounterClockwiseState(ID3D11Device* pDevice) noexcept
+    {
+        DirectX::CommonStates common(pDevice);
+
+        return common.CullCounterClockwise();
+    }
+    
+    [[nodiscard]]
+    LSOptional<ID3D11RasterizerState*> CreateWireframeState(ID3D11Device* pDevice) noexcept
+    {
+        DirectX::CommonStates common(pDevice);
+
+        return common.Wireframe();
+    }
+
     // Depth Stencil States //
     [[nodiscard]]
     LSOptional<ID3D11DepthStencilState*> CreateDepthStencilState(ID3D11Device5* pDevice, const D3D11_DEPTH_STENCIL_DESC depthDesc)
@@ -64,6 +101,61 @@ export namespace LS::Win32
         return pDepthState;
     }
 
+    [[nodiscard]]
+    LSOptional<ID3D11DepthStencilState*> CreateDefaultDepthState(ID3D11Device* pDevice) noexcept
+    {
+        assert(pDevice);
+        if (!pDevice)
+            return std::nullopt;
+
+        DirectX::CommonStates commonState(pDevice);
+        return commonState.DepthDefault();
+    }
+
+    [[nodiscard]]
+    LSOptional<ID3D11DepthStencilState*> CreateNoDepthState(ID3D11Device* pDevice) noexcept
+    {
+        assert(pDevice);
+        if (!pDevice)
+            return std::nullopt;
+
+        DirectX::CommonStates commonState(pDevice);
+        return commonState.DepthNone();
+    }
+    
+    [[nodiscard]]
+    LSOptional<ID3D11DepthStencilState*> CreateDepthReadState(ID3D11Device* pDevice) noexcept
+    {
+        assert(pDevice);
+        if (!pDevice)
+            return std::nullopt;
+
+        DirectX::CommonStates commonState(pDevice);
+        return commonState.DepthRead();
+    }
+    
+    [[nodiscard]]
+    LSOptional<ID3D11DepthStencilState*> CreateDepthReverseZState(ID3D11Device* pDevice) noexcept
+    {
+        assert(pDevice);
+        if (!pDevice)
+            return std::nullopt;
+
+        DirectX::CommonStates commonState(pDevice);
+        return commonState.DepthReverseZ();
+    }
+    
+    [[nodiscard]]
+    LSOptional<ID3D11DepthStencilState*> CreateDepthReadReverseZState(ID3D11Device* pDevice) noexcept
+    {
+        assert(pDevice);
+        if (!pDevice)
+            return std::nullopt;
+
+        DirectX::CommonStates commonState(pDevice);
+        return commonState.DepthReadReverseZ();
+    }
+    
     // Blend State //
     [[nodiscard]]
     LSOptional<ID3D11BlendState1*> CreateBlendState1(ID3D11Device5* pDevice, const D3D11_BLEND_DESC1& blendDesc)
@@ -78,6 +170,50 @@ export namespace LS::Win32
             Utils::ThrowIfFailed(hr, "Failed to create Blend Depth State 1 object with D3D11 Device");
 
         return pBlend;
+    }
+
+    [[nodiscard]]
+    LSOptional<ID3D11BlendState*> CreateAlphaBlendState(ID3D11Device* pDevice) noexcept
+    {
+        assert(pDevice);
+        if (!pDevice)
+            return std::nullopt;
+
+        DirectX::CommonStates common(pDevice);
+        return common.AlphaBlend();
+    }
+    
+    [[nodiscard]]
+    LSOptional<ID3D11BlendState*> CreateOpaqueState(ID3D11Device* pDevice) noexcept
+    {
+        assert(pDevice);
+        if (!pDevice)
+            return std::nullopt;
+
+        DirectX::CommonStates common(pDevice);
+        return common.Opaque();
+    }
+    
+    [[nodiscard]]
+    LSOptional<ID3D11BlendState*> CreateAdditiveState(ID3D11Device* pDevice) noexcept
+    {
+        assert(pDevice);
+        if (!pDevice)
+            return std::nullopt;
+
+        DirectX::CommonStates common(pDevice);
+        return common.Additive();
+    }
+    
+    [[nodiscard]]
+    LSOptional<ID3D11BlendState*> CreateNonPremultipliedState(ID3D11Device* pDevice) noexcept
+    {
+        assert(pDevice);
+        if (!pDevice)
+            return std::nullopt;
+
+        DirectX::CommonStates common(pDevice);
+        return common.NonPremultiplied();
     }
 
     // Sampler State //
@@ -96,10 +232,76 @@ export namespace LS::Win32
         return pSampler;
     }
 
+    [[nodiscard]]
+    LSOptional<ID3D11SamplerState*> CreatePointWrapSampler(ID3D11Device* pDevice) noexcept
+    {
+        assert(pDevice);
+        if (!pDevice)
+            return std::nullopt;
+
+        DirectX::CommonStates commonState(pDevice);
+        return commonState.PointWrap();
+    }
+
+    [[nodiscard]]
+    LSOptional<ID3D11SamplerState*> CreatePointClampSampler(ID3D11Device* pDevice) noexcept
+    {
+        assert(pDevice);
+        if (!pDevice)
+            return std::nullopt;
+
+        DirectX::CommonStates commonState(pDevice);
+        return commonState.PointClamp();
+    }
+    
+    [[nodiscard]]
+    LSOptional<ID3D11SamplerState*> CreateLinearWrapSampler(ID3D11Device* pDevice) noexcept
+    {
+        assert(pDevice);
+        if (!pDevice)
+            return std::nullopt;
+
+        DirectX::CommonStates commonState(pDevice);
+        return commonState.LinearWrap();
+    }
+    
+    [[nodiscard]]
+    LSOptional<ID3D11SamplerState*> CreateLinearClampSampler(ID3D11Device* pDevice) noexcept
+    {
+        assert(pDevice);
+        if (!pDevice)
+            return std::nullopt;
+
+        DirectX::CommonStates commonState(pDevice);
+        return commonState.LinearClamp();
+    }
+    
+    [[nodiscard]]
+    LSOptional<ID3D11SamplerState*> CreateAnisotropicWrapSampler(ID3D11Device* pDevice) noexcept
+    {
+        assert(pDevice);
+        if (!pDevice)
+            return std::nullopt;
+
+        DirectX::CommonStates commonState(pDevice);
+        return commonState.AnisotropicWrap();
+    }
+    
+    [[nodiscard]]
+    LSOptional<ID3D11SamplerState*> CreateAnisotropicClampSampler(ID3D11Device* pDevice) noexcept
+    {
+        assert(pDevice);
+        if (!pDevice)
+            return std::nullopt;
+
+        DirectX::CommonStates commonState(pDevice);
+        return commonState.AnisotropicClamp();
+    }
+
     // Setter Methods //
 
     // Rasterizer States //
-    constexpr void SetRasterizerState2(ID3D11DeviceContext4* pContext, ID3D11RasterizerState2* pRasterizerState)
+    constexpr void SetRasterizerState2(ID3D11DeviceContext4* pContext, ID3D11RasterizerState2* pRasterizerState) noexcept
     {
         assert(pContext);
         assert(pRasterizerState);
@@ -107,7 +309,8 @@ export namespace LS::Win32
     }
 
     // Depth Stencil State //
-    constexpr void SetBlendState1(ID3D11DeviceContext4* pContext, ID3D11DepthStencilState* pDepthStencilState, uint32_t stencilRef = 1)
+    constexpr void SetBlendState1(ID3D11DeviceContext4* pContext, ID3D11DepthStencilState* pDepthStencilState, 
+        uint32_t stencilRef = 1) noexcept
     {
         assert(pContext);
         assert(pDepthStencilState);
@@ -116,7 +319,7 @@ export namespace LS::Win32
 
     // Blend State //
     constexpr void SetBlendState1(ID3D11DeviceContext4* pContext, ID3D11BlendState1* pBlendState, uint32_t sampleMask = 0xffffffff,
-        std::array<float, 4> blendFactor = { 1.0f, 1.0f, 1.0f, 1.0f })
+        std::array<float, 4> blendFactor = { 1.0f, 1.0f, 1.0f, 1.0f }) noexcept
     {
         assert(pContext);
         assert(pBlendState);
@@ -124,8 +327,8 @@ export namespace LS::Win32
     }
 
     // Sampler Sate //
-    constexpr void SetSamplerState(ID3D11DeviceContext4* pContext, std::span<ID3D11SamplerState**> pSamplerState, LS::SHADER_TYPE type,
-        uint32_t startSlot = 0, uint32_t numSamplers = 0)
+    constexpr void SetSamplerState(ID3D11DeviceContext4* pContext, std::span<ID3D11SamplerState**> pSamplerState, 
+        LS::SHADER_TYPE type, uint32_t startSlot = 0, uint32_t numSamplers = 0) noexcept
     {
         assert(pContext);
         assert(pSamplerState.data());
