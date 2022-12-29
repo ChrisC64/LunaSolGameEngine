@@ -28,8 +28,8 @@ export namespace LS
         xmvec m_position;
         xmvec m_lookAt;
         xmvec m_up;
-        float m_fovAngleY;
-        float m_fovAngleX;
+        float m_fovAngleV;//Vertical FOV in radians
+        float m_fovAngleH;//Horizontal FOV in radians
 
     public:
         LSCamera() = default;
