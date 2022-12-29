@@ -230,20 +230,20 @@ namespace LS::Win32
         return m_pDevice->CreateDepthStencilView(depthBuffer.Get(), nullptr, ppDepthStencil);
     }
 
-    HRESULT DeviceD3D11::CreateDepthStencilState(const D3D11_DEPTH_STENCIL_DESC& depthStencilDesc, ID3D11DepthStencilState** ppDepthStencilState)
+    HRESULT DeviceD3D11::CreateDepthStencilState(const D3D11_DEPTH_STENCIL_DESC& depthStencilDesc, ID3D11DepthStencilState** ppDepthStencilState) noexcept
     {
         assert(m_pDevice);
 
         return m_pDevice->CreateDepthStencilState(&depthStencilDesc, ppDepthStencilState);
     }
 
-    HRESULT DeviceD3D11::CreateBlendState(const D3D11_BLEND_DESC& blendDesc, ID3D11BlendState** ppBlendState)
+    HRESULT DeviceD3D11::CreateBlendState(const D3D11_BLEND_DESC& blendDesc, ID3D11BlendState** ppBlendState) noexcept
     {
         assert(m_pDevice);
         return m_pDevice->CreateBlendState(&blendDesc, ppBlendState);
     }
 
-    HRESULT DeviceD3D11::CreateBuffer(const D3D11_BUFFER_DESC* pDesc, const D3D11_SUBRESOURCE_DATA* pInitialData, ID3D11Buffer** ppBuffer)
+    HRESULT DeviceD3D11::CreateBuffer(const D3D11_BUFFER_DESC* pDesc, const D3D11_SUBRESOURCE_DATA* pInitialData, ID3D11Buffer** ppBuffer) noexcept
     {
         assert(m_pDevice);
         assert(pDesc);
@@ -256,22 +256,27 @@ namespace LS::Win32
         return m_pDevice->CreateBuffer(pDesc, pInitialData, ppBuffer);
     }
 
-    Microsoft::WRL::ComPtr<ID3D11Device5> DeviceD3D11::GetDevice()
+    Microsoft::WRL::ComPtr<ID3D11Device5> DeviceD3D11::GetDevice() const noexcept
     {
         return m_pDevice;
     }
 
-    Microsoft::WRL::ComPtr<ID3D11DeviceContext4> DeviceD3D11::GetImmediateContext()
+    Microsoft::WRL::ComPtr<ID3D11DeviceContext4> DeviceD3D11::GetImmediateContext() const noexcept
     {
         return m_pImmediateContext;
     }
 
-    Microsoft::WRL::ComPtr<IDXGISwapChain1> DeviceD3D11::GetSwapChain()
+    ID3D11DeviceContext* DeviceD3D11::GetImmediateContextPtr() const noexcept
+    {
+        return m_pImmediateContext.Get();
+    }
+
+    Microsoft::WRL::ComPtr<IDXGISwapChain1> DeviceD3D11::GetSwapChain() const noexcept
     {
         return m_pSwapchain;
     }
 
-    DXGI_SWAP_CHAIN_DESC1 DeviceD3D11::BuildSwapchainDesc1(const LSSwapchainInfo& info)
+    DXGI_SWAP_CHAIN_DESC1 DeviceD3D11::BuildSwapchainDesc1(const LSSwapchainInfo& info) const noexcept
     {
         DXGI_SWAP_CHAIN_DESC1 swDesc1{};
         swDesc1.BufferCount = info.BufferSize;

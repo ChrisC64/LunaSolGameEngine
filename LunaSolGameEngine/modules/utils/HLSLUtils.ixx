@@ -6,7 +6,7 @@ import Data.LSShader;
 
 export namespace LS::Utils
 {
-	inline DXGI_FORMAT FindDXGIFormat(D3D11_SIGNATURE_PARAMETER_DESC desc)
+	constexpr DXGI_FORMAT FindDXGIFormat(D3D11_SIGNATURE_PARAMETER_DESC desc) noexcept
 	{
 		DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN;
 		if (desc.Mask == 1)
@@ -49,7 +49,7 @@ export namespace LS::Utils
 		return format;
 	}
 
-	inline LSOptional<std::vector<D3D11_INPUT_ELEMENT_DESC>> BuildFroReflection(std::span<std::byte> fileData)
+	constexpr LSOptional<std::vector<D3D11_INPUT_ELEMENT_DESC>> BuildFroReflection(std::span<std::byte> fileData)
 	{
 		if (fileData.empty())
 		{
@@ -103,7 +103,7 @@ export namespace LS::Utils
 		return vertexElems;
 	}
 
-	constexpr uint32_t FindSemanticIndex(std::string_view semanticName)
+	constexpr uint32_t FindSemanticIndex(std::string_view semanticName) noexcept
 	{
 		// Find the value of semantics 1 - 9 (We don't find any higher, but we should probably support for 
 		// double digits at least. The max resources you can bind is 128, but does that mean we can have
@@ -133,12 +133,11 @@ export namespace LS::Utils
 	}
 
 
-	DXGI_FORMAT FindDXGIFormat(ShaderElement vertex_element)
+	constexpr DXGI_FORMAT FindDXGIFormat(SHADER_DATA_TYPE shaderData)
 	{
 		using SDT = LS::SHADER_DATA_TYPE;
-		auto type = vertex_element.ShaderData;
 
-		switch (type)
+		switch (shaderData)
 		{
 		case SDT::FLOAT:		return DXGI_FORMAT_R32_FLOAT;
 		case SDT::FLOAT2:		return DXGI_FORMAT_R32G32_FLOAT;
@@ -159,7 +158,7 @@ export namespace LS::Utils
 		}
 	}
 
-	LSOptional<std::vector<D3D11_INPUT_ELEMENT_DESC>> BuildFromShaderElements(std::span<ShaderElement> elements)
+	constexpr LSOptional<std::vector<D3D11_INPUT_ELEMENT_DESC>> BuildFromShaderElements(std::span<ShaderElement> elements) noexcept
 	{
 		if (elements.empty())
 			return std::nullopt;
@@ -199,7 +198,7 @@ export namespace LS::Utils
 			inputDesc.InputSlot = se.InputSlot;
 			inputDesc.InputSlotClass = se.InputClass == INPUT_CLASS::VERTEX ? D3D11_INPUT_PER_VERTEX_DATA
 				: D3D11_INPUT_PER_INSTANCE_DATA;
-			inputDesc.Format = FindDXGIFormat(se);
+			inputDesc.Format = FindDXGIFormat(se.ShaderData);
 
 			inputs.emplace_back(inputDesc);
 		}

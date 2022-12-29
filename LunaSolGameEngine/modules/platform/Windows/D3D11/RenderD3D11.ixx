@@ -9,7 +9,8 @@ namespace WRL = Microsoft::WRL;
 export namespace LS::Win32
 {
     // CLEAR //
-    constexpr void ClearRT(ID3D11DeviceContext* pContext, ID3D11RenderTargetView* pRTView, std::array<float, 4>& color)
+    constexpr void ClearRT(ID3D11DeviceContext* pContext, ID3D11RenderTargetView* pRTView, 
+        std::array<float, 4>& color) noexcept
     {
         assert(pContext);
         assert(pRTView);
@@ -20,7 +21,7 @@ export namespace LS::Win32
     }
 
     constexpr void ClearDS(ID3D11DeviceContext* pContext, ID3D11DepthStencilView* pDSView, uint32_t flags = D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL,
-        float depth = 1.0f, uint8_t stencil = 0)
+        float depth = 1.0f, uint8_t stencil = 0) noexcept
     {
         assert(pContext);
         assert(pDSView);
@@ -31,7 +32,7 @@ export namespace LS::Win32
 
     [[nodiscard]]
     constexpr ID3D11RenderTargetView* CreateRenderTargetView(ID3D11Device* pDevice, ID3D11Resource* pResource,
-        const D3D11_RENDER_TARGET_VIEW_DESC* rtvDesc = nullptr)
+        const D3D11_RENDER_TARGET_VIEW_DESC* rtvDesc = nullptr) noexcept
     {
         assert(pDevice);
         assert(pResource);
@@ -45,7 +46,7 @@ export namespace LS::Win32
 
     [[nodiscard]]
     constexpr ID3D11RenderTargetView1* CreateRenderTargetView1(ID3D11Device3* pDevice, ID3D11Resource* pResource,
-        const D3D11_RENDER_TARGET_VIEW_DESC1* rtvDesc = nullptr)
+        const D3D11_RENDER_TARGET_VIEW_DESC1* rtvDesc = nullptr) noexcept
     {
         assert(pDevice);
         assert(pResource);
@@ -57,11 +58,11 @@ export namespace LS::Win32
         return pRTView;
     }
 
-    constexpr void SetRenderTarget(ID3D11DeviceContext* pContext, ID3D11RenderTargetView* pRTView, ID3D11DepthStencilView* pDSView, uint32_t numViews = 1)
+    constexpr void SetRenderTarget(ID3D11DeviceContext* pContext, ID3D11RenderTargetView* pRTView, ID3D11DepthStencilView* pDSView, uint32_t numViews = 1) noexcept
     {
         assert(pContext);
         assert(pRTView);
-        if (!pContext || !pDSView || !pRTView)
+        if (!pContext || !pRTView)
             return;
         pContext->OMSetRenderTargets(numViews, &pRTView, pDSView);
     }
@@ -74,7 +75,7 @@ export namespace LS::Win32
      * @param vertexCount Number of vertices to draw 
      * @param vertexOffset Offset from the buffer to start from
     */
-    constexpr void Draw(ID3D11DeviceContext* pContext, uint32_t vertexCount, uint32_t vertexOffset = 0)
+    constexpr void Draw(ID3D11DeviceContext* pContext, uint32_t vertexCount, uint32_t vertexOffset = 0) noexcept
     {
         assert(pContext);
         pContext->Draw(vertexCount, vertexOffset);
@@ -90,7 +91,7 @@ export namespace LS::Win32
      * @param instanceOffset an offset for the instance data in the indexed buffer
     */
     constexpr void DrawInstances(ID3D11DeviceContext* pContext, uint32_t indexBufferSize, uint32_t instances, 
-        uint32_t indexOffset, uint32_t baseOffset, uint32_t instanceOffset)
+        uint32_t indexOffset, uint32_t baseOffset, uint32_t instanceOffset) noexcept
     {
         assert(pContext);
         pContext->DrawIndexedInstanced(indexBufferSize, instances, indexOffset, baseOffset, instanceOffset);
@@ -105,7 +106,7 @@ export namespace LS::Win32
      * @param instanceOffset the offset value of each instance in the instanced buffer
      */
     constexpr void DrawInstances(ID3D11DeviceContext* pContext, uint32_t vertexCount, uint32_t instances, 
-        uint32_t vertexOffset, uint32_t instanceOffset)
+        uint32_t vertexOffset, uint32_t instanceOffset) noexcept
     {
         assert(pContext);
         pContext->DrawInstanced(vertexCount, instances, vertexOffset, instanceOffset);
@@ -119,21 +120,23 @@ export namespace LS::Win32
      * @param vertexOffset the number applied to the index count when reading (for non-interleaved types usually)
      */
     constexpr void DrawIndexed(ID3D11DeviceContext* pContext, uint32_t indexCount, uint32_t indexOffset, 
-        uint32_t vertexOffset)
+        uint32_t vertexOffset) noexcept
     {
         assert(pContext);
         pContext->DrawIndexed(indexCount, indexOffset, vertexOffset);
     }
 
+    // END DRAW CALLS //
+
     // PRESENT CALLS //
 
-    constexpr void Present(IDXGISwapChain* pSwapchain, uint32_t syncInterval = 0, uint32_t flags = 0)
+    constexpr void Present(IDXGISwapChain* pSwapchain, uint32_t syncInterval = 0, uint32_t flags = 0) noexcept
     {
         assert(pSwapchain);
         pSwapchain->Present(syncInterval, flags);
     }
     
-    constexpr void Present1(IDXGISwapChain1* pSwapchain, uint32_t syncInterval = 0, uint32_t flags = 0, const DXGI_PRESENT_PARAMETERS* params = nullptr)
+    constexpr void Present1(IDXGISwapChain1* pSwapchain, uint32_t syncInterval = 0, uint32_t flags = 0, const DXGI_PRESENT_PARAMETERS* params = nullptr) noexcept
     {
         assert(pSwapchain);
         constexpr DXGI_PRESENT_PARAMETERS presentParams{
@@ -149,85 +152,87 @@ export namespace LS::Win32
         pSwapchain->Present1(syncInterval, flags, params);
     }
 
+    // END PRESENT CALLS //
+
     // Shader Binders //
-    constexpr void BindVS(ID3D11DeviceContext* pContext, ID3D11VertexShader* shader)
+    constexpr void BindVS(ID3D11DeviceContext* pContext, ID3D11VertexShader* shader) noexcept
     {
         assert(pContext);
         assert(shader);
         pContext->VSSetShader(shader, nullptr, 0);
     }
     
-    constexpr void BindVS(ID3D11DeviceContext* pContext, ID3D11VertexShader* shader, ID3D11ClassInstance* classInstance, uint32_t numInstances)
+    constexpr void BindVS(ID3D11DeviceContext* pContext, ID3D11VertexShader* shader, ID3D11ClassInstance* classInstance, uint32_t numInstances) noexcept
     {
         assert(pContext);
         assert(shader);
         pContext->VSSetShader(shader, &classInstance, numInstances);
     }
     
-    constexpr void BindPS(ID3D11DeviceContext* pContext, ID3D11PixelShader* shader)
+    constexpr void BindPS(ID3D11DeviceContext* pContext, ID3D11PixelShader* shader) noexcept
     {
         assert(pContext);
         assert(shader);
         pContext->PSSetShader(shader, nullptr, 0);
     }
     
-    constexpr void BindPS(ID3D11DeviceContext* pContext, ID3D11PixelShader* shader, ID3D11ClassInstance* classInstance, uint32_t numInstances)
+    constexpr void BindPS(ID3D11DeviceContext* pContext, ID3D11PixelShader* shader, ID3D11ClassInstance* classInstance, uint32_t numInstances) noexcept
     {
         assert(pContext);
         assert(shader);
         pContext->PSSetShader(shader, &classInstance, numInstances);
     }
     
-    constexpr void BindGS(ID3D11DeviceContext* pContext, ID3D11GeometryShader* shader)
+    constexpr void BindGS(ID3D11DeviceContext* pContext, ID3D11GeometryShader* shader) noexcept
     {
         assert(pContext);
         assert(shader);
         pContext->GSSetShader(shader, nullptr, 0);
     }
     
-    constexpr void BindGS(ID3D11DeviceContext* pContext, ID3D11GeometryShader* shader, ID3D11ClassInstance* classInstance, uint32_t numInstances)
+    constexpr void BindGS(ID3D11DeviceContext* pContext, ID3D11GeometryShader* shader, ID3D11ClassInstance* classInstance, uint32_t numInstances) noexcept
     {
         assert(pContext);
         assert(shader);
         pContext->GSSetShader(shader, &classInstance, numInstances);
     }
     
-    constexpr void BindCS(ID3D11DeviceContext* pContext, ID3D11ComputeShader* shader)
+    constexpr void BindCS(ID3D11DeviceContext* pContext, ID3D11ComputeShader* shader) noexcept
     {
         assert(pContext);
         assert(shader);
         pContext->CSSetShader(shader, nullptr, 0);
     }
     
-    constexpr void BindCS(ID3D11DeviceContext* pContext, ID3D11ComputeShader* shader, ID3D11ClassInstance* classInstance, uint32_t numInstances)
+    constexpr void BindCS(ID3D11DeviceContext* pContext, ID3D11ComputeShader* shader, ID3D11ClassInstance* classInstance, uint32_t numInstances) noexcept
     {
         assert(pContext);
         assert(shader);
         pContext->CSSetShader(shader, &classInstance, numInstances);
     }
     
-    constexpr void BindHS(ID3D11DeviceContext* pContext, ID3D11HullShader* shader)
+    constexpr void BindHS(ID3D11DeviceContext* pContext, ID3D11HullShader* shader) noexcept
     {
         assert(pContext);
         assert(shader);
         pContext->HSSetShader(shader, nullptr, 0);
     }
     
-    constexpr void BindHS(ID3D11DeviceContext* pContext, ID3D11HullShader* shader, ID3D11ClassInstance* classInstance, uint32_t numInstances)
+    constexpr void BindHS(ID3D11DeviceContext* pContext, ID3D11HullShader* shader, ID3D11ClassInstance* classInstance, uint32_t numInstances) noexcept
     {
         assert(pContext);
         assert(shader);
         pContext->HSSetShader(shader, &classInstance, numInstances);
     }
     
-    constexpr void BindDS(ID3D11DeviceContext* pContext, ID3D11DomainShader* shader)
+    constexpr void BindDS(ID3D11DeviceContext* pContext, ID3D11DomainShader* shader) noexcept
     {
         assert(pContext);
         assert(shader);
         pContext->DSSetShader(shader, nullptr, 0);
     }
     
-    constexpr void BindDS(ID3D11DeviceContext* pContext, ID3D11DomainShader* shader, ID3D11ClassInstance* classInstance, uint32_t numInstances)
+    constexpr void BindDS(ID3D11DeviceContext* pContext, ID3D11DomainShader* shader, ID3D11ClassInstance* classInstance, uint32_t numInstances) noexcept
     {
         assert(pContext);
         assert(shader);
@@ -235,21 +240,21 @@ export namespace LS::Win32
     }
 
     // Input Assembly //
-    constexpr void SetTopology(ID3D11DeviceContext* pContext, D3D11_PRIMITIVE_TOPOLOGY topology)
+    constexpr void SetTopology(ID3D11DeviceContext* pContext, D3D11_PRIMITIVE_TOPOLOGY topology) noexcept
     {
         assert(pContext);
         pContext->IASetPrimitiveTopology(topology);
     }
 
     // Rasterizer State //
-    inline void SetViewport(ID3D11DeviceContext* pContext, float width, float height, float topX = 0.0f, float topY = 0.0f)
+    constexpr void SetViewport(ID3D11DeviceContext* pContext, float width, float height, float topX = 0.0f, float topY = 0.0f) noexcept
     {
         assert(pContext);
         CD3D11_VIEWPORT viewport(topX, topY, width, height);
         pContext->RSSetViewports(1, &viewport);
     }
 
-    inline void SetViewports(ID3D11DeviceContext* pContext, std::span<D3D11_VIEWPORT> viewports)
+    constexpr void SetViewports(ID3D11DeviceContext* pContext, std::span<D3D11_VIEWPORT> viewports) noexcept
     {
         assert(pContext);
         uint32_t count = 0u;
@@ -259,11 +264,40 @@ export namespace LS::Win32
         pContext->RSSetViewports(count, &viewports.front());
     }
 
-    inline void SetInputlayout(ID3D11DeviceContext* pContext, ID3D11InputLayout* layout)
+    constexpr void SetInputlayout(ID3D11DeviceContext* pContext, ID3D11InputLayout* layout) noexcept
     {
         assert(pContext);
         if (!pContext)
             return;
         pContext->IASetInputLayout(layout);
+    }
+
+    constexpr void SetVertexBuffers(ID3D11DeviceContext* pContext, std::span<ID3D11Buffer*> pBuffer, uint32_t startSlot, 
+        uint32_t stride, uint32_t offset = 0u) noexcept
+    {
+        assert(pContext);
+        if (!pContext)
+            return;
+
+        pContext->IASetVertexBuffers(startSlot, static_cast<UINT>(pBuffer.size()), pBuffer.data(), &stride, &offset);
+    }
+    
+    constexpr void SetVertexBuffers(ID3D11DeviceContext* pContext, ID3D11Buffer* pBuffer, uint32_t numBuffers, uint32_t startSlot,
+        uint32_t stride, uint32_t offset = 0u) noexcept
+    {
+        assert(pContext);
+        if (!pContext)
+            return;
+
+        pContext->IASetVertexBuffers(startSlot, numBuffers, &pBuffer, &stride, &offset);
+    }
+
+    constexpr void SetVertexBuffer(ID3D11DeviceContext* pContext, ID3D11Buffer* pBuffer, uint32_t startSlot, uint32_t stride, uint32_t offset = 0u) noexcept
+    {
+        assert(pContext);
+        if (!pContext)
+            return;
+
+        pContext->IASetVertexBuffers(startSlot, 1, &pBuffer, &stride, &offset);
     }
 }

@@ -22,9 +22,9 @@ LS::LSTimer<std::uint64_t, 1ul, 1000ul> g_timer;
 std::array<float, 4> g_color = { 0.84f, 0.48f, 0.20f, 1.0f };
 
 static std::array<float, 12> g_positions{
-    0.0f, 0.5f, 0.1f, 1.0f,
-    0.5f, 0.0f, 0.1f, 1.0f,
-    -0.5f, 0.0f, 0.1f, 1.0f
+    0.0f, 0.5f, 0.f, 1.0f,
+    0.5f, 0.0f, 0.f, 1.0f,
+    -0.5f, 0.0f, 0.f, 1.0f
 };
 
 void GpuDraw(ID3D11CommandList** commandList, ID3D11DeviceContext3* context, ID3D11RenderTargetView1* rtv)
@@ -62,15 +62,14 @@ int main()
     if (FAILED(dsResult))
         return -3;
 
-
     ComPtr<ID3D11DeviceContext> pDeferredContext;
     auto result = device.CreateDeferredContext(pDeferredContext.ReleaseAndGetAddressOf());
     if (FAILED(result))
         return EXIT_FAILURE;
-    /*
-    ComPtr<ID3D11CommandList> pCommandList;
-    pDeferredContext->ClearRenderTargetView(rtView.Get(), g_color.data());
-    pDeferredContext->FinishCommandList(false, pCommandList.ReleaseAndGetAddressOf());*/
+    
+    //ComPtr<ID3D11CommandList> pCommandList;
+    //pDeferredContext->ClearRenderTargetView(rtView.Get(), g_color.data());
+    //pDeferredContext->FinishCommandList(false, pCommandList.ReleaseAndGetAddressOf());
 
     auto vertexShader = L"VertexShader.cso";
     auto pixelShader = L"PixelShader.cso";
@@ -110,9 +109,11 @@ int main()
 
     std::vector<std::byte> vsData(sizeVS);
     vsStream.read(reinterpret_cast<char*>(vsData.data()), vsData.size());
+    vsStream.close();
 
     std::vector<std::byte> psData(sizePS);
     psStream.read(reinterpret_cast<char*>(psData.data()), psData.size());
+    psStream.close();
 
     //Shader profile 5.1 is introduced in D3D12, so we need to make sure the shaders are compiled at 5.0 profile
     ComPtr<ID3D11VertexShader> vsShader;
@@ -127,11 +128,6 @@ int main()
     {
         LS::Utils::ThrowIfFailed(psResult, "Failed to compile vertex shader!\n");
     }
-
-    //TODO: Add the interfaces to create inputlayouts and set them for our shaders.
-    //device.GetImmediateContext()->IASetInputLayout();
-    vsStream.close();
-    psStream.close();
 
     LSShaderInputSignature vsSignature;
     //vsSignature.AddElement(SHADER_DATA_TYPE::UINT, "SV_InstanceID");
@@ -172,25 +168,30 @@ int main()
     UINT stride = sizeof(float) * 4;
     UINT offset = 0;
 
-    LS::Win32::BindVS(device.GetImmediateContext().Get(), vsShader.Get());
-    LS::Win32::BindPS(device.GetImmediateContext().Get(), psShader.Get());
-    device.GetImmediateContext()->IASetInputLayout(pInputLayout.Get());
-    device.GetImmediateContext()->IASetVertexBuffers(0, 1, pBuffer.GetAddressOf(), &stride, &offset);
-    device.GetImmediateContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    Win32::BindVS(device.GetImmediateContext().Get(), vsShader.Get());
+    Win32::BindPS(device.GetImmediateContext().Get(), psShader.Get());
+    Win32::SetInputlayout(device.GetImmediateContext().Get(), pInputLayout.Get());
+    //TODO: This doesn't look any better or nicer to use, might as well just use the context object itself to set it
+    Win32::SetVertexBuffers(device.GetImmediateContext().Get(), pBuffer.Get(), 1, 0, stride);
+    //device.GetImmediateContext()->IASetVertexBuffers(0, 1, pBuffer.GetAddressOf(), &stride, &offset);
+    Win32::SetTopology(device.GetImmediateContext().Get(), D3D11_PRIMITIVE_TOPOLOGY::D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    //device.GetImmediateContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-    Win32::SetViewport(device.GetImmediateContext().Get(), window->GetWidth(), window->GetHeight());
+    Win32::SetViewport(device.GetImmediateContext().Get(), 
+        static_cast<float>(window->GetWidth()), 
+        static_cast<float>(window->GetHeight())
+    );
     ComPtr<ID3D11RenderTargetView> rtViewOg = rtView;
-    //Win32::SetRenderTarget(device.GetImmediateContext().Get(), rtView.Get(), nullptr);
 
     window->Show();
     g_timer.Start();
     while (window->IsRunning())
     {
         g_timer.Tick();
-        device.GetImmediateContext()->OMSetRenderTargets(1, rtViewOg.GetAddressOf(), nullptr);
-        LS::Win32::ClearRT(device.GetImmediateContext().Get(), rtView.Get(), g_color);
-        LS::Win32::Draw(device.GetImmediateContext().Get(), 3);
-        LS::Win32::Present1(device.GetSwapChain().Get(), 1);
+        Win32::SetRenderTarget(device.GetImmediateContext().Get(), rtViewOg.Get(), nullptr);
+        Win32::ClearRT(device.GetImmediateContext().Get(), rtView.Get(), g_color);
+        Win32::Draw(device.GetImmediateContext().Get(), 3);
+        Win32::Present1(device.GetSwapChain().Get(), 1);
         window->PollEvent();
         if (g_timer.GetTotalTimeTickedIn<std::chrono::seconds>().count() >= 5.0f)
         {

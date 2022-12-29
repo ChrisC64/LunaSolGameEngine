@@ -12,7 +12,8 @@ struct VS_INPUT
 VS_OUTPUT vs(VS_INPUT input)
 {
     VS_OUTPUT output;
-    output.Color = float4(1.0f, 0.0f, 1.0f, 1.0f);
+    //output.Color = float4(1.0f, 0.0f, 1.0f, 1.0f);
+    output.Color = float4(input.Pos.xyz, 1.0f);
     /*output.Pos = float4(0.0f, 0.0f, 0.0f, 0.0f);
     if (instanceId == 0)
     {
