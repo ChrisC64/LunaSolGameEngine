@@ -1,0 +1,72 @@
+module;
+#include "LSEFramework.h"
+
+export module D3D11.MemoryHelper;
+
+export namespace LS::Win32
+{
+    // GPU MEMORY ACCESS CALLS //
+
+    template<typename T>
+    [[nodiscard]] inline LSOptional<T*> Lock(ID3D11DeviceContext4* pContext, ID3D11Resource* pResource, uint32_t numSubResource,
+        D3D11_MAP mapType, uint32_t mapFlags)
+    {
+        assert(pContext);
+        assert(pResource);
+        if (!pContext || !pResource)
+            return std::nullopt;
+
+        D3D11_MAPPED_SUBRESOURCE mappedData;
+        HRESULT hr = pContext->Map(pResource, numSubResource, mapType, mapFlags, mappedData);
+
+        if (FAILED(hr) || mappedData.pData == nullptr)
+            return std::nullopt;
+
+        return static_cast<T*>(mappedData.pData);
+    }
+
+    template<typename T>
+    inline void Unlock(ID3D11DeviceContext4* pContext, ID3D11Resource* pResource, uint32_t numSubResource,
+        D3D11_MAP mapType, uint32_t mapFlags)
+    {
+        assert(pContext);
+        assert(pResource);
+        if (!pContext || !pResource)
+            return std::nullopt;
+
+        pContext->Unmap(pResource, numSubResource);
+    }
+
+    inline void UpdateSubresource(ID3D11DeviceContext4* pContext, ID3D11Resource* pResource, uint32_t dstSubresource,
+        const void* ptrData, uint32_t sourceRow = 0, uint32_t sourceDepth = 0, D3D11_BOX* dstBox = nullptr)
+    {
+        assert(pContext);
+        assert(pResource);
+        if (!pContext || !pResource)
+            return;
+
+        pContext->UpdateSubresource(pResource, dstSubresource, dstBox, ptrData, sourceRow, sourceDepth);
+    }
+    
+    inline void UpdateSubresource1(ID3D11DeviceContext4* pContext, ID3D11Resource* pResource, uint32_t dstSubresource,
+        const void* ptrData, uint32_t sourceRow = 0, uint32_t sourceDepth = 0, D3D11_BOX* dstBox = nullptr,
+        std::span<D3D11_COPY_FLAGS> copyFlags = {})
+    {
+        assert(pContext);
+        assert(pResource);
+        if (!pContext || !pResource)
+            return;
+        uint32_t flags = 0u;
+        if (!copyFlags.empty())
+        {
+            for (auto flag : copyFlags)
+            {
+                flags |= flag;
+            }
+        }
+
+        pContext->UpdateSubresource1(pResource, dstSubresource, dstBox, ptrData, sourceRow, sourceDepth, flags);
+    }
+
+
+}
