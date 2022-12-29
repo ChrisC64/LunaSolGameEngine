@@ -21,9 +21,6 @@
     <ClCompile Include="modules\data\LSWindowTypes.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="modules\engine\LSTimer.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="modules\data\LSMathTypes.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -48,10 +45,10 @@
     <ClCompile Include="src\platform\Windows\Win32Windows.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="modules\platform\D3D11\DeviceD3D11.ixx">
+    <ClCompile Include="modules\platform\Windows\D3D11\DeviceD3D11.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="modules\platform\D3D12\DeviceD3D12.ixx">
+    <ClCompile Include="modules\platform\Windows\D3D12\DeviceD3D12.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="modules\engine\LSScene.ixx">
@@ -60,10 +57,10 @@
     <ClCompile Include="modules\engine\LSCamera.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="modules\platform\D3D11\RenderD3D11.ixx">
+    <ClCompile Include="modules\platform\Windows\D3D11\RenderD3D11.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="modules\platform\D3D12\RenderD3D12.ixx">
+    <ClCompile Include="modules\platform\Windows\D3D12\RenderD3D12.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\platform\D3D11\DeviceD3D11.cpp">
@@ -72,13 +69,13 @@
     <ClCompile Include="modules\utils\MSUtils.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="modules\platform\D3D11\D3D11HelperStates.ixx">
+    <ClCompile Include="modules\platform\Windows\D3D11\Helpers\D3D11HelperStates.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="modules\data\LSShader.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="modules\platform\D3D11\D3D11MemoryHelper.ixx">
+    <ClCompile Include="modules\platform\Windows\D3D11\Helpers\D3D11MemoryHelper.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\LSEFramework.cpp">
@@ -90,7 +87,7 @@
     <ClCompile Include="modules\data\LSData.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="modules\platform\D3D11\D3D11Lib.ixx">
+    <ClCompile Include="modules\platform\Windows\D3D11\D3D11Lib.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="modules\engine\EngineCommon.ixx">
@@ -99,7 +96,13 @@
     <ClCompile Include="modules\platform\Windows\Win32Lib.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="modules\platform\D3D11\D3DUtils.ixx">
+    <ClCompile Include="modules\platform\Windows\D3D11\Helpers\D3DUtils.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\utils\HLSLUtils.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\data\LSBufferTypes.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -108,6 +111,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="inc\LSTimer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\LSTypeDefs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\LSBuffer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\platform\Windows\D3D11\LSConverters.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

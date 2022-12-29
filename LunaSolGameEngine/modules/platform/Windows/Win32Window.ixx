@@ -3,7 +3,7 @@ module;
 
 export module Platform.Win32Window;
 
-export import Engine.LSWindow;
+import Engine.LSWindow;
 //TODO: My idea is to see if I can restrict access to outside users. The window
 // that is created would just be based off the build type, normally this is accomplished with
 // preprocessor directives and what's included or not. Perhaps this isn't something I need to do?

@@ -1,7 +1,7 @@
 module;
 #include "LSEFramework.h"
 export module Data.LSMath.Types;
-export import Data.LSConcepts;
+import Data.LSConcepts;
 
 export namespace LS::Types
 {

@@ -27,4 +27,15 @@ export namespace LS::Utils
 		return static_cast<Enum>(t);
 	}
 
+	void OpenFile(auto, auto) = delete;//delete implicit conversions for above's OpenFile()
+	[[nodiscard]] inline LSOptional<std::fstream> OpenFile(std::filesystem::path filepath, std::ios_base::openmode modes) 
+	{
+		if (!std::filesystem::exists(filepath) || std::filesystem::is_directory(filepath))
+			return std::nullopt;
+
+		std::fstream fs(filepath, modes);
+		if (fs.is_open())
+			return fs;
+		return std::nullopt;
+	}
 }

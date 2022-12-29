@@ -9,6 +9,7 @@ export import Engine.LSWindow;
 export import Engine.LSCamera;
 
 export import Util.StdUtils;
+export import Util.HLSLUtils;
 #ifdef LS_WINDOWS_BUILD
 export import Util.MSUtils;
 #endif
