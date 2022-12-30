@@ -67,4 +67,13 @@ export namespace LS::Win32
 
         pContext->UpdateSubresource1(pResource, dstSubresource, dstBox, ptrData, sourceRow, sourceDepth, flags);
     }
+
+    [[nodiscard]]
+    constexpr HRESULT CreateBuffer(ID3D11Device* pDevice, const D3D11_BUFFER_DESC* pDesc, const D3D11_SUBRESOURCE_DATA* pInitialData, ID3D11Buffer** ppBuffer) noexcept
+    {
+        assert(pDevice);
+
+        return pDevice->CreateBuffer(pDesc, pInitialData, ppBuffer);
+    }
+
 }
