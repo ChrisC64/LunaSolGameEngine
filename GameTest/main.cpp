@@ -54,74 +54,38 @@ int main()
     ComPtr<ID3D11RasterizerState2> rsWireframe;
     rsWireframe.Attach(rsWireframeOptional.value_or(nullptr));
 
-    device.GetImmediateContextPtr()->RSSetState(rsSolid.Get());
-
     // Render Target //
     ComPtr<ID3D11Texture2D> buffer;
     device.GetSwapChain()->GetBuffer(0, IID_PPV_ARGS(&buffer));
     ComPtr< ID3D11RenderTargetView1> rtView;
     rtView.Attach(Win32::CreateRenderTargetView1(device.GetDevice().Get(), buffer.Get()));
-
+    // Depth Stencil //
     ComPtr<ID3D11DepthStencilView> dsView;
     auto dsResult = device.CreateDepthStencilViewForSwapchain(rtView.Get(), &dsView);
     if (FAILED(dsResult))
         return -3;
 
     CD3D11_DEPTH_STENCIL_DESC defaultDepthDesc(CD3D11_DEFAULT{});
-    D3D11_DEPTH_STENCIL_DESC dsDesc{};
-    // Depth Params
-    dsDesc.DepthEnable = true;
-    dsDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
-    dsDesc.DepthFunc = D3D11_COMPARISON_LESS;
-    // Stencil Test Params
-    dsDesc.StencilEnable = true;
-    dsDesc.StencilReadMask = 0xFF;
-    dsDesc.StencilWriteMask = 0xFF;
-
-    // Stencil Operations if Pixel is Front-facing
-    dsDesc.FrontFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
-    dsDesc.FrontFace.StencilDepthFailOp = D3D11_STENCIL_OP_INCR;
-    dsDesc.FrontFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
-    dsDesc.FrontFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
-
-    // Stencil Operation if pixel is Back-facing
-    dsDesc.BackFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
-    dsDesc.BackFace.StencilDepthFailOp = D3D11_STENCIL_OP_DECR;
-    dsDesc.BackFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
-    dsDesc.BackFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
-
-    auto defaultState = Win32::CreateDepthStencilState(device.GetDevice().Get(), dsDesc).value();
-
-    device.GetImmediateContextPtr()->OMSetDepthStencilState(defaultState, 1);
-    ComPtr<ID3D11DeviceContext> pDeferredContext;
-    auto result = device.CreateDeferredContext(pDeferredContext.ReleaseAndGetAddressOf());
-    if (FAILED(result))
-        return EXIT_FAILURE;
-
+    auto defaultState = Win32::CreateDepthStencilState(device.GetDevice().Get(), defaultDepthDesc).value();
+    HRESULT result;
+    // Blend State
     ComPtr<ID3D11BlendState> blendState;
     CD3D11_BLEND_DESC blendDesc(CD3D11_DEFAULT{});
 
-    //D3D11_RENDER_TARGET_BLEND_DESC rtb{};
-    //rtb.BlendEnable = true;
-    //rtb.SrcBlend = D3D11_BLEND_SRC_COLOR;
-    //rtb.DestBlend = D3D11_BLEND_DEST_COLOR;
-    //rtb.BlendOp = D3D11_BLEND_OP_ADD;
-    //rtb.SrcBlendAlpha = D3D11_BLEND_SRC_ALPHA;
-    //rtb.DestBlendAlpha = D3D11_BLEND_DEST_ALPHA;
-    //rtb.BlendOpAlpha = D3D11_BLEND_OP_ADD;
-    //rtb.RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-    //D3D11_BLEND_DESC bdDesc{ .AlphaToCoverageEnable = false, .IndependentBlendEnable = false, 
-    //    .RenderTarget = {rtb, rtb, rtb, rtb, rtb, rtb, rtb, rtb } };
     result = device.CreateBlendState(blendDesc, &blendState);
     if (FAILED(result))
         return -4;
-    FLOAT color[4]{ 0.0f, 0.0f, 0.0f, 0.0f };
-    device.GetImmediateContextPtr()->OMSetBlendState(blendState.Get(), color, 0xffffffff);
+
+    /*ComPtr<ID3D11DeviceContext> pDeferredContext;
+    result = device.CreateDeferredContext(pDeferredContext.ReleaseAndGetAddressOf());
+    if (FAILED(result))
+        return EXIT_FAILURE;*/
 
     //ComPtr<ID3D11CommandList> pCommandList;
     //pDeferredContext->ClearRenderTargetView(rtView.Get(), g_color.data());
     //pDeferredContext->FinishCommandList(false, pCommandList.ReleaseAndGetAddressOf());
-
+    
+    // BEGIN SHADER FILE OPERATIONS //
     auto vertexShader = L"VertexShader.cso";
     auto pixelShader = L"PixelShader.cso";
 
@@ -165,8 +129,9 @@ int main()
     std::vector<std::byte> psData(sizePS);
     psStream.read(reinterpret_cast<char*>(psData.data()), psData.size());
     psStream.close();
+    // END SHADER FILE OPERATIONS //
 
-    //Shader profile 5.1 is introduced in D3D12, so we need to make sure the shaders are compiled at 5.0 profile
+    // Compile Shader Objects //
     ComPtr<ID3D11VertexShader> vsShader;
     ComPtr<ID3D11PixelShader> psShader;
     auto vsResult = LS::Win32::CompileVertexShaderFromByteCode(device.GetDevice().Get(), vsData, &vsShader);
@@ -220,57 +185,59 @@ int main()
     UINT stride = sizeof(float) * 4;
     UINT offset = 0;
 
-    Win32::BindVS(device.GetImmediateContext().Get(), vsShader.Get());
-    Win32::BindPS(device.GetImmediateContext().Get(), psShader.Get());
-    Win32::SetInputlayout(device.GetImmediateContext().Get(), pInputLayout.Get());
-    //TODO: This doesn't look any better or nicer to use, might as well just use the context object itself to set it
-    Win32::SetVertexBuffers(device.GetImmediateContext().Get(), vertexBuffer.Get(), 1, 0, stride);
-    //device.GetImmediateContext()->IASetVertexBuffers(0, 1, vertexBuffer.GetAddressOf(), &stride, &offset);
-    Win32::SetTopology(device.GetImmediateContext().Get(), D3D11_PRIMITIVE_TOPOLOGY::D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-    //device.GetImmediateContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-    Win32::SetViewport(device.GetImmediateContext().Get(),
-        static_cast<float>(window->GetWidth()),
-        static_cast<float>(window->GetHeight())
-    );
     ComPtr<ID3D11RenderTargetView> rtViewOg = rtView;
 
     // Camera // 
     xmvec posVec = DirectX::XMVectorSet(0.0f, 0.0f, -15.0f, 1.0f);
-    xmvec lookAtVec = DirectX::XMVectorSet(0.0f, 0.0f, 1.0f, 1.0f);
+    xmvec lookAtVec = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
     xmvec upVec = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 1.0f);
 
     LSCamera camera(window->GetWidth(), window->GetHeight(), posVec, lookAtVec, upVec, 100.0f);
-
-    CD3D11_BUFFER_DESC viewBD(sizeof(float) * 16, D3D11_BIND_CONSTANT_BUFFER);
-    CD3D11_BUFFER_DESC projBD(sizeof(float) * 16, D3D11_BIND_CONSTANT_BUFFER);
-    CD3D11_BUFFER_DESC modelBD(sizeof(float) * 16, D3D11_BIND_CONSTANT_BUFFER);
+    // Informs how the GPU about the buffer types - we have two Matrix and Index Buffers here, the Vertex was created earlier above //
+    CD3D11_BUFFER_DESC matBD(sizeof(float) * 16, D3D11_BIND_CONSTANT_BUFFER);
     CD3D11_BUFFER_DESC indexBD(g_indices.size() * sizeof(g_indices.front()), D3D11_BIND_INDEX_BUFFER);
-
+    // Ready the GPU Data //
     D3D11_SUBRESOURCE_DATA viewSRD, projSRD, modelSRD, indexSRD;
     viewSRD.pSysMem = &camera.m_view;
     projSRD.pSysMem = &camera.m_projection;
     indexSRD.pSysMem = g_indices.data();
-
+    // Our Model's Translastion/Scale/Rotation Setup //
     xmmat modelScaleMat = DirectX::XMMatrixScaling(1.0f, 1.0f, 1.0f);
     xmmat modelRotMat = DirectX::XMMatrixRotationRollPitchYaw(0.0f, 0.0f, 0.0f);
     xmmat modelTransMat = DirectX::XMMatrixTranslation(0.0f, 0.0f, 5.0f);
-
     xmmat modelTransform = DirectX::XMMatrixIdentity();
-    modelTransform = DirectX::XMMatrixMultiply(modelTransMat, DirectX::XMMatrixMultiply(modelScaleMat, modelRotMat));
 
+    modelTransform = DirectX::XMMatrixMultiply(modelTransMat, DirectX::XMMatrixMultiply(modelScaleMat, modelRotMat));
     modelSRD.pSysMem = &modelTransform;
 
+    // Initialize Buffers //
     ComPtr<ID3D11Buffer> viewBuffer, projBuffer, modelBuffer, indexBuffer;
-    device.CreateBuffer(&viewBD, &viewSRD, &viewBuffer);
-    device.CreateBuffer(&projBD, &projSRD, &projBuffer);
-    device.CreateBuffer(&modelBD, &modelSRD, &modelBuffer);
+    device.CreateBuffer(&matBD, &viewSRD, &viewBuffer);
+    device.CreateBuffer(&matBD, &projSRD, &projBuffer);
+    device.CreateBuffer(&matBD, &modelSRD, &modelBuffer);
     device.CreateBuffer(&indexBD, &indexSRD, &indexBuffer);
+
+    // Setup states and buffers that only require one call here //
+    Win32::BindVS(device.GetImmediateContext().Get(), vsShader.Get());
+    Win32::BindPS(device.GetImmediateContext().Get(), psShader.Get());
+    Win32::SetInputlayout(device.GetImmediateContext().Get(), pInputLayout.Get());
 
     std::array<ID3D11Buffer*, 3> buffers{ viewBuffer.Get(), projBuffer.Get(), modelBuffer.Get() };
     device.GetImmediateContextPtr()->VSSetConstantBuffers(0, buffers.size(), buffers.data());
+    Win32::SetVertexBuffers(device.GetImmediateContext().Get(), vertexBuffer.Get(), 1, 0, stride);
     device.GetImmediateContextPtr()->IASetIndexBuffer(indexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
+    device.GetImmediateContextPtr()->RSSetState(rsSolid.Get());
+    
+    FLOAT color[4]{ 0.0f, 0.0f, 0.0f, 0.0f };
+    device.GetImmediateContextPtr()->OMSetBlendState(blendState.Get(), color, 0xffffffff);
+    device.GetImmediateContextPtr()->OMSetDepthStencilState(defaultState, 1);
+    Win32::SetTopology(device.GetImmediateContext().Get(), D3D11_PRIMITIVE_TOPOLOGY::D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    Win32::SetViewport(device.GetImmediateContext().Get(),
+        static_cast<float>(window->GetWidth()),
+        static_cast<float>(window->GetHeight())
+    );
 
+    // Show Window and Start Timer - duh... //
     window->Show();
     g_timer.Start();
     while (window->IsRunning())
@@ -278,6 +245,7 @@ int main()
         g_timer.Tick();
         Win32::SetRenderTarget(device.GetImmediateContext().Get(), rtViewOg.Get(), dsView.Get());
         Win32::ClearRT(device.GetImmediateContext().Get(), rtView.Get(), g_color);
+        Win32::ClearDS(device.GetImmediateContext().Get(), dsView.Get());
         Win32::DrawIndexed(device.GetImmediateContext().Get(), g_indices.size(), 0, 0);
         Win32::Present1(device.GetSwapChain().Get(), 1);
         window->PollEvent();
