@@ -11,6 +11,7 @@ using namespace LS;
 using namespace Microsoft::WRL;
 using namespace std::chrono;
 using namespace std::chrono_literals;
+using namespace DirectX;
 
 #ifdef DEBUG
 static const std::string shader_path = R"(build\x64\Debug\)";
@@ -21,11 +22,14 @@ static const std::string shader_path = R"(build\x64\Release\)";
 LS::LSTimer<std::uint64_t, 1ul, 1000ul> g_timer;
 std::array<float, 4> g_color = { 0.84f, 0.48f, 0.20f, 1.0f };
 
-static std::array<float, 12> g_positions{
-    0.0f, 0.5f, 0.f, 1.0f,
-    0.5f, 0.0f, 0.f, 1.0f,
-    -0.5f, 0.0f, 0.f, 1.0f
+static std::array<float, 12> g_positions 
+{
+    0.0f, 1.0f, 0.20f, 1.0f,
+    1.0f, 0.0f, 0.20f, 1.0f,
+    -1.0f, 0.0f, 0.20f, 1.0f
 };
+
+static std::array<uint32_t, 3> g_indices{ 0, 2, 1 };
 
 void GpuDraw(ID3D11CommandList** commandList, ID3D11DeviceContext3* context, ID3D11RenderTargetView1* rtv)
 {
@@ -56,21 +60,33 @@ int main()
     device.GetSwapChain()->GetBuffer(0, IID_PPV_ARGS(&buffer));
     ComPtr< ID3D11RenderTargetView1> rtView;
     rtView.Attach(Win32::CreateRenderTargetView1(device.GetDevice().Get(), buffer.Get()));
-
+    // Depth Stencil //
     ComPtr<ID3D11DepthStencilView> dsView;
     auto dsResult = device.CreateDepthStencilViewForSwapchain(rtView.Get(), &dsView);
     if (FAILED(dsResult))
         return -3;
 
-    ComPtr<ID3D11DeviceContext> pDeferredContext;
-    auto result = device.CreateDeferredContext(pDeferredContext.ReleaseAndGetAddressOf());
+    CD3D11_DEPTH_STENCIL_DESC defaultDepthDesc(CD3D11_DEFAULT{});
+    auto defaultState = Win32::CreateDepthStencilState(device.GetDevice().Get(), defaultDepthDesc).value();
+    HRESULT result;
+    // Blend State
+    ComPtr<ID3D11BlendState> blendState;
+    CD3D11_BLEND_DESC blendDesc(CD3D11_DEFAULT{});
+
+    result = device.CreateBlendState(blendDesc, &blendState);
     if (FAILED(result))
-        return EXIT_FAILURE;
-    
+        return -4;
+
+    /*ComPtr<ID3D11DeviceContext> pDeferredContext;
+    result = device.CreateDeferredContext(pDeferredContext.ReleaseAndGetAddressOf());
+    if (FAILED(result))
+        return EXIT_FAILURE;*/
+
     //ComPtr<ID3D11CommandList> pCommandList;
     //pDeferredContext->ClearRenderTargetView(rtView.Get(), g_color.data());
     //pDeferredContext->FinishCommandList(false, pCommandList.ReleaseAndGetAddressOf());
-
+    
+    // BEGIN SHADER FILE OPERATIONS //
     auto vertexShader = L"VertexShader.cso";
     auto pixelShader = L"PixelShader.cso";
 
@@ -91,33 +107,35 @@ int main()
     {
         std::cout << "Shaders exists!\n";
     }
+    
+    auto readFile = [](std::fstream& stream, std::filesystem::path filePath) -> std::vector<std::byte>
+    {
+        if (!stream.is_open() && !stream.good())
+        {
+            throw std::runtime_error("Failed to open file for read\n");
+        }
+
+        auto fileSize = std::filesystem::file_size(filePath);
+
+        std::vector<std::byte> shaderData(fileSize);
+
+        stream.read(reinterpret_cast<char*>(shaderData.data()), fileSize);
+        stream.close();
+
+        return shaderData;
+    };
 
     std::fstream vsStream{ vsPath, vsStream.in | vsStream.binary };
-    if (!vsStream.is_open() && !vsStream.good())
-    {
-        throw std::runtime_error("Failed to open vsStream\n");
-    }
+    auto vsData = readFile(vsStream, vsPath);
 
     std::fstream psStream(psPath, std::fstream::in | std::fstream::binary);
-    if (!psStream.is_open() && !psStream.good())
-    {
-        throw std::runtime_error("Failed to open psStream\n");
-    }
+    auto psData = readFile(psStream, psPath);
+    // END SHADER FILE OPERATIONS //
 
-    auto sizeVS = std::filesystem::file_size(vsPath);
-    auto sizePS = std::filesystem::file_size(psPath);
-
-    std::vector<std::byte> vsData(sizeVS);
-    vsStream.read(reinterpret_cast<char*>(vsData.data()), vsData.size());
-    vsStream.close();
-
-    std::vector<std::byte> psData(sizePS);
-    psStream.read(reinterpret_cast<char*>(psData.data()), psData.size());
-    psStream.close();
-
-    //Shader profile 5.1 is introduced in D3D12, so we need to make sure the shaders are compiled at 5.0 profile
+    // Compile Shader Objects //
     ComPtr<ID3D11VertexShader> vsShader;
     ComPtr<ID3D11PixelShader> psShader;
+
     auto vsResult = LS::Win32::CompileVertexShaderFromByteCode(device.GetDevice().Get(), vsData, &vsShader);
     if (FAILED(vsResult))
     {
@@ -132,6 +150,7 @@ int main()
     LSShaderInputSignature vsSignature;
     //vsSignature.AddElement(SHADER_DATA_TYPE::UINT, "SV_InstanceID");
     vsSignature.AddElement(SHADER_DATA_TYPE::FLOAT4, "POSITION0");
+    //vsSignature.AddElement(SHADER_DATA_TYPE::FLOAT2, "TEXCOORD0");
     auto layout = vsSignature.GetInputLayout();
     auto inputs = Utils::BuildFromShaderElements(layout);
     if (!inputs)
@@ -147,7 +166,7 @@ int main()
     }
     //TODO: Implement missing setups below that don't have an appropriate function call
 
-    ComPtr<ID3D11Buffer> pBuffer;
+    ComPtr<ID3D11Buffer> vertexBuffer;
     D3D11_BUFFER_DESC bufferDesc{};
     bufferDesc.ByteWidth = sizeof(g_positions);
     bufferDesc.StructureByteStride = 0;
@@ -159,7 +178,7 @@ int main()
     subData.pSysMem = g_positions.data();
     subData.SysMemPitch = 0;
     subData.SysMemSlicePitch = 0;
-    result = device.CreateBuffer(&bufferDesc, &subData, &pBuffer);
+    result = device.CreateBuffer(&bufferDesc, &subData, &vertexBuffer);
     if (FAILED(result))
     {
         return -2;
@@ -168,34 +187,72 @@ int main()
     UINT stride = sizeof(float) * 4;
     UINT offset = 0;
 
+    ComPtr<ID3D11RenderTargetView> rtViewOg = rtView;
+
+    // Camera // 
+    xmvec posVec = XMVectorSet(0.0f, 0.0f, -5.0f, 1.0f);
+    xmvec lookAtVec = XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
+    xmvec upVec = XMVectorSet(0.0f, 1.0f, 0.0f, 1.0f);
+
+    LSCamera camera(window->GetWidth(), window->GetHeight(), posVec, lookAtVec, upVec, 100.0f);
+    // Informs how the GPU about the buffer types - we have two Matrix and Index Buffers here, the Vertex was created earlier above //
+    CD3D11_BUFFER_DESC matBD(sizeof(float) * 16, D3D11_BIND_CONSTANT_BUFFER);
+    CD3D11_BUFFER_DESC indexBD(g_indices.size() * sizeof(g_indices.front()), D3D11_BIND_INDEX_BUFFER);
+    // Ready the GPU Data //
+    D3D11_SUBRESOURCE_DATA viewSRD, projSRD, modelSRD, indexSRD;
+    viewSRD.pSysMem = &camera.m_view;
+    projSRD.pSysMem = &camera.m_projection;
+    indexSRD.pSysMem = g_indices.data();
+    // Our Model's Translastion/Scale/Rotation Setup //
+    xmmat modelScaleMat = XMMatrixScaling(1.0f, 1.0f, 1.0f);
+    xmmat modelRotMat = XMMatrixRotationRollPitchYaw(0.0f, 0.0f, 0.0f);
+    xmmat modelTransMat = XMMatrixTranslation(0.0f, 0.0f, 0.0f);
+    xmmat modelTransform = XMMatrixIdentity();
+
+    modelTransform = XMMatrixMultiply(modelTransMat, XMMatrixMultiply(modelScaleMat, modelRotMat));
+    modelSRD.pSysMem = &modelTransform;
+
+    // Initialize Buffers //
+    ComPtr<ID3D11Buffer> viewBuffer, projBuffer, modelBuffer, indexBuffer;
+    device.CreateBuffer(&matBD, &viewSRD, &viewBuffer);
+    device.CreateBuffer(&matBD, &projSRD, &projBuffer);
+    device.CreateBuffer(&matBD, &modelSRD, &modelBuffer);
+    device.CreateBuffer(&indexBD, &indexSRD, &indexBuffer);
+
+    // Setup states and buffers that only require one call here //
     Win32::BindVS(device.GetImmediateContext().Get(), vsShader.Get());
     Win32::BindPS(device.GetImmediateContext().Get(), psShader.Get());
     Win32::SetInputlayout(device.GetImmediateContext().Get(), pInputLayout.Get());
-    //TODO: This doesn't look any better or nicer to use, might as well just use the context object itself to set it
-    Win32::SetVertexBuffers(device.GetImmediateContext().Get(), pBuffer.Get(), 1, 0, stride);
-    //device.GetImmediateContext()->IASetVertexBuffers(0, 1, pBuffer.GetAddressOf(), &stride, &offset);
-    Win32::SetTopology(device.GetImmediateContext().Get(), D3D11_PRIMITIVE_TOPOLOGY::D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-    //device.GetImmediateContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-    Win32::SetViewport(device.GetImmediateContext().Get(), 
-        static_cast<float>(window->GetWidth()), 
+    std::array<ID3D11Buffer*, 3> buffers{ viewBuffer.Get(), projBuffer.Get(), modelBuffer.Get() };
+    device.GetImmediateContextPtr()->VSSetConstantBuffers(0, buffers.size(), buffers.data());
+    Win32::SetVertexBuffers(device.GetImmediateContext().Get(), vertexBuffer.Get(), 1, 0, stride);
+    device.GetImmediateContextPtr()->IASetIndexBuffer(indexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
+    device.GetImmediateContextPtr()->RSSetState(rsSolid.Get());
+    
+    FLOAT color[4]{ 0.0f, 0.0f, 0.0f, 0.0f };
+    device.GetImmediateContextPtr()->OMSetBlendState(blendState.Get(), color, 0xffffffff);
+    device.GetImmediateContextPtr()->OMSetDepthStencilState(defaultState, 1);
+    Win32::SetTopology(device.GetImmediateContext().Get(), D3D11_PRIMITIVE_TOPOLOGY::D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    Win32::SetViewport(device.GetImmediateContext().Get(),
+        static_cast<float>(window->GetWidth()),
         static_cast<float>(window->GetHeight())
     );
-    ComPtr<ID3D11RenderTargetView> rtViewOg = rtView;
 
+    // Show Window and Start Timer - duh... //
     window->Show();
     g_timer.Start();
     while (window->IsRunning())
     {
         g_timer.Tick();
-        Win32::SetRenderTarget(device.GetImmediateContext().Get(), rtViewOg.Get(), nullptr);
+        Win32::SetRenderTarget(device.GetImmediateContext().Get(), rtViewOg.Get(), dsView.Get());
         Win32::ClearRT(device.GetImmediateContext().Get(), rtView.Get(), g_color);
-        Win32::Draw(device.GetImmediateContext().Get(), 3);
+        Win32::ClearDS(device.GetImmediateContext().Get(), dsView.Get());
+        Win32::DrawIndexed(device.GetImmediateContext().Get(), g_indices.size(), 0, 0);
         Win32::Present1(device.GetSwapChain().Get(), 1);
         window->PollEvent();
         if (g_timer.GetTotalTimeTickedIn<std::chrono::seconds>().count() >= 5.0f)
         {
-            std::cout << "Time passed: " << g_timer.GetTotalTimeTickedIn<std::chrono::seconds>().count() << "\n";
             g_color[0] = 0.0f;
             g_color[1] = 1.0f;
             g_color[2] = 1.0f;

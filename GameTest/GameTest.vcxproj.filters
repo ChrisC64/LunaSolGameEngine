@@ -22,5 +22,6 @@
   <ItemGroup>
     <FxCompile Include="shaders\VertexShader.hlsl" />
     <FxCompile Include="shaders\PixelShader.hlsl" />
+    <FxCompile Include="shaders\TextureShader.hlsl" />
   </ItemGroup>
 </Project>

@@ -15,8 +15,13 @@ export namespace LS::Win32
 
     // Generator Methods //
     // Rasterizer States //
+
+    // I am liking the looks of the auto [Function Signature] -> Return type setup here,
+    // it allows a more coherent design of functions where I can have things lined up more neatly, and see (at a glance)
+    // function names and parameters quickly without worrying about the return type until the end (which is almost never uniform)
+    // basically because it looks neater and nicer lined up to me.
     [[nodiscard]]
-    LSOptional<ID3D11RasterizerState2*> CreateRasterizerState2(ID3D11Device3* pDevice, const LS::LSDrawState& drawState) 
+    auto CreateRasterizerState2(ID3D11Device3* pDevice, const LS::LSDrawState& drawState) -> LSOptional<ID3D11RasterizerState2*>
     {
         assert(pDevice);
         if (!pDevice)
@@ -54,7 +59,7 @@ export namespace LS::Win32
     }
 
     [[nodiscard]]
-    LSOptional<ID3D11RasterizerState*> CreateCullNoneState(ID3D11Device* pDevice) noexcept
+    auto CreateCullNoneState(ID3D11Device* pDevice) noexcept -> LSOptional<ID3D11RasterizerState*>
     {
         DirectX::CommonStates common(pDevice);
 
@@ -62,7 +67,7 @@ export namespace LS::Win32
     }
     
     [[nodiscard]]
-    LSOptional<ID3D11RasterizerState*> CreateCullClockwiseState(ID3D11Device* pDevice) noexcept
+    auto CreateCullClockwiseState(ID3D11Device* pDevice) noexcept -> LSOptional<ID3D11RasterizerState*>
     {
         DirectX::CommonStates common(pDevice);
 
@@ -70,7 +75,7 @@ export namespace LS::Win32
     }
     
     [[nodiscard]]
-    LSOptional<ID3D11RasterizerState*> CreateCullCounterClockwiseState(ID3D11Device* pDevice) noexcept
+    auto CreateCullCounterClockwiseState(ID3D11Device* pDevice) noexcept -> LSOptional<ID3D11RasterizerState*>
     {
         DirectX::CommonStates common(pDevice);
 
@@ -78,7 +83,7 @@ export namespace LS::Win32
     }
     
     [[nodiscard]]
-    LSOptional<ID3D11RasterizerState*> CreateWireframeState(ID3D11Device* pDevice) noexcept
+    auto CreateWireframeState(ID3D11Device* pDevice) noexcept -> LSOptional<ID3D11RasterizerState*>
     {
         DirectX::CommonStates common(pDevice);
 
@@ -87,7 +92,7 @@ export namespace LS::Win32
 
     // Depth Stencil States //
     [[nodiscard]]
-    LSOptional<ID3D11DepthStencilState*> CreateDepthStencilState(ID3D11Device5* pDevice, const D3D11_DEPTH_STENCIL_DESC depthDesc)
+    auto CreateDepthStencilState(ID3D11Device5* pDevice, const D3D11_DEPTH_STENCIL_DESC depthDesc) -> LSOptional<ID3D11DepthStencilState*>
     {
         assert(pDevice);
         if (!pDevice)
@@ -102,7 +107,7 @@ export namespace LS::Win32
     }
 
     [[nodiscard]]
-    LSOptional<ID3D11DepthStencilState*> CreateDefaultDepthState(ID3D11Device* pDevice) noexcept
+    auto CreateDefaultDepthState(ID3D11Device* pDevice) noexcept -> LSOptional<ID3D11DepthStencilState*>
     {
         assert(pDevice);
         if (!pDevice)
@@ -113,7 +118,7 @@ export namespace LS::Win32
     }
 
     [[nodiscard]]
-    LSOptional<ID3D11DepthStencilState*> CreateNoDepthState(ID3D11Device* pDevice) noexcept
+    auto CreateNoDepthState(ID3D11Device* pDevice) noexcept -> LSOptional<ID3D11DepthStencilState*>
     {
         assert(pDevice);
         if (!pDevice)
@@ -124,7 +129,7 @@ export namespace LS::Win32
     }
     
     [[nodiscard]]
-    LSOptional<ID3D11DepthStencilState*> CreateDepthReadState(ID3D11Device* pDevice) noexcept
+    auto CreateDepthReadState(ID3D11Device* pDevice) noexcept -> LSOptional<ID3D11DepthStencilState*>
     {
         assert(pDevice);
         if (!pDevice)
@@ -135,7 +140,7 @@ export namespace LS::Win32
     }
     
     [[nodiscard]]
-    LSOptional<ID3D11DepthStencilState*> CreateDepthReverseZState(ID3D11Device* pDevice) noexcept
+    auto CreateDepthReverseZState(ID3D11Device* pDevice) noexcept -> LSOptional<ID3D11DepthStencilState*>
     {
         assert(pDevice);
         if (!pDevice)
@@ -146,7 +151,7 @@ export namespace LS::Win32
     }
     
     [[nodiscard]]
-    LSOptional<ID3D11DepthStencilState*> CreateDepthReadReverseZState(ID3D11Device* pDevice) noexcept
+    auto CreateDepthReadReverseZState(ID3D11Device* pDevice) noexcept -> LSOptional<ID3D11DepthStencilState*>
     {
         assert(pDevice);
         if (!pDevice)
@@ -158,7 +163,7 @@ export namespace LS::Win32
     
     // Blend State //
     [[nodiscard]]
-    LSOptional<ID3D11BlendState1*> CreateBlendState1(ID3D11Device5* pDevice, const D3D11_BLEND_DESC1& blendDesc)
+    auto CreateBlendState1(ID3D11Device5* pDevice, const D3D11_BLEND_DESC1& blendDesc) -> LSOptional<ID3D11BlendState1*>
     {
         assert(pDevice);
         if (!pDevice)
@@ -173,7 +178,7 @@ export namespace LS::Win32
     }
 
     [[nodiscard]]
-    LSOptional<ID3D11BlendState*> CreateAlphaBlendState(ID3D11Device* pDevice) noexcept
+    auto CreateAlphaBlendState(ID3D11Device* pDevice) noexcept -> LSOptional<ID3D11BlendState*>
     {
         assert(pDevice);
         if (!pDevice)
@@ -184,7 +189,7 @@ export namespace LS::Win32
     }
     
     [[nodiscard]]
-    LSOptional<ID3D11BlendState*> CreateOpaqueState(ID3D11Device* pDevice) noexcept
+    auto CreateOpaqueState(ID3D11Device* pDevice) noexcept -> LSOptional<ID3D11BlendState*>
     {
         assert(pDevice);
         if (!pDevice)
@@ -195,7 +200,7 @@ export namespace LS::Win32
     }
     
     [[nodiscard]]
-    LSOptional<ID3D11BlendState*> CreateAdditiveState(ID3D11Device* pDevice) noexcept
+    auto CreateAdditiveState(ID3D11Device* pDevice) noexcept -> LSOptional<ID3D11BlendState*>
     {
         assert(pDevice);
         if (!pDevice)
@@ -206,7 +211,7 @@ export namespace LS::Win32
     }
     
     [[nodiscard]]
-    LSOptional<ID3D11BlendState*> CreateNonPremultipliedState(ID3D11Device* pDevice) noexcept
+    auto CreateNonPremultipliedState(ID3D11Device* pDevice) noexcept -> LSOptional<ID3D11BlendState*>
     {
         assert(pDevice);
         if (!pDevice)
@@ -218,7 +223,7 @@ export namespace LS::Win32
 
     // Sampler State //
     [[nodiscard]]
-    LSOptional<ID3D11SamplerState*> CreateSamplerState(ID3D11Device5* pDevice, const D3D11_SAMPLER_DESC& samplerDesc)
+    auto CreateSamplerState(ID3D11Device5* pDevice, const D3D11_SAMPLER_DESC& samplerDesc) -> LSOptional<ID3D11SamplerState*>
     {
         assert(pDevice);
         if (!pDevice)
@@ -233,7 +238,7 @@ export namespace LS::Win32
     }
 
     [[nodiscard]]
-    LSOptional<ID3D11SamplerState*> CreatePointWrapSampler(ID3D11Device* pDevice) noexcept
+    auto CreatePointWrapSampler(ID3D11Device* pDevice) noexcept -> LSOptional<ID3D11SamplerState*>
     {
         assert(pDevice);
         if (!pDevice)
@@ -244,7 +249,7 @@ export namespace LS::Win32
     }
 
     [[nodiscard]]
-    LSOptional<ID3D11SamplerState*> CreatePointClampSampler(ID3D11Device* pDevice) noexcept
+    auto CreatePointClampSampler(ID3D11Device* pDevice) noexcept -> LSOptional<ID3D11SamplerState*>
     {
         assert(pDevice);
         if (!pDevice)
@@ -255,7 +260,7 @@ export namespace LS::Win32
     }
     
     [[nodiscard]]
-    LSOptional<ID3D11SamplerState*> CreateLinearWrapSampler(ID3D11Device* pDevice) noexcept
+    auto CreateLinearWrapSampler(ID3D11Device* pDevice) noexcept -> LSOptional<ID3D11SamplerState*>
     {
         assert(pDevice);
         if (!pDevice)
@@ -266,7 +271,7 @@ export namespace LS::Win32
     }
     
     [[nodiscard]]
-    LSOptional<ID3D11SamplerState*> CreateLinearClampSampler(ID3D11Device* pDevice) noexcept
+    auto CreateLinearClampSampler(ID3D11Device* pDevice) noexcept -> LSOptional<ID3D11SamplerState*>
     {
         assert(pDevice);
         if (!pDevice)
@@ -277,7 +282,7 @@ export namespace LS::Win32
     }
     
     [[nodiscard]]
-    LSOptional<ID3D11SamplerState*> CreateAnisotropicWrapSampler(ID3D11Device* pDevice) noexcept
+    auto CreateAnisotropicWrapSampler(ID3D11Device* pDevice) noexcept -> LSOptional<ID3D11SamplerState*>
     {
         assert(pDevice);
         if (!pDevice)
@@ -288,7 +293,7 @@ export namespace LS::Win32
     }
     
     [[nodiscard]]
-    LSOptional<ID3D11SamplerState*> CreateAnisotropicClampSampler(ID3D11Device* pDevice) noexcept
+    auto CreateAnisotropicClampSampler(ID3D11Device* pDevice) noexcept -> LSOptional<ID3D11SamplerState*>
     {
         assert(pDevice);
         if (!pDevice)
