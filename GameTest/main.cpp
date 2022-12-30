@@ -11,6 +11,7 @@ using namespace LS;
 using namespace Microsoft::WRL;
 using namespace std::chrono;
 using namespace std::chrono_literals;
+using namespace DirectX;
 
 #ifdef DEBUG
 static const std::string shader_path = R"(build\x64\Debug\)";
@@ -106,34 +107,35 @@ int main()
     {
         std::cout << "Shaders exists!\n";
     }
+    
+    auto readFile = [](std::fstream& stream, std::filesystem::path filePath) -> std::vector<std::byte>
+    {
+        if (!stream.is_open() && !stream.good())
+        {
+            throw std::runtime_error("Failed to open file for read\n");
+        }
+
+        auto fileSize = std::filesystem::file_size(filePath);
+
+        std::vector<std::byte> shaderData(fileSize);
+
+        stream.read(reinterpret_cast<char*>(shaderData.data()), fileSize);
+        stream.close();
+
+        return shaderData;
+    };
 
     std::fstream vsStream{ vsPath, vsStream.in | vsStream.binary };
-    if (!vsStream.is_open() && !vsStream.good())
-    {
-        throw std::runtime_error("Failed to open vsStream\n");
-    }
+    auto vsData = readFile(vsStream, vsPath);
 
     std::fstream psStream(psPath, std::fstream::in | std::fstream::binary);
-    if (!psStream.is_open() && !psStream.good())
-    {
-        throw std::runtime_error("Failed to open psStream\n");
-    }
-
-    auto sizeVS = std::filesystem::file_size(vsPath);
-    auto sizePS = std::filesystem::file_size(psPath);
-
-    std::vector<std::byte> vsData(sizeVS);
-    vsStream.read(reinterpret_cast<char*>(vsData.data()), vsData.size());
-    vsStream.close();
-
-    std::vector<std::byte> psData(sizePS);
-    psStream.read(reinterpret_cast<char*>(psData.data()), psData.size());
-    psStream.close();
+    auto psData = readFile(psStream, psPath);
     // END SHADER FILE OPERATIONS //
 
     // Compile Shader Objects //
     ComPtr<ID3D11VertexShader> vsShader;
     ComPtr<ID3D11PixelShader> psShader;
+
     auto vsResult = LS::Win32::CompileVertexShaderFromByteCode(device.GetDevice().Get(), vsData, &vsShader);
     if (FAILED(vsResult))
     {
@@ -188,9 +190,9 @@ int main()
     ComPtr<ID3D11RenderTargetView> rtViewOg = rtView;
 
     // Camera // 
-    xmvec posVec = DirectX::XMVectorSet(0.0f, 0.0f, -15.0f, 1.0f);
-    xmvec lookAtVec = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
-    xmvec upVec = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 1.0f);
+    xmvec posVec = XMVectorSet(0.0f, 0.0f, -5.0f, 1.0f);
+    xmvec lookAtVec = XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
+    xmvec upVec = XMVectorSet(0.0f, 1.0f, 0.0f, 1.0f);
 
     LSCamera camera(window->GetWidth(), window->GetHeight(), posVec, lookAtVec, upVec, 100.0f);
     // Informs how the GPU about the buffer types - we have two Matrix and Index Buffers here, the Vertex was created earlier above //
@@ -202,12 +204,12 @@ int main()
     projSRD.pSysMem = &camera.m_projection;
     indexSRD.pSysMem = g_indices.data();
     // Our Model's Translastion/Scale/Rotation Setup //
-    xmmat modelScaleMat = DirectX::XMMatrixScaling(1.0f, 1.0f, 1.0f);
-    xmmat modelRotMat = DirectX::XMMatrixRotationRollPitchYaw(0.0f, 0.0f, 0.0f);
-    xmmat modelTransMat = DirectX::XMMatrixTranslation(0.0f, 0.0f, 5.0f);
-    xmmat modelTransform = DirectX::XMMatrixIdentity();
+    xmmat modelScaleMat = XMMatrixScaling(1.0f, 1.0f, 1.0f);
+    xmmat modelRotMat = XMMatrixRotationRollPitchYaw(0.0f, 0.0f, 0.0f);
+    xmmat modelTransMat = XMMatrixTranslation(0.0f, 0.0f, 0.0f);
+    xmmat modelTransform = XMMatrixIdentity();
 
-    modelTransform = DirectX::XMMatrixMultiply(modelTransMat, DirectX::XMMatrixMultiply(modelScaleMat, modelRotMat));
+    modelTransform = XMMatrixMultiply(modelTransMat, XMMatrixMultiply(modelScaleMat, modelRotMat));
     modelSRD.pSysMem = &modelTransform;
 
     // Initialize Buffers //
