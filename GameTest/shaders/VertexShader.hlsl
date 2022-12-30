@@ -28,12 +28,14 @@ cbuffer PerObject : register(b2)
 VS_OUTPUT vs(VS_INPUT input)
 {
     VS_OUTPUT output = (VS_OUTPUT)0;
-    output.Pos = mul(input.Pos, Model);
+    matrix mvp = mul(Projection, mul(View, Model));
+    output.Pos = mul(mvp, input.Pos);
+    /*output.Pos = mul(input.Pos, Model);
     output.Pos = mul(output.Pos, View);
-    output.Pos = mul(output.Pos, Projection);
+    output.Pos = mul(output.Pos, Projection);*/
 
-    //output.Color = float4(1.0f, 0.0f, 1.0f, 1.0f);
-    output.Color = float4(input.Pos.xyz, 1.0f);
+    output.Color = float4(1.0f, 0.0f, 1.0f, 1.0f);
+    //output.Color = float4(input.Pos.xyz, 1.0f);
     /*output.Pos = float4(0.0f, 0.0f, 0.0f, 0.0f);
     if (instanceId == 0)
     {

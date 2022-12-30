@@ -21,15 +21,14 @@ static const std::string shader_path = R"(build\x64\Release\)";
 LS::LSTimer<std::uint64_t, 1ul, 1000ul> g_timer;
 std::array<float, 4> g_color = { 0.84f, 0.48f, 0.20f, 1.0f };
 
-static std::array<float, 12> g_positions{
-    0.0f, 1.0f, 0.0f, 1.0f,
-    1.0f, 0.0f, 0.0f, 1.0f,
-    -1.0f, 0.0f, 0.0f, 1.0f
+static std::array<float, 12> g_positions 
+{
+    0.0f, 1.0f, 0.20f, 1.0f,
+    1.0f, 0.0f, 0.20f, 1.0f,
+    -1.0f, 0.0f, 0.20f, 1.0f
 };
 
-static std::array<uint32_t, 3> g_indices{
-    0, 1, 2
-};
+static std::array<uint32_t, 3> g_indices{ 0, 2, 1 };
 
 void GpuDraw(ID3D11CommandList** commandList, ID3D11DeviceContext3* context, ID3D11RenderTargetView1* rtv)
 {
@@ -54,6 +53,8 @@ int main()
     rsSolid.Attach(rsSolidOptional.value_or(nullptr));
     ComPtr<ID3D11RasterizerState2> rsWireframe;
     rsWireframe.Attach(rsWireframeOptional.value_or(nullptr));
+
+    device.GetImmediateContextPtr()->RSSetState(rsSolid.Get());
 
     // Render Target //
     ComPtr<ID3D11Texture2D> buffer;
@@ -96,6 +97,26 @@ int main()
     auto result = device.CreateDeferredContext(pDeferredContext.ReleaseAndGetAddressOf());
     if (FAILED(result))
         return EXIT_FAILURE;
+
+    ComPtr<ID3D11BlendState> blendState;
+    CD3D11_BLEND_DESC blendDesc(CD3D11_DEFAULT{});
+
+    //D3D11_RENDER_TARGET_BLEND_DESC rtb{};
+    //rtb.BlendEnable = true;
+    //rtb.SrcBlend = D3D11_BLEND_SRC_COLOR;
+    //rtb.DestBlend = D3D11_BLEND_DEST_COLOR;
+    //rtb.BlendOp = D3D11_BLEND_OP_ADD;
+    //rtb.SrcBlendAlpha = D3D11_BLEND_SRC_ALPHA;
+    //rtb.DestBlendAlpha = D3D11_BLEND_DEST_ALPHA;
+    //rtb.BlendOpAlpha = D3D11_BLEND_OP_ADD;
+    //rtb.RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+    //D3D11_BLEND_DESC bdDesc{ .AlphaToCoverageEnable = false, .IndependentBlendEnable = false, 
+    //    .RenderTarget = {rtb, rtb, rtb, rtb, rtb, rtb, rtb, rtb } };
+    result = device.CreateBlendState(blendDesc, &blendState);
+    if (FAILED(result))
+        return -4;
+    FLOAT color[4]{ 0.0f, 0.0f, 0.0f, 0.0f };
+    device.GetImmediateContextPtr()->OMSetBlendState(blendState.Get(), color, 0xffffffff);
 
     //ComPtr<ID3D11CommandList> pCommandList;
     //pDeferredContext->ClearRenderTargetView(rtView.Get(), g_color.data());
@@ -161,7 +182,7 @@ int main()
 
     LSShaderInputSignature vsSignature;
     //vsSignature.AddElement(SHADER_DATA_TYPE::UINT, "SV_InstanceID");
-    vsSignature.AddElement(SHADER_DATA_TYPE::FLOAT4, "POSITION");
+    vsSignature.AddElement(SHADER_DATA_TYPE::FLOAT4, "POSITION0");
     //vsSignature.AddElement(SHADER_DATA_TYPE::FLOAT2, "TEXCOORD0");
     auto layout = vsSignature.GetInputLayout();
     auto inputs = Utils::BuildFromShaderElements(layout);
@@ -215,7 +236,7 @@ int main()
     ComPtr<ID3D11RenderTargetView> rtViewOg = rtView;
 
     // Camera // 
-    xmvec posVec = DirectX::XMVectorSet(0.0f, 0.0f, -5.0f, 1.0f);
+    xmvec posVec = DirectX::XMVectorSet(0.0f, 0.0f, -15.0f, 1.0f);
     xmvec lookAtVec = DirectX::XMVectorSet(0.0f, 0.0f, 1.0f, 1.0f);
     xmvec upVec = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 1.0f);
 
