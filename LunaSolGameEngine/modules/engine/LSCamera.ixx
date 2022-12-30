@@ -14,20 +14,17 @@ export namespace LS
 
     struct LSCamera
     {
-    protected:
         xmmat m_projection;
         xmmat m_view;
         xmmat m_mvp;
         xmmat m_invProj;
         xmmat m_invView;
         xmmat m_invMvp;
-
-        uint32_t m_width;
-        uint32_t m_height;
-
         xmvec m_position;
         xmvec m_lookAt;
         xmvec m_up;
+        uint32_t m_width;
+        uint32_t m_height;
         float m_fovAngleV;//Vertical FOV in radians
         float m_fovAngleH;//Horizontal FOV in radians
 
@@ -35,7 +32,7 @@ export namespace LS
         LSCamera() = default;
         ~LSCamera() = default;
 
-        LSCamera(uint32_t width, uint32_t height, xmvec position, xmvec lookAt, xmvec up, float farZ = 1.0f, float nearZ = 0.0f)
+        LSCamera(uint32_t width, uint32_t height, xmvec position, xmvec lookAt, xmvec up, float farZ = 100.0f, float nearZ = 0.1f)
             : m_projection(XMMatrixIdentity()),
             m_view(XMMatrixIdentity()),
             m_mvp(XMMatrixIdentity()),
@@ -46,13 +43,12 @@ export namespace LS
             m_height(height),
             m_position(position),
             m_lookAt(lookAt),
-            m_up(up),
+            m_up(up)
         {
-            m_projection = XMMatrixPerspectiveLH(width, height, nearZ, farZ);
+            m_projection = XMMatrixPerspectiveFovLH( XMConvertToRadians(45.0f), width / height, nearZ, farZ);
             m_view = XMMatrixLookAtLH(position, lookAt, up);
             m_invProj = XMMatrixInverse(nullptr, m_projection);
             m_invView = XMMatrixInverse(nullptr, m_view);
-
         }
     };
 }
