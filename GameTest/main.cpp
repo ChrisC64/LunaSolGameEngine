@@ -70,7 +70,9 @@ int main()
         return -3;
 
     CD3D11_DEPTH_STENCIL_DESC defaultDepthDesc(CD3D11_DEFAULT{});
-    auto defaultState = CreateDepthStencilState(device.GetDevice().Get(), defaultDepthDesc).value();
+    ComPtr<ID3D11DepthStencilState> defaultState;
+    auto dss = CreateDepthStencilState(device.GetDevice().Get(), defaultDepthDesc).value();
+    defaultState.Attach(dss);
     HRESULT result;
     // Blend State
     ComPtr<ID3D11BlendState> blendState;
@@ -170,25 +172,13 @@ int main()
     //TODO: Implement missing setups below that don't have an appropriate function call
 
     ComPtr<ID3D11Buffer> vertexBuffer;
-    D3D11_BUFFER_DESC bufferDesc{};
-    bufferDesc.ByteWidth = sizeof(g_positions);
-    bufferDesc.StructureByteStride = 0;
-    bufferDesc.Usage = D3D11_USAGE_DEFAULT;
-    bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-    bufferDesc.CPUAccessFlags = 0;
-
-    D3D11_SUBRESOURCE_DATA subData{};
-    subData.pSysMem = g_positions.data();
-    subData.SysMemPitch = 0;
-    subData.SysMemSlicePitch = 0;
+    CD3D11_BUFFER_DESC bufferDesc(sizeof(g_positions), D3D11_BIND_VERTEX_BUFFER);
+    D3D11_SUBRESOURCE_DATA subData{.pSysMem = g_positions.data(), .SysMemPitch = 0, .SysMemSlicePitch = 0};
     result = device.CreateBuffer(&bufferDesc, &subData, &vertexBuffer);
     if (FAILED(result))
     {
         return -2;
     }
-
-    UINT stride = sizeof(float) * 4;
-    UINT offset = 0;
 
     ComPtr<ID3D11RenderTargetView> rtViewOg = rtView;
 
@@ -198,14 +188,17 @@ int main()
     xmvec upVec = XMVectorSet(0.0f, 1.0f, 0.0f, 1.0f);
 
     LSCamera camera(window->GetWidth(), window->GetHeight(), posVec, lookAtVec, upVec, 100.0f);
+    
     // Informs how the GPU about the buffer types - we have two Matrix and Index Buffers here, the Vertex was created earlier above //
     CD3D11_BUFFER_DESC matBD(sizeof(float) * 16, D3D11_BIND_CONSTANT_BUFFER);
     CD3D11_BUFFER_DESC indexBD(g_indices.size() * sizeof(g_indices.front()), D3D11_BIND_INDEX_BUFFER);
+    
     // Ready the GPU Data //
     D3D11_SUBRESOURCE_DATA viewSRD, projSRD, modelSRD, indexSRD;
     viewSRD.pSysMem = &camera.m_view;
     projSRD.pSysMem = &camera.m_projection;
     indexSRD.pSysMem = g_indices.data();
+
     // Our Model's Translastion/Scale/Rotation Setup //
     xmmat modelScaleMat = XMMatrixScaling(1.0f, 1.0f, 1.0f);
     xmmat modelRotMat = XMMatrixRotationRollPitchYaw(0.0f, 0.0f, 0.0f);
@@ -229,13 +222,16 @@ int main()
 
     std::array<ID3D11Buffer*, 3> buffers{ viewBuffer.Get(), projBuffer.Get(), modelBuffer.Get() };
     BindVSConstantBuffers(immContext.Get(), 0, buffers);
+    UINT stride = sizeof(float) * 4;
     SetVertexBuffers(immContext.Get(), vertexBuffer.Get(), 1, 0, stride);
     SetIndexBuffer(immContext.Get(), indexBuffer.Get());
     SetRasterizerState(immContext.Get(), rsSolid.Get());
     
     FLOAT color[4]{ 0.0f, 0.0f, 0.0f, 0.0f };
-    device.GetImmediateContextPtr()->OMSetBlendState(blendState.Get(), color, 0xffffffff);
-    device.GetImmediateContextPtr()->OMSetDepthStencilState(defaultState, 1);
+    SetBlendState(immContext.Get(), blendState.Get());
+    SetDepthStencilState(immContext.Get(), defaultState.Get(), 1);
+    //device.GetImmediateContextPtr()->OMSetBlendState(blendState.Get(), color, 0xffffffff);
+    //device.GetImmediateContextPtr()->OMSetDepthStencilState(defaultState, 1);
     SetTopology(immContext.Get(), D3D11_PRIMITIVE_TOPOLOGY::D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     SetViewport(immContext.Get(),
         static_cast<float>(window->GetWidth()),

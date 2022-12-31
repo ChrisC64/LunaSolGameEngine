@@ -313,10 +313,27 @@ export namespace LS::Win32
         pContext->IASetPrimitiveTopology(topology);
     }
 
+    // Blend State //
+    constexpr void SetBlendState(ID3D11DeviceContext* pContext, ID3D11BlendState* pBlendState,
+        const std::array<float, 4>& blendFactor = {1.f, 1.f, 1.f, 1.f}, uint32_t sampleMask = 0xffffffff) noexcept
+    {
+        assert(pContext);
+        pContext->OMSetBlendState(pBlendState, blendFactor.data(), sampleMask);
+    }
+
+    // Depth Stencil //
+    constexpr void SetDepthStencilState(ID3D11DeviceContext* pContext, ID3D11DepthStencilState* dsState, uint32_t stencilRef)
+    {
+        assert(pContext);
+        assert(dsState);
+        pContext->OMSetDepthStencilState(dsState, stencilRef);
+    }
+
     // Rasterizer State //
     constexpr void SetRasterizerState(ID3D11DeviceContext* pContext, ID3D11RasterizerState* state)
     {
         assert(pContext);
+        assert(state);
         pContext->RSSetState(state);
     }
 
