@@ -2,6 +2,7 @@
 
 import D3D11.Device;
 import Util.MSUtils;
+import LSData;
 
 namespace WRL = Microsoft::WRL;
 
@@ -136,7 +137,7 @@ namespace LS::Win32
         swapchain1.As(&m_pSwapchain);
     }
 
-    void DeviceD3D11::CreateSwapchain(const LSWindowBase* window, PIXEL_FORMAT format, uint32_t bufferSize)
+    void DeviceD3D11::CreateSwapchain(const LSWindowBase* window, PIXEL_COLOR_FORMAT format, uint32_t bufferSize)
     {
         LSSwapchainInfo info{
             .BufferSize = bufferSize,
@@ -281,20 +282,20 @@ namespace LS::Win32
         swDesc1.BufferCount = info.BufferSize;
         swDesc1.Height = info.Height;
         swDesc1.Width = info.Width;
-        using enum PIXEL_FORMAT;
+        using enum PIXEL_COLOR_FORMAT;
         DXGI_FORMAT format;
         switch (info.PixelFormat)
         {
-        case RGBA_8:
+        case RGBA8_UNORM:
             format = DXGI_FORMAT_R8G8B8A8_UNORM;
             break;
-        case BGRA_8:
+        case BGRA8_UNORM:
             format = DXGI_FORMAT_B8G8R8A8_UNORM;
             break;
-        case RGBA_16:
+        case RGBA16_UNORM:
             format = DXGI_FORMAT_R16G16B16A16_UNORM;
             break;
-        case BGRA_16:
+        case BGRA16_UNORM:
             format = DXGI_FORMAT_R16G16B16A16_UNORM;
             break;
         default:

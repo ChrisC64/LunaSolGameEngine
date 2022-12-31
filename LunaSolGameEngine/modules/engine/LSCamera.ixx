@@ -11,7 +11,7 @@ export namespace LS
 
     using vec3 = XMFLOAT3;
     using xmvec = XMVECTOR;
-
+    //TODO: Structs don't require m_ prefix, I'll edit to make them like the other structs.
     struct LSCamera
     {
         xmmat m_projection;

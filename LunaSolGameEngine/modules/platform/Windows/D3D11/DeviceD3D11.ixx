@@ -18,7 +18,7 @@ export namespace LS::Win32
 
         void CreateDevice(bool isSingleThreaded = false);
         void CreateSwapchain(HWND winHandle, const LS::LSSwapchainInfo& swapchainInfo);
-        void CreateSwapchain(const LS::LSWindowBase* window, PIXEL_FORMAT format = PIXEL_FORMAT::RGBA_8, uint32_t bufferSize = 2);
+        void CreateSwapchain(const LS::LSWindowBase* window, PIXEL_COLOR_FORMAT format = PIXEL_COLOR_FORMAT::RGBA8_UNORM, uint32_t bufferSize = 2);
         
         HRESULT CreateDeferredContext(ID3D11DeviceContext** pDeferredContext) noexcept;
         HRESULT CreateDeferredContext2(ID3D11DeviceContext2** ppDeferredContext) noexcept;

@@ -5,8 +5,6 @@
 #include <stdexcept>
 #include "LSTypeDefs.h"
 
-
-
 namespace LS
 {
     /***

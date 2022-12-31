@@ -184,6 +184,7 @@
     <ClCompile Include="modules\data\LSWindowTypes.ixx" />
     <ClCompile Include="modules\engine\EngineCommon.ixx" />
     <ClCompile Include="modules\engine\LSApp.ixx" />
+    <ClCompile Include="modules\engine\LSBuffer.ixx" />
     <ClCompile Include="modules\engine\LSCamera.ixx" />
     <ClCompile Include="modules\engine\LSDevice.ixx" />
     <ClCompile Include="modules\engine\LSScene.ixx" />
