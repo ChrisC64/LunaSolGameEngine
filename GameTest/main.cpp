@@ -230,8 +230,6 @@ int main()
     FLOAT color[4]{ 0.0f, 0.0f, 0.0f, 0.0f };
     SetBlendState(immContext.Get(), blendState.Get());
     SetDepthStencilState(immContext.Get(), defaultState.Get(), 1);
-    //device.GetImmediateContextPtr()->OMSetBlendState(blendState.Get(), color, 0xffffffff);
-    //device.GetImmediateContextPtr()->OMSetDepthStencilState(defaultState, 1);
     SetTopology(immContext.Get(), D3D11_PRIMITIVE_TOPOLOGY::D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     SetViewport(immContext.Get(),
         static_cast<float>(window->GetWidth()),
