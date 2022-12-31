@@ -3,6 +3,7 @@ module;
 
 export module D3D11.RenderD3D11;
 import Util.MSUtils;
+import LSData;
 
 namespace WRL = Microsoft::WRL;
 
@@ -168,6 +169,17 @@ export namespace LS::Win32
         assert(shader);
         pContext->VSSetShader(shader, &classInstance, numInstances);
     }
+
+    constexpr void BindVSConstantBuffers(ID3D11DeviceContext* pContext, uint32_t startSlot, std::span<ID3D11Buffer*> buffers)
+    {
+        assert(pContext);
+        assert(!buffers.empty());
+        assert(buffers.size() <= std::numeric_limits<uint32_t>::max());
+        if (buffers.empty() && buffers.size() <= std::numeric_limits<uint32_t>::max())
+            return;
+
+        pContext->VSSetConstantBuffers(startSlot, static_cast<uint32_t>(buffers.size()), buffers.data());
+    }
     
     constexpr void BindPS(ID3D11DeviceContext* pContext, ID3D11PixelShader* shader) noexcept
     {
@@ -181,6 +193,17 @@ export namespace LS::Win32
         assert(pContext);
         assert(shader);
         pContext->PSSetShader(shader, &classInstance, numInstances);
+    }
+
+    constexpr void BindPSConstantBuffers(ID3D11DeviceContext* pContext, uint32_t startSlot, std::span<ID3D11Buffer*> buffers)
+    {
+        assert(pContext);
+        assert(!buffers.empty());
+        assert(buffers.size() <= std::numeric_limits<uint32_t>::max());
+        if (buffers.empty() && buffers.size() <= std::numeric_limits<uint32_t>::max())
+            return;
+
+        pContext->PSSetConstantBuffers(startSlot, static_cast<uint32_t>(buffers.size()), buffers.data());
     }
     
     constexpr void BindGS(ID3D11DeviceContext* pContext, ID3D11GeometryShader* shader) noexcept
@@ -197,6 +220,17 @@ export namespace LS::Win32
         pContext->GSSetShader(shader, &classInstance, numInstances);
     }
     
+    constexpr void BindGSConstantBuffers(ID3D11DeviceContext* pContext, uint32_t startSlot, std::span<ID3D11Buffer*> buffers)
+    {
+        assert(pContext);
+        assert(!buffers.empty());
+        assert(buffers.size() <= std::numeric_limits<uint32_t>::max());
+        if (buffers.empty() && buffers.size() <= std::numeric_limits<uint32_t>::max())
+            return;
+
+        pContext->GSSetConstantBuffers(startSlot, static_cast<uint32_t>(buffers.size()), buffers.data());
+    }
+
     constexpr void BindCS(ID3D11DeviceContext* pContext, ID3D11ComputeShader* shader) noexcept
     {
         assert(pContext);
@@ -211,6 +245,17 @@ export namespace LS::Win32
         pContext->CSSetShader(shader, &classInstance, numInstances);
     }
     
+    constexpr void BindCSConstantBuffers(ID3D11DeviceContext* pContext, uint32_t startSlot, std::span<ID3D11Buffer*> buffers)
+    {
+        assert(pContext);
+        assert(!buffers.empty());
+        assert(buffers.size() <= std::numeric_limits<uint32_t>::max());
+        if (buffers.empty() && buffers.size() <= std::numeric_limits<uint32_t>::max())
+            return;
+
+        pContext->CSSetConstantBuffers(startSlot, static_cast<uint32_t>(buffers.size()), buffers.data());
+    }
+
     constexpr void BindHS(ID3D11DeviceContext* pContext, ID3D11HullShader* shader) noexcept
     {
         assert(pContext);
@@ -223,6 +268,17 @@ export namespace LS::Win32
         assert(pContext);
         assert(shader);
         pContext->HSSetShader(shader, &classInstance, numInstances);
+    }
+
+    constexpr void BindHSConstantBuffers(ID3D11DeviceContext* pContext, uint32_t startSlot, std::span<ID3D11Buffer*> buffers)
+    {
+        assert(pContext);
+        assert(!buffers.empty());
+        assert(buffers.size() <= std::numeric_limits<uint32_t>::max());
+        if (buffers.empty() && buffers.size() <= std::numeric_limits<uint32_t>::max())
+            return;
+
+        pContext->HSSetConstantBuffers(startSlot, static_cast<uint32_t>(buffers.size()), buffers.data());
     }
     
     constexpr void BindDS(ID3D11DeviceContext* pContext, ID3D11DomainShader* shader) noexcept
@@ -239,6 +295,17 @@ export namespace LS::Win32
         pContext->DSSetShader(shader, &classInstance, numInstances);
     }
 
+    constexpr void BindDSConstantBuffers(ID3D11DeviceContext* pContext, uint32_t startSlot, std::span<ID3D11Buffer*> buffers)
+    {
+        assert(pContext);
+        assert(!buffers.empty());
+        assert(buffers.size() <= std::numeric_limits<uint32_t>::max());
+        if (buffers.empty() && buffers.size() <= std::numeric_limits<uint32_t>::max())
+            return;
+
+        pContext->DSSetConstantBuffers(startSlot, static_cast<uint32_t>(buffers.size()), buffers.data());
+    }
+
     // Input Assembly //
     constexpr void SetTopology(ID3D11DeviceContext* pContext, D3D11_PRIMITIVE_TOPOLOGY topology) noexcept
     {
@@ -246,7 +313,30 @@ export namespace LS::Win32
         pContext->IASetPrimitiveTopology(topology);
     }
 
+    // Blend State //
+    constexpr void SetBlendState(ID3D11DeviceContext* pContext, ID3D11BlendState* pBlendState,
+        const std::array<float, 4>& blendFactor = {1.f, 1.f, 1.f, 1.f}, uint32_t sampleMask = 0xffffffff) noexcept
+    {
+        assert(pContext);
+        pContext->OMSetBlendState(pBlendState, blendFactor.data(), sampleMask);
+    }
+
+    // Depth Stencil //
+    constexpr void SetDepthStencilState(ID3D11DeviceContext* pContext, ID3D11DepthStencilState* dsState, uint32_t stencilRef)
+    {
+        assert(pContext);
+        assert(dsState);
+        pContext->OMSetDepthStencilState(dsState, stencilRef);
+    }
+
     // Rasterizer State //
+    constexpr void SetRasterizerState(ID3D11DeviceContext* pContext, ID3D11RasterizerState* state)
+    {
+        assert(pContext);
+        assert(state);
+        pContext->RSSetState(state);
+    }
+
     constexpr void SetViewport(ID3D11DeviceContext* pContext, float width, float height, float topX = 0.0f, float topY = 0.0f) noexcept
     {
         assert(pContext);
@@ -299,5 +389,14 @@ export namespace LS::Win32
             return;
 
         pContext->IASetVertexBuffers(startSlot, 1, &pBuffer, &stride, &offset);
+    }
+
+    constexpr void SetIndexBuffer(ID3D11DeviceContext* pContext, ID3D11Buffer* pBuffer, uint32_t offset = 0, DXGI_FORMAT format = DXGI_FORMAT_R32_UINT)
+    {
+        assert(pContext);
+        if (!pContext)
+            return;
+
+        pContext->IASetIndexBuffer(pBuffer, format, offset);
     }
 }

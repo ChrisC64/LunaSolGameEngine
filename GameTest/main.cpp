@@ -8,6 +8,8 @@ import Win32Lib;
 import Util.HLSLUtils;
 
 using namespace LS;
+using namespace LS::Win32;
+using namespace LS::Utils;
 using namespace Microsoft::WRL;
 using namespace std::chrono;
 using namespace std::chrono_literals;
@@ -19,7 +21,7 @@ static const std::string shader_path = R"(build\x64\Debug\)";
 static const std::string shader_path = R"(build\x64\Release\)";
 #endif
 
-LS::LSTimer<std::uint64_t, 1ul, 1000ul> g_timer;
+LSTimer<std::uint64_t, 1ul, 1000ul> g_timer;
 std::array<float, 4> g_color = { 0.84f, 0.48f, 0.20f, 1.0f };
 
 static std::array<float, 12> g_positions 
@@ -43,12 +45,13 @@ int main()
 
     Ref<LSWindowBase> window = LS::LSCreateWindow(800u, 700u, L"Hello App");
     // Device Setup //
-    Win32::DeviceD3D11 device;
+    DeviceD3D11 device;
     device.CreateDevice();
+    ComPtr<ID3D11DeviceContext4> immContext = device.GetImmediateContext();
     device.CreateSwapchain(window.get());
 
-    auto rsSolidOptional = Win32::CreateRasterizerState2(device.GetDevice().Get(), LS::SolidFill_NoneCull_CCWFront_DCE);
-    auto rsWireframeOptional = Win32::CreateRasterizerState2(device.GetDevice().Get(), LS::Wireframe_FrontCull_CCWFront_DCE);
+    auto rsSolidOptional = CreateRasterizerState2(device.GetDevice().Get(), SolidFill_NoneCull_CCWFront_DCE);
+    auto rsWireframeOptional = CreateRasterizerState2(device.GetDevice().Get(), Wireframe_FrontCull_CCWFront_DCE);
 
     ComPtr<ID3D11RasterizerState2> rsSolid;
     rsSolid.Attach(rsSolidOptional.value_or(nullptr));
@@ -59,7 +62,7 @@ int main()
     ComPtr<ID3D11Texture2D> buffer;
     device.GetSwapChain()->GetBuffer(0, IID_PPV_ARGS(&buffer));
     ComPtr< ID3D11RenderTargetView1> rtView;
-    rtView.Attach(Win32::CreateRenderTargetView1(device.GetDevice().Get(), buffer.Get()));
+    rtView.Attach(CreateRenderTargetView1(device.GetDevice().Get(), buffer.Get()));
     // Depth Stencil //
     ComPtr<ID3D11DepthStencilView> dsView;
     auto dsResult = device.CreateDepthStencilViewForSwapchain(rtView.Get(), &dsView);
@@ -67,7 +70,9 @@ int main()
         return -3;
 
     CD3D11_DEPTH_STENCIL_DESC defaultDepthDesc(CD3D11_DEFAULT{});
-    auto defaultState = Win32::CreateDepthStencilState(device.GetDevice().Get(), defaultDepthDesc).value();
+    ComPtr<ID3D11DepthStencilState> defaultState;
+    auto dss = CreateDepthStencilState(device.GetDevice().Get(), defaultDepthDesc).value();
+    defaultState.Attach(dss);
     HRESULT result;
     // Blend State
     ComPtr<ID3D11BlendState> blendState;
@@ -136,15 +141,15 @@ int main()
     ComPtr<ID3D11VertexShader> vsShader;
     ComPtr<ID3D11PixelShader> psShader;
 
-    auto vsResult = LS::Win32::CompileVertexShaderFromByteCode(device.GetDevice().Get(), vsData, &vsShader);
+    auto vsResult = CompileVertexShaderFromByteCode(device.GetDevice().Get(), vsData, &vsShader);
     if (FAILED(vsResult))
     {
-        LS::Utils::ThrowIfFailed(vsResult, "Failed to compile vertex shader!\n");
+        ThrowIfFailed(vsResult, "Failed to compile vertex shader!\n");
     }
-    auto psResult = LS::Win32::CompilePixelShaderFromByteCode(device.GetDevice().Get(), psData, &psShader);
+    auto psResult = CompilePixelShaderFromByteCode(device.GetDevice().Get(), psData, &psShader);
     if (FAILED(psResult))
     {
-        LS::Utils::ThrowIfFailed(psResult, "Failed to compile vertex shader!\n");
+        ThrowIfFailed(psResult, "Failed to compile vertex shader!\n");
     }
 
     LSShaderInputSignature vsSignature;
@@ -152,7 +157,7 @@ int main()
     vsSignature.AddElement(SHADER_DATA_TYPE::FLOAT4, "POSITION0");
     //vsSignature.AddElement(SHADER_DATA_TYPE::FLOAT2, "TEXCOORD0");
     auto layout = vsSignature.GetInputLayout();
-    auto inputs = Utils::BuildFromShaderElements(layout);
+    auto inputs = BuildFromShaderElements(layout);
     if (!inputs)
     {
         throw std::runtime_error("Failed to create input layout from shader elements\n");
@@ -167,25 +172,13 @@ int main()
     //TODO: Implement missing setups below that don't have an appropriate function call
 
     ComPtr<ID3D11Buffer> vertexBuffer;
-    D3D11_BUFFER_DESC bufferDesc{};
-    bufferDesc.ByteWidth = sizeof(g_positions);
-    bufferDesc.StructureByteStride = 0;
-    bufferDesc.Usage = D3D11_USAGE_DEFAULT;
-    bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-    bufferDesc.CPUAccessFlags = 0;
-
-    D3D11_SUBRESOURCE_DATA subData{};
-    subData.pSysMem = g_positions.data();
-    subData.SysMemPitch = 0;
-    subData.SysMemSlicePitch = 0;
+    CD3D11_BUFFER_DESC bufferDesc(sizeof(g_positions), D3D11_BIND_VERTEX_BUFFER);
+    D3D11_SUBRESOURCE_DATA subData{.pSysMem = g_positions.data(), .SysMemPitch = 0, .SysMemSlicePitch = 0};
     result = device.CreateBuffer(&bufferDesc, &subData, &vertexBuffer);
     if (FAILED(result))
     {
         return -2;
     }
-
-    UINT stride = sizeof(float) * 4;
-    UINT offset = 0;
 
     ComPtr<ID3D11RenderTargetView> rtViewOg = rtView;
 
@@ -195,14 +188,17 @@ int main()
     xmvec upVec = XMVectorSet(0.0f, 1.0f, 0.0f, 1.0f);
 
     LSCamera camera(window->GetWidth(), window->GetHeight(), posVec, lookAtVec, upVec, 100.0f);
+    
     // Informs how the GPU about the buffer types - we have two Matrix and Index Buffers here, the Vertex was created earlier above //
     CD3D11_BUFFER_DESC matBD(sizeof(float) * 16, D3D11_BIND_CONSTANT_BUFFER);
     CD3D11_BUFFER_DESC indexBD(g_indices.size() * sizeof(g_indices.front()), D3D11_BIND_INDEX_BUFFER);
+    
     // Ready the GPU Data //
     D3D11_SUBRESOURCE_DATA viewSRD, projSRD, modelSRD, indexSRD;
     viewSRD.pSysMem = &camera.m_view;
     projSRD.pSysMem = &camera.m_projection;
     indexSRD.pSysMem = g_indices.data();
+
     // Our Model's Translastion/Scale/Rotation Setup //
     xmmat modelScaleMat = XMMatrixScaling(1.0f, 1.0f, 1.0f);
     xmmat modelRotMat = XMMatrixRotationRollPitchYaw(0.0f, 0.0f, 0.0f);
@@ -220,21 +216,22 @@ int main()
     device.CreateBuffer(&indexBD, &indexSRD, &indexBuffer);
 
     // Setup states and buffers that only require one call here //
-    Win32::BindVS(device.GetImmediateContext().Get(), vsShader.Get());
-    Win32::BindPS(device.GetImmediateContext().Get(), psShader.Get());
-    Win32::SetInputlayout(device.GetImmediateContext().Get(), pInputLayout.Get());
+    BindVS(immContext.Get(), vsShader.Get());
+    BindPS(immContext.Get(), psShader.Get());
+    SetInputlayout(immContext.Get(), pInputLayout.Get());
 
     std::array<ID3D11Buffer*, 3> buffers{ viewBuffer.Get(), projBuffer.Get(), modelBuffer.Get() };
-    device.GetImmediateContextPtr()->VSSetConstantBuffers(0, buffers.size(), buffers.data());
-    Win32::SetVertexBuffers(device.GetImmediateContext().Get(), vertexBuffer.Get(), 1, 0, stride);
-    device.GetImmediateContextPtr()->IASetIndexBuffer(indexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
-    device.GetImmediateContextPtr()->RSSetState(rsSolid.Get());
+    BindVSConstantBuffers(immContext.Get(), 0, buffers);
+    UINT stride = sizeof(float) * 4;
+    SetVertexBuffers(immContext.Get(), vertexBuffer.Get(), 1, 0, stride);
+    SetIndexBuffer(immContext.Get(), indexBuffer.Get());
+    SetRasterizerState(immContext.Get(), rsSolid.Get());
     
     FLOAT color[4]{ 0.0f, 0.0f, 0.0f, 0.0f };
-    device.GetImmediateContextPtr()->OMSetBlendState(blendState.Get(), color, 0xffffffff);
-    device.GetImmediateContextPtr()->OMSetDepthStencilState(defaultState, 1);
-    Win32::SetTopology(device.GetImmediateContext().Get(), D3D11_PRIMITIVE_TOPOLOGY::D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-    Win32::SetViewport(device.GetImmediateContext().Get(),
+    SetBlendState(immContext.Get(), blendState.Get());
+    SetDepthStencilState(immContext.Get(), defaultState.Get(), 1);
+    SetTopology(immContext.Get(), D3D11_PRIMITIVE_TOPOLOGY::D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    SetViewport(immContext.Get(),
         static_cast<float>(window->GetWidth()),
         static_cast<float>(window->GetHeight())
     );
@@ -245,11 +242,11 @@ int main()
     while (window->IsRunning())
     {
         g_timer.Tick();
-        Win32::SetRenderTarget(device.GetImmediateContext().Get(), rtViewOg.Get(), dsView.Get());
-        Win32::ClearRT(device.GetImmediateContext().Get(), rtView.Get(), g_color);
-        Win32::ClearDS(device.GetImmediateContext().Get(), dsView.Get());
-        Win32::DrawIndexed(device.GetImmediateContext().Get(), g_indices.size(), 0, 0);
-        Win32::Present1(device.GetSwapChain().Get(), 1);
+        SetRenderTarget(immContext.Get(), rtViewOg.Get(), dsView.Get());
+        ClearRT(immContext.Get(), rtView.Get(), g_color);
+        ClearDS(immContext.Get(), dsView.Get());
+        DrawIndexed(immContext.Get(), g_indices.size(), 0, 0);
+        Present1(device.GetSwapChain().Get(), 1);
         window->PollEvent();
         if (g_timer.GetTotalTimeTickedIn<std::chrono::seconds>().count() >= 5.0f)
         {

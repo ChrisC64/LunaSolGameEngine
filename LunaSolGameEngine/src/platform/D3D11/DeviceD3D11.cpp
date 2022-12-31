@@ -246,7 +246,6 @@ namespace LS::Win32
     HRESULT DeviceD3D11::CreateBuffer(const D3D11_BUFFER_DESC* pDesc, const D3D11_SUBRESOURCE_DATA* pInitialData, ID3D11Buffer** ppBuffer) noexcept
     {
         assert(m_pDevice);
-        assert(pDesc);
 
         if (!pDesc)
         {
