@@ -168,6 +168,21 @@ export namespace LS
     };
 
     /**
+     * @brief How to perform operations with the depth stencil tests
+    */
+    enum class DEPTH_STENCIL_OPS
+    {
+        KEEP,
+        ZERO,
+        REPLACE,
+        INVERT,
+        INCR_THEN_CLAMP,
+        INCR_THEN_WRAP,
+        DECR_THEN_CLAMP,
+        DECR_THEN_WRAP,
+    };
+
+    /**
      * @brief
     */
     struct LSSamplerState
@@ -205,7 +220,6 @@ export namespace LS
                 IsDepthClipEnabled != rhs.IsDepthClipEnabled;
         }
     };
-
 
     struct LSDrawStateHashFunc
     {
@@ -251,6 +265,27 @@ export namespace LS
         DEVICE_TYPE DeviceType;
         DEVICE_API DeviceApi;
         OnDeviceEvent OnDeviceEvent;
+    };
+
+    struct LSDepthStencil
+    {
+        LSTextureInfo DepthBuffer;
+        bool IsDepthEnabled;
+        bool IsStencilEnabled;
+        EVAL_COMPARE DepthComparison;// @brief How to handle depth comparison data with destination data
+        bool ShouldWriteToDepthMask;// @brief Turn on/off writing to the depth mask
+        uint32_t StencilWriteMask;// @brief The mask to perform operations on depth-stencil buffer reads
+        uint32_t StencilReadMask;// @brief The mask to perform operations on depth-stencil buffer writes
+        /**
+         * @brief Information on how to handle depth stencil operations
+        */
+        struct DepthStencilOps
+        {
+            DEPTH_STENCIL_OPS StencilFailOp;// @brief stencil test fails to pass
+            DEPTH_STENCIL_OPS StencilPassDepthFailOp; //@brief stencil test passes but depth test fails
+            DEPTH_STENCIL_OPS StencilPassOp; // @brief Stencil test passes,
+            EVAL_COMPARE StencilTestFunc; // @brief function to perform for this stencil operation
+        };
     };
 
     // Pipeline State //
