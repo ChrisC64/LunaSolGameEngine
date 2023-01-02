@@ -1,6 +1,6 @@
-export module Data.LSCommonTypes;
+export module Helper.LSCommonTypes;
 
-export import Engine.LSDevice;
+import Engine.LSDevice;
 
 export namespace LS
 {

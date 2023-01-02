@@ -176,7 +176,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="modules\data\LSBufferTypes.ixx" />
-    <ClCompile Include="modules\data\LSCommonTypes.ixx" />
+    <ClCompile Include="modules\helper\LSCommonTypes.ixx" />
     <ClCompile Include="modules\data\LSConcepts.ixx" />
     <ClCompile Include="modules\data\LSData.ixx" />
     <ClCompile Include="modules\data\LSShader.ixx" />

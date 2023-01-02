@@ -81,7 +81,7 @@
     <ClCompile Include="src\LSEFramework.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="modules\data\LSCommonTypes.ixx">
+    <ClCompile Include="modules\helper\LSCommonTypes.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="modules\data\LSData.ixx">

@@ -6,6 +6,7 @@ import Engine.Common;
 import D3D11Lib;
 import Win32Lib;
 import Util.HLSLUtils;
+import Helper.LSCommonTypes;
 
 using namespace LS;
 using namespace LS::Win32;

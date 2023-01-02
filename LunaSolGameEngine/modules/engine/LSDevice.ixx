@@ -2,8 +2,9 @@ module;
 #include "LSEFramework.h"
 
 export module Engine.LSDevice;
-import Data.LSTextureDesc;
+import LSData;
 import Util.StdUtils;
+
 // Helps intellisense, but will not actually effect compilation
 #if (__INTELLISENSE__ == 1)
 #ifdef UNICODE
@@ -267,7 +268,10 @@ export namespace LS
         OnDeviceEvent OnDeviceEvent;
     };
 
-    struct LSDepthStencil
+    /**
+     * @brief A depth stencil object
+    */
+    struct DepthStencil
     {
         LSTextureInfo DepthBuffer;
         bool IsDepthEnabled;
@@ -286,6 +290,14 @@ export namespace LS
             DEPTH_STENCIL_OPS StencilPassOp; // @brief Stencil test passes,
             EVAL_COMPARE StencilTestFunc; // @brief function to perform for this stencil operation
         };
+
+        DepthStencilOps FrontFace;// @brief Operations for front facing pixels
+        DepthStencilOps BackFace;// @brief Operations for back facing pixels
+    };
+
+    struct ShaderMap
+    {
+        std::unordered_map<SHADER_TYPE, std::vector<std::byte>> ShaderMap;
     };
 
     // Pipeline State //
@@ -306,9 +318,11 @@ export namespace LS
     struct LSPipelineState
     {
         LSDrawState DrawState;
-        PRIMITIVE_TOPOLOGY Topology;
         LSBlendState BlendState;
-
+        DepthStencil DepthStencil;
+        ShaderMap Shaders; 
+        LSShaderInputSignature ShaderSignature;
+        PRIMITIVE_TOPOLOGY Topology;
         // Resources //
         std::vector<LSSamplerState> Samplers;
     };
