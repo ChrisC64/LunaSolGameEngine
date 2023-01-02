@@ -55,3 +55,4 @@
 #endif
 
 #include "LSTypeDefs.h"
+#include "LSBuffer.h"

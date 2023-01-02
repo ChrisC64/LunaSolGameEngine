@@ -300,6 +300,12 @@ export namespace LS
         std::unordered_map<SHADER_TYPE, std::vector<std::byte>> ShaderMap;
     };
 
+    struct BufferMap
+    {
+        BUFFER_BIND_TYPE BindStage;
+        std::vector<std::byte> Data;
+    };
+
     // Pipeline State //
     /**
      * @brief A system for the different states that construct a graphics pipeline

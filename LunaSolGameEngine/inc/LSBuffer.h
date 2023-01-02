@@ -44,6 +44,7 @@ namespace LS
         CONSTANT_BUFFER, // @brief Shader constant buffer
         SHADER_RESOURCE // @brief A shader resource (textures
     };
+
     //TODO: Add constraints to this... because I don't know what but I'm sure I"ll think of some later!
     template<class TObject>
     class LSBuffer
