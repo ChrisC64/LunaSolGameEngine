@@ -196,8 +196,8 @@ int main()
     
     // Ready the GPU Data //
     D3D11_SUBRESOURCE_DATA viewSRD, projSRD, modelSRD, indexSRD;
-    viewSRD.pSysMem = &camera.m_view;
-    projSRD.pSysMem = &camera.m_projection;
+    viewSRD.pSysMem = &camera.View;
+    projSRD.pSysMem = &camera.Projection;
     indexSRD.pSysMem = g_indices.data();
 
     // Our Model's Translastion/Scale/Rotation Setup //

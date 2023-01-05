@@ -259,12 +259,15 @@ export namespace LS
         int32_t FrameBufferCount;
         LSTextureInfo RenderTargetDesc;
         LSSwapchainInfo SwapchainInfo;
-    };
-
-    struct LSDevice
-    {
         DEVICE_TYPE DeviceType;
         DEVICE_API DeviceApi;
+    };
+
+    /**
+     * @brief Represents the GPU physical device 
+    */
+    struct LSDevice
+    {
         OnDeviceEvent OnDeviceEvent;
     };
 
@@ -303,7 +306,20 @@ export namespace LS
     struct BufferMap
     {
         BUFFER_BIND_TYPE BindStage;
+        uint16_t BindSlot;
         std::vector<std::byte> Data;
+    };
+
+    struct TextureMap
+    {
+        uint16_t BindSlot;
+        LSTextureInfo Texture;
+    };
+
+    struct SamplerMap
+    {
+        uint16_t BindSlot;
+        LSSamplerState Sampler;
     };
 
     // Pipeline State //
@@ -316,7 +332,7 @@ export namespace LS
      * - Blend state - (opaque, alpha, reverse z, etc.)
      * - Shaders - what shaders are in use during this pipeline
      * - Input layout - the layout of data for the vertex shader
-     * - Buffers - what buffers are in use for this: Verrtex, Index, Constant Buffers per shader type
+     * - Buffers - what buffers are in use for this: Verrtex, Index, Constant Buffers per shader type (maybe later version add this?)
      * - Topology (PRIMITIVE_TOPOLOGY enum) - the way primitives will be drawn
      * - Resources - samplers, textures, and other shader resources - perhaps store as some key values
      *    so we aren't holding pointers, and can access them in some resource manager.
@@ -330,6 +346,8 @@ export namespace LS
         LSShaderInputSignature ShaderSignature;
         PRIMITIVE_TOPOLOGY Topology;
         // Resources //
-        std::vector<LSSamplerState> Samplers;
+        std::vector<SamplerMap> Samplers;
+        std::vector<TextureMap> Textures;
+        std::vector<BufferMap> Buffers;
     };
 }

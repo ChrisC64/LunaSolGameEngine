@@ -11,7 +11,7 @@
 // Reference Pointers //
 template <class T, typename Deleter = std::default_delete<T>>
 using Ref = std::unique_ptr<T, Deleter>;
-template <class T, typename Deleter> 
+template <class T, typename Deleter>
 using Ref = std::unique_ptr<T, Deleter>;
 
 template <class S>
