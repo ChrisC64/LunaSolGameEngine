@@ -21,7 +21,7 @@ export namespace LS::Win32
     // function names and parameters quickly without worrying about the return type until the end (which is almost never uniform)
     // basically because it looks neater and nicer lined up to me.
     [[nodiscard]]
-    auto CreateRasterizerState2(ID3D11Device3* pDevice, const LS::LSDrawState& drawState) -> LSOptional<ID3D11RasterizerState2*>
+    auto CreateRasterizerState2(ID3D11Device3* pDevice, const LS::RasterizerInfo& drawState) -> LSOptional<ID3D11RasterizerState2*>
     {
         assert(pDevice);
         if (!pDevice)

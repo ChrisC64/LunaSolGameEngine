@@ -2,17 +2,9 @@ module;
 #include "LSEFramework.h"
 
 export module Engine.LSDevice;
+import Engine.LSWindow;
 import LSData;
 import Util.StdUtils;
-
-// Helps intellisense, but will not actually effect compilation
-#if (__INTELLISENSE__ == 1)
-#ifdef UNICODE
-#undef DrawState  DrawStateW
-#else
-#undef DrawState  DrawStateA
-#endif
-#endif
 
 export namespace LS
 {
@@ -198,14 +190,14 @@ export namespace LS
     // Callbacks // 
     using OnDeviceEvent = std::function<void(DEVICE_EVENT)>;
 
-    struct LSDrawState
+    struct RasterizerInfo
     {
         FILL_STATE Fill;
         CULL_METHOD Cull;
         bool IsFrontCounterClockwise; // @brief Front Face drawn counterclockwise = true, false if not 
         bool IsDepthClipEnabled;
 
-        bool operator==(const LSDrawState& rhs) const
+        bool operator==(const RasterizerInfo& rhs) const
         {
             return Fill == rhs.Fill &&
                 IsFrontCounterClockwise == rhs.IsFrontCounterClockwise &&
@@ -213,7 +205,7 @@ export namespace LS
                 IsDepthClipEnabled == rhs.IsDepthClipEnabled;
         }
 
-        bool operator!=(const LSDrawState& rhs) const
+        bool operator!=(const RasterizerInfo& rhs) const
         {
             return Fill != rhs.Fill ||
                 IsFrontCounterClockwise != rhs.IsFrontCounterClockwise ||
@@ -224,7 +216,7 @@ export namespace LS
 
     struct LSDrawStateHashFunc
     {
-        template<typename T = LS::LSDrawState>
+        template<typename T = LS::RasterizerInfo>
         std::size_t operator()(T const& t) const noexcept
         {
             std::size_t h1 = LS::Utils::HashEnum(t.Fill);
@@ -263,13 +255,6 @@ export namespace LS
         DEVICE_API DeviceApi;
     };
 
-    /**
-     * @brief Represents the GPU physical device 
-    */
-    struct LSDevice
-    {
-        OnDeviceEvent OnDeviceEvent;
-    };
 
     /**
      * @brief A depth stencil object
@@ -297,6 +282,52 @@ export namespace LS
         DepthStencilOps FrontFace;// @brief Operations for front facing pixels
         DepthStencilOps BackFace;// @brief Operations for back facing pixels
     };
+
+
+    class LSContext
+    {
+    protected:
+        LSContext() = default;
+
+    public:
+        ~LSContext() = default;
+        LSContext(const LSContext&) = delete;
+        LSContext(LSContext&&) = default;
+        LSContext& operator=(const LSContext&) = delete;
+        LSContext& operator=(LSContext&&) = default;
+
+    };
+
+    /**
+     * @brief Represents the GPU physical device 
+    */
+    class LSDevice
+    {
+    protected:
+        LSDevice() = default;
+
+    public:
+        ~LSDevice() = default;
+        LSDevice(LSDevice&&) = default;
+        LSDevice(const LSDevice&) = default;
+        LSDevice& operator=(const LSDevice&) = default;
+        LSDevice& operator=(LSDevice&&) = default;
+
+        OnDeviceEvent OnDeviceEvent;
+
+        /**
+         * @brief Initializes the device 
+         * @return true if successful, false if failed.
+        */
+        [[nodiscard]] virtual bool InitDevice() noexcept = 0;
+        [[nodiscard]] virtual bool CreateSwapchain(const LSWindowBase* window, const LSSwapchainInfo& swapchainInfo) noexcept = 0;
+        [[nodiscard]] virtual bool CreateVertexInput(const LSShaderInputSignature& vertexInput) noexcept = 0;
+        [[nodiscard]] virtual bool CreateRenderTarget(const LSTextureInfo& rtInfo) noexcept = 0;
+        [[nodiscard]] virtual bool CreateDepthStencil(const DepthStencil& dsInfo) noexcept = 0;
+        [[nodiscard]] virtual bool CreateBlendState(const LSBlendState& blendInfo) noexcept = 0;
+        [[nodiscard]] virtual LSOptional<Ref<LSContext>> CreateContext() noexcept = 0;
+    };
+
 
     struct ShaderMap
     {
@@ -327,7 +358,7 @@ export namespace LS
      * @brief A system for the different states that construct a graphics pipeline
      *
      * Necessary components to render a frame:
-     * - Rasterizer state (LSDrawState) - (Wireframe/Solid and how triangles are drawn, culled, etc.)
+     * - Rasterizer state (RasterizerInfo) - (Wireframe/Solid and how triangles are drawn, culled, etc.)
      * - Depth stencil
      * - Blend state - (opaque, alpha, reverse z, etc.)
      * - Shaders - what shaders are in use during this pipeline
@@ -339,12 +370,14 @@ export namespace LS
     */
     struct LSPipelineState
     {
-        LSDrawState DrawState;
+        RasterizerInfo RasterizeState;
         LSBlendState BlendState;
         DepthStencil DepthStencil;
         ShaderMap Shaders; 
         LSShaderInputSignature ShaderSignature;
         PRIMITIVE_TOPOLOGY Topology;
+        LSTextureInfo RenderTarget;
+
         // Resources //
         std::vector<SamplerMap> Samplers;
         std::vector<TextureMap> Textures;

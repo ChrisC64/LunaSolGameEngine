@@ -14,13 +14,14 @@ export namespace LS
 
     public:
         //TODO: Build an interface Device/Context as they will be needed to create the pipeline state
-        PipelineFactory();
+        PipelineFactory() noexcept;
         ~PipelineFactory() = default;
 
-        LSOptional<LSPipelineState> BuildPipelineState(const LSDrawState& drawState,
+        [[nodiscard]]
+        LSOptional<LSPipelineState> BuildPipelineState(const RasterizerInfo& drawState,
             const LSBlendState& blendState, const DepthStencil& depthStencil,
             const ShaderMap Shaders, const LSShaderInputSignature& shaderInput,
-            PRIMITIVE_TOPOLOGY topology, std::span<SamplerMap> samplers = {},
-            std::span<TextureMap> textures = {}, std::span<BufferMap> buffers = {});
+            PRIMITIVE_TOPOLOGY topology, const LSTextureInfo& renderTarget, 
+            std::span<SamplerMap> samplers = {}, std::span<TextureMap> textures = {}, std::span<BufferMap> buffers = {}) noexcept;
     };
 }
