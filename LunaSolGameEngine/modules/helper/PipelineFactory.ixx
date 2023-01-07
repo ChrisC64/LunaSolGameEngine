@@ -8,20 +8,49 @@ export namespace LS
 {
     class PipelineFactory
     {
-    private:
-        class Impl;
-        Ref<Impl> m_pimpl;
-
     public:
         //TODO: Build an interface Device/Context as they will be needed to create the pipeline state
-        PipelineFactory() noexcept;
+        PipelineFactory() noexcept = default;
         ~PipelineFactory() = default;
 
-        [[nodiscard]]
-        LSOptional<LSPipelineState> BuildPipelineState(const RasterizerInfo& drawState,
-            const LSBlendState& blendState, const DepthStencil& depthStencil,
-            const ShaderMap Shaders, const LSShaderInputSignature& shaderInput,
-            PRIMITIVE_TOPOLOGY topology, const LSTextureInfo& renderTarget, 
-            std::span<SamplerMap> samplers = {}, std::span<TextureMap> textures = {}, std::span<BufferMap> buffers = {}) noexcept;
+        void CreateRasterizerState(const RasterizerInfo& rastInfo, Ref<LSPipelineState>& pPipeline, Ref<LSDevice>& pDevice) noexcept;
+        void CreateDepthStencil(const DepthStencil& depthStencil, Ref<LSPipelineState>& pPipeline, Ref<LSDevice>& pDevice) noexcept;
+        void CreateBlendState(const LSBlendState& blendState, Ref<LSPipelineState>& pPipeline, Ref<LSDevice>& pDevice) noexcept;
+        void CompileShaders(const ShaderMap& shaders, Ref<LSPipelineState>& pPipeline, Ref<LSDevice>& pDevice) noexcept;
+        void CreateShaderInput(const LSShaderInputSignature& inputSignature, Ref<LSPipelineState>& pPipeline, Ref<LSDevice>& pDevice) noexcept;
+        void CreateRenderTarget(const LSTextureInfo& renderTarget, Ref<LSPipelineState>& pPipeline, Ref<LSDevice>& pDevice) noexcept;
     };
+}
+
+module :private;
+namespace LS
+{
+    /*void PipelineFactory::CreateRasterizerState(const RasterizerInfo& rastInfo, Ref<LSPipelineState>& pPipeline, Ref<LSDevice>& pDevice) noexcept
+    {
+    }
+
+    void PipelineFactory::CreateDepthStencil(const DepthStencil& depthStencil, Ref<LSPipelineState>& pPipeline, Ref<LSDevice>& pDevice) noexcept
+    {
+    }
+
+    void PipelineFactory::CreateBlendState(const LSBlendState& blendState, Ref<LSPipelineState>& pPipeline, Ref<LSDevice>& pDevice) noexcept
+    {
+
+    }
+
+    void PipelineFactory::CompileShaders(const ShaderMap& shaders, Ref<LSPipelineState>& pPipeline, Ref<LSDevice>& pDevice) noexcept
+    {
+
+    }
+
+    void PipelineFactory::CreateShaderInput(const LSShaderInputSignature& inputSignature, Ref<LSPipelineState>& pPipeline, Ref<LSDevice>& pDevice) noexcept
+    {
+
+    }
+
+    void PipelineFactory::CreateRenderTarget(const LSTextureInfo& renderTarget, Ref<LSPipelineState>& pPipeline, Ref<LSDevice>& pDevice) noexcept
+    {
+
+    }*/
+
 }

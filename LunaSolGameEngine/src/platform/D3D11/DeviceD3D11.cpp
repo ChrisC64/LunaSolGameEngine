@@ -3,6 +3,7 @@
 import D3D11.Device;
 import Util.MSUtils;
 import LSData;
+import Util.HLSLUtils;
 
 namespace WRL = Microsoft::WRL;
 
@@ -274,6 +275,69 @@ namespace LS::Win32
     Microsoft::WRL::ComPtr<IDXGISwapChain1> DeviceD3D11::GetSwapChain() const noexcept
     {
         return m_pSwapchain;
+    }
+
+    bool DeviceD3D11::InitDevice() noexcept
+    {
+        try
+        {
+            CreateDevice();
+        }
+        catch (const std::exception& ex)
+        {
+            std::cout << std::format("{}\n", ex.what());
+            return false;
+        }
+
+        return true;
+    }
+
+    bool DeviceD3D11::CreateSwapchain(const LS::LSWindowBase* window, const LS::LSSwapchainInfo& swapchainInfo) noexcept
+    {
+        try
+        {
+            CreateSwapchain(window);
+        }
+        catch (const std::exception& ex)
+        {
+            std::cout << std::format("{}\n", ex.what());
+            return false;
+        }
+        return true;
+    }
+
+    bool DeviceD3D11::CreateVertexInput(const LS::LSShaderInputSignature& vertexInput, std::span<std::byte> pShaderBytecode) noexcept
+    {
+        auto layout = vertexInput.GetInputLayout();
+        auto results = Utils::BuildFromShaderElements(layout);
+        if (!results)
+        {
+            return false;
+        }
+
+        WRL::ComPtr<ID3D11InputLayout> pInputLayout = nullptr;
+        CreateInputLayout(results.value(), pShaderBytecode, &pInputLayout);
+        return true;
+    }
+
+    bool DeviceD3D11::CreateRenderTarget(const LS::LSTextureInfo& rtInfo) noexcept
+    {
+        return false;
+    }
+
+    bool DeviceD3D11::CreateDepthStencil(const LS::DepthStencil& dsInfo) noexcept
+    {
+        return false;
+    }
+
+    bool DeviceD3D11::CreateBlendState(const LS::LSBlendState& blendInfo) noexcept
+    {
+        return false;
+    }
+
+    auto DeviceD3D11::CreateContext() noexcept -> LSOptional<Ref<LS::LSContext>>
+    {
+        return {};
     }
 
     DXGI_SWAP_CHAIN_DESC1 DeviceD3D11::BuildSwapchainDesc1(const LSSwapchainInfo& info) const noexcept

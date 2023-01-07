@@ -10,7 +10,7 @@ namespace WRL = Microsoft::WRL;
 
 export namespace LS::Win32
 {
-    class DeviceD3D11
+    class DeviceD3D11 final : LSDevice
     {
     public:
         DeviceD3D11() = default;
@@ -36,6 +36,15 @@ export namespace LS::Win32
         WRL::ComPtr<ID3D11DeviceContext4>    GetImmediateContext() const noexcept;
         ID3D11DeviceContext*                 GetImmediateContextPtr() const noexcept;
         WRL::ComPtr<IDXGISwapChain1>         GetSwapChain() const noexcept;
+
+        // Inherited by LSDevice //
+        [[nodiscard]] virtual bool InitDevice() noexcept final;
+        [[nodiscard]] virtual bool CreateSwapchain(const LS::LSWindowBase* window, const LS::LSSwapchainInfo& swapchainInfo) noexcept final;
+        [[nodiscard]] virtual bool CreateVertexInput(const LS::LSShaderInputSignature& vertexInput, std::span<std::byte> pShaderBytecode) noexcept final;
+        [[nodiscard]] virtual bool CreateRenderTarget(const LS::LSTextureInfo& rtInfo) noexcept final;
+        [[nodiscard]] virtual bool CreateDepthStencil(const LS::DepthStencil& dsInfo) noexcept final;
+        [[nodiscard]] virtual bool CreateBlendState(const LS::LSBlendState& blendInfo) noexcept final;
+        [[nodiscard]] virtual auto CreateContext() noexcept -> LSOptional<Ref<LS::LSContext>> final;
 
     private:
         bool                                            m_bIsInitialized = false;

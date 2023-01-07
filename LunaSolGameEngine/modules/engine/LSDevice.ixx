@@ -2,20 +2,21 @@ module;
 #include "LSEFramework.h"
 
 export module Engine.LSDevice;
+
 import Engine.LSWindow;
 import LSData;
 import Util.StdUtils;
 
-export namespace LS
+namespace LS
 {
-    enum class DEVICE_TYPE : int8_t
+    export enum class DEVICE_TYPE : int8_t
     {
         HARDWARE,
         SOFTWARE,
         UNKNOWN
     };
 
-    enum class DEVICE_API
+    export enum class DEVICE_API
     {
         DIRECT3D_11,
         DIRECT3D_12,
@@ -26,7 +27,7 @@ export namespace LS
     /**
      * @brief Details how the object should be drawn
     */
-    enum class FILL_STATE : int8_t
+    export enum class FILL_STATE : int8_t
     {
         FILL,
         WIREFRAME
@@ -39,14 +40,14 @@ export namespace LS
      * Front means cull front facing triangles
      * Back will cull back facing triangles
     */
-    enum class CULL_METHOD : int8_t
+    export enum class CULL_METHOD : int8_t
     {
         NONE,
         FRONT,
         BACK
     };
 
-    enum class DEVICE_EVENT : int32_t
+    export enum class DEVICE_EVENT : int32_t
     {
         ON_DEVICE_CREATE,
         ON_DEVICE_SHUTDOWN,
@@ -85,7 +86,7 @@ export namespace LS
      * output, so considering the order in which you draw objects you may notice multiple
      * transparencies or other blending setups to create the effect you desire.
     */
-    enum class BLEND_FACTOR
+    export enum class BLEND_FACTOR
     {
         ZERO, // @brief Use a set of 0s for the blend factor equation
         ONE, // @brief Use a set of 1s for the blend factor equation 
@@ -102,7 +103,7 @@ export namespace LS
     /**
      * @brief Details the action to take on the blending procedure.
     */
-    enum class BLEND_OPERATION
+    export enum class BLEND_OPERATION
     {
         BLEND_ADD, // @brief Blends data by adding data from first and second objects
         BLEND_SUB, // @brief Blends data by subtracting data from first and second object
@@ -111,7 +112,7 @@ export namespace LS
         BLEND_MAX // @brief Find the max data between both sources and blend them
     };
 
-    struct LSBlendState
+    export struct LSBlendState
     {
         BLEND_OPERATION BlendOpRGB;
         BLEND_FACTOR SrcBF;
@@ -124,7 +125,7 @@ export namespace LS
     /**
      * @brief Details how to use the vertex buffer to render the vertices given
     */
-    enum class PRIMITIVE_TOPOLOGY
+    export enum class PRIMITIVE_TOPOLOGY
     {
         // TRIANGLES //
         TRIANGLE_LIST,
@@ -150,7 +151,7 @@ export namespace LS
      * but ALL_PASS means all comparisons will always be "true" or "pass"
      * the test.
     */
-    enum class EVAL_COMPARE
+    export enum class EVAL_COMPARE
     {
         NEVER_PASS = 0, //@brief condition never will pass
         LESS_PASS, //@brief condition is true when less than only
@@ -163,7 +164,7 @@ export namespace LS
     /**
      * @brief How to perform operations with the depth stencil tests
     */
-    enum class DEPTH_STENCIL_OPS
+    export enum class DEPTH_STENCIL_OPS
     {
         KEEP,
         ZERO,
@@ -178,7 +179,7 @@ export namespace LS
     /**
      * @brief
     */
-    struct LSSamplerState
+    export struct LSSamplerState
     {
         uint32_t AnisotropyLevel = 0;
         float MinLOD = 0;
@@ -188,9 +189,9 @@ export namespace LS
 
 
     // Callbacks // 
-    using OnDeviceEvent = std::function<void(DEVICE_EVENT)>;
+    export using OnDeviceEvent = std::function<void(DEVICE_EVENT)>;
 
-    struct RasterizerInfo
+    export struct RasterizerInfo
     {
         FILL_STATE Fill;
         CULL_METHOD Cull;
@@ -214,7 +215,7 @@ export namespace LS
         }
     };
 
-    struct LSDrawStateHashFunc
+    export struct LSDrawStateHashFunc
     {
         template<typename T = LS::RasterizerInfo>
         std::size_t operator()(T const& t) const noexcept
@@ -228,7 +229,7 @@ export namespace LS
         }
     };
 
-    struct LSSwapchainInfo
+    export struct LSSwapchainInfo
     {
         uint32_t            BufferSize{ 2u };
         uint32_t            Width;
@@ -239,12 +240,12 @@ export namespace LS
         uint16_t            MSQuality{ 0 };
     };
 
-    struct LSDeviceInfo
+    export struct LSDeviceInfo
     {
         std::string Info;
     };
 
-    struct LSDeviceSettings
+    export struct LSDeviceSettings
     {
         int32_t FPSTarget;
         bool IsVSync;
@@ -255,11 +256,10 @@ export namespace LS
         DEVICE_API DeviceApi;
     };
 
-
     /**
      * @brief A depth stencil object
     */
-    struct DepthStencil
+    export struct DepthStencil
     {
         LSTextureInfo DepthBuffer;
         bool IsDepthEnabled;
@@ -283,71 +283,25 @@ export namespace LS
         DepthStencilOps BackFace;// @brief Operations for back facing pixels
     };
 
-
-    class LSContext
-    {
-    protected:
-        LSContext() = default;
-
-    public:
-        ~LSContext() = default;
-        LSContext(const LSContext&) = delete;
-        LSContext(LSContext&&) = default;
-        LSContext& operator=(const LSContext&) = delete;
-        LSContext& operator=(LSContext&&) = default;
-
-    };
-
-    /**
-     * @brief Represents the GPU physical device 
-    */
-    class LSDevice
-    {
-    protected:
-        LSDevice() = default;
-
-    public:
-        ~LSDevice() = default;
-        LSDevice(LSDevice&&) = default;
-        LSDevice(const LSDevice&) = default;
-        LSDevice& operator=(const LSDevice&) = default;
-        LSDevice& operator=(LSDevice&&) = default;
-
-        OnDeviceEvent OnDeviceEvent;
-
-        /**
-         * @brief Initializes the device 
-         * @return true if successful, false if failed.
-        */
-        [[nodiscard]] virtual bool InitDevice() noexcept = 0;
-        [[nodiscard]] virtual bool CreateSwapchain(const LSWindowBase* window, const LSSwapchainInfo& swapchainInfo) noexcept = 0;
-        [[nodiscard]] virtual bool CreateVertexInput(const LSShaderInputSignature& vertexInput) noexcept = 0;
-        [[nodiscard]] virtual bool CreateRenderTarget(const LSTextureInfo& rtInfo) noexcept = 0;
-        [[nodiscard]] virtual bool CreateDepthStencil(const DepthStencil& dsInfo) noexcept = 0;
-        [[nodiscard]] virtual bool CreateBlendState(const LSBlendState& blendInfo) noexcept = 0;
-        [[nodiscard]] virtual LSOptional<Ref<LSContext>> CreateContext() noexcept = 0;
-    };
-
-
-    struct ShaderMap
+    export struct ShaderMap
     {
         std::unordered_map<SHADER_TYPE, std::vector<std::byte>> ShaderMap;
     };
 
-    struct BufferMap
+    export struct BufferMap
     {
         BUFFER_BIND_TYPE BindStage;
         uint16_t BindSlot;
         std::vector<std::byte> Data;
     };
 
-    struct TextureMap
+    export struct TextureMap
     {
         uint16_t BindSlot;
         LSTextureInfo Texture;
     };
 
-    struct SamplerMap
+    export struct SamplerMap
     {
         uint16_t BindSlot;
         LSSamplerState Sampler;
@@ -368,12 +322,12 @@ export namespace LS
      * - Resources - samplers, textures, and other shader resources - perhaps store as some key values
      *    so we aren't holding pointers, and can access them in some resource manager.
     */
-    struct LSPipelineState
+    export struct LSPipelineState
     {
         RasterizerInfo RasterizeState;
         LSBlendState BlendState;
         DepthStencil DepthStencil;
-        ShaderMap Shaders; 
+        ShaderMap Shaders;
         LSShaderInputSignature ShaderSignature;
         PRIMITIVE_TOPOLOGY Topology;
         LSTextureInfo RenderTarget;
@@ -383,4 +337,64 @@ export namespace LS
         std::vector<TextureMap> Textures;
         std::vector<BufferMap> Buffers;
     };
+
+    export class LSContext
+    {
+    protected:
+        LSContext() = default;
+
+    public:
+        virtual ~LSContext() = default;
+        LSContext(const LSContext&) = delete;
+        LSContext(LSContext&&) = default;
+        LSContext& operator=(const LSContext&) = delete;
+        LSContext& operator=(LSContext&&) = default;
+
+        /**
+         * @brief Sets the pipeline state and all required components to prepare the draw
+         * @param pipeline 
+        */
+        virtual void PreparePipeline(Ref<LSPipelineState> pipeline) noexcept = 0;
+
+        /**
+         * @brief Clears the render target associated with the given pipeline
+         * @param color The color values to set for the render target
+        */
+        virtual void Clear(const std::array<float, 4>& color) noexcept = 0;
+        
+        /**
+         * @brief Finalize the work and prepare it for presentation to the render target
+        */
+        virtual void Present() noexcept = 0;
+    };
+
+    /**
+     * @brief Represents the GPU physical device 
+    */
+    export class LSDevice
+    {
+    protected:
+        LSDevice() = default;
+
+    public:
+        virtual ~LSDevice() = default;
+        LSDevice(LSDevice&&) = default;
+        LSDevice(const LSDevice&) = default;
+        LSDevice& operator=(const LSDevice&) = default;
+        LSDevice& operator=(LSDevice&&) = default;
+
+        OnDeviceEvent OnDeviceEvent;
+
+        /**
+         * @brief Initializes the device 
+         * @return true if successful, false if failed.
+        */
+        [[nodiscard]] virtual bool InitDevice() noexcept = 0;
+        [[nodiscard]] virtual bool CreateSwapchain(const LSWindowBase* window, const LSSwapchainInfo& swapchainInfo) noexcept = 0;
+        [[nodiscard]] virtual bool CreateVertexInput(const LSShaderInputSignature& vertexInput, std::span<std::byte> pShaderBytecode) noexcept = 0;
+        [[nodiscard]] virtual bool CreateRenderTarget(const LSTextureInfo& rtInfo) noexcept = 0;
+        [[nodiscard]] virtual bool CreateDepthStencil(const DepthStencil& dsInfo) noexcept = 0;
+        [[nodiscard]] virtual bool CreateBlendState(const LSBlendState& blendInfo) noexcept = 0;
+        [[nodiscard]] virtual auto CreateContext() noexcept -> LSOptional<Ref<LSContext>> = 0;
+    };    
 }
