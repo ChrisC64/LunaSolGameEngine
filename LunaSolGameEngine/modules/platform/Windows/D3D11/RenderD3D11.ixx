@@ -4,6 +4,7 @@ module;
 export module D3D11.RenderD3D11;
 import Util.MSUtils;
 import LSData;
+import Engine.LSDevice;
 
 namespace WRL = Microsoft::WRL;
 
@@ -398,5 +399,43 @@ export namespace LS::Win32
             return;
 
         pContext->IASetIndexBuffer(pBuffer, format, offset);
+    }
+
+    constexpr auto BuildSwapchainDesc1(const LS::LSSwapchainInfo& info) noexcept -> DXGI_SWAP_CHAIN_DESC1
+    {
+        DXGI_SWAP_CHAIN_DESC1 swDesc1{};
+        swDesc1.BufferCount = info.BufferSize;
+        swDesc1.Height = info.Height;
+        swDesc1.Width = info.Width;
+        using enum PIXEL_COLOR_FORMAT;
+        DXGI_FORMAT format;
+        switch (info.PixelFormat)
+        {
+        case RGBA8_UNORM:
+            format = DXGI_FORMAT_R8G8B8A8_UNORM;
+            break;
+        case BGRA8_UNORM:
+            format = DXGI_FORMAT_B8G8R8A8_UNORM;
+            break;
+        case RGBA16_UNORM:
+            format = DXGI_FORMAT_R16G16B16A16_UNORM;
+            break;
+        case BGRA16_UNORM:
+            format = DXGI_FORMAT_R16G16B16A16_UNORM;
+            break;
+        default:
+            format = DXGI_FORMAT_R8G8B8A8_UNORM;
+            break;
+        }
+
+        swDesc1.Format = format;
+        swDesc1.Stereo = false;
+        swDesc1.SampleDesc.Count = 1;
+        swDesc1.SampleDesc.Quality = 0;
+        swDesc1.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+        swDesc1.Scaling = DXGI_SCALING_NONE;
+        swDesc1.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+        swDesc1.Flags = 0;
+        return swDesc1;
     }
 }

@@ -13,42 +13,42 @@ export namespace LS
         PipelineFactory() noexcept = default;
         ~PipelineFactory() = default;
 
-        void CreateRasterizerState(const RasterizerInfo& rastInfo, Ref<LSPipelineState>& pPipeline, Ref<LSDevice>& pDevice) noexcept;
-        void CreateDepthStencil(const DepthStencil& depthStencil, Ref<LSPipelineState>& pPipeline, Ref<LSDevice>& pDevice) noexcept;
-        void CreateBlendState(const LSBlendState& blendState, Ref<LSPipelineState>& pPipeline, Ref<LSDevice>& pDevice) noexcept;
-        void CompileShaders(const ShaderMap& shaders, Ref<LSPipelineState>& pPipeline, Ref<LSDevice>& pDevice) noexcept;
-        void CreateShaderInput(const LSShaderInputSignature& inputSignature, Ref<LSPipelineState>& pPipeline, Ref<LSDevice>& pDevice) noexcept;
-        void CreateRenderTarget(const LSTextureInfo& renderTarget, Ref<LSPipelineState>& pPipeline, Ref<LSDevice>& pDevice) noexcept;
+        void CreateRasterizerState(const RasterizerInfo& rastInfo, Ref<PipelineDescriptor>& pPipeline, Ref<ILSDevice>& pDevice) noexcept;
+        void CreateDepthStencil(const DepthStencil& depthStencil, Ref<PipelineDescriptor>& pPipeline, Ref<ILSDevice>& pDevice) noexcept;
+        void CreateBlendState(const LSBlendState& blendState, Ref<PipelineDescriptor>& pPipeline, Ref<ILSDevice>& pDevice) noexcept;
+        void CompileShaders(const ShaderMap& shaders, Ref<PipelineDescriptor>& pPipeline, Ref<ILSDevice>& pDevice) noexcept;
+        void CreateShaderInput(const LSShaderInputSignature& inputSignature, Ref<PipelineDescriptor>& pPipeline, Ref<ILSDevice>& pDevice) noexcept;
+        void CreateRenderTarget(const LSTextureInfo& renderTarget, Ref<PipelineDescriptor>& pPipeline, Ref<ILSDevice>& pDevice) noexcept;
     };
 }
 
 module :private;
 namespace LS
 {
-    /*void PipelineFactory::CreateRasterizerState(const RasterizerInfo& rastInfo, Ref<LSPipelineState>& pPipeline, Ref<LSDevice>& pDevice) noexcept
+    /*void PipelineFactory::CreateRasterizerState(const RasterizerInfo& rastInfo, Ref<PipelineDescriptor>& pPipeline, Ref<ILSDevice>& pDevice) noexcept
     {
     }
 
-    void PipelineFactory::CreateDepthStencil(const DepthStencil& depthStencil, Ref<LSPipelineState>& pPipeline, Ref<LSDevice>& pDevice) noexcept
+    void PipelineFactory::CreateDepthStencil(const DepthStencil& depthStencil, Ref<PipelineDescriptor>& pPipeline, Ref<ILSDevice>& pDevice) noexcept
     {
     }
 
-    void PipelineFactory::CreateBlendState(const LSBlendState& blendState, Ref<LSPipelineState>& pPipeline, Ref<LSDevice>& pDevice) noexcept
-    {
-
-    }
-
-    void PipelineFactory::CompileShaders(const ShaderMap& shaders, Ref<LSPipelineState>& pPipeline, Ref<LSDevice>& pDevice) noexcept
+    void PipelineFactory::CreateBlendState(const LSBlendState& blendState, Ref<PipelineDescriptor>& pPipeline, Ref<ILSDevice>& pDevice) noexcept
     {
 
     }
 
-    void PipelineFactory::CreateShaderInput(const LSShaderInputSignature& inputSignature, Ref<LSPipelineState>& pPipeline, Ref<LSDevice>& pDevice) noexcept
+    void PipelineFactory::CompileShaders(const ShaderMap& shaders, Ref<PipelineDescriptor>& pPipeline, Ref<ILSDevice>& pDevice) noexcept
     {
 
     }
 
-    void PipelineFactory::CreateRenderTarget(const LSTextureInfo& renderTarget, Ref<LSPipelineState>& pPipeline, Ref<LSDevice>& pDevice) noexcept
+    void PipelineFactory::CreateShaderInput(const LSShaderInputSignature& inputSignature, Ref<PipelineDescriptor>& pPipeline, Ref<ILSDevice>& pDevice) noexcept
+    {
+
+    }
+
+    void PipelineFactory::CreateRenderTarget(const LSTextureInfo& renderTarget, Ref<PipelineDescriptor>& pPipeline, Ref<ILSDevice>& pDevice) noexcept
     {
 
     }*/

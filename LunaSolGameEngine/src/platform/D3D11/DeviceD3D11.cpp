@@ -1,6 +1,7 @@
 #include "LSEFramework.h"
 
 import D3D11.Device;
+import D3D11.RenderD3D11;
 import Util.MSUtils;
 import LSData;
 import Util.HLSLUtils;
@@ -107,7 +108,7 @@ namespace LS::Win32
         m_bIsInitialized = true;
     }
 
-    void DeviceD3D11::CreateSwapchain(HWND winHandle, const LSSwapchainInfo& swapchainInfo) 
+    void DeviceD3D11::CreateSwapchain(HWND winHandle, const LS::LSSwapchainInfo& swapchainInfo)
     {
         using namespace Microsoft::WRL;
 
@@ -124,23 +125,21 @@ namespace LS::Win32
         hr = dxgiAdapter->GetParent(IID_PPV_ARGS(&factory));
         Utils::ThrowIfFailed(hr, "Failed to find IDXGIFactory2 for Adapter");
 
-        ComPtr<IDXGISwapChain1> swapchain1;
         hr = factory->CreateSwapChainForHwnd(
             m_pDevice.Get(),
             winHandle,
             &swDesc1,
             nullptr,
             nullptr,
-            swapchain1.GetAddressOf()
+            &m_pSwapchain
         );
 
         Utils::ThrowIfFailed(hr, "Failed to create swap chain for HWND in DX11 Device");
-        swapchain1.As(&m_pSwapchain);
     }
 
     void DeviceD3D11::CreateSwapchain(const LSWindowBase* window, PIXEL_COLOR_FORMAT format, uint32_t bufferSize)
     {
-        LSSwapchainInfo info{
+        LS::LSSwapchainInfo info{
             .BufferSize = bufferSize,
             .Width = window->GetWidth(),
             .Height = window->GetHeight(),
@@ -159,14 +158,14 @@ namespace LS::Win32
             return E_NOT_SET; // Device is not set
         return m_pDevice->CreateDeferredContext(0, ppDeferredContext);
     }
-    
+
     HRESULT DeviceD3D11::CreateDeferredContext2(ID3D11DeviceContext2** ppDeferredContext) noexcept
     {
         if (!m_pDevice)
             return E_NOT_SET; // Device is not set
         return m_pDevice->CreateDeferredContext2(0, ppDeferredContext);
     }
-    
+
     HRESULT DeviceD3D11::CreateDeferredContext3(ID3D11DeviceContext3** ppDeferredContext) noexcept
     {
         if (!m_pDevice)
@@ -181,7 +180,7 @@ namespace LS::Win32
         return m_pDevice->CreateInputLayout(inputs.data(), static_cast<UINT>(inputs.size()), byteCode.data(), byteCode.size(), ppInputLayout);
     }
 
-    HRESULT DeviceD3D11::CreateRenderTargetView(ID3D11Resource* pResource, ID3D11RenderTargetView** ppRTView, 
+    HRESULT DeviceD3D11::CreateRenderTargetView(ID3D11Resource* pResource, ID3D11RenderTargetView** ppRTView,
         const D3D11_RENDER_TARGET_VIEW_DESC* rtvDesc) noexcept
     {
         assert(m_pDevice);
@@ -198,28 +197,27 @@ namespace LS::Win32
         return m_pDevice->CreateRenderTargetView1(pResource, rtvDesc, ppRTView);
     }
 
-    HRESULT DeviceD3D11::CreateDepthStencilView(ID3D11RenderTargetView* pRenderTargetView, ID3D11Resource* pResource, 
+    HRESULT DeviceD3D11::CreateDepthStencilView(ID3D11RenderTargetView* pRenderTargetView, ID3D11Resource* pResource,
         ID3D11DepthStencilView** ppDepthStencil, const D3D11_DEPTH_STENCIL_VIEW_DESC* pDesc /*= nullptr*/) noexcept
     {
         assert(m_pDevice);
         assert(pRenderTargetView);
         assert(pResource);
         return m_pDevice->CreateDepthStencilView(pResource, pDesc, ppDepthStencil);
-    }    
-    
+    }
+
     HRESULT DeviceD3D11::CreateDepthStencilViewForSwapchain(ID3D11RenderTargetView* pRenderTargetView, ID3D11DepthStencilView** ppDepthStencil, DXGI_FORMAT format /*= DXGI_FORMAT_D24_UNORM_S8_UINT*/) noexcept
     {
         assert(m_pDevice);
         assert(pRenderTargetView);
         assert(m_pSwapchain);
 
-        WRL::ComPtr<ID3D11Texture2D> frameBuffer;
-        auto result = m_pSwapchain->GetBuffer(0, IID_PPV_ARGS(&frameBuffer));
+        auto result = m_pSwapchain->GetBuffer(0, IID_PPV_ARGS(&m_pBackBufferFrame));
         if (FAILED(result))
             return result;
 
         D3D11_TEXTURE2D_DESC depthBufferDesc{};
-        frameBuffer->GetDesc(&depthBufferDesc);
+        m_pBackBufferFrame->GetDesc(&depthBufferDesc);
         depthBufferDesc.Format = format;
         depthBufferDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
 
@@ -227,7 +225,6 @@ namespace LS::Win32
         result = m_pDevice->CreateTexture2D(&depthBufferDesc, nullptr, &depthBuffer);
         if (FAILED(result))
             return result;
-        
 
         return m_pDevice->CreateDepthStencilView(depthBuffer.Get(), nullptr, ppDepthStencil);
     }
@@ -277,11 +274,12 @@ namespace LS::Win32
         return m_pSwapchain;
     }
 
-    bool DeviceD3D11::InitDevice() noexcept
+    bool DeviceD3D11::InitDevice(const LS::LSDeviceSettings& settings) noexcept
     {
         try
         {
             CreateDevice();
+            CreateSwapchain(reinterpret_cast<HWND>(settings.WindowHandle), settings.SwapchainInfo);
         }
         catch (const std::exception& ex)
         {
@@ -292,89 +290,9 @@ namespace LS::Win32
         return true;
     }
 
-    bool DeviceD3D11::CreateSwapchain(const LS::LSWindowBase* window, const LS::LSSwapchainInfo& swapchainInfo) noexcept
+    auto DeviceD3D11::CreateContext() noexcept -> LSOptional<Ref<LS::ILSContext>>
     {
-        try
-        {
-            CreateSwapchain(window);
-        }
-        catch (const std::exception& ex)
-        {
-            std::cout << std::format("{}\n", ex.what());
-            return false;
-        }
-        return true;
-    }
-
-    bool DeviceD3D11::CreateVertexInput(const LS::LSShaderInputSignature& vertexInput, std::span<std::byte> pShaderBytecode) noexcept
-    {
-        auto layout = vertexInput.GetInputLayout();
-        auto results = Utils::BuildFromShaderElements(layout);
-        if (!results)
-        {
-            return false;
-        }
-
-        WRL::ComPtr<ID3D11InputLayout> pInputLayout = nullptr;
-        CreateInputLayout(results.value(), pShaderBytecode, &pInputLayout);
-        return true;
-    }
-
-    bool DeviceD3D11::CreateRenderTarget(const LS::LSTextureInfo& rtInfo) noexcept
-    {
-        return false;
-    }
-
-    bool DeviceD3D11::CreateDepthStencil(const LS::DepthStencil& dsInfo) noexcept
-    {
-        return false;
-    }
-
-    bool DeviceD3D11::CreateBlendState(const LS::LSBlendState& blendInfo) noexcept
-    {
-        return false;
-    }
-
-    auto DeviceD3D11::CreateContext() noexcept -> LSOptional<Ref<LS::LSContext>>
-    {
+        assert(m_pDevice);
         return {};
     }
-
-    DXGI_SWAP_CHAIN_DESC1 DeviceD3D11::BuildSwapchainDesc1(const LSSwapchainInfo& info) const noexcept
-    {
-        DXGI_SWAP_CHAIN_DESC1 swDesc1{};
-        swDesc1.BufferCount = info.BufferSize;
-        swDesc1.Height = info.Height;
-        swDesc1.Width = info.Width;
-        using enum PIXEL_COLOR_FORMAT;
-        DXGI_FORMAT format;
-        switch (info.PixelFormat)
-        {
-        case RGBA8_UNORM:
-            format = DXGI_FORMAT_R8G8B8A8_UNORM;
-            break;
-        case BGRA8_UNORM:
-            format = DXGI_FORMAT_B8G8R8A8_UNORM;
-            break;
-        case RGBA16_UNORM:
-            format = DXGI_FORMAT_R16G16B16A16_UNORM;
-            break;
-        case BGRA16_UNORM:
-            format = DXGI_FORMAT_R16G16B16A16_UNORM;
-            break;
-        default:
-            format = DXGI_FORMAT_R8G8B8A8_UNORM;
-            break;
-        }
-        swDesc1.Format = format;
-        swDesc1.Stereo = false;
-        swDesc1.SampleDesc.Count = 1;
-        swDesc1.SampleDesc.Quality = 0;
-        swDesc1.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-        swDesc1.Scaling = DXGI_SCALING_NONE;
-        swDesc1.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
-        swDesc1.Flags = 0;
-        return swDesc1;
-    }
-    
 }

@@ -245,17 +245,6 @@ namespace LS
         std::string Info;
     };
 
-    export struct LSDeviceSettings
-    {
-        int32_t FPSTarget;
-        bool IsVSync;
-        int32_t FrameBufferCount;
-        LSTextureInfo RenderTargetDesc;
-        LSSwapchainInfo SwapchainInfo;
-        DEVICE_TYPE DeviceType;
-        DEVICE_API DeviceApi;
-    };
-
     /**
      * @brief A depth stencil object
     */
@@ -282,6 +271,19 @@ namespace LS
         DepthStencilOps FrontFace;// @brief Operations for front facing pixels
         DepthStencilOps BackFace;// @brief Operations for back facing pixels
     };
+
+    export struct LSDeviceSettings
+    {
+        int32_t FPSTarget;
+        bool IsVSync;
+        int32_t FrameBufferCount;
+        LSTextureInfo RenderTargetDesc;
+        LSSwapchainInfo SwapchainInfo;
+        DEVICE_TYPE DeviceType;
+        DEVICE_API DeviceApi;
+        LS::LSWindowHandle WindowHandle;
+    };
+
 
     export struct ShaderMap
     {
@@ -322,7 +324,7 @@ namespace LS
      * - Resources - samplers, textures, and other shader resources - perhaps store as some key values
      *    so we aren't holding pointers, and can access them in some resource manager.
     */
-    export struct LSPipelineState
+    export struct PipelineDescriptor
     {
         RasterizerInfo RasterizeState;
         LSBlendState BlendState;
@@ -338,23 +340,23 @@ namespace LS
         std::vector<BufferMap> Buffers;
     };
 
-    export class LSContext
+    export class ILSContext
     {
     protected:
-        LSContext() = default;
+        ILSContext() = default;
 
     public:
-        virtual ~LSContext() = default;
-        LSContext(const LSContext&) = delete;
-        LSContext(LSContext&&) = default;
-        LSContext& operator=(const LSContext&) = delete;
-        LSContext& operator=(LSContext&&) = default;
+        virtual ~ILSContext() = default;
+        ILSContext(const ILSContext&) = delete;
+        ILSContext(ILSContext&&) = default;
+        ILSContext& operator=(const ILSContext&) = delete;
+        ILSContext& operator=(ILSContext&&) = default;
 
         /**
          * @brief Sets the pipeline state and all required components to prepare the draw
          * @param pipeline 
         */
-        virtual void PreparePipeline(Ref<LSPipelineState> pipeline) noexcept = 0;
+        virtual void PreparePipeline(Ref<PipelineDescriptor> pipeline) noexcept = 0;
 
         /**
          * @brief Clears the render target associated with the given pipeline
@@ -371,17 +373,17 @@ namespace LS
     /**
      * @brief Represents the GPU physical device 
     */
-    export class LSDevice
+    export class ILSDevice
     {
     protected:
-        LSDevice() = default;
+        ILSDevice() = default;
 
     public:
-        virtual ~LSDevice() = default;
-        LSDevice(LSDevice&&) = default;
-        LSDevice(const LSDevice&) = default;
-        LSDevice& operator=(const LSDevice&) = default;
-        LSDevice& operator=(LSDevice&&) = default;
+        virtual ~ILSDevice() = default;
+        ILSDevice(ILSDevice&&) = default;
+        ILSDevice(const ILSDevice&) = default;
+        ILSDevice& operator=(const ILSDevice&) = default;
+        ILSDevice& operator=(ILSDevice&&) = default;
 
         OnDeviceEvent OnDeviceEvent;
 
@@ -389,12 +391,33 @@ namespace LS
          * @brief Initializes the device 
          * @return true if successful, false if failed.
         */
-        [[nodiscard]] virtual bool InitDevice() noexcept = 0;
-        [[nodiscard]] virtual bool CreateSwapchain(const LSWindowBase* window, const LSSwapchainInfo& swapchainInfo) noexcept = 0;
-        [[nodiscard]] virtual bool CreateVertexInput(const LSShaderInputSignature& vertexInput, std::span<std::byte> pShaderBytecode) noexcept = 0;
-        [[nodiscard]] virtual bool CreateRenderTarget(const LSTextureInfo& rtInfo) noexcept = 0;
-        [[nodiscard]] virtual bool CreateDepthStencil(const DepthStencil& dsInfo) noexcept = 0;
-        [[nodiscard]] virtual bool CreateBlendState(const LSBlendState& blendInfo) noexcept = 0;
-        [[nodiscard]] virtual auto CreateContext() noexcept -> LSOptional<Ref<LSContext>> = 0;
-    };    
+        [[nodiscard]] virtual bool InitDevice(const LSDeviceSettings& settings) noexcept = 0;
+        [[nodiscard]] virtual auto CreateContext() noexcept -> LSOptional<Ref<ILSContext>> = 0;
+    };
+
+    export class ILSRenderer
+    {
+    protected:
+        explicit ILSRenderer(Ref<ILSDevice> pDevice) : m_pDevice(std::move(pDevice))
+        {
+        }
+
+        Ref<ILSDevice> m_pDevice;
+
+    public:
+        virtual ~ILSRenderer() = default;
+
+        /**
+         * @brief Creates a context from the device
+         * @return the context object 
+        */
+        virtual auto CreateContext() noexcept -> Ref<ILSContext> = 0;
+
+        /**
+         * @brief Prepares the Context's commands for the render queue to be presented
+         * @param pContext The context with commands to perform with
+        */
+        virtual void QueueCommands(Ref<ILSContext>& pContext) noexcept = 0;
+
+    };
 }
