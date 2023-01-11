@@ -38,8 +38,12 @@ export namespace LS::Win32
         WRL::ComPtr<IDXGISwapChain1>         GetSwapChain() const noexcept;
 
         // Inherited by ILSDevice //
-        [[nodiscard]] virtual bool InitDevice(const LS::LSDeviceSettings& settings) noexcept final;
-        [[nodiscard]] virtual auto CreateContext() noexcept -> LSOptional<Ref<LS::ILSContext>> final;
+        [[nodiscard]] 
+        virtual bool InitDevice(const LS::LSDeviceSettings& settings) noexcept final;
+        
+        [[nodiscard]] 
+        virtual auto CreateContext() noexcept -> LSOptional<Ref<LS::ILSContext>> final;
+        virtual void Shutdown() noexcept final;
 
     private:
         bool                                            m_bIsInitialized = false;

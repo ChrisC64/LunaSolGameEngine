@@ -84,7 +84,7 @@
     <ClCompile Include="modules\helper\LSCommonTypes.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="modules\data\LSData.ixx">
+    <ClCompile Include="modules\data\DataLib.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="modules\platform\Windows\D3D11\D3D11Lib.ixx">
@@ -112,6 +112,15 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="modules\engine\LSDefinitions.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\platform\Windows\D3D11\PipelineFactoryD3D11.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\utils\Util.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\platform\D3D11\PipelineFactoryD3D11.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

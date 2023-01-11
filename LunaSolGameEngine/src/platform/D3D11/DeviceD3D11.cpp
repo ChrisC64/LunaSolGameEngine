@@ -21,6 +21,7 @@ namespace LS::Win32
             Utils::ComRelease(m_pDebug.GetAddressOf());
         }
 #endif
+        Shutdown();
     }
 
     void DeviceD3D11::CreateDevice(bool isSingleThreaded /*= false*/)
@@ -284,9 +285,11 @@ namespace LS::Win32
         catch (const std::exception& ex)
         {
             std::cout << std::format("{}\n", ex.what());
+            m_bIsInitialized = false;
             return false;
         }
 
+        m_bIsInitialized = true;
         return true;
     }
 
@@ -294,5 +297,10 @@ namespace LS::Win32
     {
         assert(m_pDevice);
         return {};
+    }
+
+    void DeviceD3D11::Shutdown() noexcept
+    {
+
     }
 }
