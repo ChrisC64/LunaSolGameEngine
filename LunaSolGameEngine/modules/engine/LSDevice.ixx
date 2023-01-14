@@ -112,14 +112,27 @@ namespace LS
         BLEND_MAX // @brief Find the max data between both sources and blend them
     };
 
+    export enum class COLOR_CHANNEL_MASK : uint8_t
+    {
+        RED = 1,
+        GREEN = 2,
+        BLUE = 4,
+        ALPHA = 8,
+        ALL = ( ( (RED | GREEN) | BLUE) | ALPHA)
+    };
+
     export struct LSBlendState
     {
+        bool IsAlphaSampling;
+        bool IsIndepdentBlend;
+        bool IsEnabled;
         BLEND_OPERATION BlendOpRGB;
         BLEND_FACTOR SrcBF;
         BLEND_FACTOR DestBF;
         BLEND_OPERATION BlendOpAlpha;
         BLEND_FACTOR AlphaSrcBF;
         BLEND_FACTOR AlphaDestBF;
+        COLOR_CHANNEL_MASK Mask;
     };
 
     /**

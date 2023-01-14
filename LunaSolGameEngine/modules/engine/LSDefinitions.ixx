@@ -1,10 +1,9 @@
 module;
 #include <DirectXMath.h>
 #include <wrl/client.h>
-
+#include <memory>
+#include <optional>
 export module Engine.LSDefinitions;
-import <memory>;
-import <optional>;
 
 export 
 {

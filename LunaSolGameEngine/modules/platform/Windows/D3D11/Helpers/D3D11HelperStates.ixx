@@ -65,7 +65,7 @@ export namespace LS::Win32
 
         return common.CullNone();
     }
-    
+
     [[nodiscard]]
     auto CreateCullClockwiseState(ID3D11Device* pDevice) noexcept -> LSOptional<ID3D11RasterizerState*>
     {
@@ -73,7 +73,7 @@ export namespace LS::Win32
 
         return common.CullClockwise();
     }
-    
+
     [[nodiscard]]
     auto CreateCullCounterClockwiseState(ID3D11Device* pDevice) noexcept -> LSOptional<ID3D11RasterizerState*>
     {
@@ -81,7 +81,7 @@ export namespace LS::Win32
 
         return common.CullCounterClockwise();
     }
-    
+
     [[nodiscard]]
     auto CreateWireframeState(ID3D11Device* pDevice) noexcept -> LSOptional<ID3D11RasterizerState*>
     {
@@ -127,7 +127,7 @@ export namespace LS::Win32
         DirectX::CommonStates commonState(pDevice);
         return commonState.DepthNone();
     }
-    
+
     [[nodiscard]]
     auto CreateDepthReadState(ID3D11Device* pDevice) noexcept -> LSOptional<ID3D11DepthStencilState*>
     {
@@ -138,7 +138,7 @@ export namespace LS::Win32
         DirectX::CommonStates commonState(pDevice);
         return commonState.DepthRead();
     }
-    
+
     [[nodiscard]]
     auto CreateDepthReverseZState(ID3D11Device* pDevice) noexcept -> LSOptional<ID3D11DepthStencilState*>
     {
@@ -149,7 +149,7 @@ export namespace LS::Win32
         DirectX::CommonStates commonState(pDevice);
         return commonState.DepthReverseZ();
     }
-    
+
     [[nodiscard]]
     auto CreateDepthReadReverseZState(ID3D11Device* pDevice) noexcept -> LSOptional<ID3D11DepthStencilState*>
     {
@@ -160,8 +160,105 @@ export namespace LS::Win32
         DirectX::CommonStates commonState(pDevice);
         return commonState.DepthReadReverseZ();
     }
-    
+
     // Blend State //
+    [[nodiscard]]
+    auto CreateBlendState1(ID3D11Device5* pDevice, const LSBlendState& blendState) -> LSOptional<ID3D11BlendState1*>
+    {
+        assert(pDevice);
+        if (!pDevice)
+            return std::nullopt;
+
+        CD3D11_BLEND_DESC1 blendDesc;
+        blendDesc.AlphaToCoverageEnable = blendState.IsAlphaSampling;
+        blendDesc.IndependentBlendEnable = blendState.IsIndepdentBlend;
+
+        blendDesc.RenderTarget[0].BlendEnable = blendState.IsEnabled;
+
+        auto convertBlendOperation = [](BLEND_OPERATION op) -> D3D11_BLEND_OP
+        {
+            using enum BLEND_OPERATION;
+            switch (op)
+            {
+            case BLEND_ADD:
+                return D3D11_BLEND_OP_ADD;
+            case BLEND_SUB:
+                return D3D11_BLEND_OP_SUBTRACT;
+            case BLEND_REV_SUB:
+                return D3D11_BLEND_OP_REV_SUBTRACT;
+            case BLEND_MIN:
+                return D3D11_BLEND_OP_MIN;
+            case BLEND_MAX:
+                return D3D11_BLEND_OP_MAX;
+            default:
+                return D3D11_BLEND_OP_ADD;
+            }
+        };
+
+        auto convertBlend = [](BLEND_FACTOR factor) -> D3D11_BLEND
+        {
+            using enum BLEND_FACTOR;
+            switch (factor)
+            {
+            case ZERO:
+                return D3D11_BLEND::D3D11_BLEND_ZERO;
+            case ONE:
+                return D3D11_BLEND::D3D11_BLEND_ONE;
+            case SRC_COLOR:
+                return D3D11_BLEND::D3D11_BLEND_SRC_COLOR;
+            case DEST_COLOR:
+                return D3D11_BLEND::D3D11_BLEND_DEST_COLOR;
+            case SRC_ALPHA:
+                return D3D11_BLEND::D3D11_BLEND_SRC_ALPHA;
+            case DEST_ALPHA:
+                return D3D11_BLEND::D3D11_BLEND_DEST_ALPHA;
+            case INV_SRC_COLOR:
+                return D3D11_BLEND::D3D11_BLEND_INV_SRC_ALPHA;
+            case INV_SRC_ALPHA:
+                return D3D11_BLEND::D3D11_BLEND_INV_SRC_ALPHA;
+            case INV_DEST_COLOR:
+                return D3D11_BLEND::D3D11_BLEND_INV_DEST_COLOR;
+            case INV_DEST_ALPHA:
+                return D3D11_BLEND::D3D11_BLEND_INV_DEST_ALPHA;
+            default:
+                return D3D11_BLEND::D3D11_BLEND_ZERO;
+            }
+        };
+
+        auto writeMask = [](COLOR_CHANNEL_MASK mask) -> D3D11_COLOR_WRITE_ENABLE
+        {
+            using enum COLOR_CHANNEL_MASK;
+            switch (mask)
+            {
+            case RED:
+                return D3D11_COLOR_WRITE_ENABLE::D3D11_COLOR_WRITE_ENABLE_RED;
+            case GREEN:
+                return D3D11_COLOR_WRITE_ENABLE::D3D11_COLOR_WRITE_ENABLE_GREEN;
+            case BLUE:
+                return D3D11_COLOR_WRITE_ENABLE::D3D11_COLOR_WRITE_ENABLE_BLUE;
+            case ALPHA:
+                return D3D11_COLOR_WRITE_ENABLE::D3D11_COLOR_WRITE_ENABLE_ALPHA;
+            case ALL:
+                return D3D11_COLOR_WRITE_ENABLE::D3D11_COLOR_WRITE_ENABLE_ALL;
+            }
+        };
+
+        blendDesc.RenderTarget[0].SrcBlend = convertBlend(blendState.SrcBF);
+        blendDesc.RenderTarget[0].DestBlend = convertBlend(blendState.DestBF);
+        blendDesc.RenderTarget[0].BlendOp = convertBlendOperation(blendState.BlendOpRGB);
+        blendDesc.RenderTarget[0].SrcBlendAlpha = convertBlend(blendState.AlphaSrcBF);
+        blendDesc.RenderTarget[0].DestBlendAlpha = convertBlend(blendState.AlphaDestBF);
+        blendDesc.RenderTarget[0].BlendOpAlpha = convertBlendOperation(blendState.BlendOpAlpha);
+        blendDesc.RenderTarget[0].RenderTargetWriteMask = writeMask(blendState.Mask);
+
+
+        ID3D11BlendState1* pBlend;
+        HRESULT hr = pDevice->CreateBlendState1(&blendDesc, &pBlend);
+        if (FAILED(hr))
+            return std::nullopt;
+        return pBlend;
+    }
+
     [[nodiscard]]
     auto CreateBlendState1(ID3D11Device5* pDevice, const D3D11_BLEND_DESC1& blendDesc) -> LSOptional<ID3D11BlendState1*>
     {
@@ -187,7 +284,7 @@ export namespace LS::Win32
         DirectX::CommonStates common(pDevice);
         return common.AlphaBlend();
     }
-    
+
     [[nodiscard]]
     auto CreateOpaqueState(ID3D11Device* pDevice) noexcept -> LSOptional<ID3D11BlendState*>
     {
@@ -198,7 +295,7 @@ export namespace LS::Win32
         DirectX::CommonStates common(pDevice);
         return common.Opaque();
     }
-    
+
     [[nodiscard]]
     auto CreateAdditiveState(ID3D11Device* pDevice) noexcept -> LSOptional<ID3D11BlendState*>
     {
@@ -209,7 +306,7 @@ export namespace LS::Win32
         DirectX::CommonStates common(pDevice);
         return common.Additive();
     }
-    
+
     [[nodiscard]]
     auto CreateNonPremultipliedState(ID3D11Device* pDevice) noexcept -> LSOptional<ID3D11BlendState*>
     {
@@ -258,7 +355,7 @@ export namespace LS::Win32
         DirectX::CommonStates commonState(pDevice);
         return commonState.PointClamp();
     }
-    
+
     [[nodiscard]]
     auto CreateLinearWrapSampler(ID3D11Device* pDevice) noexcept -> LSOptional<ID3D11SamplerState*>
     {
@@ -269,7 +366,7 @@ export namespace LS::Win32
         DirectX::CommonStates commonState(pDevice);
         return commonState.LinearWrap();
     }
-    
+
     [[nodiscard]]
     auto CreateLinearClampSampler(ID3D11Device* pDevice) noexcept -> LSOptional<ID3D11SamplerState*>
     {
@@ -280,7 +377,7 @@ export namespace LS::Win32
         DirectX::CommonStates commonState(pDevice);
         return commonState.LinearClamp();
     }
-    
+
     [[nodiscard]]
     auto CreateAnisotropicWrapSampler(ID3D11Device* pDevice) noexcept -> LSOptional<ID3D11SamplerState*>
     {
@@ -291,7 +388,7 @@ export namespace LS::Win32
         DirectX::CommonStates commonState(pDevice);
         return commonState.AnisotropicWrap();
     }
-    
+
     [[nodiscard]]
     auto CreateAnisotropicClampSampler(ID3D11Device* pDevice) noexcept -> LSOptional<ID3D11SamplerState*>
     {
@@ -314,7 +411,7 @@ export namespace LS::Win32
     }
 
     // Depth Stencil State //
-    constexpr void SetBlendState1(ID3D11DeviceContext4* pContext, ID3D11DepthStencilState* pDepthStencilState, 
+    constexpr void SetBlendState1(ID3D11DeviceContext4* pContext, ID3D11DepthStencilState* pDepthStencilState,
         uint32_t stencilRef = 1) noexcept
     {
         assert(pContext);
@@ -332,7 +429,7 @@ export namespace LS::Win32
     }
 
     // Sampler Sate //
-    constexpr void SetSamplerState(ID3D11DeviceContext4* pContext, std::span<ID3D11SamplerState**> pSamplerState, 
+    constexpr void SetSamplerState(ID3D11DeviceContext4* pContext, std::span<ID3D11SamplerState**> pSamplerState,
         LS::SHADER_TYPE type, uint32_t startSlot = 0, uint32_t numSamplers = 0) noexcept
     {
         assert(pContext);

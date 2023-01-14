@@ -66,5 +66,6 @@ export namespace LS::Win32
 
     private:
         SharedRef<DeviceD3D11> m_pDevice;
+        std::vector<PipelineD3D11> m_pipelines;
     };
 }
