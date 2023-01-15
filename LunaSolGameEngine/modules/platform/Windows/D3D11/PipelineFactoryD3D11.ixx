@@ -42,7 +42,9 @@ export namespace LS::Win32
         WRL::ComPtr<ID3D11BlendState>           BlendState;
         WRL::ComPtr<ID3D11DepthStencilState>    DepthStencilState;
         WRL::ComPtr<ID3D11DepthStencilView>     DepthStencilView;
-        ShaderMapD3D11                          Shaders;
+        WRL::ComPtr<ID3D11VertexShader>         VertexShader;
+        WRL::ComPtr<ID3D11PixelShader>          PixelShader;
+        WRL::ComPtr<ID3D11GeometryShader>       GeometryShader;
         WRL::ComPtr<ID3D11InputLayout>          InputLayout;
         WRL::ComPtr<ID3D11Resource>             RenderTarget;
         WRL::ComPtr<ID3D11RenderTargetView>     RenderTargetView;

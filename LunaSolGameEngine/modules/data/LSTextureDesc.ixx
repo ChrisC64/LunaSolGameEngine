@@ -21,10 +21,26 @@ export namespace LS
     */
     enum class TEX_FILTER_MODE
     {
+        DEFAULT,
         POINT, // @brief Also referred to as "nearest", this simply returns the closest pixel
-        BILINEAR, // @brief Returns the pixel after blending pixels together
-        TRILINEAR, // @brief Same concept as BILINEAR but more additional computation for improved visual clarity
-        ANISOTROPIC // @brief Generally the best for visual quality, but most expensive computation
+        LINEAR
+    };
+
+    enum class TEX_FILTER_METHOD
+    {
+        POINT,
+        BILINEAR,
+        TRILINEAR,
+        ANISOTROPIC,
+        USER_MISC
+    };
+
+    enum class TEX_FILTER_MODE_TYPE
+    {
+        DEFAULT,
+        MINIMUM,
+        MAXIMUM,
+        COMPARE
     };
 
     /**
@@ -60,25 +76,30 @@ export namespace LS
     */
     struct TextureRenderState
     {
-        TEX_FILTER_MODE FILTER;
+        TEX_FILTER_METHOD METHOD;
+        TEX_FILTER_MODE MIN_FILTER;//@brief only used if method is "USER_MISC" 
+        TEX_FILTER_MODE MAG_FILTER;//@brief only used if method is "USER_MISC" 
+        TEX_FILTER_MODE MIP_FILTER;//@brief only used if method is "USER_MISC" 
+        TEX_FILTER_MODE_TYPE FILTER_TYPE;
         TEX_ADDRESS_MODE ADDRESS_U;
         TEX_ADDRESS_MODE ADDRESS_V;
         TEX_ADDRESS_MODE ADDRESS_W;
-
+        std::array<float, 4> BorderColor;
         bool operator==(const TextureRenderState& rhs) const
         {
-            return (this->FILTER == rhs.FILTER)
+            return (this->METHOD == rhs.METHOD)
+                && (this->MIN_FILTER == rhs.MIN_FILTER)
+                && (this->MAG_FILTER == rhs.MAG_FILTER)
+                && (this->MIP_FILTER == rhs.MIP_FILTER)
                 && (this->ADDRESS_U == rhs.ADDRESS_U)
                 && (this->ADDRESS_V == rhs.ADDRESS_V)
-                && (this->ADDRESS_W == rhs.ADDRESS_W);
+                && (this->ADDRESS_W == rhs.ADDRESS_W)
+                && (this->BorderColor == rhs.BorderColor);
         }
 
         bool operator!=(const TextureRenderState& rhs) const
         {
-            return (this->FILTER != rhs.FILTER)
-                || (this->ADDRESS_U != rhs.ADDRESS_U)
-                || (this->ADDRESS_V != rhs.ADDRESS_V)
-                || (this->ADDRESS_W != rhs.ADDRESS_W);
+            return !(*this == rhs);
         }
     };
 

@@ -92,6 +92,107 @@ export namespace LS::Win32
 
     // Depth Stencil States //
     [[nodiscard]]
+    auto CreateDepthStencilState(ID3D11Device5* pDevice, const DepthStencil& depthStencil) -> LSOptional<ID3D11DepthStencilState*>
+    {
+        assert(pDevice);
+        if (!pDevice)
+            return std::nullopt;
+
+        D3D11_DEPTH_STENCIL_DESC dsDesc;
+
+        auto convertToDepthWriteMask = [](DEPTH_STENCIL_WRITE_MASK mask) -> D3D11_DEPTH_WRITE_MASK
+        {
+            using enum DEPTH_STENCIL_WRITE_MASK;
+            switch (mask)
+            {
+            case ZERO:
+                return D3D11_DEPTH_WRITE_MASK::D3D11_DEPTH_WRITE_MASK_ZERO;
+            case ALL:
+                return D3D11_DEPTH_WRITE_MASK::D3D11_DEPTH_WRITE_MASK_ALL;
+            default:
+                return D3D11_DEPTH_WRITE_MASK::D3D11_DEPTH_WRITE_MASK_ZERO;
+            }
+        };
+
+        dsDesc.DepthEnable = depthStencil.IsDepthEnabled;
+        dsDesc.StencilEnable = depthStencil.IsStencilEnabled;
+        dsDesc.DepthWriteMask = convertToDepthWriteMask(depthStencil.DepthWriteMask);
+        dsDesc.StencilReadMask = depthStencil.StencilReadMask;
+        dsDesc.StencilWriteMask = depthStencil.StencilWriteMask;
+
+        auto convertToDepthFunc = [](EVAL_COMPARE compare) -> D3D11_COMPARISON_FUNC
+        {
+            using enum EVAL_COMPARE;
+            switch (compare)
+            {
+                case NEVER_PASS:
+                    return D3D11_COMPARISON_NEVER;
+                case LESS_PASS:
+                    return D3D11_COMPARISON_LESS;
+                case LESSS_EQUAL_PASS:
+                    return D3D11_COMPARISON_LESS_EQUAL;
+                case EQUAL:
+                    return D3D11_COMPARISON_EQUAL;
+                case NOT_EQUAL:
+                    return D3D11_COMPARISON_NOT_EQUAL;
+                case GREATER_PASS:
+                    return D3D11_COMPARISON_GREATER;
+                case GREATER_EQUAL_PASS:
+                    return D3D11_COMPARISON_EQUAL;
+                case ALWAYS_PASS:
+                    return D3D11_COMPARISON_ALWAYS;
+                default:
+                    return D3D11_COMPARISON_NEVER;
+            }
+        };
+        dsDesc.DepthFunc = convertToDepthFunc(depthStencil.DepthComparison);
+
+        auto convertDSOps = [](DEPTH_STENCIL_OPS ops) -> D3D11_STENCIL_OP
+        {
+            using enum DEPTH_STENCIL_OPS;
+            switch (ops)
+            {
+                case KEEP:
+                    return D3D11_STENCIL_OP::D3D11_STENCIL_OP_KEEP;
+                case ZERO:
+                    return D3D11_STENCIL_OP::D3D11_STENCIL_OP_ZERO;
+                case REPLACE:
+                    return D3D11_STENCIL_OP::D3D11_STENCIL_OP_REPLACE;
+                case INVERT:
+                    return D3D11_STENCIL_OP::D3D11_STENCIL_OP_INVERT;
+                case INCR_THEN_CLAMP:
+                    return D3D11_STENCIL_OP::D3D11_STENCIL_OP_INCR;
+                case INCR_THEN_WRAP:
+                    return D3D11_STENCIL_OP::D3D11_STENCIL_OP_INCR_SAT;
+                case DECR_THEN_CLAMP:
+                    return D3D11_STENCIL_OP::D3D11_STENCIL_OP_DECR;
+                case DECR_THEN_WRAP:
+                    return D3D11_STENCIL_OP::D3D11_STENCIL_OP_DECR_SAT;
+                default:
+                    return D3D11_STENCIL_OP::D3D11_STENCIL_OP_KEEP;
+            }
+        };
+
+        auto convertDepthStencilOp = [&](const DepthStencil::DepthStencilOps& ops) -> D3D11_DEPTH_STENCILOP_DESC
+        {
+            D3D11_DEPTH_STENCILOP_DESC out;
+            out.StencilFailOp = convertDSOps(ops.StencilFailOp);
+            out.StencilDepthFailOp = convertDSOps(ops.StencilPassDepthFailOp);
+            out.StencilPassOp = convertDSOps(ops.StencilPassOp);
+            out.StencilFunc = convertToDepthFunc(ops.StencilTestFunc);
+            return out;
+        };
+
+        dsDesc.FrontFace = convertDepthStencilOp(depthStencil.FrontFace);
+        dsDesc.BackFace = convertDepthStencilOp(depthStencil.BackFace);
+
+        ID3D11DepthStencilState* pState;
+        pDevice->CreateDepthStencilState(&dsDesc, &pState);
+
+        return pState;
+    }
+
+    [[nodiscard]]
     auto CreateDepthStencilState(ID3D11Device5* pDevice, const D3D11_DEPTH_STENCIL_DESC depthDesc) -> LSOptional<ID3D11DepthStencilState*>
     {
         assert(pDevice);
@@ -239,6 +340,8 @@ export namespace LS::Win32
             case ALPHA:
                 return D3D11_COLOR_WRITE_ENABLE::D3D11_COLOR_WRITE_ENABLE_ALPHA;
             case ALL:
+                return D3D11_COLOR_WRITE_ENABLE::D3D11_COLOR_WRITE_ENABLE_ALL;
+            default:
                 return D3D11_COLOR_WRITE_ENABLE::D3D11_COLOR_WRITE_ENABLE_ALL;
             }
         };

@@ -164,11 +164,13 @@ namespace LS
      * but ALL_PASS means all comparisons will always be "true" or "pass"
      * the test.
     */
-    export enum class EVAL_COMPARE
+    export enum class EVAL_COMPARE : uint8_t
     {
         NEVER_PASS = 0, //@brief condition never will pass
         LESS_PASS, //@brief condition is true when less than only
         LESSS_EQUAL_PASS, //@brief condition is true when less than or equal to
+        EQUAL, //@brief condition is equal to 
+        NOT_EQUAL, //@brief condition is when they are not equal
         GREATER_PASS, //@brief condition is true when greater than
         GREATER_EQUAL_PASS, //@brief condition is true when greater than or equal to
         ALWAYS_PASS //@brief condition will always result in true
@@ -195,8 +197,10 @@ namespace LS
     export struct LSSamplerState
     {
         uint32_t AnisotropyLevel = 0;
-        float MinLOD = 0;
+        float MinLOD = 0.0f;
         float MaxLOD = std::numeric_limits<float>::max();
+        float MipLODBias = 0.0f;
+        TextureRenderState TextureRenderState;
         EVAL_COMPARE Evaluator;
     };
 
@@ -258,6 +262,12 @@ namespace LS
         std::string Info;
     };
 
+    export enum class DEPTH_STENCIL_WRITE_MASK
+    {
+        ZERO,// @brief 0x0
+        ALL // @brief 0xFFFFFFFF
+    };
+
     /**
      * @brief A depth stencil object
     */
@@ -268,8 +278,9 @@ namespace LS
         bool IsStencilEnabled;
         EVAL_COMPARE DepthComparison;// @brief How to handle depth comparison data with destination data
         bool ShouldWriteToDepthMask;// @brief Turn on/off writing to the depth mask
-        uint32_t StencilWriteMask;// @brief The mask to perform operations on depth-stencil buffer reads
-        uint32_t StencilReadMask;// @brief The mask to perform operations on depth-stencil buffer writes
+        DEPTH_STENCIL_WRITE_MASK DepthWriteMask; //@brief portion of depth stencil buffer that can be modified
+        uint8_t StencilWriteMask;// @brief The mask to perform operations on depth-stencil buffer reads
+        uint8_t StencilReadMask;// @brief The mask to perform operations on depth-stencil buffer writes
         /**
          * @brief Information on how to handle depth stencil operations
         */
