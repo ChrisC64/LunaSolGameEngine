@@ -2,6 +2,7 @@ struct VS_OUTPUT
 {
     float4 Pos : SV_POSITION;
     float4 Color : COLOR;
+    float2 uv : TEXCOORD;
 };
 
 struct VS_INPUT
@@ -29,7 +30,7 @@ cbuffer Color : register(b3)
     float4 ModelColor;
 }
 
-VS_OUTPUT vs(VS_INPUT input)
+VS_OUTPUT vs(VS_INPUT input, uint instanceId : SV_VertexID)
 {
     VS_OUTPUT output = (VS_OUTPUT)0;
     matrix mvp = mul(Projection, mul(View, Model));
@@ -37,7 +38,18 @@ VS_OUTPUT vs(VS_INPUT input)
     /*output.Pos = mul(input.Pos, Model);
     output.Pos = mul(output.Pos, View);
     output.Pos = mul(output.Pos, Projection);*/
-
+    if (instanceId == 0)
+    {
+        output.uv = float2(0.0f, 0.0f);
+    }
+    else if (instanceId == 1)
+    {
+        output.uv = float2(1.f, 1.0f);
+    }
+    else if (instanceId == 2)
+    {
+        output.uv = float2(1.f, 0.0f);
+    }
     //output.Color = float4(1.0f, 0.0f, 1.0f, 1.0f);
     output.Color = ModelColor;
     /*output.Pos = float4(0.0f, 0.0f, 0.0f, 0.0f);

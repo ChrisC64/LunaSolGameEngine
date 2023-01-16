@@ -34,6 +34,9 @@ static std::array<float, 12> g_positions
     -1.0f, 0.0f, 0.20f, 1.0f
 };
 
+//static std::array<uint32_t, 32 * 32> g_textureData;
+static std::array<uint32_t, 1> g_textureData{ 0xFF32B3FF };
+
 static std::array<uint32_t, 3> g_indices{ 0, 2, 1 };
 
 void GpuDraw(ID3D11CommandList** commandList, ID3D11DeviceContext3* context, ID3D11RenderTargetView1* rtv)
@@ -47,6 +50,8 @@ int main()
     std::cout << "Hello Luna Sol Game Engine!\n";
 
     Ref<LSWindowBase> window = LS::LSCreateWindow(800u, 700u, L"Hello App");
+
+    std::cout << "Texture size: " << g_textureData.size() << "\n";
     // Device Setup //
     DeviceD3D11 device;
     device.CreateDevice();
@@ -61,11 +66,65 @@ int main()
     ComPtr<ID3D11RasterizerState2> rsWireframe;
     rsWireframe.Attach(rsWireframeOptional.value_or(nullptr));
 
+    // Create Texture //
+    /*for (auto i = 0u; i < g_textureData.size(); ++i)
+    {
+        g_textureData[i] = 0xFF3200FF;
+    }*/
+
+    D3D11_TEXTURE2D_DESC textureDesc{};
+    textureDesc.Width = 1;
+    textureDesc.Height = 1;
+    textureDesc.ArraySize = g_textureData.size();
+    textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+    textureDesc.CPUAccessFlags = 0;
+    textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    textureDesc.MipLevels = 1;
+    textureDesc.MiscFlags = 0;
+    textureDesc.Usage = D3D11_USAGE_DEFAULT;
+    textureDesc.SampleDesc.Count = 1;
+
+    D3D11_SUBRESOURCE_DATA texData{};
+    texData.pSysMem = g_textureData.data();
+    texData.SysMemPitch = sizeof(uint32_t);
+    ComPtr<ID3D11Texture2D> tex2D;
+    auto texResult = device.GetDevice()->CreateTexture2D(&textureDesc, &texData, &tex2D);
+    if (FAILED(texResult))
+        return -20;
+
+    ComPtr<ID3D11ShaderResourceView> pTexResView;
+
+    D3D11_SHADER_RESOURCE_VIEW_DESC texresView{};
+    D3D11_TEX2D_SRV tex2dSRV{};
+    tex2dSRV.MipLevels = textureDesc.MipLevels;
+
+    texresView.Format = textureDesc.Format;
+    texresView.ViewDimension = D3D_SRV_DIMENSION_TEXTURE2D;
+    texresView.Texture2D = tex2dSRV;
+    auto srvResult = device.GetDevice()->CreateShaderResourceView(tex2D.Get(), &texresView, &pTexResView);
+    if (FAILED(srvResult))
+    {
+        return -21;
+    }
+
+    ComPtr<ID3D11SamplerState> pSampler;
+    CD3D11_SAMPLER_DESC samplerDesc(CD3D11_DEFAULT{});
+    auto samplerResult = device.GetDevice()->CreateSamplerState(&samplerDesc, &pSampler);
+    if (FAILED(samplerResult))
+        return -22;
+
+    // END TEXTURE STUFF //
+
     // Render Target //
     ComPtr<ID3D11Texture2D> buffer;
     device.GetSwapChain()->GetBuffer(0, IID_PPV_ARGS(&buffer));
     ComPtr< ID3D11RenderTargetView1> rtView;
+    ComPtr< ID3D11RenderTargetView1> rtView2;
     rtView.Attach(CreateRenderTargetView1(device.GetDevice().Get(), buffer.Get()));
+    rtView2.Attach(CreateRenderTargetView1(device.GetDevice().Get(), buffer.Get()));
+
+    std::array<ID3D11RenderTargetView*, 2> rtViews = { rtView.Get(), rtView2.Get() };
+
     // Depth Stencil //
     ComPtr<ID3D11DepthStencilView> dsView;
     auto dsResult = device.CreateDepthStencilViewForSwapchain(rtView.Get(), &dsView);
@@ -104,6 +163,7 @@ int main()
     // BEGIN SHADER FILE OPERATIONS //
     auto vertexShader = L"VertexShader.cso";
     auto pixelShader = L"PixelShader.cso";
+    auto pixelShader2 = L"PixelShader2.cso";
 
     std::array<wchar_t, _MAX_PATH> modulePath;
     if (!GetModuleFileName(nullptr, modulePath.data(), modulePath.size()))
@@ -117,6 +177,7 @@ int main()
 
     auto vsPath = path + L"\\" + vertexShader;
     auto psPath = path + L"\\" + pixelShader;
+    auto psPath2 = path + L"\\" + pixelShader2;
 
     if (std::filesystem::exists(vsPath) && std::filesystem::exists(psPath))
     {
@@ -145,21 +206,32 @@ int main()
 
     std::fstream psStream(psPath, std::fstream::in | std::fstream::binary);
     auto psData = readFile(psStream, psPath);
+    
+    std::fstream psStream2(psPath2, std::fstream::in | std::fstream::binary);
+    auto psData2 = readFile(psStream2, psPath2);
     // END SHADER FILE OPERATIONS //
 
     // Compile Shader Objects //
     ComPtr<ID3D11VertexShader> vsShader;
     ComPtr<ID3D11PixelShader> psShader;
+    ComPtr<ID3D11PixelShader> psShader2;
 
     auto vsResult = CompileVertexShaderFromByteCode(device.GetDevice().Get(), vsData, &vsShader);
     if (FAILED(vsResult))
     {
         ThrowIfFailed(vsResult, "Failed to compile vertex shader!\n");
     }
+    
     auto psResult = CompilePixelShaderFromByteCode(device.GetDevice().Get(), psData, &psShader);
     if (FAILED(psResult))
     {
         ThrowIfFailed(psResult, "Failed to compile vertex shader!\n");
+    }
+    
+    auto psResult2 = CompilePixelShaderFromByteCode(device.GetDevice().Get(), psData2, &psShader2);
+    if (FAILED(psResult2))
+    {
+        ThrowIfFailed(psResult2, "Failed to compile vertex shader!\n");
     }
 
     LSShaderInputSignature vsSignature;
@@ -191,6 +263,7 @@ int main()
     }
 
     ComPtr<ID3D11RenderTargetView> rtViewOg = rtView;
+    ComPtr<ID3D11RenderTargetView> rtViewOg2 = rtView2;
 
     // Camera // 
     xmvec posVec = XMVectorSet(0.0f, 0.0f, -5.0f, 1.0f);
@@ -238,8 +311,12 @@ int main()
     BindVS(context1.Get(), vsShader.Get());
     BindVS(context2.Get(), vsShader.Get());
 
-    BindPS(context1.Get(), psShader.Get());
-    BindPS(context2.Get(), psShader.Get());
+    BindPS(context1.Get(), psShader2.Get());
+    BindPS(context2.Get(), psShader2.Get());
+    /*context1->PSSetShaderResources(0, 1, &pTexResView);
+    context2->PSSetShaderResources(0, 1, &pTexResView);
+    context1->PSSetSamplers(0, 1, &pSampler);
+    context2->PSSetSamplers(0, 1, &pSampler);*/
 
     //SetInputlayout(immContext.Get(), pInputLayout.Get());
     SetInputlayout(context1.Get(), pInputLayout.Get());
@@ -293,13 +370,18 @@ int main()
         static_cast<float>(window->GetWidth()),
         static_cast<float>(window->GetHeight())
     );
-    SetRenderTarget(context1.Get(), rtViewOg.Get(), dsView.Get());
+    /*SetViewport(context2.Get(),
+        static_cast<float>(window->GetWidth() / 2.f),
+        static_cast<float>(window->GetHeight() / 2.f)
+    );*/
+
+    SetRenderTarget(context1.Get(), rtView.Get(), dsView.Get());
     ClearRT(context1.Get(), rtView.Get(), g_color3);
     ClearDS(context1.Get(), dsView.Get());
     DrawIndexed(context1.Get(), g_indices.size(), 0, 0);
 
-    SetRenderTarget(context2.Get(), rtViewOg.Get(), dsView.Get());
-    ClearRT(context2.Get(), rtView.Get(), g_color);
+    SetRenderTarget(context2.Get(), rtView2.Get(), dsView.Get());
+    ClearRT(context2.Get(), rtView2.Get(), g_color);
     ClearDS(context2.Get(), dsView.Get());
     DrawIndexed(context2.Get(), g_indices.size(), 0, 0);
 

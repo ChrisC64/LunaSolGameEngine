@@ -68,7 +68,16 @@ export namespace LS::Win32
             return;
         pContext->OMSetRenderTargets(numViews, &pRTView, pDSView);
     }
-
+    
+    constexpr void SetRenderTarget(ID3D11DeviceContext* pContext, ID3D11RenderTargetView* const *pRTView, ID3D11DepthStencilView* pDSView, uint32_t numViews = 1) noexcept
+    {
+        assert(pContext);
+        assert(pRTView);
+        if (!pContext || !pRTView)
+            return;
+        pContext->OMSetRenderTargets(numViews, pRTView, pDSView);
+    }
+    
     // DRAW CALLS //
 
     /**

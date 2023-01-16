@@ -7,5 +7,5 @@ struct VS_OUTPUT
 
 float4 ps(VS_OUTPUT input) : SV_Target
 {
-    return input.Color;
+    return float4(1.0f, 0.0f, 0.0f, 1.0f);
 }
