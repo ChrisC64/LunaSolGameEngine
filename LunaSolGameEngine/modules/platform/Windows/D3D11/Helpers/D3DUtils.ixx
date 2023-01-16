@@ -3,9 +3,11 @@ module;
 #include "LSBuffer.h"
 
 export module D3D11.Utils;
+
+import D3D11.EngineWrapperD3D11;
 import LSData;
 import Util.HLSLUtils;
-
+import Engine.LSDevice;
 export namespace LS::Win32
 {
     /**
@@ -66,5 +68,25 @@ export namespace LS::Win32
     constexpr HRESULT CompilePixelShaderFromByteCode(ID3D11Device* pDevice, std::span<std::byte> byteCode, ID3D11PixelShader** ppShader)
     {
         return pDevice->CreatePixelShader(byteCode.data(), byteCode.size(), nullptr, ppShader);
+    }
+
+    [[nodiscard]]
+    inline auto CreateTexture2DDesc(const LSTextureInfo& texture,
+        BUFFER_USAGE usage = BUFFER_USAGE::DEFAULT_RW, BUFFER_BIND_TYPE bindType = BUFFER_BIND_TYPE::SHADER_RESOURCE, CPU_ACCESS_FLAG cpuAccess = CPU_ACCESS_FLAG::NOT_SET, 
+        uint32_t miscFlags = 0) -> D3D11_TEXTURE2D_DESC
+    {
+        D3D11_TEXTURE2D_DESC out{};
+        out.Width = texture.Width;
+        out.Height = texture.Height;
+        out.MipLevels = texture.MipMapLevels;
+        //Array size maps to number of mip maps because each mip map is the texture scaled 
+        out.ArraySize = texture.MipMapLevels;
+        out.Format = FromPixelColorFormat(texture.PixelFormat);
+        out.SampleDesc = { .Count = texture.SampleCount, .Quality = texture.SampleQuality };
+        out.Usage = FindD3D11Usage(usage);
+        out.BindFlags = FindD3D11BindFlag(bindType);
+        out.CPUAccessFlags = FindD3D11CpuAccessFlag(cpuAccess);
+        out.MiscFlags = miscFlags;
+        return out;
     }
 }

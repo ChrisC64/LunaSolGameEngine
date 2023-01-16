@@ -42,7 +42,13 @@ namespace LS
         VERTEX, // @brief A vertex buffer for geometry
         INDEX, // @brief An index buffer accompanying a vertex buffer
         CONSTANT_BUFFER, // @brief Shader constant buffer
-        SHADER_RESOURCE // @brief A shader resource (textures
+        SHADER_RESOURCE, // @brief A shader resource (textures
+        STREAM_OUTPUT,
+        RENDER_TARGET,
+        DEPTH_STENCIL,
+        UNORDERED_ACCESS,
+        DECODER,
+        VIDEO_ENCODER
     };
 
     //TODO: Add constraints to this... because I don't know what but I'm sure I"ll think of some later!

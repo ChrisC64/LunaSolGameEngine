@@ -204,6 +204,13 @@ namespace LS
         EVAL_COMPARE Evaluator;
     };
 
+    export enum class CPU_ACCESS_FLAG
+    {
+        NOT_SET,
+        READ_ONLY,
+        WRITE_ONLY,
+        READ_AND_WRITE
+    };
 
     // Callbacks // 
     export using OnDeviceEvent = std::function<void(DEVICE_EVENT)>;

@@ -123,6 +123,9 @@
     <ClCompile Include="src\platform\D3D11\PipelineFactoryD3D11.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="modules\platform\Windows\D3D11\Helpers\EngineWrapperD3D11.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\LSEFramework.h">

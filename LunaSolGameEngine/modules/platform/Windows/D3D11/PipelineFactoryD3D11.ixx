@@ -64,7 +64,7 @@ export namespace LS::Win32
         [[nodiscard]]
         virtual bool CreatePipelineState(const PipelineDescriptor& pipeline) noexcept final;
 
-        PipelineD3D11 CreatePipelineD3D11(const PipelineDescriptor& pipeline) noexcept;
+        PipelineD3D11 CreatePipelineD3D11(const PipelineDescriptor& pipeline);
 
     private:
         SharedRef<DeviceD3D11> m_pDevice;

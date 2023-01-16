@@ -25,7 +25,7 @@ bool D3D11PipelineFactory::CreatePipelineState(const PipelineDescriptor& pipelin
     return true;
 }
 
-PipelineD3D11 LS::Win32::D3D11PipelineFactory::CreatePipelineD3D11(const PipelineDescriptor& pipeline) noexcept
+PipelineD3D11 LS::Win32::D3D11PipelineFactory::CreatePipelineD3D11(const PipelineDescriptor& pipeline)
 {
     namespace WRL = Microsoft::WRL;
     PipelineD3D11 out;
@@ -55,33 +55,31 @@ PipelineD3D11 LS::Win32::D3D11PipelineFactory::CreatePipelineD3D11(const Pipelin
         out.DepthStencilState = state;
     }
     // Shader Compilation //
-    for (auto& [type, data] : pipeline.Shaders)
+    for (auto [type, data] : pipeline.Shaders)
     {
         using enum SHADER_TYPE;
         switch (type)
         {
         case VERTEX:
         {
-            /*WRL::ComPtr<ID3D11VertexShader> pShader;
-            std::span<std::byte> spand{ data.data() };
-            HRESULT hr = CompileVertexShaderFromByteCode(device, spand, &pShader);
+            WRL::ComPtr<ID3D11VertexShader> pShader;
+            HRESULT hr = CompileVertexShaderFromByteCode(device, data, &pShader);
             if (FAILED(hr))
             {
                 break;
             }
-            out.VertexShader = pShader;*/
+            out.VertexShader = pShader;
             break;
         }
         case PIXEL:
         {
-            /*WRL::ComPtr<ID3D11PixelShader> pShader;
-            std::span<std::byte> spand{ data.data() };
-            HRESULT hr = CompilePixelShaderFromByteCode(device, spand, &pShader);
+            WRL::ComPtr<ID3D11PixelShader> pShader;
+            HRESULT hr = CompilePixelShaderFromByteCode(device, data, &pShader);
             if (FAILED(hr))
             {
                 break;
             }
-            out.PixelShader = pShader;*/
+            out.PixelShader = pShader;
             break;
         }
         case GEOMETRY:
@@ -478,7 +476,21 @@ PipelineD3D11 LS::Win32::D3D11PipelineFactory::CreatePipelineD3D11(const Pipelin
         }
     }
     // Textures //
+    for (auto& [slot, texture] : pipeline.Textures)
+    {
+        auto texDesc = CreateTexture2DDesc(texture);
 
+        WRL::ComPtr<ID3D11Texture2D> pTexture;
+        D3D11_SUBRESOURCE_DATA subRes{};
+        subRes.pSysMem = texture.Data.data();
+        subRes.SysMemPitch = static_cast<UINT>(texture.Width * 4);
+        auto result = device->CreateTexture2D(&texDesc, &subRes, &pTexture);
+        if (FAILED(result))
+        {
+            throw std::runtime_error("Failed to create texture2D object\n");
+        }
+        out.Textures.emplace_back(slot, pTexture);
+    }
     // Buffers //
     return out;
 }

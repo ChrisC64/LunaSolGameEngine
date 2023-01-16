@@ -192,6 +192,7 @@
     <ClCompile Include="modules\engine\LSWindow.ixx" />
     <ClCompile Include="modules\data\LSMathTypes.ixx" />
     <ClCompile Include="modules\helper\PipelineFactory.ixx" />
+    <ClCompile Include="modules\platform\Windows\D3D11\Helpers\EngineWrapperD3D11.ixx" />
     <ClCompile Include="modules\platform\Windows\D3D11\PipelineFactoryD3D11.ixx" />
     <ClCompile Include="modules\platform\Windows\D3D11\Helpers\D3D11HelperStates.ixx" />
     <ClCompile Include="modules\platform\Windows\D3D11\D3D11Lib.ixx" />
