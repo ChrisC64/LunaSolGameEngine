@@ -422,12 +422,6 @@ namespace LS
         [[nodiscard]] virtual bool InitDevice(const LSDeviceSettings& settings) noexcept = 0;
         [[nodiscard]] virtual auto CreateContext() noexcept -> LSOptional<Ref<ILSContext>> = 0;
         virtual void Shutdown() noexcept = 0;
-        /**
-         * @brief Creates a pipeline state for the given pipeline descriptor
-         * @param pipelineDescriptor A set of settings to construct a pipeline state for the GPU to use for rendering
-         * @return True if pipeline was created successfully, false if there was a failure.
-        */
-        [[nodiscard]] virtual bool CreateePipelineState(const LS::PipelineDescriptor& pipelineDescriptor) noexcept = 0;
 
     };
 

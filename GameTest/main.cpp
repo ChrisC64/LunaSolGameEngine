@@ -24,6 +24,8 @@ static const std::string shader_path = R"(build\x64\Release\)";
 
 LSTimer<std::uint64_t, 1ul, 1000ul> g_timer;
 std::array<float, 4> g_color = { 0.84f, 0.48f, 0.20f, 1.0f };
+std::array<float, 4> g_color2 = { 0.0f, 0.74f, 0.60f, 1.0f };
+std::array<float, 4> g_color3 = { 0.50f, 0.0f, 0.23f, 1.0f };
 
 static std::array<float, 12> g_positions 
 {
@@ -83,14 +85,21 @@ int main()
     if (FAILED(result))
         return -4;
 
-    /*ComPtr<ID3D11DeviceContext> pDeferredContext;
-    result = device.CreateDeferredContext(pDeferredContext.ReleaseAndGetAddressOf());
-    if (FAILED(result))
-        return EXIT_FAILURE;*/
+    auto createDeferredContext = [&]() -> ComPtr<ID3D11DeviceContext>
+    {
+        ComPtr<ID3D11DeviceContext> pDeferredContext;
+        result = device.CreateDeferredContext(pDeferredContext.ReleaseAndGetAddressOf());
+        if (FAILED(result))
+            return nullptr;
+        return pDeferredContext;
+    };
 
-    //ComPtr<ID3D11CommandList> pCommandList;
-    //pDeferredContext->ClearRenderTargetView(rtView.Get(), g_color.data());
-    //pDeferredContext->FinishCommandList(false, pCommandList.ReleaseAndGetAddressOf());
+    auto context1 = createDeferredContext();
+    auto context2 = createDeferredContext();
+
+    /*ComPtr<ID3D11CommandList> pCommandList;
+    context1->ClearRenderTargetView(rtView.Get(), g_color.data());
+    context1->FinishCommandList(false, pCommandList.ReleaseAndGetAddressOf());*/
     
     // BEGIN SHADER FILE OPERATIONS //
     auto vertexShader = L"VertexShader.cso";
@@ -193,12 +202,15 @@ int main()
     // Informs how the GPU about the buffer types - we have two Matrix and Index Buffers here, the Vertex was created earlier above //
     CD3D11_BUFFER_DESC matBD(sizeof(float) * 16, D3D11_BIND_CONSTANT_BUFFER);
     CD3D11_BUFFER_DESC indexBD(g_indices.size() * sizeof(g_indices.front()), D3D11_BIND_INDEX_BUFFER);
+    CD3D11_BUFFER_DESC colorBD(sizeof(float) * 4, D3D11_BIND_CONSTANT_BUFFER);
     
     // Ready the GPU Data //
-    D3D11_SUBRESOURCE_DATA viewSRD, projSRD, modelSRD, indexSRD;
+    D3D11_SUBRESOURCE_DATA viewSRD, projSRD, modelSRD, indexSRD, color1SRD, color2SRD;
     viewSRD.pSysMem = &camera.View;
     projSRD.pSysMem = &camera.Projection;
     indexSRD.pSysMem = g_indices.data();
+    color1SRD.pSysMem = g_color.data();
+    color2SRD.pSysMem = g_color2.data();
 
     // Our Model's Translastion/Scale/Rotation Setup //
     xmmat modelScaleMat = XMMatrixScaling(1.0f, 1.0f, 1.0f);
@@ -210,32 +222,94 @@ int main()
     modelSRD.pSysMem = &modelTransform;
 
     // Initialize Buffers //
-    ComPtr<ID3D11Buffer> viewBuffer, projBuffer, modelBuffer, indexBuffer;
+    ComPtr<ID3D11Buffer> viewBuffer, projBuffer, modelBuffer, indexBuffer, color1Buffer, color2Buffer;
     device.CreateBuffer(&matBD, &viewSRD, &viewBuffer);
     device.CreateBuffer(&matBD, &projSRD, &projBuffer);
     device.CreateBuffer(&matBD, &modelSRD, &modelBuffer);
     device.CreateBuffer(&indexBD, &indexSRD, &indexBuffer);
+    device.CreateBuffer(&colorBD, &color1SRD, &color1Buffer);
+    device.CreateBuffer(&colorBD, &color2SRD, &color2Buffer);
 
     // Setup states and buffers that only require one call here //
-    BindVS(immContext.Get(), vsShader.Get());
-    BindPS(immContext.Get(), psShader.Get());
-    SetInputlayout(immContext.Get(), pInputLayout.Get());
+    /*BindVS(immContext.Get(), vsShader.Get());
+    BindPS(immContext.Get(), psShader.Get());*/
 
-    std::array<ID3D11Buffer*, 3> buffers{ viewBuffer.Get(), projBuffer.Get(), modelBuffer.Get() };
-    BindVSConstantBuffers(immContext.Get(), 0, buffers);
+    // Deferred Contexts //
+    BindVS(context1.Get(), vsShader.Get());
+    BindVS(context2.Get(), vsShader.Get());
+
+    BindPS(context1.Get(), psShader.Get());
+    BindPS(context2.Get(), psShader.Get());
+
+    //SetInputlayout(immContext.Get(), pInputLayout.Get());
+    SetInputlayout(context1.Get(), pInputLayout.Get());
+    SetInputlayout(context2.Get(), pInputLayout.Get());
+
+    std::array<ID3D11Buffer*, 4> buffers{ viewBuffer.Get(), projBuffer.Get(), modelBuffer.Get(), 
+        color1Buffer.Get()};
+    
+    std::array<ID3D11Buffer*, 4> buffers2{ viewBuffer.Get(), projBuffer.Get(), modelBuffer.Get(), 
+        color2Buffer.Get()};
+
+    //BindVSConstantBuffers(immContext.Get(), 0, buffers);
+    BindVSConstantBuffers(context1.Get(), 0, buffers);
+    BindVSConstantBuffers(context2.Get(), 0, buffers2);
+
     UINT stride = sizeof(float) * 4;
-    SetVertexBuffers(immContext.Get(), vertexBuffer.Get(), 1, 0, stride);
+    
+    /*SetVertexBuffers(immContext.Get(), vertexBuffer.Get(), 1, 0, stride);
     SetIndexBuffer(immContext.Get(), indexBuffer.Get());
     SetRasterizerState(immContext.Get(), rsSolid.Get());
+    */
+    SetVertexBuffers(context1.Get(), vertexBuffer.Get(), 1, 0, stride);
+    SetIndexBuffer(context1.Get(), indexBuffer.Get());
+    SetRasterizerState(context1.Get(), rsSolid.Get());
+    
+    SetVertexBuffers(context2.Get(), vertexBuffer.Get(), 1, 0, stride);
+    SetIndexBuffer(context2.Get(), indexBuffer.Get());
+    SetRasterizerState(context2.Get(), rsSolid.Get());
     
     FLOAT color[4]{ 0.0f, 0.0f, 0.0f, 0.0f };
-    SetBlendState(immContext.Get(), blendState.Get());
+    /*SetBlendState(immContext.Get(), blendState.Get());
     SetDepthStencilState(immContext.Get(), defaultState.Get(), 1);
     SetTopology(immContext.Get(), D3D11_PRIMITIVE_TOPOLOGY::D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     SetViewport(immContext.Get(),
         static_cast<float>(window->GetWidth()),
         static_cast<float>(window->GetHeight())
+    );*/
+    
+    SetBlendState(context1.Get(), blendState.Get());
+    SetDepthStencilState(context1.Get(), defaultState.Get(), 1);
+    SetTopology(context1.Get(), D3D11_PRIMITIVE_TOPOLOGY::D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    SetViewport(context1.Get(),
+        static_cast<float>(window->GetWidth()),
+        static_cast<float>(window->GetHeight())
     );
+    
+    SetBlendState(context2.Get(), blendState.Get());
+    SetDepthStencilState(context2.Get(), defaultState.Get(), 1);
+    SetTopology(context2.Get(), D3D11_PRIMITIVE_TOPOLOGY::D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    SetViewport(context2.Get(),
+        static_cast<float>(window->GetWidth()),
+        static_cast<float>(window->GetHeight())
+    );
+    SetRenderTarget(context1.Get(), rtViewOg.Get(), dsView.Get());
+    ClearRT(context1.Get(), rtView.Get(), g_color3);
+    ClearDS(context1.Get(), dsView.Get());
+    DrawIndexed(context1.Get(), g_indices.size(), 0, 0);
+
+    SetRenderTarget(context2.Get(), rtViewOg.Get(), dsView.Get());
+    ClearRT(context2.Get(), rtView.Get(), g_color);
+    ClearDS(context2.Get(), dsView.Get());
+    DrawIndexed(context2.Get(), g_indices.size(), 0, 0);
+
+    ComPtr<ID3D11CommandList> command1, command2;
+    auto hr = context1->FinishCommandList(FALSE, &command1);
+    if (FAILED(hr))
+        return EXIT_FAILURE;
+    hr = context2->FinishCommandList(FALSE, &command2);
+    if (FAILED(hr))
+        return EXIT_FAILURE;
 
     // Show Window and Start Timer - duh... //
     window->Show();
@@ -243,18 +317,27 @@ int main()
     while (window->IsRunning())
     {
         g_timer.Tick();
-        SetRenderTarget(immContext.Get(), rtViewOg.Get(), dsView.Get());
-        ClearRT(immContext.Get(), rtView.Get(), g_color);
-        ClearDS(immContext.Get(), dsView.Get());
-        DrawIndexed(immContext.Get(), g_indices.size(), 0, 0);
+        /*SetRenderTarget(immContext.Get(), rtViewOg.Get(), dsView.Get());
+        ClearRT(immContext.Get(), rtView.Get(), g_color3);
+        ClearDS(immContext.Get(), dsView.Get());*/
+
+        if (command1)
+        {
+            immContext->ExecuteCommandList(command1.Get(), FALSE);
+        }
+        if (command2)
+        {
+            immContext->ExecuteCommandList(command2.Get(), FALSE);
+        }
+        //DrawIndexed(immContext.Get(), g_indices.size(), 0, 0);
         Present1(device.GetSwapChain().Get(), 1);
         window->PollEvent();
-        if (g_timer.GetTotalTimeTickedIn<std::chrono::seconds>().count() >= 5.0f)
+        /*if (g_timer.GetTotalTimeTickedIn<std::chrono::seconds>().count() >= 5.0f)
         {
             g_color[0] = 0.0f;
             g_color[1] = 1.0f;
             g_color[2] = 1.0f;
             g_color[3] = 1.0f;
-        }
+        }*/
     }
 }

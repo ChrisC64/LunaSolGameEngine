@@ -24,6 +24,10 @@ cbuffer PerObject : register(b2)
     float4x4 Model;
 }
 
+cbuffer Color : register(b3)
+{
+    float4 ModelColor;
+}
 
 VS_OUTPUT vs(VS_INPUT input)
 {
@@ -35,7 +39,7 @@ VS_OUTPUT vs(VS_INPUT input)
     output.Pos = mul(output.Pos, Projection);*/
 
     //output.Color = float4(1.0f, 0.0f, 1.0f, 1.0f);
-    output.Color = float4(input.Pos.xyz, 1.0f);
+    output.Color = ModelColor;
     /*output.Pos = float4(0.0f, 0.0f, 0.0f, 0.0f);
     if (instanceId == 0)
     {

@@ -24,7 +24,7 @@ bool D3D11PipelineFactory::CreatePipelineState(const PipelineDescriptor& pipelin
     m_pipelines.emplace_back(pipelineD3D);
     return true;
 }
-
+//TODO: Breka up and put conversion functions into stand alone functions so we can reuse them.
 PipelineD3D11 LS::Win32::D3D11PipelineFactory::CreatePipelineD3D11(const PipelineDescriptor& pipeline)
 {
     namespace WRL = Microsoft::WRL;
