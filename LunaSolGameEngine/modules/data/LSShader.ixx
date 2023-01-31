@@ -233,6 +233,7 @@ export namespace LS
             };
             m_inputLayout.emplace_back(elem);
         }
+        
         bool operator==(const LSShaderInputSignature& rhs) const
         {
             if (m_stride != rhs.m_stride)

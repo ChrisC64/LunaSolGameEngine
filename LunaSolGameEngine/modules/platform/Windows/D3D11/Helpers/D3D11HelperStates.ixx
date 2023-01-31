@@ -326,7 +326,7 @@ export namespace LS::Win32
             }
         };
 
-        auto writeMask = [](COLOR_CHANNEL_MASK mask) -> D3D11_COLOR_WRITE_ENABLE
+        auto writeMask = [](COLOR_CHANNEL_MASK mask) -> uint8_t
         {
             using enum COLOR_CHANNEL_MASK;
             switch (mask)

@@ -17,7 +17,7 @@ export namespace LS::Utils
     }
 #endif LS_WINDOWS_BUILD
 
-    constexpr void SetDebugName(ID3D11DeviceChild* child, const std::string& name)
+    constexpr void SetDebugName([[maybe_unused]] ID3D11DeviceChild* child, [[maybe_unused]] const std::string& name)
     {
 #ifdef _DEBUG
         if (child)
@@ -27,7 +27,7 @@ export namespace LS::Utils
 #endif _DEBUG
     }
 
-    constexpr void SetDebugName(ID3D11Device* device, const std::string& name)
+    constexpr void SetDebugName([[maybe_unused]] ID3D11Device* device, [[maybe_unused]] const std::string& name)
     {
 #ifdef _DEBUG
         if (device)
@@ -37,7 +37,7 @@ export namespace LS::Utils
 #endif _DEBUG
     }
 
-    constexpr void SetDebugName(IDXGIObject* object, const std::string& name)
+    constexpr void SetDebugName([[maybe_unused]] IDXGIObject* object, [[maybe_unused]] const std::string& name)
     {
 #ifdef _DEBUG
         if (object)

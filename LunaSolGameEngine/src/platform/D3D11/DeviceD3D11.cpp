@@ -153,6 +153,38 @@ namespace LS::Win32
         CreateSwapchain(static_cast<HWND>(window->GetHandleToWindow()), info);
     }
 
+    void DeviceD3D11::CreateSwapchainAsTexture(const LS::LSWindowBase* window, PIXEL_COLOR_FORMAT format, uint32_t bufferSize)
+    {
+        LS::LSSwapchainInfo info{
+            .BufferSize = bufferSize,
+            .Width = window->GetWidth(),
+            .Height = window->GetHeight(),
+            .PixelFormat = format,
+            .IsStereoScopic = false,
+            .MSCount = 1,
+            .MSQuality = 0
+        };
+
+        D3D11_TEXTURE2D_DESC rtDesc;
+        rtDesc.Format = Utils::FindDXGIFormat(format);
+        rtDesc.ArraySize = 1;
+        rtDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
+        rtDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+        rtDesc.MipLevels = 1;
+        rtDesc.MiscFlags = 0;
+        rtDesc.Usage = D3D11_USAGE_DYNAMIC;
+        rtDesc.Width = window->GetWidth();
+        rtDesc.Height = window->GetHeight();
+        rtDesc.SampleDesc.Count = info.MSCount;
+        rtDesc.SampleDesc.Quality = info.MSQuality;
+
+        auto result = m_pDevice->CreateTexture2D(&rtDesc, nullptr, &m_pBackBufferFrame);
+        if (FAILED(result))
+        {
+            Utils::ThrowIfFailed(result, "Failed to generate back buffer as texture.");
+        }
+    }
+
     HRESULT DeviceD3D11::CreateDeferredContext(ID3D11DeviceContext** ppDeferredContext) noexcept
     {
         if (!m_pDevice)
@@ -198,7 +230,7 @@ namespace LS::Win32
         return m_pDevice->CreateRenderTargetView1(pResource, rtvDesc, ppRTView);
     }
 
-    HRESULT DeviceD3D11::CreateDepthStencilView(ID3D11RenderTargetView* pRenderTargetView, ID3D11Resource* pResource,
+    HRESULT DeviceD3D11::CreateDepthStencilView([[maybe_unused]] ID3D11RenderTargetView* pRenderTargetView, ID3D11Resource* pResource,
         ID3D11DepthStencilView** ppDepthStencil, const D3D11_DEPTH_STENCIL_VIEW_DESC* pDesc /*= nullptr*/) noexcept
     {
         assert(m_pDevice);
@@ -207,7 +239,7 @@ namespace LS::Win32
         return m_pDevice->CreateDepthStencilView(pResource, pDesc, ppDepthStencil);
     }
 
-    HRESULT DeviceD3D11::CreateDepthStencilViewForSwapchain(ID3D11RenderTargetView* pRenderTargetView, ID3D11DepthStencilView** ppDepthStencil, DXGI_FORMAT format /*= DXGI_FORMAT_D24_UNORM_S8_UINT*/) noexcept
+    HRESULT DeviceD3D11::CreateDepthStencilViewForSwapchain([[maybe_unused]] ID3D11RenderTargetView* pRenderTargetView, ID3D11DepthStencilView** ppDepthStencil, DXGI_FORMAT format /*= DXGI_FORMAT_D24_UNORM_S8_UINT*/) noexcept
     {
         assert(m_pDevice);
         assert(pRenderTargetView);
