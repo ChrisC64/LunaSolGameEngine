@@ -35,7 +35,7 @@ export namespace LS::Win32
         WRL::ComPtr<ID3D11SamplerState> Sampler;
     };
 
-    struct PipelineD3D11
+    struct PipelineStateDX11
     {
         D3D_PRIMITIVE_TOPOLOGY                  PrimitiveTopology;
         WRL::ComPtr<ID3D11RasterizerState>      RasterizerState;
@@ -55,19 +55,25 @@ export namespace LS::Win32
         std::vector<TextureD3D11>               Textures;
     };
 
-    class D3D11PipelineFactory : IPipelineFactory
+    class D3D11PipelineFactory final : public IPipelineFactory
     {
     public:
-        D3D11PipelineFactory(SharedRef<DeviceD3D11>& deviceD3D11);
+        D3D11PipelineFactory() = default;
         ~D3D11PipelineFactory() = default;
 
+        D3D11PipelineFactory& operator=(D3D11PipelineFactory&&) = default;
+        D3D11PipelineFactory(D3D11PipelineFactory&&) = default;
+        D3D11PipelineFactory& operator=(const D3D11PipelineFactory&) = delete;
+        D3D11PipelineFactory(const D3D11PipelineFactory&) = delete;
+
+        void Init(SharedRef<DeviceD3D11>& device) noexcept;
         [[nodiscard]]
         virtual bool CreatePipelineState(const PipelineDescriptor& pipeline) noexcept final;
 
-        PipelineD3D11 CreatePipelineD3D11(const PipelineDescriptor& pipeline);
+        PipelineStateDX11 CreatePipelineD3D11(const PipelineDescriptor& pipeline);
 
     private:
         SharedRef<DeviceD3D11> m_pDevice;
-        std::vector<PipelineD3D11> m_pipelines;
+        std::vector<PipelineStateDX11> m_pipelines;
     };
 }

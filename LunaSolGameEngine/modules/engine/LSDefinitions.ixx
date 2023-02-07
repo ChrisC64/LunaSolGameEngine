@@ -14,6 +14,7 @@ export
 
     template <class S>
     using SharedRef = std::shared_ptr<S>;
+
     template<class T>
     using LSOptional = std::optional<T>;
 #ifdef LS_WINDOWS_BUILD

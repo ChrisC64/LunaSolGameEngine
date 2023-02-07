@@ -7,6 +7,7 @@ import D3D11Lib;
 import Win32Lib;
 import Util.HLSLUtils;
 import Helper.LSCommonTypes;
+import Helper.PipelineFactory;
 
 using namespace LS;
 using namespace LS::Win32;
@@ -70,6 +71,7 @@ int main()
     // Device Setup //
     DeviceD3D11 device;
     device.CreateDevice();
+
     ComPtr<ID3D11DeviceContext4> immContext = device.GetImmediateContext();
     device.CreateSwapchain(window.get());
     //device.CreateSwapchainAsTexture(window.get());
@@ -399,10 +401,6 @@ int main()
     device.CreateBuffer(&colorBD, &color1SRD, &color1Buffer);
     device.CreateBuffer(&colorBD, &color2SRD, &color2Buffer);
 
-    // Setup states and buffers that only require one call here //
-    /*BindVS(immContext.Get(), vsShader.Get());
-    BindPS(immContext.Get(), psShader.Get());*/
-
     // Deferred Contexts //
     BindVS(context1.Get(), vsShader.Get());
     //BindVS(context2.Get(), vsShader.Get());
@@ -414,7 +412,6 @@ int main()
     //context1->PSSetSamplers(0, 1, pSampler.GetAddressOf());
     //context2->PSSetSamplers(0, 1, pSampler.GetAddressOf());
 
-    //SetInputlayout(immContext.Get(), pInputLayoutPosTex.Get());
     SetInputlayout(context1.Get(), pInputLayoutPosTex.Get());
     //SetInputlayout(context2.Get(), pInputLayoutPosTex.Get());
 
@@ -424,16 +421,11 @@ int main()
     std::array<ID3D11Buffer*, 4> buffers2{ viewBuffer.Get(), projBuffer.Get(), modelBuffer.Get(),
         color2Buffer.Get() };
 
-    //BindVSConstantBuffers(immContext.Get(), 0, buffers);
     BindVSConstantBuffers(context1.Get(), 0, buffers);
     //BindVSConstantBuffers(context2.Get(), 0, buffers2);
 
     UINT stride = sizeof(float) * 8;
 
-    /*SetVertexBuffers(immContext.Get(), vertexBuffer.Get(), 1, 0, stride);
-    SetIndexBuffer(immContext.Get(), indexBuffer.Get());
-    SetRasterizerState(immContext.Get(), rsSolid.Get());
-    */
     SetVertexBuffers(context1.Get(), vertexBuffer.Get(), 1, 0, stride);
     SetIndexBuffer(context1.Get(), indexBuffer.Get());
     SetRasterizerState(context1.Get(), rsSolid.Get());
@@ -443,13 +435,6 @@ int main()
     SetRasterizerState(context2.Get(), rsSolid.Get());
     */
     FLOAT color[4]{ 0.0f, 0.0f, 0.0f, 0.0f };
-    /*SetBlendState(immContext.Get(), blendState.Get());
-    SetDepthStencilState(immContext.Get(), defaultState.Get(), 1);
-    SetTopology(immContext.Get(), D3D11_PRIMITIVE_TOPOLOGY::D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-    SetViewport(immContext.Get(),
-        static_cast<float>(window->GetWidth()),
-        static_cast<float>(window->GetHeight())
-    );*/
 
     SetBlendState(context1.Get(), blendState.Get());
     SetDepthStencilState(context1.Get(), defaultState.Get(), 1);
@@ -475,6 +460,7 @@ int main()
     ClearRT(context1.Get(), pTextureRTView.Get(), g_color3);
     ClearDS(context1.Get(), dsView.Get());
     DrawIndexed(context1.Get(), g_indices.size(), 0, 0);
+
     // 2nd Pass - Use default Render Target, and bind Texture as resource //
     BindVSConstantBuffer(context1.Get(), 3, color2Buffer.Get());
     BindPS(context1.Get(), psShader2.Get());
@@ -494,7 +480,7 @@ int main()
     context2->PSSetSamplers(0, 1, pSampler.GetAddressOf());
     DrawIndexed(context2.Get(), g_indices.size(), 0, 0);*/
     // Obtain render target buffer and set as texture //
-     // Create Render Texture (texture to write to) //
+    // Create Render Texture (texture to write to) //
     //D3D11_TEXTURE2D_DESC renderTD{};
     //DXGI_SWAP_CHAIN_DESC swapchainDesc;
     //auto swapDesc = device.GetSwapChain()->GetDesc(&swapchainDesc);
@@ -533,7 +519,6 @@ int main()
 
     //context2->CopyResource(pStagingTexture.Get(), pSourceBB.Get());
 
-
     ComPtr<ID3D11CommandList> command1, command2;
     auto hr = context1->FinishCommandList(FALSE, &command1);
     if (FAILED(hr))
@@ -549,10 +534,6 @@ int main()
     while (window->IsRunning())
     {
         g_timer.Tick();
-        /*SetRenderTarget(immContext.Get(), rtViewOg.Get(), dsView.Get());
-        ClearRT(immContext.Get(), defaultRTView.Get(), g_color3);
-        ClearDS(immContext.Get(), dsView.Get());*/
-
         if (command1)
         {
             immContext->ExecuteCommandList(command1.Get(), false);
@@ -561,15 +542,7 @@ int main()
         {
             immContext->ExecuteCommandList(command2.Get(), true);
         }*/
-        //DrawIndexed(immContext.Get(), g_indices.size(), 0, 0);
         Present1(device.GetSwapChain().Get(), 1);
         window->PollEvent();
-        /*if (g_timer.GetTotalTimeTickedIn<std::chrono::seconds>().count() >= 5.0f)
-        {
-            g_color[0] = 0.0f;
-            g_color[1] = 1.0f;
-            g_color[2] = 1.0f;
-            g_color[3] = 1.0f;
-        }*/
     }
 }

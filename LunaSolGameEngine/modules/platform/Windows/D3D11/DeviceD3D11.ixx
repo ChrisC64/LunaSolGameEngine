@@ -10,7 +10,7 @@ namespace WRL = Microsoft::WRL;
 
 export namespace LS::Win32
 {
-    class DeviceD3D11 final : ILSDevice
+    class DeviceD3D11 final : public ILSDevice
     {
     public:
         DeviceD3D11() = default;

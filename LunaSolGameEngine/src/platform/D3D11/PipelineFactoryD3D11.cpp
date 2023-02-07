@@ -9,8 +9,9 @@ import LSData;
 using namespace LS;
 using namespace LS::Win32;
 
-D3D11PipelineFactory::D3D11PipelineFactory(SharedRef<DeviceD3D11>& deviceD3D11) : m_pDevice(deviceD3D11)
+void D3D11PipelineFactory::Init(SharedRef<DeviceD3D11>& device) noexcept
 {
+    m_pDevice = device;
 }
 
 bool D3D11PipelineFactory::CreatePipelineState(const PipelineDescriptor& pipeline) noexcept
@@ -25,10 +26,10 @@ bool D3D11PipelineFactory::CreatePipelineState(const PipelineDescriptor& pipelin
     return true;
 }
 //TODO: Breka up and put conversion functions into stand alone functions so we can reuse them.
-PipelineD3D11 LS::Win32::D3D11PipelineFactory::CreatePipelineD3D11(const PipelineDescriptor& pipeline)
+PipelineStateDX11 LS::Win32::D3D11PipelineFactory::CreatePipelineD3D11(const PipelineDescriptor& pipeline)
 {
     namespace WRL = Microsoft::WRL;
-    PipelineD3D11 out;
+    PipelineStateDX11 out;
     ID3D11Device5* device = m_pDevice->GetDevice().Get();
     auto rasterizer = CreateRasterizerState2(device, pipeline.RasterizeState);
     if (rasterizer)

@@ -18,10 +18,8 @@ namespace LS
 
     export enum class DEVICE_API
     {
-        DIRECT3D_11,
-        DIRECT3D_12,
-        VULKAN,
-        OPEN_GL
+        DIRECTX_11,
+        DIRECTX_12,
     };
 
     /**
@@ -406,6 +404,7 @@ namespace LS
         ILSDevice() = default;
 
         bool m_bIsInitialized = false;
+
     public:
         virtual ~ILSDevice() = default;
         ILSDevice(ILSDevice&&) = default;
