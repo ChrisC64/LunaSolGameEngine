@@ -10,7 +10,7 @@ namespace WRL = Microsoft::WRL;
 
 export namespace LS::Win32
 {
-    class DeviceD3D11
+    class DeviceD3D11 final : public ILSDevice
     {
     public:
         DeviceD3D11() = default;
@@ -18,7 +18,8 @@ export namespace LS::Win32
 
         void CreateDevice(bool isSingleThreaded = false);
         void CreateSwapchain(HWND winHandle, const LS::LSSwapchainInfo& swapchainInfo);
-        void CreateSwapchain(const LS::LSWindowBase* window, PIXEL_FORMAT format = PIXEL_FORMAT::RGBA_8, uint32_t bufferSize = 2);
+        void CreateSwapchain(const LS::LSWindowBase* window, PIXEL_COLOR_FORMAT format = PIXEL_COLOR_FORMAT::RGBA8_UNORM, uint32_t bufferSize = 2);
+        void CreateSwapchainAsTexture(const LS::LSWindowBase* window, PIXEL_COLOR_FORMAT format = PIXEL_COLOR_FORMAT::RGBA8_UNORM, uint32_t bufferSize = 2);
         
         HRESULT CreateDeferredContext(ID3D11DeviceContext** pDeferredContext) noexcept;
         HRESULT CreateDeferredContext2(ID3D11DeviceContext2** ppDeferredContext) noexcept;
@@ -37,14 +38,23 @@ export namespace LS::Win32
         ID3D11DeviceContext*                 GetImmediateContextPtr() const noexcept;
         WRL::ComPtr<IDXGISwapChain1>         GetSwapChain() const noexcept;
 
+        // Inherited by ILSDevice //
+        [[nodiscard]] 
+        virtual bool InitDevice(const LS::LSDeviceSettings& settings) noexcept final;
+        
+        [[nodiscard]] 
+        virtual auto CreateContext() noexcept -> LSOptional<Ref<LS::ILSContext>> final;
+        virtual void Shutdown() noexcept final;
+
     private:
         bool                                            m_bIsInitialized = false;
         WRL::ComPtr<ID3D11Device5>                      m_pDevice = nullptr;
         WRL::ComPtr<ID3D11DeviceContext4>               m_pImmediateContext = nullptr;
         WRL::ComPtr<ID3D11Debug>                        m_pDebug = nullptr;
         WRL::ComPtr<IDXGISwapChain1>                    m_pSwapchain = nullptr;
+        //WRL::ComPtr<ID3D11RenderTargetView1>            m_pRenderTargetView = nullptr;
+        WRL::ComPtr<ID3D11Texture2D>                    m_pBackBufferFrame = nullptr;
+        WRL::ComPtr<ID3D11DepthStencilView>             m_pDepthStencil = nullptr;// @brief depth stencil based on back buffer
         D3D_FEATURE_LEVEL                               m_featureLevel{};
-
-        DXGI_SWAP_CHAIN_DESC1 BuildSwapchainDesc1(const LS::LSSwapchainInfo& info) const noexcept;
     };
 }

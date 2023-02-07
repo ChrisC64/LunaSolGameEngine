@@ -1,6 +1,6 @@
-export module Data.LSCommonTypes;
+export module Helper.LSCommonTypes;
 
-export import Engine.LSDevice;
+import Engine.LSDevice;
 
 export namespace LS
 {
@@ -17,42 +17,42 @@ export namespace LS
     /**
     * @brief Solid fill with back faces culled and triangles in CW order. Depth Clip Enabled (DCE)
     */
-    LSDrawState SolidFill_BackCull_CCFront_DCE{
+    RasterizerInfo SolidFill_BackCull_CCFront_DCE{
         .Fill = LS::FILL_STATE::FILL,
         .Cull = LS::CULL_METHOD::BACK,
         .IsFrontCounterClockwise = false,
         .IsDepthClipEnabled = true
     };
     
-    LSDrawState SolidFill_FrontCull_CCFront_DCE{
+    RasterizerInfo SolidFill_FrontCull_CCFront_DCE{
         .Fill = LS::FILL_STATE::FILL,
         .Cull = LS::CULL_METHOD::FRONT,
         .IsFrontCounterClockwise = false,
         .IsDepthClipEnabled = true
     };
     
-    LSDrawState SolidFill_NoneCull_CCFront_DCE{
+    RasterizerInfo SolidFill_NoneCull_CCFront_DCE{
         .Fill = LS::FILL_STATE::FILL,
         .Cull = LS::CULL_METHOD::NONE,
         .IsFrontCounterClockwise = false,
         .IsDepthClipEnabled = true
     };
     
-    LSDrawState SolidFill_BackCull_CCFront_DCD{
+    RasterizerInfo SolidFill_BackCull_CCFront_DCD{
         .Fill = LS::FILL_STATE::FILL,
         .Cull = LS::CULL_METHOD::BACK,
         .IsFrontCounterClockwise = false,
         .IsDepthClipEnabled = false
     };
     
-    LSDrawState SolidFill_FrontCull_CCFront_DCD{
+    RasterizerInfo SolidFill_FrontCull_CCFront_DCD{
         .Fill = LS::FILL_STATE::FILL,
         .Cull = LS::CULL_METHOD::FRONT,
         .IsFrontCounterClockwise = false,
         .IsDepthClipEnabled = false
     };
     
-    LSDrawState SolidFill_NoneCull_CCFront_DCD{
+    RasterizerInfo SolidFill_NoneCull_CCFront_DCD{
         .Fill = LS::FILL_STATE::FILL,
         .Cull = LS::CULL_METHOD::NONE,
         .IsFrontCounterClockwise = false,
@@ -62,42 +62,42 @@ export namespace LS
     // Counter Clockwise Winding Order Set //
     /////////////////////////////////////////
 
-    LSDrawState SolidFill_BackCull_CCWFront_DCE{
+    RasterizerInfo SolidFill_BackCull_CCWFront_DCE{
         .Fill = LS::FILL_STATE::FILL,
         .Cull = LS::CULL_METHOD::BACK,
         .IsFrontCounterClockwise = true,
         .IsDepthClipEnabled = true
     };
     
-    LSDrawState SolidFill_FrontCull_CCWFront_DCE{
+    RasterizerInfo SolidFill_FrontCull_CCWFront_DCE{
         .Fill = LS::FILL_STATE::FILL,
         .Cull = LS::CULL_METHOD::FRONT,
         .IsFrontCounterClockwise = true,
         .IsDepthClipEnabled = true
     };
     
-    LSDrawState SolidFill_NoneCull_CCWFront_DCE{
+    RasterizerInfo SolidFill_NoneCull_CCWFront_DCE{
         .Fill = LS::FILL_STATE::FILL,
         .Cull = LS::CULL_METHOD::NONE,
         .IsFrontCounterClockwise = true,
         .IsDepthClipEnabled = true
     };
     
-    LSDrawState SolidFill_BackCull_CCWFront_DCD{
+    RasterizerInfo SolidFill_BackCull_CCWFront_DCD{
         .Fill = LS::FILL_STATE::FILL,
         .Cull = LS::CULL_METHOD::BACK,
         .IsFrontCounterClockwise = true,
         .IsDepthClipEnabled = false
     };
     
-    LSDrawState SolidFill_FrontCull_CCWFront_DCD{
+    RasterizerInfo SolidFill_FrontCull_CCWFront_DCD{
         .Fill = LS::FILL_STATE::FILL,
         .Cull = LS::CULL_METHOD::FRONT,
         .IsFrontCounterClockwise = true,
         .IsDepthClipEnabled = false
     };
     
-    LSDrawState SolidFill_NoneCull_CCWFront_DCD{
+    RasterizerInfo SolidFill_NoneCull_CCWFront_DCD{
         .Fill = LS::FILL_STATE::FILL,
         .Cull = LS::CULL_METHOD::NONE,
         .IsFrontCounterClockwise = true,
@@ -112,42 +112,42 @@ export namespace LS
     /**
     * @brief Solid fill with back faces culled and triangles in CW order. Depth Clip Enabled (DCE)
     */
-    LSDrawState Wireframe_BackCull_CCFront_DCE{
+    RasterizerInfo Wireframe_BackCull_CCFront_DCE{
         .Fill = LS::FILL_STATE::WIREFRAME,
         .Cull = LS::CULL_METHOD::BACK,
         .IsFrontCounterClockwise = false,
         .IsDepthClipEnabled = true
     };
 
-    LSDrawState Wireframe_FrontCull_CCFront_DCE{
+    RasterizerInfo Wireframe_FrontCull_CCFront_DCE{
         .Fill = LS::FILL_STATE::WIREFRAME,
         .Cull = LS::CULL_METHOD::FRONT,
         .IsFrontCounterClockwise = false,
         .IsDepthClipEnabled = true
     };
 
-    LSDrawState Wireframe_NoneCull_CCFront_DCE{
+    RasterizerInfo Wireframe_NoneCull_CCFront_DCE{
         .Fill = LS::FILL_STATE::WIREFRAME,
         .Cull = LS::CULL_METHOD::NONE,
         .IsFrontCounterClockwise = false,
         .IsDepthClipEnabled = true
     };
 
-    LSDrawState Wireframe_BackCull_CCFront_DCD{
+    RasterizerInfo Wireframe_BackCull_CCFront_DCD{
         .Fill = LS::FILL_STATE::WIREFRAME,
         .Cull = LS::CULL_METHOD::BACK,
         .IsFrontCounterClockwise = false,
         .IsDepthClipEnabled = false
     };
 
-    LSDrawState Wireframe_FrontCull_CCFront_DCD{
+    RasterizerInfo Wireframe_FrontCull_CCFront_DCD{
         .Fill = LS::FILL_STATE::WIREFRAME,
         .Cull = LS::CULL_METHOD::FRONT,
         .IsFrontCounterClockwise = false,
         .IsDepthClipEnabled = false
     };
 
-    LSDrawState Wireframe_NoneCull_CCFront_DCD{
+    RasterizerInfo Wireframe_NoneCull_CCFront_DCD{
         .Fill = LS::FILL_STATE::WIREFRAME,
         .Cull = LS::CULL_METHOD::NONE,
         .IsFrontCounterClockwise = false,
@@ -157,42 +157,42 @@ export namespace LS
     // Counter Clockwise Winding Order Set //
     /////////////////////////////////////////
 
-    LSDrawState Wireframe_BackCull_CCWFront_DCE{
+    RasterizerInfo Wireframe_BackCull_CCWFront_DCE{
         .Fill = LS::FILL_STATE::WIREFRAME,
         .Cull = LS::CULL_METHOD::BACK,
         .IsFrontCounterClockwise = true,
         .IsDepthClipEnabled = true
     };
 
-    LSDrawState Wireframe_FrontCull_CCWFront_DCE{
+    RasterizerInfo Wireframe_FrontCull_CCWFront_DCE{
         .Fill = LS::FILL_STATE::WIREFRAME,
         .Cull = LS::CULL_METHOD::FRONT,
         .IsFrontCounterClockwise = true,
         .IsDepthClipEnabled = true
     };
 
-    LSDrawState Wireframe_NoneCull_CCWFront_DCE{
+    RasterizerInfo Wireframe_NoneCull_CCWFront_DCE{
         .Fill = LS::FILL_STATE::WIREFRAME,
         .Cull = LS::CULL_METHOD::NONE,
         .IsFrontCounterClockwise = true,
         .IsDepthClipEnabled = true
     };
 
-    LSDrawState Wireframe_BackCull_CCWFront_DCD{
+    RasterizerInfo Wireframe_BackCull_CCWFront_DCD{
         .Fill = LS::FILL_STATE::WIREFRAME,
         .Cull = LS::CULL_METHOD::BACK,
         .IsFrontCounterClockwise = true,
         .IsDepthClipEnabled = false
     };
 
-    LSDrawState Wireframe_FrontCull_CCWFront_DCD{
+    RasterizerInfo Wireframe_FrontCull_CCWFront_DCD{
         .Fill = LS::FILL_STATE::WIREFRAME,
         .Cull = LS::CULL_METHOD::FRONT,
         .IsFrontCounterClockwise = true,
         .IsDepthClipEnabled = false
     };
 
-    LSDrawState Wireframe_NoneCull_CCWFront_DCD{
+    RasterizerInfo Wireframe_NoneCull_CCWFront_DCD{
         .Fill = LS::FILL_STATE::WIREFRAME,
         .Cull = LS::CULL_METHOD::NONE,
         .IsFrontCounterClockwise = true,

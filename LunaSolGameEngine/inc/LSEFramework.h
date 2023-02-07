@@ -18,6 +18,8 @@
 #include <iostream>
 #include <filesystem>
 #include <fstream>
+#include <queue>
+#include <variant>
 
 #ifdef LS_WINDOWS_BUILD
 // Windows Headers
@@ -55,3 +57,9 @@
 #endif
 
 #include "LSTypeDefs.h"
+#include "LSBuffer.h"
+
+
+namespace LS
+{
+}

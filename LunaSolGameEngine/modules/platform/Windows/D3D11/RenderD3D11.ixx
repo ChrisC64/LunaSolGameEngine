@@ -4,13 +4,14 @@ module;
 export module D3D11.RenderD3D11;
 import Util.MSUtils;
 import LSData;
+import Engine.LSDevice;
 
 namespace WRL = Microsoft::WRL;
 
 export namespace LS::Win32
 {
     // CLEAR //
-    constexpr void ClearRT(ID3D11DeviceContext* pContext, ID3D11RenderTargetView* pRTView, 
+    constexpr void ClearRT(ID3D11DeviceContext* pContext, ID3D11RenderTargetView* pRTView,
         std::array<float, 4>& color) noexcept
     {
         assert(pContext);
@@ -68,12 +69,27 @@ export namespace LS::Win32
         pContext->OMSetRenderTargets(numViews, &pRTView, pDSView);
     }
 
+    constexpr void SetRenderTarget(ID3D11DeviceContext* pContext, ID3D11RenderTargetView* const* pRTView, ID3D11DepthStencilView* pDSView, uint32_t numViews = 1) noexcept
+    {
+        assert(pContext);
+        assert(pRTView);
+        if (!pContext || !pRTView)
+            return;
+        pContext->OMSetRenderTargets(numViews, pRTView, pDSView);
+    }
+
+    constexpr void UnbindRenderTarget(ID3D11DeviceContext* pContext, ID3D11DepthStencilView* pDSView = nullptr)
+    {
+        assert(pContext);
+        pContext->OMSetRenderTargets(0, nullptr, pDSView);
+    }
+
     // DRAW CALLS //
 
     /**
      * @brief Draws the number of vertices supplied to the vertex buffer
      * @param pContext The context to issue the draw call
-     * @param vertexCount Number of vertices to draw 
+     * @param vertexCount Number of vertices to draw
      * @param vertexOffset Offset from the buffer to start from
     */
     constexpr void Draw(ID3D11DeviceContext* pContext, uint32_t vertexCount, uint32_t vertexOffset = 0) noexcept
@@ -91,13 +107,13 @@ export namespace LS::Win32
      * @param baseOffset the offset to each index of the next starting point in the vertex buffer
      * @param instanceOffset an offset for the instance data in the indexed buffer
     */
-    constexpr void DrawInstances(ID3D11DeviceContext* pContext, uint32_t indexBufferSize, uint32_t instances, 
+    constexpr void DrawInstances(ID3D11DeviceContext* pContext, uint32_t indexBufferSize, uint32_t instances,
         uint32_t indexOffset, uint32_t baseOffset, uint32_t instanceOffset) noexcept
     {
         assert(pContext);
         pContext->DrawIndexedInstanced(indexBufferSize, instances, indexOffset, baseOffset, instanceOffset);
     }
-    
+
     /**
      * @brief Draws a number of instances from the set vertex buffer
      * @param pContext the context to use in this draw call
@@ -106,21 +122,21 @@ export namespace LS::Win32
      * @param vertexOffset the offset in the vertexBuffer to start reading from
      * @param instanceOffset the offset value of each instance in the instanced buffer
      */
-    constexpr void DrawInstances(ID3D11DeviceContext* pContext, uint32_t vertexCount, uint32_t instances, 
+    constexpr void DrawInstances(ID3D11DeviceContext* pContext, uint32_t vertexCount, uint32_t instances,
         uint32_t vertexOffset, uint32_t instanceOffset) noexcept
     {
         assert(pContext);
         pContext->DrawInstanced(vertexCount, instances, vertexOffset, instanceOffset);
     }
-    
+
     /**
      * @brief Draws a vertex buffer with the associated index buffer provided
-     * @param pContext the context to draw with 
+     * @param pContext the context to draw with
      * @param indexCount the number of indices to read from
      * @param indexOffset the offset from the index buffer to start at
      * @param vertexOffset the number applied to the index count when reading (for non-interleaved types usually)
      */
-    constexpr void DrawIndexed(ID3D11DeviceContext* pContext, uint32_t indexCount, uint32_t indexOffset, 
+    constexpr void DrawIndexed(ID3D11DeviceContext* pContext, uint32_t indexCount, uint32_t indexOffset,
         uint32_t vertexOffset) noexcept
     {
         assert(pContext);
@@ -136,7 +152,7 @@ export namespace LS::Win32
         assert(pSwapchain);
         pSwapchain->Present(syncInterval, flags);
     }
-    
+
     constexpr void Present1(IDXGISwapChain1* pSwapchain, uint32_t syncInterval = 0, uint32_t flags = 0, const DXGI_PRESENT_PARAMETERS* params = nullptr) noexcept
     {
         assert(pSwapchain);
@@ -162,7 +178,7 @@ export namespace LS::Win32
         assert(shader);
         pContext->VSSetShader(shader, nullptr, 0);
     }
-    
+
     constexpr void BindVS(ID3D11DeviceContext* pContext, ID3D11VertexShader* shader, ID3D11ClassInstance* classInstance, uint32_t numInstances) noexcept
     {
         assert(pContext);
@@ -180,14 +196,23 @@ export namespace LS::Win32
 
         pContext->VSSetConstantBuffers(startSlot, static_cast<uint32_t>(buffers.size()), buffers.data());
     }
-    
+
+    constexpr void BindVSConstantBuffer(ID3D11DeviceContext* pContext, uint32_t slot, ID3D11Buffer* buffer)
+    {
+        assert(pContext);
+        if (!pContext)
+            return;
+
+        pContext->VSSetConstantBuffers(slot, 1u, &buffer);
+    }
+
     constexpr void BindPS(ID3D11DeviceContext* pContext, ID3D11PixelShader* shader) noexcept
     {
         assert(pContext);
         assert(shader);
         pContext->PSSetShader(shader, nullptr, 0);
     }
-    
+
     constexpr void BindPS(ID3D11DeviceContext* pContext, ID3D11PixelShader* shader, ID3D11ClassInstance* classInstance, uint32_t numInstances) noexcept
     {
         assert(pContext);
@@ -205,21 +230,21 @@ export namespace LS::Win32
 
         pContext->PSSetConstantBuffers(startSlot, static_cast<uint32_t>(buffers.size()), buffers.data());
     }
-    
+
     constexpr void BindGS(ID3D11DeviceContext* pContext, ID3D11GeometryShader* shader) noexcept
     {
         assert(pContext);
         assert(shader);
         pContext->GSSetShader(shader, nullptr, 0);
     }
-    
+
     constexpr void BindGS(ID3D11DeviceContext* pContext, ID3D11GeometryShader* shader, ID3D11ClassInstance* classInstance, uint32_t numInstances) noexcept
     {
         assert(pContext);
         assert(shader);
         pContext->GSSetShader(shader, &classInstance, numInstances);
     }
-    
+
     constexpr void BindGSConstantBuffers(ID3D11DeviceContext* pContext, uint32_t startSlot, std::span<ID3D11Buffer*> buffers)
     {
         assert(pContext);
@@ -237,14 +262,14 @@ export namespace LS::Win32
         assert(shader);
         pContext->CSSetShader(shader, nullptr, 0);
     }
-    
+
     constexpr void BindCS(ID3D11DeviceContext* pContext, ID3D11ComputeShader* shader, ID3D11ClassInstance* classInstance, uint32_t numInstances) noexcept
     {
         assert(pContext);
         assert(shader);
         pContext->CSSetShader(shader, &classInstance, numInstances);
     }
-    
+
     constexpr void BindCSConstantBuffers(ID3D11DeviceContext* pContext, uint32_t startSlot, std::span<ID3D11Buffer*> buffers)
     {
         assert(pContext);
@@ -262,7 +287,7 @@ export namespace LS::Win32
         assert(shader);
         pContext->HSSetShader(shader, nullptr, 0);
     }
-    
+
     constexpr void BindHS(ID3D11DeviceContext* pContext, ID3D11HullShader* shader, ID3D11ClassInstance* classInstance, uint32_t numInstances) noexcept
     {
         assert(pContext);
@@ -280,14 +305,14 @@ export namespace LS::Win32
 
         pContext->HSSetConstantBuffers(startSlot, static_cast<uint32_t>(buffers.size()), buffers.data());
     }
-    
+
     constexpr void BindDS(ID3D11DeviceContext* pContext, ID3D11DomainShader* shader) noexcept
     {
         assert(pContext);
         assert(shader);
         pContext->DSSetShader(shader, nullptr, 0);
     }
-    
+
     constexpr void BindDS(ID3D11DeviceContext* pContext, ID3D11DomainShader* shader, ID3D11ClassInstance* classInstance, uint32_t numInstances) noexcept
     {
         assert(pContext);
@@ -315,7 +340,7 @@ export namespace LS::Win32
 
     // Blend State //
     constexpr void SetBlendState(ID3D11DeviceContext* pContext, ID3D11BlendState* pBlendState,
-        const std::array<float, 4>& blendFactor = {1.f, 1.f, 1.f, 1.f}, uint32_t sampleMask = 0xffffffff) noexcept
+        const std::array<float, 4>& blendFactor = { 1.f, 1.f, 1.f, 1.f }, uint32_t sampleMask = 0xffffffff) noexcept
     {
         assert(pContext);
         pContext->OMSetBlendState(pBlendState, blendFactor.data(), sampleMask);
@@ -362,7 +387,7 @@ export namespace LS::Win32
         pContext->IASetInputLayout(layout);
     }
 
-    constexpr void SetVertexBuffers(ID3D11DeviceContext* pContext, std::span<ID3D11Buffer*> pBuffer, uint32_t startSlot, 
+    constexpr void SetVertexBuffers(ID3D11DeviceContext* pContext, std::span<ID3D11Buffer*> pBuffer, uint32_t startSlot,
         uint32_t stride, uint32_t offset = 0u) noexcept
     {
         assert(pContext);
@@ -371,7 +396,7 @@ export namespace LS::Win32
 
         pContext->IASetVertexBuffers(startSlot, static_cast<UINT>(pBuffer.size()), pBuffer.data(), &stride, &offset);
     }
-    
+
     constexpr void SetVertexBuffers(ID3D11DeviceContext* pContext, ID3D11Buffer* pBuffer, uint32_t numBuffers, uint32_t startSlot,
         uint32_t stride, uint32_t offset = 0u) noexcept
     {
@@ -398,5 +423,43 @@ export namespace LS::Win32
             return;
 
         pContext->IASetIndexBuffer(pBuffer, format, offset);
+    }
+
+    constexpr auto BuildSwapchainDesc1(const LS::LSSwapchainInfo& info) noexcept -> DXGI_SWAP_CHAIN_DESC1
+    {
+        DXGI_SWAP_CHAIN_DESC1 swDesc1{};
+        swDesc1.BufferCount = info.BufferSize;
+        swDesc1.Height = info.Height;
+        swDesc1.Width = info.Width;
+        using enum PIXEL_COLOR_FORMAT;
+        DXGI_FORMAT format;
+        switch (info.PixelFormat)
+        {
+        case RGBA8_UNORM:
+            format = DXGI_FORMAT_R8G8B8A8_UNORM;
+            break;
+        case BGRA8_UNORM:
+            format = DXGI_FORMAT_B8G8R8A8_UNORM;
+            break;
+        case RGBA16_UNORM:
+            format = DXGI_FORMAT_R16G16B16A16_UNORM;
+            break;
+        case BGRA16_UNORM:
+            format = DXGI_FORMAT_R16G16B16A16_UNORM;
+            break;
+        default:
+            format = DXGI_FORMAT_R8G8B8A8_UNORM;
+            break;
+        }
+
+        swDesc1.Format = format;
+        swDesc1.Stereo = false;
+        swDesc1.SampleDesc.Count = 1;
+        swDesc1.SampleDesc.Quality = 0;
+        swDesc1.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+        swDesc1.Scaling = DXGI_SCALING_NONE;
+        swDesc1.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+        swDesc1.Flags = 0;
+        return swDesc1;
     }
 }

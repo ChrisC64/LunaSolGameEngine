@@ -5,15 +5,13 @@
 #include <stdexcept>
 #include "LSTypeDefs.h"
 
-
-
 namespace LS
 {
     /***
      * @enum BUFFER_USAGE
      * @brief Details how the buffer will be used which effects the GPU/CPU read/write access.
      */
-    enum class BUFFER_USAGE
+    enum class BUFFER_USAGE : uint16_t
     {
         DEFAULT_RW, // @brief Buffer can be read and written by the GPU. 
         CONSTANT,// @brief Buffer is meant to be used by shader's constant buffers
@@ -26,7 +24,7 @@ namespace LS
      * @enum BUFFER_PIPELINE_STAGES
      * @brief The description of what pipeline stage this buffer object will be used for in the graphics pipeline.
      */
-    enum class BUFFER_PIPELINE_STAGES
+    enum class BUFFER_PIPELINE_STAGES : uint16_t
     {
         UNDEFINED,
         VERTEX, // @brief Buffer can be used for vertex pipeline
@@ -38,14 +36,21 @@ namespace LS
         SHADER_RESOURCE // @brief Buffer is a resource (texture or other type) that is used for shaders (not a constant buffer data)
     };
 
-    enum class BUFFER_BIND_TYPE
+    enum class BUFFER_BIND_TYPE : uint16_t
     {
         UNKNOWN,
         VERTEX, // @brief A vertex buffer for geometry
         INDEX, // @brief An index buffer accompanying a vertex buffer
         CONSTANT_BUFFER, // @brief Shader constant buffer
-        SHADER_RESOURCE // @brief A shader resource (textures
+        SHADER_RESOURCE, // @brief A shader resource (textures
+        STREAM_OUTPUT,
+        RENDER_TARGET,
+        DEPTH_STENCIL,
+        UNORDERED_ACCESS,
+        DECODER,
+        VIDEO_ENCODER
     };
+
     //TODO: Add constraints to this... because I don't know what but I'm sure I"ll think of some later!
     template<class TObject>
     class LSBuffer

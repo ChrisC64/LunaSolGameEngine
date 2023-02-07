@@ -176,19 +176,24 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="modules\data\LSBufferTypes.ixx" />
-    <ClCompile Include="modules\data\LSCommonTypes.ixx" />
+    <ClCompile Include="modules\engine\LSDefinitions.ixx" />
+    <ClCompile Include="modules\helper\LSCommonTypes.ixx" />
     <ClCompile Include="modules\data\LSConcepts.ixx" />
-    <ClCompile Include="modules\data\LSData.ixx" />
+    <ClCompile Include="modules\data\DataLib.ixx" />
     <ClCompile Include="modules\data\LSShader.ixx" />
     <ClCompile Include="modules\data\LSTextureDesc.ixx" />
     <ClCompile Include="modules\data\LSWindowTypes.ixx" />
     <ClCompile Include="modules\engine\EngineCommon.ixx" />
     <ClCompile Include="modules\engine\LSApp.ixx" />
+    <ClCompile Include="modules\engine\LSBuffer.ixx" />
     <ClCompile Include="modules\engine\LSCamera.ixx" />
     <ClCompile Include="modules\engine\LSDevice.ixx" />
     <ClCompile Include="modules\engine\LSScene.ixx" />
     <ClCompile Include="modules\engine\LSWindow.ixx" />
     <ClCompile Include="modules\data\LSMathTypes.ixx" />
+    <ClCompile Include="modules\helper\PipelineFactory.ixx" />
+    <ClCompile Include="modules\platform\Windows\D3D11\Helpers\EngineWrapperD3D11.ixx" />
+    <ClCompile Include="modules\platform\Windows\D3D11\PipelineFactoryD3D11.ixx" />
     <ClCompile Include="modules\platform\Windows\D3D11\Helpers\D3D11HelperStates.ixx" />
     <ClCompile Include="modules\platform\Windows\D3D11\D3D11Lib.ixx" />
     <ClCompile Include="modules\platform\Windows\D3D11\Helpers\D3D11MemoryHelper.ixx" />
@@ -202,23 +207,25 @@
     <ClCompile Include="modules\utils\MSUtils.ixx" />
     <ClCompile Include="modules\utils\StdUtils.ixx" />
     <ClCompile Include="modules\platform\Windows\Win32Window.ixx" />
+    <ClCompile Include="modules\utils\Util.ixx" />
     <ClCompile Include="src\LSEFramework.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="src\platform\D3D11\DeviceD3D11.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Use</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="src\platform\D3D11\PipelineFactoryD3D11.cpp" />
     <ClCompile Include="src\platform\Windows\Win32Windows.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Use</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -35,13 +35,14 @@ cbuffer cbChangesEveryFrame : register(b3)
 struct VS_INPUT
 {
 	float3 Pos : POSITION;
-	float2 Tex : TEXCOORD0;
+	float2 Uv : TEXCOORD0;
 };
 
 struct PS_INPUT
 {
 	float4 Pos : SV_POSITION;
-	float2 Tex : TEXCOORD0;
+	float4 Color : COLOR;
+	float2 Uv : TEXCOORD0;
 };
 
 
@@ -54,7 +55,7 @@ PS_INPUT main(VS_INPUT input)
 	output.Pos = mul(float4(input.Pos, 1.0f), Model);
 	output.Pos = mul(output.Pos, View);
 	output.Pos = mul(output.Pos, Projection);
-	output.Tex = input.Tex;
+	output.Uv = input.Uv;
 
 	return output;
 }
@@ -65,5 +66,5 @@ PS_INPUT main(VS_INPUT input)
 //--------------------------------------------------------------------------------------
 float4 PS(PS_INPUT input) : SV_Target
 {
-	return tex2D.Sample(samplerState, input.Tex) * float4(1.0f, 1.0f, 1.0f, 1.0f);
+	return tex2D.Sample(samplerState, input.Uv) * float4(1.0f, 1.0f, 1.0f, 1.0f);
 }

@@ -2,11 +2,14 @@ struct VS_OUTPUT
 {
     float4 Pos : SV_POSITION;
     float4 Color : COLOR;
+    float2 Uv : TEXCOORD;
 };
 
 struct VS_INPUT
 {
     float4 Pos : POSITION0;
+    float2 Uv : TEXCOORD;
+    float2 Pad : PADDING;
 };
 
 cbuffer ScreenView : register(b0)
@@ -24,8 +27,12 @@ cbuffer PerObject : register(b2)
     float4x4 Model;
 }
 
+cbuffer Color : register(b3)
+{
+    float4 ModelColor;
+}
 
-VS_OUTPUT vs(VS_INPUT input)
+VS_OUTPUT vs(VS_INPUT input, uint instanceId : SV_VertexID)
 {
     VS_OUTPUT output = (VS_OUTPUT)0;
     matrix mvp = mul(Projection, mul(View, Model));
@@ -33,9 +40,9 @@ VS_OUTPUT vs(VS_INPUT input)
     /*output.Pos = mul(input.Pos, Model);
     output.Pos = mul(output.Pos, View);
     output.Pos = mul(output.Pos, Projection);*/
-
+    output.Uv = input.Uv;
     //output.Color = float4(1.0f, 0.0f, 1.0f, 1.0f);
-    output.Color = float4(input.Pos.xyz, 1.0f);
+    output.Color = ModelColor;
     /*output.Pos = float4(0.0f, 0.0f, 0.0f, 0.0f);
     if (instanceId == 0)
     {

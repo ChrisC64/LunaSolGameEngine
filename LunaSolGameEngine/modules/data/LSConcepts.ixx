@@ -32,4 +32,7 @@ export namespace LS
 		{ Multiplicative<T> };
 		{ Divisible<T> };
 	};
+
+	template<class T>
+	concept DestructibleNoThrow = std::is_nothrow_destructible_v<T>;
 }
