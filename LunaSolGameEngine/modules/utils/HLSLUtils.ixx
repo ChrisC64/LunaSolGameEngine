@@ -3,7 +3,8 @@ module;
 export module Util.HLSLUtils;
 
 import Data.LSShader;
-import Data.LSTextureDesc;
+import Data.LSTextureTypes;
+import Data.LSDataTypes;
 
 export namespace LS::Utils
 {
@@ -50,7 +51,7 @@ export namespace LS::Utils
         return format;
     }
 
-    constexpr LSOptional<std::vector<D3D11_INPUT_ELEMENT_DESC>> BuildFroReflection(std::span<std::byte> fileData)
+    constexpr Nullable<std::vector<D3D11_INPUT_ELEMENT_DESC>> BuildFromReflection(std::span<std::byte> fileData)
     {
         if (fileData.empty())
         {
@@ -189,7 +190,7 @@ export namespace LS::Utils
         }
     }
 
-    constexpr LSOptional<std::vector<D3D11_INPUT_ELEMENT_DESC>> BuildFromShaderElements(std::span<ShaderElement> elements) noexcept
+    constexpr Nullable<std::vector<D3D11_INPUT_ELEMENT_DESC>> BuildFromShaderElements(std::span<ShaderElement> elements) noexcept
     {
         if (elements.empty())
             return std::nullopt;

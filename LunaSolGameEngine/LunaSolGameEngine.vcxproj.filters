@@ -36,7 +36,7 @@
     <ClCompile Include="modules\data\LSConcepts.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="modules\data\LSTextureDesc.ixx">
+    <ClCompile Include="modules\data\LSTextureTypes.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="modules\platform\Windows\Win32Window.ixx">
@@ -57,7 +57,7 @@
     <ClCompile Include="modules\engine\LSCamera.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="modules\platform\Windows\D3D11\RenderD3D11.ixx">
+    <ClCompile Include="modules\platform\Windows\D3D11\RenderFuncs.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="modules\platform\Windows\D3D12\RenderD3D12.ixx">
@@ -105,13 +105,7 @@
     <ClCompile Include="modules\data\LSBufferTypes.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="modules\engine\LSBuffer.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="modules\helper\PipelineFactory.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="modules\engine\LSDefinitions.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="modules\platform\Windows\D3D11\PipelineFactoryD3D11.ixx">
@@ -126,21 +120,21 @@
     <ClCompile Include="modules\platform\Windows\D3D11\Helpers\EngineWrapperD3D11.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\engine\EngineCommon.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\data\LSDataTypes.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\helper\PipelineFactory.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\LSEFramework.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="inc\LSTimer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="inc\LSTypeDefs.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="inc\LSBuffer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="inc\platform\Windows\D3D11\LSConverters.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

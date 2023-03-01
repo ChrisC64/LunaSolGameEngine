@@ -2,13 +2,14 @@ module;
 #include "LSEFramework.h"
 
 export module D3D11.MemoryHelper;
+import LSData;
 
 export namespace LS::Win32
 {
     // GPU MEMORY ACCESS CALLS //
 
     template<typename T>
-    [[nodiscard]] constexpr LSOptional<T*> Lock(ID3D11DeviceContext4* pContext, ID3D11Resource* pResource, uint32_t numSubResource,
+    [[nodiscard]] constexpr Nullable<T*> Lock(ID3D11DeviceContext4* pContext, ID3D11Resource* pResource, uint32_t numSubResource,
         D3D11_MAP mapType, uint32_t mapFlags) noexcept
     {
         assert(pContext);

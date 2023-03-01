@@ -1,7 +1,7 @@
 module;
 #include "LSEFramework.h"
 
-export module D3D11.RenderD3D11;
+export module D3D11.RenderFuncD3D11;
 import Util.MSUtils;
 import LSData;
 import Engine.LSDevice;

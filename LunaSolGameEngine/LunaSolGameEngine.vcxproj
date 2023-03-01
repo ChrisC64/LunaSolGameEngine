@@ -176,16 +176,15 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="modules\data\LSBufferTypes.ixx" />
-    <ClCompile Include="modules\engine\LSDefinitions.ixx" />
+    <ClCompile Include="modules\data\LSDataTypes.ixx" />
     <ClCompile Include="modules\helper\LSCommonTypes.ixx" />
     <ClCompile Include="modules\data\LSConcepts.ixx" />
     <ClCompile Include="modules\data\DataLib.ixx" />
     <ClCompile Include="modules\data\LSShader.ixx" />
-    <ClCompile Include="modules\data\LSTextureDesc.ixx" />
+    <ClCompile Include="modules\data\LSTextureTypes.ixx" />
     <ClCompile Include="modules\data\LSWindowTypes.ixx" />
     <ClCompile Include="modules\engine\EngineCommon.ixx" />
     <ClCompile Include="modules\engine\LSApp.ixx" />
-    <ClCompile Include="modules\engine\LSBuffer.ixx" />
     <ClCompile Include="modules\engine\LSCamera.ixx" />
     <ClCompile Include="modules\engine\LSDevice.ixx" />
     <ClCompile Include="modules\engine\LSScene.ixx" />
@@ -199,7 +198,7 @@
     <ClCompile Include="modules\platform\Windows\D3D11\Helpers\D3D11MemoryHelper.ixx" />
     <ClCompile Include="modules\platform\Windows\D3D11\Helpers\D3DUtils.ixx" />
     <ClCompile Include="modules\platform\Windows\D3D11\DeviceD3D11.ixx" />
-    <ClCompile Include="modules\platform\Windows\D3D11\RenderD3D11.ixx" />
+    <ClCompile Include="modules\platform\Windows\D3D11\RenderFuncs.ixx" />
     <ClCompile Include="modules\platform\Windows\D3D12\DeviceD3D12.ixx" />
     <ClCompile Include="modules\platform\Windows\D3D12\RenderD3D12.ixx" />
     <ClCompile Include="modules\platform\Windows\Win32Lib.ixx" />
@@ -208,6 +207,8 @@
     <ClCompile Include="modules\utils\StdUtils.ixx" />
     <ClCompile Include="modules\platform\Windows\Win32Window.ixx" />
     <ClCompile Include="modules\utils\Util.ixx" />
+    <ClCompile Include="src\engine\EngineCommon.cpp" />
+    <ClCompile Include="src\helper\PipelineFactory.cpp" />
     <ClCompile Include="src\LSEFramework.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
@@ -229,11 +230,8 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="inc\LSBuffer.h" />
     <ClInclude Include="inc\LSEFramework.h" />
     <ClInclude Include="inc\LSTimer.h" />
-    <ClInclude Include="inc\LSTypeDefs.h" />
-    <ClInclude Include="inc\platform\Windows\D3D11\LSConverters.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

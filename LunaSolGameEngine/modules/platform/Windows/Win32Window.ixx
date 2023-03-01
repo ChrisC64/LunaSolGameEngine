@@ -2,25 +2,8 @@ module;
 #include "LSEFramework.h"
 
 export module Platform.Win32Window;
-
+import LSData;
 import Engine.LSWindow;
-//TODO: My idea is to see if I can restrict access to outside users. The window
-// that is created would just be based off the build type, normally this is accomplished with
-// preprocessor directives and what's included or not. Perhaps this isn't something I need to do?
-// I can just control which files are compiled with what build I suppose, instead. 
-namespace LS
-{
-    namespace Win32
-    {
-        class Win32Window;
-    };
-
-    export Ref<LS::Win32::Win32Window> LSCreateWindow(uint32_t width, uint32_t height,
-        std::wstring_view title)
-    {
-        return std::make_unique<LS::Win32::Win32Window>(width, height, title);
-    }
-}
 
 namespace LS::Win32
 {

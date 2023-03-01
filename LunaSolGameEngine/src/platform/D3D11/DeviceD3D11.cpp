@@ -1,7 +1,7 @@
 #include "LSEFramework.h"
 
 import D3D11.Device;
-import D3D11.RenderD3D11;
+import D3D11.RenderFuncD3D11;
 import Util.MSUtils;
 import LSData;
 import Util.HLSLUtils;
@@ -324,7 +324,7 @@ bool DeviceD3D11::InitDevice(const LS::LSDeviceSettings& settings) noexcept
     return true;
 }
 
-auto DeviceD3D11::CreateContext() noexcept -> LSOptional<Ref<LS::ILSContext>>
+auto DeviceD3D11::CreateContext() noexcept -> Nullable<Ref<LS::ILSContext>>
 {
     assert(m_pDevice);
     return {};

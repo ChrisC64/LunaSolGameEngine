@@ -8,8 +8,8 @@ struct VS_OUTPUT
 struct VS_INPUT
 {
     float4 Pos : POSITION0;
-    float2 Uv : TEXCOORD;
-    float2 Pad : PADDING;
+    float4 Color : COLOR;
+    float2 UV : TEXCOORD;
 };
 
 cbuffer ScreenView : register(b0)
@@ -40,8 +40,7 @@ VS_OUTPUT vs(VS_INPUT input, uint instanceId : SV_VertexID)
     /*output.Pos = mul(input.Pos, Model);
     output.Pos = mul(output.Pos, View);
     output.Pos = mul(output.Pos, Projection);*/
-    output.Uv = input.Uv;
-    //output.Color = float4(1.0f, 0.0f, 1.0f, 1.0f);
+    output.Uv = input.UV;
     output.Color = ModelColor;
     /*output.Pos = float4(0.0f, 0.0f, 0.0f, 0.0f);
     if (instanceId == 0)

@@ -6,7 +6,6 @@ import Helper.PipelineFactory;
 import LSData;
 import Engine.Common;
 import Util;
-import Engine.LSDefinitions;
 import D3D11.Device;
 
 namespace WRL = Microsoft::WRL;
@@ -68,7 +67,7 @@ export namespace LS::Win32
 
         void Init(SharedRef<DeviceD3D11>& device) noexcept;
         [[nodiscard]]
-        virtual bool CreatePipelineState(const PipelineDescriptor& pipeline) noexcept final;
+        virtual auto CreatePipelineState(const PipelineDescriptor& pipeline) noexcept -> Nullable <Id> final;
 
         PipelineStateDX11 CreatePipelineD3D11(const PipelineDescriptor& pipeline);
 

@@ -26,5 +26,6 @@
     <FxCompile Include="shaders\PixelShader2.hlsl" />
     <FxCompile Include="shaders\ScreenQuad.hlsl" />
     <FxCompile Include="shaders\VertexShader2.hlsl" />
+    <FxCompile Include="shaders\FullScreenQuad.hlsl" />
   </ItemGroup>
 </Project>

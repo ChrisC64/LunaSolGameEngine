@@ -1,6 +1,5 @@
 module;
 #include "LSEFramework.h"
-#include "LSBuffer.h"
 
 export module D3D11.Utils;
 
@@ -8,6 +7,7 @@ import D3D11.EngineWrapperD3D11;
 import LSData;
 import Util.HLSLUtils;
 import Engine.LSDevice;
+
 export namespace LS::Win32
 {
     /**

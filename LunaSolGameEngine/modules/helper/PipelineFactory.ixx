@@ -1,7 +1,7 @@
 export module Helper.PipelineFactory;
 
 import Engine.LSDevice;
-import Engine.LSDefinitions;
+import Data.LSDataTypes;
 import Data.LSShader;
 
 export namespace LS
@@ -17,6 +17,8 @@ export namespace LS
         virtual ~IPipelineFactory() = default;
 
         [[nodiscard]]
-        virtual bool CreatePipelineState(const PipelineDescriptor& pipeline) noexcept = 0;
+        virtual auto CreatePipelineState(const PipelineDescriptor& pipeline) noexcept -> Nullable <Id> = 0;
     };
+
+    auto BuildPipelienFactory(Ref<ILSDevice>& pDevice) noexcept -> Ref<IPipelineFactory>;
 }

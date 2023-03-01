@@ -14,16 +14,16 @@ void D3D11PipelineFactory::Init(SharedRef<DeviceD3D11>& device) noexcept
     m_pDevice = device;
 }
 
-bool D3D11PipelineFactory::CreatePipelineState(const PipelineDescriptor& pipeline) noexcept
+auto D3D11PipelineFactory::CreatePipelineState(const PipelineDescriptor& pipeline) noexcept -> Nullable <Id>
 {
     assert(m_pDevice);
     if (!m_pDevice)
-        return false;
+        return std::nullopt;
 
     auto pipelineD3D = CreatePipelineD3D11(pipeline);
 
     m_pipelines.emplace_back(pipelineD3D);
-    return true;
+    return std::nullopt;
 }
 //TODO: Breka up and put conversion functions into stand alone functions so we can reuse them.
 PipelineStateDX11 LS::Win32::D3D11PipelineFactory::CreatePipelineD3D11(const PipelineDescriptor& pipeline)

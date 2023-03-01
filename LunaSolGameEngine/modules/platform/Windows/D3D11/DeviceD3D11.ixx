@@ -43,7 +43,7 @@ export namespace LS::Win32
         virtual bool InitDevice(const LS::LSDeviceSettings& settings) noexcept final;
         
         [[nodiscard]] 
-        virtual auto CreateContext() noexcept -> LSOptional<Ref<LS::ILSContext>> final;
+        virtual auto CreateContext() noexcept -> Nullable<Ref<LS::ILSContext>> final;
         virtual void Shutdown() noexcept final;
 
     private:
@@ -52,7 +52,6 @@ export namespace LS::Win32
         WRL::ComPtr<ID3D11DeviceContext4>               m_pImmediateContext = nullptr;
         WRL::ComPtr<ID3D11Debug>                        m_pDebug = nullptr;
         WRL::ComPtr<IDXGISwapChain1>                    m_pSwapchain = nullptr;
-        //WRL::ComPtr<ID3D11RenderTargetView1>            m_pRenderTargetView = nullptr;
         WRL::ComPtr<ID3D11Texture2D>                    m_pBackBufferFrame = nullptr;
         WRL::ComPtr<ID3D11DepthStencilView>             m_pDepthStencil = nullptr;// @brief depth stencil based on back buffer
         D3D_FEATURE_LEVEL                               m_featureLevel{};
