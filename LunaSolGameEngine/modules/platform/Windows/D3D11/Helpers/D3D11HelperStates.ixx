@@ -514,7 +514,7 @@ export namespace LS::Win32
     }
 
     // Depth Stencil State //
-    constexpr void SetBlendState1(ID3D11DeviceContext4* pContext, ID3D11DepthStencilState* pDepthStencilState,
+    constexpr void SetDepthStencilState(ID3D11DeviceContext4* pContext, ID3D11DepthStencilState* pDepthStencilState,
         uint32_t stencilRef = 1) noexcept
     {
         assert(pContext);
