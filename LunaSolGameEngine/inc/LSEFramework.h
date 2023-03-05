@@ -27,8 +27,6 @@
 #define NOMINMAX
 #include <Windows.h>
 #include <windowsx.h>
-#include <atlbase.h>
-#include <atlcomcli.h>
 // DirectX/Windows Headers //
 #include <d2d1helper.h>
 #include <d2d1.h>

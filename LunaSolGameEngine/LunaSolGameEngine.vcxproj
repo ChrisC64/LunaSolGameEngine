@@ -201,7 +201,6 @@
     <ClCompile Include="modules\platform\Windows\D3D11\RenderFuncs.ixx" />
     <ClCompile Include="modules\platform\Windows\D3D12\DeviceD3D12.ixx" />
     <ClCompile Include="modules\platform\Windows\D3D12\RenderD3D12.ixx" />
-    <ClCompile Include="modules\platform\Windows\Win32Lib.ixx" />
     <ClCompile Include="modules\utils\HLSLUtils.ixx" />
     <ClCompile Include="modules\utils\MSUtils.ixx" />
     <ClCompile Include="modules\utils\StdUtils.ixx" />

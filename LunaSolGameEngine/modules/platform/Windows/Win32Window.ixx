@@ -5,12 +5,12 @@ export module Platform.Win32Window;
 import LSData;
 import Engine.LSWindow;
 
-namespace LS::Win32
+export namespace LS::Win32
 {
     //TODO: Would I want to make this so I can have the user only see the above LSCreateWindow()
     // and yet still construct this for the object I need in the Win32Window.cpp file where we
     // grab the pointer to the class so we can use the class' internal WndProc handler. 
-    export class Win32Window : public LS::LSWindowBase
+    class Win32Window : public LS::LSWindowBase
     {
     public:
         

@@ -64,8 +64,8 @@ void DeviceD3D11::CreateDevice(bool isSingleThreaded /*= false*/)
         D3D_FEATURE_LEVEL_9_1
     };
 
-    ComPtr<ID3D11Device> device;
-    ComPtr<ID3D11DeviceContext> context;
+    WRL::ComPtr<ID3D11Device> device;
+    WRL::ComPtr<ID3D11DeviceContext> context;
 
     // Create the device only at this point, store the device, feature level, and context
     for (auto driverTypeIndex = 0u; driverTypeIndex < driverCount; ++driverTypeIndex)
@@ -113,15 +113,15 @@ void DeviceD3D11::CreateSwapchain(HWND winHandle, const LS::LSSwapchainInfo& swa
     using namespace Microsoft::WRL;
 
     auto swDesc1 = BuildSwapchainDesc1(swapchainInfo);
-    ComPtr<IDXGIDevice1> dxgiDevice1;
+    WRL::ComPtr<IDXGIDevice1> dxgiDevice1;
     auto hr = Utils::QueryInterfaceFor(m_pDevice, dxgiDevice1);
     Utils::ThrowIfFailed(hr, "Failed to find DXGI Device1");
 
-    ComPtr<IDXGIAdapter> dxgiAdapter;
+    WRL::ComPtr<IDXGIAdapter> dxgiAdapter;
     hr = dxgiDevice1->GetAdapter(&dxgiAdapter);
     Utils::ThrowIfFailed(hr, "Failed to obtain adapter from DXGI Device1");
 
-    ComPtr<IDXGIFactory2> factory;
+    WRL::ComPtr<IDXGIFactory2> factory;
     hr = dxgiAdapter->GetParent(IID_PPV_ARGS(&factory));
     Utils::ThrowIfFailed(hr, "Failed to find IDXGIFactory2 for Adapter");
 

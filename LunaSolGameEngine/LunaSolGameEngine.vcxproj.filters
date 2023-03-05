@@ -93,9 +93,6 @@
     <ClCompile Include="modules\engine\EngineCommon.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="modules\platform\Windows\Win32Lib.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="modules\platform\Windows\D3D11\Helpers\D3DUtils.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>

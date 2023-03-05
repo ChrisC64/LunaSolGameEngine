@@ -1,10 +1,9 @@
-#define LS_WINDOWS_BUILD
 #include "LSEFramework.h"
 #include "LSTimer.h"
 
 import Engine.Common;
 import D3D11Lib;
-import Win32Lib;
+import Platform.Win32Window;
 import Util.HLSLUtils;
 import Helper.LSCommonTypes;
 import Helper.PipelineFactory;
