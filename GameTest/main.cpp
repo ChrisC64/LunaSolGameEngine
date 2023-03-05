@@ -289,27 +289,27 @@ int main()
 	auto vsDataOpt = CompileShader(vsPath);
 	if (!vsDataOpt)
 		return -1;
-	auto vsData = vsDataOpt.value();
+	auto& vsData = vsDataOpt.value();
 	auto vsData2Opt = CompileShader(vsPath2);
 	if (!vsData2Opt)
 		return -1;
-	auto vsData2 = vsData2Opt.value();
+	auto& vsData2 = vsData2Opt.value();
 	auto psDataOpt = CompileShader(psPath);
 	if (!psDataOpt)
 		return -1;
-	auto psData = psDataOpt.value();
+	auto& psData = psDataOpt.value();
 	auto psData2Opt = CompileShader(psPath2);
 	if (!psData2Opt)
 		return -1;
-	auto psData2 = psData2Opt.value();
+	auto& psData2 = psData2Opt.value();
 	auto texPSDataOpt = CompileShader(texPSPath);
 	if (!texPSDataOpt)
 		return -1;
-	auto texPSData = texPSDataOpt.value();
+	auto& texPSData = texPSDataOpt.value();
 	auto fsQuadOpt = CompileShader(fsQuadPath);
 	if (!fsQuadOpt)
 		return -1;
-	auto fsQuadData = fsQuadOpt.value();
+	auto& fsQuadData = fsQuadOpt.value();
 
 	// END SHADER FILE OPERATIONS //
 
@@ -363,7 +363,7 @@ int main()
 	vsSignature.AddElement(elementColor);
 	auto layout = vsSignature.GetInputLayout();
 	auto inputPos = BuildFromShaderElements(layout);
-	auto valInputs = inputPos.value();
+	auto& valInputs = inputPos.value();
 	if (!inputPos)
 	{
 		throw std::runtime_error("Failed to create input layout from shader elements\n");
@@ -378,7 +378,7 @@ int main()
 	vsSignature.AddElement(elementTexCoord);
 	auto layout2 = vsSignature.GetInputLayout();
 	auto inputPosTex = BuildFromShaderElements(layout2);
-	auto valInputs2 = inputPosTex.value();
+	auto& valInputs2 = inputPosTex.value();
 	ComPtr<ID3D11InputLayout> pInputLayoutPosColorText;
 	if (FAILED(device.CreateInputLayout(valInputs2, vsData, &pInputLayoutPosColorText)))
 	{
@@ -391,7 +391,7 @@ int main()
 	auto inputIdOpt = BuildFromShaderElements(inputIdLayout);
 	if (!inputIdOpt)
 		return -10;
-	auto inputId = inputIdOpt.value();
+	auto& inputId = inputIdOpt.value();
 	ComPtr<ID3D11InputLayout> pInputVertexID;
 	if (FAILED(device.CreateInputLayout(inputId, fsQuadData, &pInputVertexID)))
 	{
