@@ -60,7 +60,7 @@ export namespace LS::Utils
 
         Microsoft::WRL::ComPtr<ID3D11ShaderReflection> pReflector;
 
-        D3DReflect(fileData.data(), fileData.size(), IID_PPV_ARGS(&pReflector));
+        D3DReflect(fileData.data(), fileData.size(), IID_ID3D11ShaderReflection, &pReflector);
 
         if (!pReflector)
         {
@@ -76,14 +76,14 @@ export namespace LS::Utils
         }
 
         std::vector<D3D11_INPUT_ELEMENT_DESC> vertexElems(shaderDesc.InputParameters);
-
-        for (uint32_t i = 0u; i < shaderDesc.InputParameters; ++i)
+        auto i = 0u;
+        for (auto& elem : vertexElems)
         {
             D3D11_INPUT_ELEMENT_DESC inputElem;
 
-            hr = pReflector->GetInputParameterDesc(i, &desc);
+            hr = pReflector->GetInputParameterDesc(i++, &desc);
 
-            inputElem.SemanticName = desc.SemanticName;
+            inputElem.SemanticName = std::move(desc.SemanticName);
             inputElem.SemanticIndex = desc.SemanticIndex;
             inputElem.InputSlot = 0;
             inputElem.AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
@@ -96,7 +96,7 @@ export namespace LS::Utils
             {
                 throw std::runtime_error("Failed to parse the DXGI Format\n");
             }
-            vertexElems.emplace_back(inputElem);
+            elem = std::move(inputElem);
         }
 
         if (vertexElems.empty())
