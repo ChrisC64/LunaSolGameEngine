@@ -186,7 +186,6 @@
     <ClCompile Include="modules\engine\EngineCommon.ixx" />
     <ClCompile Include="modules\engine\LSCamera.ixx" />
     <ClCompile Include="modules\engine\LSDevice.ixx" />
-    <ClCompile Include="modules\engine\LSScene.ixx" />
     <ClCompile Include="modules\engine\LSWindow.ixx" />
     <ClCompile Include="modules\data\LSMathTypes.ixx" />
     <ClCompile Include="modules\helper\PipelineFactory.ixx" />

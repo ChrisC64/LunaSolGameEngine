@@ -117,7 +117,7 @@ export namespace LS
         [[nodiscard]] constexpr auto operator<=>(const Vec3<T>&) const noexcept = default;
     };
 
-
+    //TODO: Shouldn't probably have something like this fixed, should be user assignable
     constexpr float EPSILON_F = 0.0000001f;
     template<class T>
         requires BasicMathOperators<T>&& IsNumerical<T>
@@ -178,7 +178,9 @@ export namespace LS
             return x >= rhs.x && y >= rhs.y && z >= rhs.z && w >= rhs.w;
         }
 
-        [[nodiscard]] constexpr auto operator<=>(const Vec4<float>& rhs) const noexcept
+        template<class T>
+            requires std::is_floating_point<T>
+        [[nodiscard]] constexpr auto operator<=>(const Vec4<T>& rhs) const noexcept 
         {
             if (IsGreater(x, rhs.x) && IsGreater(y, rhs.y) && IsGreater(z, rhs.z) && IsGreater(w, rhs.w))
             {

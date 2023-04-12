@@ -48,9 +48,6 @@
     <ClCompile Include="modules\platform\Windows\D3D12\DeviceD3D12.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="modules\engine\LSScene.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="modules\engine\LSCamera.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
