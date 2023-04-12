@@ -18,6 +18,9 @@ export namespace LS
 	concept IsFloatingPoint = std::is_floating_point_v<T>;
 
 	template<class T>
+	concept IsNumerical = std::is_integral_v<T> || std::is_floating_point_v<T>;
+
+	template<class T>
 	concept Addable = requires (T x) { x + x; };
 	template<class T>
 	concept Subtractable = requires (T x) { x - x; };

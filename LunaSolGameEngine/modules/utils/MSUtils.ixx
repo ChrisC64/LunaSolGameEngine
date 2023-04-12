@@ -26,7 +26,9 @@ export namespace LS::Utils
         }
 #endif _DEBUG
     }
-
+    // C4100 warning - unused params for both device and name, despite the attribute maybe_unused being flagged
+    // the other functions similar to this one do not get flagged.
+#pragma warning(disable :4100)
     constexpr void SetDebugName([[maybe_unused]] ID3D11Device* device, [[maybe_unused]] const std::string& name)
     {
 #ifdef _DEBUG
@@ -35,6 +37,10 @@ export namespace LS::Utils
             device->SetPrivateData(WKPDID_D3DDebugObjectName, static_cast<UINT>(name.size()), name.c_str());
         }
 #endif _DEBUG
+        //For some reason when building in release with /WX enabled, this function throws
+        // a warning of unused params, despite the attribute maybe_unused being flagged.
+        // is this a bug? 
+#pragma warning(default: 4100)
     }
 
     constexpr void SetDebugName([[maybe_unused]] IDXGIObject* object, [[maybe_unused]] const std::string& name)

@@ -67,7 +67,6 @@ export namespace LS::Utils
             return std::nullopt;
         }
 
-        D3D11_SIGNATURE_PARAMETER_DESC desc{};
         D3D11_SHADER_DESC shaderDesc{};
         HRESULT hr = pReflector->GetDesc(&shaderDesc);
         if (FAILED(hr))
@@ -76,27 +75,27 @@ export namespace LS::Utils
         }
 
         std::vector<D3D11_INPUT_ELEMENT_DESC> vertexElems(shaderDesc.InputParameters);
-        auto i = 0u;
-        for (auto& elem : vertexElems)
+
+        for (auto p = 0u; p < vertexElems.size(); ++p)
         {
-            D3D11_INPUT_ELEMENT_DESC inputElem;
+            D3D11_SIGNATURE_PARAMETER_DESC desc{};
+            D3D11_INPUT_ELEMENT_DESC elem{};
+            hr = pReflector->GetInputParameterDesc(p, &desc);
 
-            hr = pReflector->GetInputParameterDesc(i++, &desc);
+            elem.SemanticName = desc.SemanticName;
+            elem.SemanticIndex = desc.SemanticIndex;
+            elem.InputSlot = 0;
+            elem.AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
+            elem.InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+            elem.InstanceDataStepRate = 0;
 
-            inputElem.SemanticName = std::move(desc.SemanticName);
-            inputElem.SemanticIndex = desc.SemanticIndex;
-            inputElem.InputSlot = 0;
-            inputElem.AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
-            inputElem.InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
-            inputElem.InstanceDataStepRate = 0;
-
-            inputElem.Format = FindDXGIFormat(desc);
-            assert(inputElem.Format != DXGI_FORMAT_UNKNOWN);
-            if (inputElem.Format == DXGI_FORMAT_UNKNOWN)
+            elem.Format = FindDXGIFormat(desc);
+            assert(elem.Format != DXGI_FORMAT_UNKNOWN);
+            if (elem.Format == DXGI_FORMAT_UNKNOWN)
             {
                 throw std::runtime_error("Failed to parse the DXGI Format\n");
             }
-            elem = std::move(inputElem);
+            vertexElems.at(p) = elem;
         }
 
         if (vertexElems.empty())
@@ -105,33 +104,39 @@ export namespace LS::Utils
         return vertexElems;
     }
     //TODO: Make better - handle cases for value 0 isn't used for things like POSITION/TEXCOORD because 0 is implied
-    constexpr uint32_t FindSemanticIndex(std::string_view semanticName) noexcept
+    //TODO: Just redo this wohle thing, I think we cand o this better.
+    inline auto FindSemanticIndex(std::string_view semanticName) noexcept -> uint32_t
     {
-        // Find the value of semantics 1 - 9 (We don't find any higher, but we should probably support for 
-        // double digits at least. The max resources you can bind is 128, but does that mean we can have
-        // POSITION128 as a possible semantic too? 
-        int num = 0;// If it fails, 0 will be the value from the result below (keeps default value)
-        auto getIndex = [&](int length)
+        uint32_t offset = 0;
+        uint32_t end = static_cast<uint32_t>(semanticName.size()) - 1u;
+        if (std::isdigit(semanticName.back()) == 0)
+            return 0;
+
+        for (auto i = end; i > 0; --i)
         {
-            auto v = std::from_chars(semanticName.data() + semanticName.size() - length, semanticName.data() + semanticName.size(), num);
-            if (v.ec == std::errc::invalid_argument)
-            {
-                TRACE("Cannot find value for length of " << length << " in semantic name: " << semanticName.data() << "\n");
-            }
-            else if (v.ec == std::errc::result_out_of_range)
-            {
-                TRACE("Out of range error for length of " << length << " when searching for semantic index for semantic: " << semanticName.data() << "\n");
-            }
-        };
-        int temp = -1;
-        for (int i = 1u; i <= 3; i++)
-        {
-            getIndex(i);
-            if (num == temp)
-                break;
-            temp = num;
+            if (std::isdigit(semanticName.at(i)))
+                continue;
+            offset = i + 1u;
+            break;
         }
-        return num;
+
+        auto substr = semanticName.substr(offset, end);
+        size_t pos;
+        auto result = 0u;
+        try
+        {
+            result = std::stoul(substr.data(), &pos);
+        }
+        catch (std::invalid_argument ex)
+        {
+            return 0;
+        }
+        catch (std::out_of_range ex)
+        {
+            return 0;
+        }
+
+        return result;
     }
 
 
@@ -190,32 +195,10 @@ export namespace LS::Utils
         }
     }
 
-    constexpr Nullable<std::vector<D3D11_INPUT_ELEMENT_DESC>> BuildFromShaderElements(std::span<ShaderElement> elements) noexcept
+    constexpr auto BuildFromShaderElements(std::span<ShaderElement> elements) noexcept -> Nullable<std::vector<D3D11_INPUT_ELEMENT_DESC>>
     {
         if (elements.empty())
             return std::nullopt;
-
-        auto trim = [](std::string_view semanticName, int semanticIndex, std::string& outStr)
-        {
-            if (semanticIndex < 10)
-            {
-                // check final position is not a letter first (EX: POSITION or POSITION0 are both valid for a 0 index)
-                auto c = semanticName.end() - 1;
-                if (std::isdigit(*c))// Last letter is a letter, not number
-                {
-                    semanticName.remove_suffix(1);
-                }
-            }
-            else if (semanticIndex < 100)
-            {
-                semanticName.remove_suffix(2);
-            }
-            else if (semanticIndex < 999)
-            {
-                semanticName.remove_suffix(3);
-            }
-            outStr = std::string{ semanticName };
-        };
 
         std::vector<D3D11_INPUT_ELEMENT_DESC> inputs;
 
@@ -223,8 +206,7 @@ export namespace LS::Utils
         {
             auto inputDesc = D3D11_INPUT_ELEMENT_DESC{};
 
-            inputDesc.SemanticIndex = FindSemanticIndex(se.SemanticName);
-            trim(se.SemanticName, inputDesc.SemanticIndex, se.SemanticName);
+            inputDesc.SemanticIndex = se.SemanticIndex;;
             inputDesc.SemanticName = se.SemanticName.data();
             inputDesc.AlignedByteOffset = se.OffsetAligned;
             inputDesc.InputSlot = se.InputSlot;

@@ -24,7 +24,7 @@ export namespace LS::Win32
         HRESULT CreateDeferredContext(ID3D11DeviceContext** pDeferredContext) noexcept;
         HRESULT CreateDeferredContext2(ID3D11DeviceContext2** ppDeferredContext) noexcept;
         HRESULT CreateDeferredContext3(ID3D11DeviceContext3** ppDeferredContext) noexcept;
-        HRESULT CreateInputLayout(std::span<D3D11_INPUT_ELEMENT_DESC> inputs, std::span<std::byte> byteCode, ID3D11InputLayout** ppInputLayout);
+        HRESULT CreateInputLayout(const D3D11_INPUT_ELEMENT_DESC* elemDesc, uint32_t elemSize, std::span<std::byte> byteCode, ID3D11InputLayout** ppInputLayout);
         HRESULT CreateRenderTargetView(ID3D11Resource* pResource, ID3D11RenderTargetView** ppRTView, const D3D11_RENDER_TARGET_VIEW_DESC* rtvDesc = nullptr) noexcept;
         HRESULT CreateRenderTargetView1(ID3D11Resource* pResource, ID3D11RenderTargetView1** ppRTView, const D3D11_RENDER_TARGET_VIEW_DESC1* rtvDesc = nullptr) noexcept;
         HRESULT CreateDepthStencilView(ID3D11RenderTargetView* pRenderTargetView, ID3D11Resource* pResource, ID3D11DepthStencilView** ppDepthStencil, const D3D11_DEPTH_STENCIL_VIEW_DESC* pDesc = nullptr) noexcept;

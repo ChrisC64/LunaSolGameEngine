@@ -192,13 +192,13 @@ namespace LS::Win32
 			m_bIsResizing = false;
 			if (!m_bIsResizing)
 			{
-				TRACE("Window exit size move!\n");
+				/*TRACE("Window exit size move!\n");
 				if (m_prevHeight != m_height || m_prevWidth != m_width)
 				{
 					m_prevHeight = m_height;
 					m_prevWidth = m_width;
 					ResizeWindow(m_width, m_height);
-				}
+				}*/
 			}
 			break;
 		}

@@ -10,7 +10,7 @@ export namespace LS::Win32
     //TODO: Would I want to make this so I can have the user only see the above LSCreateWindow()
     // and yet still construct this for the object I need in the Win32Window.cpp file where we
     // grab the pointer to the class so we can use the class' internal WndProc handler. 
-    class Win32Window : public LS::LSWindowBase
+    class Win32Window final : public LS::LSWindowBase
     {
     public:
         
@@ -23,10 +23,10 @@ export namespace LS::Win32
         ~Win32Window() = default;
 
         // Inherited via LSWindowBase
-        virtual void Show() override;
-        virtual void Close() override;
-        virtual void PollEvent() override;
-        virtual LSWindowHandle GetHandleToWindow() const override;
+        virtual void Show() final;
+        virtual void Close() final;
+        virtual void PollEvent() final;
+        virtual LSWindowHandle GetHandleToWindow() const final;
         LRESULT HandleWinMessage(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam);
 
     private:

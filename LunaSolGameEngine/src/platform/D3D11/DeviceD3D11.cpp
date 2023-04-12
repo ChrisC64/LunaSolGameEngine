@@ -205,11 +205,11 @@ HRESULT DeviceD3D11::CreateDeferredContext3(ID3D11DeviceContext3** ppDeferredCon
     return m_pDevice->CreateDeferredContext3(0, ppDeferredContext);
 }
 
-HRESULT DeviceD3D11::CreateInputLayout(std::span<D3D11_INPUT_ELEMENT_DESC> inputs, std::span<std::byte> byteCode, ID3D11InputLayout** ppInputLayout)
+HRESULT DeviceD3D11::CreateInputLayout(const D3D11_INPUT_ELEMENT_DESC* elemDesc, uint32_t elemSize, std::span<std::byte> byteCode, ID3D11InputLayout** ppInputLayout)
 {
-    if (!m_pDevice && inputs.size() <= std::numeric_limits<UINT>().max())
+    if (!m_pDevice)
         return E_NOT_SET;
-    return m_pDevice->CreateInputLayout(inputs.data(), static_cast<UINT>(inputs.size()), byteCode.data(), byteCode.size(), ppInputLayout);
+    return m_pDevice->CreateInputLayout(elemDesc, elemSize, byteCode.data(), byteCode.size(), ppInputLayout);
 }
 
 HRESULT DeviceD3D11::CreateRenderTargetView(ID3D11Resource* pResource, ID3D11RenderTargetView** ppRTView,

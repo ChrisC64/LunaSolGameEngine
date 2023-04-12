@@ -78,6 +78,9 @@ static std::array<uint32_t, SCREEN_WIDTH* SCREEN_HEIGHT> g_textureData{};
 auto ReadShaderFile(std::filesystem::path path) -> std::optional<std::vector<std::byte>>;
 auto CreateVertexShader(const DeviceD3D11& device, ComPtr<ID3D11VertexShader>& shader, std::vector<std::byte>& byteCode) -> bool;
 auto CreatePixelShader(const DeviceD3D11& device, ComPtr<ID3D11PixelShader>& shader, std::vector<std::byte>& byteCode) -> bool;
+void InitializeShaderInputSignatures(DeviceD3D11& device);
+
+static LS::LSShaderInputSignature g_PosColorUv, g_PosColor;
 
 // TODO: Make a cube appear by loading in a .obj or .gltf reader
 // TODO: Consider cleaning up the modules a little
@@ -89,11 +92,11 @@ auto CreatePixelShader(const DeviceD3D11& device, ComPtr<ID3D11PixelShader>& sha
 // TODO: Start DX12 renderer
 // TODO: Start Vulkan renderer
 // TODO: Examin needed Interfaces and build them
-int main()
+int main(int argc, char* argv[])
 {
     std::cout << "Hello Luna Sol Game Engine!\n";
     Ref<LSWindowBase> window = LS::BuildWindow(SCREEN_WIDTH, SCREEN_HEIGHT, L"Hello App");
-
+    
     std::cout << "Texture size: " << g_textureData.size() << "\n";
     // Device Setup //
     // auto device = LS::BuildDevice(LS::DEVICE_API::DIRECTX_11);
@@ -103,6 +106,7 @@ int main()
     ComPtr<ID3D11DeviceContext4> immContext = device.GetImmediateContext();
     device.CreateSwapchain(window.get());
 
+    //InitializeShaderInputSignatures(device);
     auto rsSolidOptional = CreateRasterizerState2(device.GetDevice().Get(), SolidFill_NoneCull_CCWFront_DCE);
     auto rsWireframeOptional = CreateRasterizerState2(device.GetDevice().Get(), Wireframe_FrontCull_CCWFront_DCE);
 
@@ -336,7 +340,42 @@ int main()
     if (!shaderResult)
         return -2;
 
-    auto reflectResult1 = BuildFromReflection(vsData);
+    // Build Shader Input Signatures //
+    g_PosColorUv.AddElement(LS::ShaderElement{ .ShaderData = SHADER_DATA_TYPE::FLOAT4, .SemanticName {"POSITION"},
+       .SemanticIndex = 0, .OffsetAligned = 0, .InputSlot = 0, .InputClass = INPUT_CLASS::VERTEX });
+    g_PosColorUv.AddElement(LS::ShaderElement{ .ShaderData = SHADER_DATA_TYPE::FLOAT4, .SemanticName {"COLOR"},
+        .SemanticIndex = 0, .OffsetAligned = sizeof(float) * 4 });
+    g_PosColorUv.AddElement(LS::ShaderElement{ .ShaderData = SHADER_DATA_TYPE::FLOAT2, .SemanticName = "TEXCOORD",
+        .SemanticIndex = 0, .OffsetAligned = (sizeof(float) * 4) * 2 });
+
+    g_PosColor.AddElement(LS::ShaderElement{ .ShaderData = SHADER_DATA_TYPE::FLOAT4, .SemanticName = "POSITION" });
+
+    std::vector<D3D11_INPUT_ELEMENT_DESC> posColorDesc, posColorUvDesc;
+    auto ilResult = BuildFromShaderElements(g_PosColor.Elements);
+    if (ilResult)
+    {
+        posColorDesc = ilResult.value();
+    }
+
+    ilResult = BuildFromShaderElements(g_PosColorUv.Elements);
+    if (ilResult)
+    {
+        posColorUvDesc = ilResult.value();
+    }
+
+    ComPtr<ID3D11InputLayout> pInputLayoutPosColorText;
+    if (FAILED(device.CreateInputLayout(posColorDesc.data(), posColorDesc.size(), vsData2, &pInputLayoutPosColorText)))
+    {
+        throw std::runtime_error("Failed to create input layout from device\n");
+    }
+
+    ComPtr<ID3D11InputLayout> pInputLayoutPosColor;
+    if (FAILED(device.CreateInputLayout(posColorUvDesc.data(), posColorUvDesc.size(), vsData, &pInputLayoutPosColor)))
+    {
+        throw std::runtime_error("Failed to create input layout from device\n");
+    }
+
+    /*auto reflectResult1 = BuildFromReflection(vsData);
     if (!reflectResult1)
     {
         std::cout << "Failed to find reflection\n";
@@ -352,27 +391,27 @@ int main()
     if (!reflectResult3)
     {
         std::cout << "Failed to find reflection\n";
-    }
+    }*/
     //TODO: Sometimes this fails when debugging (need to try release) what could the issue be? I just get a runtime error (i.e. it returns an HRESULT that evaluates to FAIL)
     // so I'm not sure why that is... but usually the debugger is saying something about failing to find one of the semantic names (and reading the results from the debugger displays some
     // garbage for the semantic name object.
-    ComPtr<ID3D11InputLayout> pInputLayoutPosColorText;
-    if (FAILED(device.CreateInputLayout(reflectResult1.value(), vsData, &pInputLayoutPosColorText)))
+    /*ComPtr<ID3D11InputLayout> pInputLayoutPosColorText;
+    if (FAILED(device.CreateInputLayout(reflectResult1.value().data(), reflectResult1.value().size(), vsData, &pInputLayoutPosColorText)))
     {
         throw std::runtime_error("Failed to create input layout from device\n");
     }
 
     ComPtr<ID3D11InputLayout> pInputLayoutPosColor;
-    if (FAILED(device.CreateInputLayout(reflectResult2.value(), vsData2, &pInputLayoutPosColor)))
+    if (FAILED(device.CreateInputLayout(reflectResult2.value().data(), reflectResult2.value().size(), vsData2, &pInputLayoutPosColor)))
     {
         throw std::runtime_error("Failed to create input layout from device\n");
     }
 
     ComPtr<ID3D11InputLayout> pInputVertexID;
-    if (FAILED(device.CreateInputLayout(reflectResult3.value(), fsQuadData, &pInputVertexID)))
+    if (FAILED(device.CreateInputLayout(reflectResult3.value().data(), reflectResult3.value().size(), fsQuadData, &pInputVertexID)))
     {
         throw std::runtime_error("Failed to create input layout for FS Quad\n");
-    }
+    }*/
 
     // TODO: Implement missing setups below that don't have an appropriate function call
     ComPtr<ID3D11Buffer> vertexBuffer;
@@ -431,7 +470,7 @@ int main()
     // First Context Begin //
     BindVS(context1.Get(), fsQuadShader.Get());
     BindPS(context1.Get(), psShader.Get());
-    SetInputlayout(context1.Get(), pInputVertexID.Get());
+    //SetInputlayout(context1.Get(), pInputVertexID.Get());
     SetRasterizerState(context1.Get(), rsSolid.Get());
     SetBlendState(context1.Get(), blendState.Get());
     SetTopology(context1.Get(), D3D11_PRIMITIVE_TOPOLOGY::D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -473,7 +512,7 @@ int main()
         // SET Immediate Context State //
     BindVS(immContext.Get(), fsQuadShader.Get());
     BindPS(immContext.Get(), psShader.Get());
-    SetInputlayout(immContext.Get(), pInputVertexID.Get());
+    //SetInputlayout(immContext.Get(), pInputVertexID.Get());
     SetRasterizerState(immContext.Get(), rsSolid.Get());
     SetBlendState(immContext.Get(), blendState.Get());
     SetTopology(immContext.Get(), D3D11_PRIMITIVE_TOPOLOGY::D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -581,4 +620,31 @@ auto CreatePixelShader(const DeviceD3D11& device, ComPtr<ID3D11PixelShader>& sha
         return false;
     }
     return true;
+}
+
+void InitializeShaderInputSignatures(DeviceD3D11& device)
+{
+    g_PosColorUv.AddElement(LS::ShaderElement{ .ShaderData = SHADER_DATA_TYPE::FLOAT4, .SemanticName {"POSITION0"},
+        .SemanticIndex = 0, .OffsetAligned = 0, .InputSlot = 0, .InputClass = INPUT_CLASS::VERTEX });
+    g_PosColorUv.AddElement(LS::ShaderElement{ .ShaderData = SHADER_DATA_TYPE::FLOAT4, .SemanticName {"COLOR0"},
+        .SemanticIndex = 0, .OffsetAligned = sizeof(float) * 4 });
+    g_PosColorUv.AddElement(LS::ShaderElement{ .ShaderData = SHADER_DATA_TYPE::FLOAT2, .SemanticName = "TEXCOORD0",
+        .SemanticIndex = 0, .OffsetAligned = (sizeof(float) * 4) * 2 });
+
+    g_PosColor.AddElement(LS::ShaderElement{ .ShaderData = SHADER_DATA_TYPE::FLOAT4, .SemanticName = "POSITION" });
+
+    std::vector<D3D11_INPUT_ELEMENT_DESC> posColorDesc, posColorUvDesc;
+    auto result = BuildFromShaderElements(g_PosColor.Elements);
+    if (result)
+    {
+        posColorDesc = result.value();
+    }
+    result = BuildFromShaderElements(g_PosColorUv.Elements);
+    if (result)
+    {
+        posColorUvDesc = result.value();
+    }
+
+    Microsoft::WRL::ComPtr<ID3D11InputLayout> pPosColUvIP;
+    device.CreateInputLayout(posColorUvDesc.data(), posColorUvDesc.size(), {}, pPosColUvIP.ReleaseAndGetAddressOf());
 }

@@ -169,6 +169,6 @@ export namespace LS
         uint32_t SampleCount; // @brief Used for MSAA count
         uint32_t SampleQuality;// @brief Used for MSAA quality
         TEXTURE_ARRAY_TYPE ArrayType; //@brief Informs how we should read the array
-        std::vector<uint32_t> Data; //@brief the Texture data
+        std::vector<std::byte> Data; //@brief the Texture data
     };
 }

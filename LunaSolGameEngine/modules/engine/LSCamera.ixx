@@ -2,27 +2,21 @@ module;
 #include "LSEFramework.h"
 
 export module Engine.LSCamera;
-
+import Data.LSMath.Types;
 using namespace DirectX;
 export namespace LS
 {
-    using mat4 = XMFLOAT4X4;
-    using xmmat = XMMATRIX;
-
-    using vec3 = XMFLOAT3;
-    using xmvec = XMVECTOR;
-    //TODO: Structs don't require m_ prefix, I'll edit to make them like the other structs.
     struct LSCamera
     {
-        xmmat Projection;
-        xmmat View;
-        xmmat Mvp;
-        xmmat InvProj;
-        xmmat InvView;
-        xmmat InvMvp;
-        xmvec Position;
-        xmvec LookAt;
-        xmvec Up;
+        LS::Mat4F Projection;
+        LS::Mat4F View;
+        LS::Mat4F Mvp;
+        LS::Mat4F InvProj;
+        LS::Mat4F InvView;
+        LS::Mat4F InvMvp;
+        LS::Vec4F Position;
+        LS::Vec4F LookAt;
+        LS::Vec4F Up;
         uint32_t Width;
         uint32_t Height;
         float FovAngleV;//Vertical FOV in radians
@@ -31,23 +25,23 @@ export namespace LS
         LSCamera() = default;
         ~LSCamera() = default;
 
-        LSCamera(uint32_t width, uint32_t height, xmvec position, xmvec lookAt, xmvec up, float farZ = 100.0f, float nearZ = 0.1f)
-            : Projection(XMMatrixIdentity()),
-            View(XMMatrixIdentity()),
-            Mvp(XMMatrixIdentity()),
-            InvProj(XMMatrixIdentity()),
-            InvView(XMMatrixIdentity()),
-            InvMvp(XMMatrixIdentity()),
+        LSCamera(uint32_t width, uint32_t height, LS::Vec4F position, LS::Vec4F lookAt, LS::Vec4F up, float farZ = 100.0f, float nearZ = 0.1f)
+            : Projection(Mat4F::Identity()),
+            View(Mat4F::Identity()),
+            Mvp(Mat4F::Identity()),
+            InvProj(Mat4F::Identity()),
+            InvView(Mat4F::Identity()),
+            InvMvp(Mat4F::Identity()),
             Width(width),
             Height(height),
             Position(position),
             LookAt(lookAt),
             Up(up)
         {
-            Projection = XMMatrixPerspectiveFovLH( XMConvertToRadians(45.0f), static_cast<float>(width / height), nearZ, farZ);
+            /*Projection = XMMatrixPerspectiveFovLH( XMConvertToRadians(45.0f), static_cast<float>(width / height), nearZ, farZ);
             View = XMMatrixLookAtLH(position, lookAt, up);
             InvProj = XMMatrixInverse(nullptr, Projection);
-            InvView = XMMatrixInverse(nullptr, View);
+            InvView = XMMatrixInverse(nullptr, View);*/
         }
     };
 }

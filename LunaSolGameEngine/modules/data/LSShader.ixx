@@ -67,11 +67,11 @@ export namespace LS
     struct ShaderElement
     {
         SHADER_DATA_TYPE ShaderData = SHADER_DATA_TYPE::NONE;
-        std::string SemanticName; // Used for custom semantic names
-        uint32_t SemanticIndex; // Used for custom semantic names
+        std::string SemanticName; // The semantic name without the value (e.g. POSITION1 = POSITION)
+        uint32_t SemanticIndex = 0; // The index value of the semantic (e.g. POSITION1 = 1)
         uint32_t OffsetAligned = 0; // The offset position for this data in the buffer
         uint32_t InputSlot = 0; // The input slot for this element (used for combined structures)
-        INPUT_CLASS InputClass; // Purpose for this input element
+        INPUT_CLASS InputClass = INPUT_CLASS::VERTEX; // Purpose for this input element
         uint32_t InstanceStepRate = 0; // the Instance data step rate
 
         bool operator==(const ShaderElement& v) const
@@ -177,7 +177,7 @@ export namespace LS
     /**
      * @brief An object that represents the signature of the shader input
      */
-    class LSShaderInputSignature
+    struct LSShaderInputSignature
     {
     public:
         LSShaderInputSignature() = default;
@@ -190,31 +190,21 @@ export namespace LS
 
         const std::vector<ShaderElement>& GetInputLayout() const
         {
-            return m_inputLayout;
-        }
-
-        uint32_t GetLayoutStride() const
-        {
-            return m_stride;
+            return Elements;
         }
 
         void SetInputLayout(std::span<ShaderElement> elems)
         {
-            m_inputLayout.resize(elems.size());
-            std::ranges::copy(elems, m_inputLayout.data());
-        }
-
-        void SetStride(uint32_t stride)
-        {
-            m_stride = stride;
+            Elements.resize(elems.size());
+            std::ranges::copy(elems, Elements.data());
         }
 
         /**
         * @brief Adds the vertex element to this vertex description
         */
-        void AddElement(const ShaderElement& desc)
+        void AddElement(ShaderElement desc)
         {
-            m_inputLayout.emplace_back(desc);
+            Elements.emplace_back(desc);
         }
 
         void AddElement(SHADER_DATA_TYPE dataType, std::string_view semanticName,
@@ -231,22 +221,18 @@ export namespace LS
             .InputClass = inputClass,
             .InstanceStepRate = instanceStepRate
             };
-            m_inputLayout.emplace_back(elem);
+            Elements.emplace_back(elem);
         }
         
         bool operator==(const LSShaderInputSignature& rhs) const
         {
-            if (m_stride != rhs.m_stride)
-                return false;
-            return this->m_inputLayout == rhs.m_inputLayout;
+            return this->Elements == rhs.Elements;
         }
         bool operator!=(const LSShaderInputSignature& rhs) const
         {
             return !(*this == rhs);
         }
 
-    protected:
-        std::vector<ShaderElement> m_inputLayout;
-        uint32_t m_stride = 0;
+        std::vector<ShaderElement> Elements;
     };
 }

@@ -12,7 +12,7 @@ export namespace LS::Win32
 {
     // CLEAR //
     constexpr void ClearRT(ID3D11DeviceContext* pContext, ID3D11RenderTargetView* pRTView,
-        std::array<float, 4>& color) noexcept
+        std::array<float, 4> color) noexcept
     {
         assert(pContext);
         assert(pRTView);
