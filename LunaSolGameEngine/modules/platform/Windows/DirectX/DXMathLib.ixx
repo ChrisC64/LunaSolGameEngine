@@ -1,3 +1,3 @@
 export module DXMathLib;
 
-export import :MatrixUtils;
+export import :DXMatrixUtils;

@@ -1,9 +1,4 @@
 module;
-#ifdef LS_WINDOWS_BUILD
-// DirectX Libraries //
-#include <DirectXMath.h>
-#endif
-
 #include <optional>
 #include <string>
 #include <memory>
@@ -25,9 +20,42 @@ export
     using Nullable = std::optional<T>;
     using Guid = std::string;
     using Id = uint64_t;
-#ifdef LS_WINDOWS_BUILD
-    using mat4 = DirectX::XMFLOAT4X4;
-#endif
+
+    namespace LS
+    {
+        struct ColorRGBA
+        {
+            float R, G, B, A;
+
+            ColorRGBA(float r, float g, float b, float a) : R(r), G(g), B(b), A(a)
+            {}
+
+            ColorRGBA(uint8_t r, uint8_t g, uint8_t b, uint8_t a) : R(r / 255.0f),
+                G(g / 255.0f), B(b / 255.0f), A(a / 255.0f)
+            {}
+
+            bool operator==(const ColorRGBA& rhs) noexcept
+            {
+                return R == rhs.R && G == rhs.G && B == rhs.B && A == rhs.A;
+            }
+        };
+
+        struct ColorRGB
+        {
+            float R, G, B;
+            ColorRGB(float r, float g, float b) : R(r), G(g), B(b)
+            {}
+
+            ColorRGB(uint8_t r, uint8_t g, uint8_t b) : R(r / 255.0f),
+                G(g / 255.0f), B(b / 255.0f)
+            {}
+
+            bool operator==(const ColorRGB& rhs) noexcept
+            {
+                return R == rhs.R && G == rhs.G && B == rhs.B;
+            }
+        };
+    }
 }
 
 export namespace LS

@@ -23,18 +23,21 @@ export namespace LS::Win32
         ~Win32Window() = default;
 
         // Inherited via LSWindowBase
-        virtual void Show() final;
-        virtual void Close() final;
-        virtual void PollEvent() final;
-        virtual LSWindowHandle GetHandleToWindow() const final;
+        void ClearDisplay() noexcept final;
+        void Show() noexcept final;
+        void Close() noexcept final;
+        void PollEvent() noexcept final;
+        LSWindowHandle GetHandleToWindow() const final;
         LRESULT HandleWinMessage(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam);
 
     private:
         HINSTANCE m_hInstance;
+        HWND m_hwnd;
         uint32_t m_prevWidth = 0u;
         uint32_t m_prevHeight = 0u;
         bool m_bIsResizing = false;
         MSG m_msg;
+        HBRUSH m_bgBrush;
         void Initialize(uint32_t width, uint32_t height, std::wstring_view title);
         void OnKeyPress(WPARAM wp);
         void OnKeyRelease(WPARAM wp);

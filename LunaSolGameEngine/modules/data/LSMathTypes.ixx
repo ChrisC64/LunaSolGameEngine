@@ -8,6 +8,10 @@ import Data.LSConcepts;
 
 export namespace LS
 {
+    // Define Constants Here //
+    //TODO: Shouldn't probably have something like this fixed, should be user assignable
+    constexpr float EPSILON_F = 0.0000001f;
+
     template<class T>
         requires BasicMathOperators<T> && IsNumerical<T>
     struct Vec2
@@ -55,6 +59,25 @@ export namespace LS
         [[nodiscard]] constexpr bool operator>=(const Vec2<T>& rhs) noexcept
         {
             return x >= rhs.x && y >= rhs.y;
+        }
+
+        template<class T>
+            requires std::is_floating_point<T>
+        [[nodiscard]] constexpr auto operator<=>(const Vec2<T>& rhs) const noexcept
+        {
+            if (IsGreater(x, rhs.x) && IsGreater(y, rhs.y) )
+            {
+                return std::partial_ordering::greater;
+            }
+            else if (IsLess(x, rhs.x) && IsLess(y, rhs.y) )
+            {
+                return std::partial_ordering::less;
+            }
+            else if (IsEqual(x, rhs.x, EPSILON_F) && IsEqual(y, rhs.y, EPSILON_F))
+            {
+                std::partial_ordering::equivalent;
+            }
+            return std::partial_ordering::unordered;
         }
 
         [[nodiscard]] constexpr auto operator<=>(const Vec2<T>&) const noexcept = default;
@@ -114,11 +137,29 @@ export namespace LS
             return x >= rhs.x && y >= rhs.y && z >= rhs.z;
         }
 
+        template<class T>
+            requires std::is_floating_point<T>
+        [[nodiscard]] constexpr auto operator<=>(const Vec3<T>& rhs) const noexcept
+        {
+            if (IsGreater(x, rhs.x) && IsGreater(y, rhs.y) && IsGreater(z, rhs.z))
+            {
+                return std::partial_ordering::greater;
+            }
+            else if (IsLess(x, rhs.x) && IsLess(y, rhs.y) && IsLess(z, rhs.z))
+            {
+                return std::partial_ordering::less;
+            }
+            else if (IsEqual(x, rhs.x, EPSILON_F) && IsEqual(y, rhs.y, EPSILON_F)
+                && IsEqual(z, rhs.z, EPSILON_F) )
+            {
+                std::partial_ordering::equivalent;
+            }
+            return std::partial_ordering::unordered;
+        }
+
         [[nodiscard]] constexpr auto operator<=>(const Vec3<T>&) const noexcept = default;
     };
 
-    //TODO: Shouldn't probably have something like this fixed, should be user assignable
-    constexpr float EPSILON_F = 0.0000001f;
     template<class T>
         requires BasicMathOperators<T>&& IsNumerical<T>
     struct Vec4
@@ -202,7 +243,7 @@ export namespace LS
 
     };
 
-    // Common Declarations //
+    // Typedefs //
     using Vec2F = Vec2<float>;
     using Vec2D = Vec2<double>;
     using Vec2I = Vec2<int32_t>;
@@ -218,6 +259,7 @@ export namespace LS
     using Vec4I = Vec4<int32_t>;
     using Vec4U = Vec4<uint32_t>;
 
+    // Some Useful Functions - Maybe should be in Math lib //
     constexpr float abs(float a)
     {
         return a - ((a > 0) - (a < 0));
@@ -389,9 +431,11 @@ export namespace LS
     struct Mat4
     {
         std::array<T, 16> Mat;
-
-        constexpr T& at(uint32_t x, uint32_t y) noexcept(x * 4 + y < Mat.size()) {
-            if constexpr (x * 4 + y > Mat.size())
+        //TODO: Can I make this better? Compile time checks possible? 
+        // If not, how can I make it safely be accessed? This goes for the other functions 
+        // likr Row() and Col() below too
+        constexpr T& at(size_t x, size_t y) {
+            if (x * 4 + y >= Mat.size())
             {
                 std::string msg = fmt::format("Out of range access for Matrix: {},{}\n", x, y);
                 throw std::out_of_range(msg);
@@ -409,6 +453,48 @@ export namespace LS
             mat[12] = 0; mat[13] = 0; mat[14] = 0; mat[15] = 1;
             return matrix;
         }
+
+        constexpr T& operator[](size_t idx)
+        {
+            if (idx >= Mat.size())
+            {
+                std::string msg = fmt::format("Out of range access for Matrix: {}\n", idx);
+                throw std::out_of_range(msg);
+            }
+            return Mat[idx];
+        }
+
+        constexpr Vec4<T> Row(size_t row)
+        {
+            if (row > 3)
+            {
+                std::string msg = fmt::format("Out of range access for Matrix Row: {}\n", row);
+                throw std::out_of_range(msg);
+            }
+            Vec4<T> out;
+            out.x = Mat[row * 4];
+            out.y = Mat[row * 4 + 1];
+            out.z = Mat[row * 4 + 2];
+            out.w = Mat[row * 4 + 3];
+
+            return out;
+        }
+
+        constexpr Vec4<T> Col(size_t col)
+        {
+            if (col > 3)
+            {
+                std::string msg = fmt::format("Out of range access for Matrix Column: {}\n", col);
+                throw std::out_of_range(msg);
+            }
+            Vec4<T> out;
+            out.x = Mat[0 * 4 + col];
+            out.y = Mat[1 * 4 + col];
+            out.z = Mat[2 * 4 + col];
+            out.w = Mat[3 * 4 + col];
+
+            return out;
+        }
     };
     
     template<class T>
@@ -417,8 +503,9 @@ export namespace LS
     {
         std::array<T, 9> Mat;
 
-        constexpr T& at(uint32_t x, uint32_t y) noexcept(x * 3 + y < Mat.size()) {
-            if constexpr (x * 3 + y > Mat.size())
+        constexpr T& at(uint32_t x, uint32_t y) 
+        {
+            if (x * 3 + y >= Mat.size())
             {
                 std::string msg = fmt::format("Out of range access for Matrix: {},{}\n", x, y);
                 throw std::out_of_range(msg);
@@ -434,6 +521,46 @@ export namespace LS
             mat[3] = 0; mat[4] = 1; mat[5] = 0;
             mat[6] = 0; mat[7] = 0; mat[8] = 1;
             return mat;
+        }
+
+        constexpr T& operator[](size_t idx)
+        {
+            if (idx >= Mat.size())
+            {
+                std::string msg = fmt::format("Out of range access for Matrix: {}\n", idx);
+                throw std::out_of_range(msg);
+            }
+            return Mat[idx];
+        }
+
+        constexpr Vec3<T> Row(size_t row)
+        {
+            if (row > 2)
+            {
+                std::string msg = fmt::format("Out of range access for Matrix Row: {}\n", row);
+                throw std::out_of_range(msg);
+            }
+            Vec3<T> out;
+            out.x = Mat[row * 3];
+            out.y = Mat[row * 3 + 1];
+            out.z = Mat[row * 3 + 2];
+
+            return out;
+        }
+
+        constexpr Vec4<T> Col(size_t col)
+        {
+            if (col > 2)
+            {
+                std::string msg = fmt::format("Out of range access for Matrix Column: {}\n", col);
+                throw std::out_of_range(msg);
+            }
+            Vec3<T> out;
+            out.x = Mat[0 * 3 + col];
+            out.y = Mat[1 * 3 + col];
+            out.z = Mat[2 * 3 + col];
+
+            return out;
         }
     };
     
@@ -459,7 +586,44 @@ export namespace LS
             mat[0] = 1; mat[1] = 0;
             mat[2] = 0; mat[3] = 1;
             return mat;
+        }
 
+        constexpr T& operator[](size_t idx)
+        {
+            if (idx >= Mat.size())
+            {
+                std::string msg = fmt::format("Out of range access for Matrix: {}\n", idx);
+                throw std::out_of_range(msg);
+            }
+            return Mat[idx];
+        }
+
+        constexpr Vec2<T> Row(size_t row)
+        {
+            if (row > 1)
+            {
+                std::string msg = fmt::format("Out of range access for Matrix Row: {}\n", row);
+                throw std::out_of_range(msg);
+            }
+            Vec2<T> out;
+            out.x = Mat[row];
+            out.y = Mat[row + 1];
+
+            return out;
+        }
+
+        constexpr Vec4<T> Col(size_t col)
+        {
+            if (col > 1)
+            {
+                std::string msg = fmt::format("Out of range access for Matrix Column: {}\n", col);
+                throw std::out_of_range(msg);
+            }
+            Vec2<T> out;
+            out.x = Mat[0 + col];
+            out.y = Mat[2 + col];
+
+            return out;
         }
     };
 

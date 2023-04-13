@@ -17,6 +17,7 @@ namespace LS
 
     export enum class DEVICE_API
     {
+        NONE,
         DIRECTX_11,
         DIRECTX_12,
     };

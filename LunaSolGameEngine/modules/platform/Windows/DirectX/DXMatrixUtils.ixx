@@ -1,6 +1,6 @@
 module;
 #include <DirectXMath.h>
-export module DXMathLib:MatrixUtils;
+export module DXMathLib:DXMatrixUtils;
 import Data.LSMath.Types;
 
 using namespace DirectX;

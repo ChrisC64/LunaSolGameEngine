@@ -177,6 +177,9 @@
   <ItemGroup>
     <ClCompile Include="modules\data\LSBufferTypes.ixx" />
     <ClCompile Include="modules\data\LSDataTypes.ixx" />
+    <ClCompile Include="modules\engine\GeometryMath.ixx" />
+    <ClCompile Include="modules\engine\MathLib.ixx" />
+    <ClCompile Include="modules\engine\MatrixMath.ixx" />
     <ClCompile Include="modules\helper\LSCommonTypes.ixx" />
     <ClCompile Include="modules\data\LSConcepts.ixx" />
     <ClCompile Include="modules\data\DataLib.ixx" />
@@ -189,6 +192,7 @@
     <ClCompile Include="modules\engine\LSWindow.ixx" />
     <ClCompile Include="modules\data\LSMathTypes.ixx" />
     <ClCompile Include="modules\helper\PipelineFactory.ixx" />
+    <ClCompile Include="modules\platform\Windows\DirectX\DXCamera.ixx" />
     <ClCompile Include="modules\platform\Windows\DirectX\DXMathLib.ixx" />
     <ClCompile Include="modules\platform\Windows\D3D11\Helpers\EngineWrapperD3D11.ixx" />
     <ClCompile Include="modules\platform\Windows\D3D11\PipelineFactoryD3D11.ixx" />
@@ -200,7 +204,7 @@
     <ClCompile Include="modules\platform\Windows\D3D11\RenderFuncs.ixx" />
     <ClCompile Include="modules\platform\Windows\D3D12\DeviceD3D12.ixx" />
     <ClCompile Include="modules\platform\Windows\D3D12\RenderD3D12.ixx" />
-    <ClCompile Include="modules\platform\Windows\DirectX\MatrixUtils.ixx" />
+    <ClCompile Include="modules\platform\Windows\DirectX\DXMatrixUtils.ixx" />
     <ClCompile Include="modules\utils\HLSLUtils.ixx" />
     <ClCompile Include="modules\utils\MSUtils.ixx" />
     <ClCompile Include="modules\utils\StdUtils.ixx" />

@@ -21,6 +21,7 @@
 #include <queue>
 #include <variant>
 
+// Windows and DirectX API Includes //
 #ifdef LS_WINDOWS_BUILD
 // Windows Headers
 #define WIN32_LEAN_AND_MEAN
@@ -40,9 +41,9 @@
 #include <dxgi1_6.h>
 
 // DirectX Libraries //
-#include <DirectXMath.h>
+#include <directxmath/DirectXMath.h>
+#include <directxmath/DirectXColors.h>
 #include <directxtk/CommonStates.h>
-#include <DirectXColors.h>
 #include <d3dcompiler.h>
 
 // libs to include //

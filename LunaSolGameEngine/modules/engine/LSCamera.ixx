@@ -38,10 +38,6 @@ export namespace LS
             LookAt(lookAt),
             Up(up)
         {
-            /*Projection = XMMatrixPerspectiveFovLH( XMConvertToRadians(45.0f), static_cast<float>(width / height), nearZ, farZ);
-            View = XMMatrixLookAtLH(position, lookAt, up);
-            InvProj = XMMatrixInverse(nullptr, Projection);
-            InvView = XMMatrixInverse(nullptr, View);*/
         }
     };
 }

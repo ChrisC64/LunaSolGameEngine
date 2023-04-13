@@ -10,11 +10,14 @@ namespace LS
 {
     auto BuildDevice(DEVICE_API api) noexcept -> Nullable<Ref<ILSDevice>>
     {
+        using enum DEVICE_API;
         switch (api)
         {
-        case DEVICE_API::DIRECTX_11:
+        case NONE:
+            return std::nullopt;
+        case DIRECTX_11:
             return std::make_unique<Win32::DeviceD3D11>();
-        case DEVICE_API::DIRECTX_12:
+        case DIRECTX_12:
             return std::nullopt;
         default:
             return std::nullopt;
