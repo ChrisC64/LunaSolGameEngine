@@ -175,7 +175,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="MultiPassTestApp.ixx" />
+    <ClCompile Include="src\CubeApp.ixx" />
+    <ClCompile Include="src\MultiPassTestApp.ixx" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="shaders\FullScreenQuad.hlsl">
