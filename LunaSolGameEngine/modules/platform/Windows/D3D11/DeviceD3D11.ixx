@@ -16,11 +16,13 @@ export namespace LS::Win32
         DeviceD3D11() = default;
         ~DeviceD3D11();
 
-        void CreateDevice(bool isSingleThreaded = false);
+        auto EnumerateDisplays() -> std::vector<WRL::ComPtr<IDXGIAdapter>>;
+        void CreateDevice(WRL::ComPtr<IDXGIAdapter> displayAdapter = nullptr, bool isSingleThreaded = false);
         void CreateSwapchain(HWND winHandle, const LS::LSSwapchainInfo& swapchainInfo);
         void CreateSwapchain(const LS::LSWindowBase* window, PIXEL_COLOR_FORMAT format = PIXEL_COLOR_FORMAT::RGBA8_UNORM, uint32_t bufferSize = 2);
         void CreateSwapchainAsTexture(const LS::LSWindowBase* window, PIXEL_COLOR_FORMAT format = PIXEL_COLOR_FORMAT::RGBA8_UNORM, uint32_t bufferSize = 2);
-        
+        void PrintDisplays(const std::vector<WRL::ComPtr<IDXGIAdapter>>& adapters);
+
         HRESULT CreateDeferredContext(ID3D11DeviceContext** pDeferredContext) noexcept;
         HRESULT CreateDeferredContext2(ID3D11DeviceContext2** ppDeferredContext) noexcept;
         HRESULT CreateDeferredContext3(ID3D11DeviceContext3** ppDeferredContext) noexcept;

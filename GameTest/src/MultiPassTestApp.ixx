@@ -98,7 +98,7 @@ export namespace gt
     LS::LSShaderInputSignature g_PosColorUv, g_PosColor;
 
     int Init();
-    int Run();
+    void Run();
     auto App = InitializeApp(SCREEN_WIDTH, SCREEN_HEIGHT, L"AppTest",
         std::move(Init), std::move(Run));
 
@@ -186,6 +186,10 @@ namespace gt
         // Device Setup //
         // auto device = LS::BuildDevice(LS::DEVICE_API::DIRECTX_11);
         //DeviceD3D11 device;
+        const auto displays = g_device.EnumerateDisplays();
+        std::cout << "Displays found: " << displays.size();
+
+        g_device.PrintDisplays(displays);
         g_device.CreateDevice();
 
         ComPtr<ID3D11DeviceContext4> immContext = g_device.GetImmediateContext();
@@ -399,17 +403,17 @@ namespace gt
         // END SHADER FILE OPERATIONS //
 
         // Compile Shader Objects //
-        ComPtr<ID3D11VertexShader> vsShader;
         ComPtr<ID3D11VertexShader> vsShader2;
+        ComPtr<ID3D11VertexShader> vsShader;
         ComPtr<ID3D11VertexShader> fsQuadShader;
         ComPtr<ID3D11PixelShader> psShader;
         ComPtr<ID3D11PixelShader> psShader2;
         ComPtr<ID3D11PixelShader> texPS;
 
-        auto shaderResult = CreateVertexShader(g_device, vsShader, vsData);
+        auto shaderResult = CreateVertexShader(g_device, vsShader2, vsData);
         if (!shaderResult)
             return -2;
-        shaderResult = CreateVertexShader(g_device, vsShader2, vsData2);
+        shaderResult = CreateVertexShader(g_device, vsShader, vsData2);
         if (!shaderResult)
             return -2;
         shaderResult = CreatePixelShader(g_device, psShader, psData);
@@ -448,14 +452,14 @@ namespace gt
             posColorUvDesc = ilResult.value();
         }
 
-        ComPtr<ID3D11InputLayout> pInputLayoutPosColorText;
-        if (FAILED(g_device.CreateInputLayout(posColorDesc.data(), posColorDesc.size(), vsData2, &pInputLayoutPosColorText)))
+        ComPtr<ID3D11InputLayout> pPosIL;
+        if (FAILED(g_device.CreateInputLayout(posColorDesc.data(), posColorDesc.size(), vsData2, &pPosIL)))
         {
             throw std::runtime_error("Failed to create input layout from device\n");
         }
 
-        ComPtr<ID3D11InputLayout> pInputLayoutPosColor;
-        if (FAILED(g_device.CreateInputLayout(posColorUvDesc.data(), posColorUvDesc.size(), vsData, &pInputLayoutPosColor)))
+        ComPtr<ID3D11InputLayout> pPosColTexIL;
+        if (FAILED(g_device.CreateInputLayout(posColorUvDesc.data(), posColorUvDesc.size(), vsData, &pPosColTexIL)))
         {
             throw std::runtime_error("Failed to create input layout from device\n");
         }
@@ -569,11 +573,11 @@ namespace gt
 
         /**********************SECOND CONTEXT BEGIN *****************************/
             // Second Context Begin //
-        BindVS(context2.Get(), vsShader.Get());
+        BindVS(context2.Get(), vsShader2.Get());
         BindPS(context2.Get(), psShader2.Get());
         context2->PSSetShaderResources(0, 1, pTexturRenderTargetSRV.GetAddressOf());
         context2->PSSetSamplers(0, 1, pSampler.GetAddressOf());
-        SetInputlayout(context2.Get(), pInputLayoutPosColorText.Get());
+        SetInputlayout(context2.Get(), pPosIL.Get());
         std::array<ID3D11Buffer*, 4> buffers2{ viewBuffer.Get(), projBuffer.Get(), modelBuffer.Get(),
                                                colorGreenBuffer.Get() };
         BindVSConstantBuffers(context2.Get(), 0, buffers2);
@@ -652,7 +656,7 @@ namespace gt
         return 1;
     }
 
-    int Run()
+    void Run()
     {
         ComPtr<ID3D11DeviceContext4> immContext = g_device.GetImmediateContext();
         auto& window = App->Window;
@@ -671,6 +675,5 @@ namespace gt
             }
             Present1(g_device.GetSwapChain().Get(), 1);
         }
-        return -1;
     }
 }

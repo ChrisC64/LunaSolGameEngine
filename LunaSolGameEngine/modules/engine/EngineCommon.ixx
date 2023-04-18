@@ -31,7 +31,7 @@ namespace LS
     export 
     {
         using AppInitFunc = std::function<int()>;
-        using AppRunFunc = std::function<int()>;
+        using AppRunFunc = std::function<void()>;
     }
 
     struct LSApp

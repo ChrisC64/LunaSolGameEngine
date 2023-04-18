@@ -10,17 +10,12 @@ import Data.LSDataTypes;
 export namespace LS::Win32
 {
     // TODO:Consider Building a PIMPL method instead for these creation methods?
-    //TODO: The create methods from CommonStates return pointers to owned ComPtr objects in a shared resource pool.
+    // TODO: The create methods from CommonStates return pointers to owned ComPtr objects in a shared resource pool.
     // This factory class means that I cannot just take the pointers as given unless I have it release the ownership or copy
     // the com pointers. I should re-evaluate how I would want to use them. 
 
     // Generator Methods //
     // Rasterizer States //
-
-    // I am liking the looks of the auto [Function Signature] -> Return type setup here,
-    // it allows a more coherent design of functions where I can have things lined up more neatly, and see (at a glance)
-    // function names and parameters quickly without worrying about the return type until the end (which is almost never uniform)
-    // basically because it looks neater and nicer lined up to me.
     [[nodiscard]]
     auto CreateRasterizerState2(ID3D11Device3* pDevice, const LS::RasterizerInfo& drawState) -> Nullable<ID3D11RasterizerState2*>
     {

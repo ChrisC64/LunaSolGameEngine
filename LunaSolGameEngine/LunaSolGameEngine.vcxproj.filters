@@ -138,6 +138,9 @@
     <ClCompile Include="modules\platform\Windows\DirectX\DXCamera.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="modules\data\khronos_standards\gltfParser.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\LSEFramework.h">

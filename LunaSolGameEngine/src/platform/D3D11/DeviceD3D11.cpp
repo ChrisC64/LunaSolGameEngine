@@ -23,7 +23,47 @@ DeviceD3D11::~DeviceD3D11()
     Shutdown();
 }
 
-void DeviceD3D11::CreateDevice(bool isSingleThreaded /*= false*/)
+auto LS::Win32::DeviceD3D11::EnumerateDisplays() -> std::vector<WRL::ComPtr<IDXGIAdapter>>
+{
+    WRL::ComPtr<IDXGIFactory2> pFactory;
+    auto result = CreateDXGIFactory2(0, IID_PPV_ARGS(&pFactory));
+    if (FAILED(result))
+    {
+        //TODO: Add error handling results here
+    }
+
+    std::vector<WRL::ComPtr<IDXGIAdapter>> adapters;
+    WRL::ComPtr<IDXGIAdapter> adapter;
+    //TODO: There's a wierd bug where I am stuck in an infinite loop 
+    // explained below, but for now I'll do this. Arbitrary limit, because 
+    // I'm sure you won't have a graphics card with 10 monitors, but
+    // some may in niche cases to prove me wrong somehow. As if this would ever be released....
+    for (auto i = 0u; i < 10; ++i)
+    {
+        HRESULT hr = pFactory->EnumAdapters(i, &adapter);
+        if (hr == DXGI_ERROR_NOT_FOUND)
+            break;
+        adapters.push_back(std::move(adapter));
+    }
+
+    // TODO: There's a problem with the code below just running on forever,
+    // and I don't seem to even get anything in the adapter (like it's just stalled
+    // before running the first line of the loop.) I'm not sure what this is,
+    // could it be an MSVC bug? I'll maybe try a repro later to see 
+    // if I can determine that to be the case, not sure what this is doing.
+    /*auto i = 0u;
+    HRESULT hr = pFactory->EnumAdapters(i, &adapter);
+    while (hr != DXGI_ERROR_NOT_FOUND);
+    {
+        adapters.push_back(std::move(adapter));
+        ++i;
+        hr = pFactory->EnumAdapters(i, &adapter);
+    }*/
+
+    return adapters;
+}
+
+void DeviceD3D11::CreateDevice(WRL::ComPtr<IDXGIAdapter> displayAdapter, bool isSingleThreaded /*= false*/)
 {
     using namespace Microsoft::WRL;
 
@@ -66,16 +106,16 @@ void DeviceD3D11::CreateDevice(bool isSingleThreaded /*= false*/)
 
     WRL::ComPtr<ID3D11Device> device;
     WRL::ComPtr<ID3D11DeviceContext> context;
-
+    IDXGIAdapter* adapter = displayAdapter.Get() == nullptr ? nullptr : displayAdapter.Get();
     // Create the device only at this point, store the device, feature level, and context
     for (auto driverTypeIndex = 0u; driverTypeIndex < driverCount; ++driverTypeIndex)
     {
         hr = D3D11CreateDevice(
-            nullptr,
+            adapter,
             driverTypes[0],
             nullptr,
             creationFlags,
-            featureLevels,
+            &featureLevels[driverTypeIndex],
             ARRAYSIZE(featureLevels),
             D3D11_SDK_VERSION,
             &device,
@@ -99,8 +139,6 @@ void DeviceD3D11::CreateDevice(bool isSingleThreaded /*= false*/)
     hr = device.As(&m_pDevice);
     Utils::ThrowIfFailed(hr, "Failed to initialize the device!\n");
 
-    Utils::ComRelease(device.GetAddressOf());
-    Utils::ComRelease(context.GetAddressOf());
     Utils::SetDebugName(m_pDevice.Get(), "Device");
 #ifdef _DEBUG
     m_pDevice.As(&m_pDebug);
@@ -181,6 +219,37 @@ void DeviceD3D11::CreateSwapchainAsTexture(const LS::LSWindowBase* window, PIXEL
     if (FAILED(result))
     {
         Utils::ThrowIfFailed(result, "Failed to generate back buffer as texture.");
+    }
+}
+
+void LS::Win32::DeviceD3D11::PrintDisplays(const std::vector<WRL::ComPtr<IDXGIAdapter>>& adapters)
+{
+
+    std::vector<WRL::ComPtr<IDXGIOutput>> outputs;
+    WRL::ComPtr<IDXGIOutput> output;
+    for (const auto& a : adapters)
+    {
+        auto i = 0u;
+        while (a->EnumOutputs(i, &output) != DXGI_ERROR_NOT_FOUND)
+        {
+            outputs.push_back(std::move(output));
+            ++i;
+        }
+    }
+
+    const auto print = [](const DXGI_OUTPUT_DESC& desc)
+    {
+        const auto rc = desc.DesktopCoordinates;
+        std::wcout << std::format(L"Name: {}\nCoords: ({}x{})\nIs Attached?: {}\nRotationFlag: {}\nMon Handl: {}\n\n",
+            desc.DeviceName, (rc.right - rc.left), (rc.bottom - rc.top), desc.AttachedToDesktop, (int)desc.Rotation,
+            (void*)desc.Monitor);
+    };
+
+    DXGI_OUTPUT_DESC desc;
+    for (const auto& o : outputs)
+    {
+        o->GetDesc(&desc);
+        print(desc);
     }
 }
 

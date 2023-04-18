@@ -175,6 +175,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="modules\data\khronos_standards\gltfParser.ixx" />
     <ClCompile Include="modules\data\LSBufferTypes.ixx" />
     <ClCompile Include="modules\data\LSDataTypes.ixx" />
     <ClCompile Include="modules\engine\GeometryMath.ixx" />
