@@ -7,6 +7,7 @@ export import LSData;
 export import Engine.LSDevice;
 export import Engine.LSWindow;
 export import Engine.LSCamera;
+export import Engine.EngineCodes;
 #ifdef LS_WINDOWS_BUILD
 export import Engine.DXCamera;
 #endif

@@ -16,9 +16,14 @@ export
 
     template <class S>
     using SharedRef = std::shared_ptr<S>;
+    /**
+     * @brief Typedef of a Nullable Object (std::optional wrapper)
+     * @tparam T type to wrap in optional object
+    */
     template<class T>
     using Nullable = std::optional<T>;
-    using Guid = std::string;
+    using GuidStr = std::string;
+    using GuidLL = uint64_t;
     using Id = uint64_t;
 
     namespace LS

@@ -41,7 +41,7 @@ export namespace LS::Win32
         void Initialize(uint32_t width, uint32_t height, std::wstring_view title);
         void OnKeyPress(WPARAM wp);
         void OnKeyRelease(WPARAM wp);
-        inline void GetScreenCoordinates(LPARAM lp, int& x, int& y);
+        void GetScreenCoordinates(LPARAM lp, int& x, int& y);
         void OnMouseMove(int x, int y);
         void OnMouseClick(UINT msg, int x, int y);
         void OnMouseRelease(UINT msg, int x, int y);

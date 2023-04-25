@@ -242,13 +242,34 @@ namespace LS::Win32
             // Error Handle 
             throw std::runtime_error("Failed to create window");
         }
+        auto style = WS_OVERLAPPEDWINDOW;
 
+        RECT rt;
+        rt.left = 0;
+        rt.top = 0;
+        rt.right = width;
+        rt.bottom = height;
+        // AdjustWindowRectExForDPI may also be worth considering //
+        auto hresult = AdjustWindowRectEx(&rt, style, false, 0);
+
+        if (hresult)
+        {
+            auto error = GetLastError();
+            auto eResult = HRESULT_FROM_WIN32(error);
+            auto wformat = std::format(L"Failed to find window rect size. Error: {}", eResult);
+
+            MessageBox(nullptr, wformat.c_str(), L"An Error Ocurred", MB_OK | MB_ICONERROR);
+            throw std::runtime_error("An error ocurred");
+        }
+
+        auto newWidth = rt.right - rt.left;
+        auto newHeight = rt.bottom - rt.top;
         auto handle = CreateWindowEx(0,
             title.data(),
             title.data(),
-            WS_OVERLAPPEDWINDOW,
+            style,
             CW_USEDEFAULT, CW_USEDEFAULT,
-            width, height,
+            newWidth, newHeight,
             NULL,
             NULL,
             reinterpret_cast<HINSTANCE>(m_hInstance),
@@ -321,7 +342,7 @@ namespace LS::Win32
         m_onKeyboardInput(ToIntegral(input), mods, ToIntegral(action));
     }
 
-    inline void Win32Window::GetScreenCoordinates(LPARAM lp, int& x, int& y)
+    void Win32Window::GetScreenCoordinates(LPARAM lp, int& x, int& y)
     {
         x = GET_X_LPARAM(lp);
         y = GET_Y_LPARAM(lp);

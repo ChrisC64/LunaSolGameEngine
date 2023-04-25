@@ -178,6 +178,7 @@
     <ClCompile Include="modules\data\khronos_standards\gltfParser.ixx" />
     <ClCompile Include="modules\data\LSBufferTypes.ixx" />
     <ClCompile Include="modules\data\LSDataTypes.ixx" />
+    <ClCompile Include="modules\engine\EngineCodes.ixx" />
     <ClCompile Include="modules\engine\GeometryMath.ixx" />
     <ClCompile Include="modules\engine\MathLib.ixx" />
     <ClCompile Include="modules\engine\MatrixMath.ixx" />
@@ -193,6 +194,7 @@
     <ClCompile Include="modules\engine\LSWindow.ixx" />
     <ClCompile Include="modules\data\LSMathTypes.ixx" />
     <ClCompile Include="modules\helper\PipelineFactory.ixx" />
+    <ClCompile Include="modules\platform\Windows\D3D12\D3D12Lib.ixx" />
     <ClCompile Include="modules\platform\Windows\DirectX\DXCamera.ixx" />
     <ClCompile Include="modules\platform\Windows\DirectX\DXMathLib.ixx" />
     <ClCompile Include="modules\platform\Windows\D3D11\Helpers\EngineWrapperD3D11.ixx" />
@@ -206,6 +208,7 @@
     <ClCompile Include="modules\platform\Windows\D3D12\DeviceD3D12.ixx" />
     <ClCompile Include="modules\platform\Windows\D3D12\RenderD3D12.ixx" />
     <ClCompile Include="modules\platform\Windows\DirectX\DXMatrixUtils.ixx" />
+    <ClCompile Include="modules\platform\Windows\DXGI\DXGIHelper.ixx" />
     <ClCompile Include="modules\utils\HLSLUtils.ixx" />
     <ClCompile Include="modules\utils\MSUtils.ixx" />
     <ClCompile Include="modules\utils\StdUtils.ixx" />
