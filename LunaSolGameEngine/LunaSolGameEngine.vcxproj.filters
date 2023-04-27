@@ -54,9 +54,6 @@
     <ClCompile Include="modules\platform\Windows\D3D11\RenderFuncs.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="modules\platform\Windows\D3D12\RenderD3D12.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\platform\D3D11\DeviceD3D11.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -148,6 +145,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="modules\platform\Windows\DXGI\DXGIHelper.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\platform\D3D12\DeviceD3D12.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

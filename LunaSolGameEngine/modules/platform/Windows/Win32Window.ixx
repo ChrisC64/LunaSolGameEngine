@@ -30,6 +30,15 @@ export namespace LS::Win32
         LSWindowHandle GetHandleToWindow() const final;
         LRESULT HandleWinMessage(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam);
 
+        HWND Hwnd()
+        {
+            return m_hwnd;
+        }
+
+        HWND Hwnd() const
+        {
+            return m_hwnd;
+        }
     private:
         HINSTANCE m_hInstance;
         HWND m_hwnd;

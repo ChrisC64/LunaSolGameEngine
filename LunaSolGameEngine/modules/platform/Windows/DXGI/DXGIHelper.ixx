@@ -3,6 +3,8 @@ module;
 #include <wrl/client.h>
 #include <vector>
 #include <cassert>
+#include <optional>
+
 export module DXGIHelper;
 export import Data.LSDataTypes;
 
@@ -15,54 +17,44 @@ export namespace LS::Win32
      * @param flags DXGI_CREATE_FLAGS
      * @return @link Nullable object of a IDXGIFactory7 instance (see module @link LSdataTypes.ixx)
     */
-    [[nodiscard]] auto CreateFactory(UINT flags = 0u) noexcept -> Nullable<IDXGIFactory7*>;
+    [[nodiscard]] auto CreateFactory(UINT flags = 0u) noexcept -> Nullable<WRL::ComPtr<IDXGIFactory7>>;
 
     /**
      * @brief Returns any high performance display adapters (discrete or external GPU supported)
      * @param pFactory The IDXGIFactory, must be convertable to a IDXGIFactory6 object
      * @return A vector of all Discrete GPU supported displays if any are found.
     */
-    [[nodiscard]] auto EnumerateDiscreteGpuAdapters(IDXGIFactory1* pFactory) noexcept -> std::vector<WRL::ComPtr<IDXGIAdapter4>>;
+    [[nodiscard]] auto EnumerateDiscreteGpuAdapters(WRL::ComPtr<IDXGIFactory7>& pFactory) noexcept -> std::vector<WRL::ComPtr<IDXGIAdapter4>>;
 
     /**
      * @brief Returns any display adapters
      * @param pFactory The IDXGIFactory interface object to use
      * @return A container containing all display adapters
     */
-    [[nodiscard]] auto EnumerateDisplayAdapters(IDXGIFactory1* pFactory) noexcept -> std::vector<WRL::ComPtr<IDXGIAdapter4>>;
+    [[nodiscard]] auto EnumerateDisplayAdapters(WRL::ComPtr<IDXGIFactory7>& pFactory) noexcept -> std::vector<WRL::ComPtr<IDXGIAdapter4>>;
 }
-
 
 module : private;
 
 using namespace LS::Win32;
 
-auto CreateFactory(UINT flags) noexcept -> Nullable<IDXGIFactory7*>
+auto CreateFactory(UINT flags) noexcept -> Nullable<Microsoft::WRL::ComPtr<IDXGIFactory7>>
 {
-    IDXGIFactory7* pOut;
+    WRL::ComPtr<IDXGIFactory7> pOut;
     auto result = CreateDXGIFactory2(flags, IID_PPV_ARGS(&pOut));
     if (FAILED(result))
-        return {};
+        return std::nullopt;
     return pOut;
 }
 
-auto EnumerateDiscreteGpuAdapters(IDXGIFactory1* pFactory) noexcept -> std::vector<WRL::ComPtr<IDXGIAdapter4>>
+auto EnumerateDiscreteGpuAdapters(Microsoft::WRL::ComPtr<IDXGIFactory7>& pFactory) noexcept -> std::vector<WRL::ComPtr<IDXGIAdapter4>>
 {
     assert(pFactory);
     WRL::ComPtr<IDXGIAdapter4> adapter;
-    WRL::ComPtr<IDXGIFactory6> factory6;
-
-    auto result = SUCCEEDED(pFactory->QueryInterface(IID_PPV_ARGS(&factory6)));
-
     std::vector<WRL::ComPtr<IDXGIAdapter4>> out;
-    if (FAILED(result))
-    {
-        // Unable to find the high performance adapter because we cannot obtain the proper interface
-        return out;
-    }
 
     auto preference = DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE;
-    for (auto adapterIndex = 0u; SUCCEEDED(factory6->EnumAdapterByGpuPreference(adapterIndex, preference, IID_PPV_ARGS(&adapter)));
+    for (auto adapterIndex = 0u; SUCCEEDED(pFactory->EnumAdapterByGpuPreference(adapterIndex, preference, IID_PPV_ARGS(&adapter)));
         ++adapterIndex)
     {
         DXGI_ADAPTER_DESC1 desc;
@@ -80,7 +72,7 @@ auto EnumerateDiscreteGpuAdapters(IDXGIFactory1* pFactory) noexcept -> std::vect
     return out;
 }
 
-auto EnumerateDisplayAdapters(IDXGIFactory1* pFactory) noexcept -> std::vector<WRL::ComPtr<IDXGIAdapter4>>
+auto EnumerateDisplayAdapters(Microsoft::WRL::ComPtr<IDXGIFactory7>& pFactory) noexcept -> std::vector<WRL::ComPtr<IDXGIAdapter4>>
 {
     assert(pFactory);
     std::vector<WRL::ComPtr<IDXGIAdapter4>> out;
