@@ -60,7 +60,10 @@ export namespace LS
           * @brief Obtain the window's handle.
           * @return void* pointer handle
          */
-        virtual LSWindowHandle GetHandleToWindow() const = 0;
+        auto GetHandleToWindow() const -> LSWindowHandle
+        {
+            return m_winHandle;
+        }
 
     protected:
         std::wstring m_title;

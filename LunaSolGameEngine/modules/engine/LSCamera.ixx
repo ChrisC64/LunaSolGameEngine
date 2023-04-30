@@ -21,6 +21,8 @@ export namespace LS
         uint32_t Height;
         float FovAngleV;//Vertical FOV in radians
         float FovAngleH;//Horizontal FOV in radians
+        float NearZ = 0.1f;
+        float FarZ = 100.0f;
 
         LSCamera() = default;
         ~LSCamera() = default;
@@ -36,7 +38,9 @@ export namespace LS
             Height(height),
             Position(position),
             LookAt(lookAt),
-            Up(up)
+            Up(up),
+            NearZ(nearZ),
+            FarZ(farZ)
         {
         }
     };

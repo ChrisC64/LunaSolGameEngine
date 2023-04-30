@@ -446,7 +446,7 @@ namespace LS
         */
         virtual auto CreateContext() noexcept -> Ref<ILSContext> = 0;
 
-        virtual auto CreateTexture(const LSTextureInfo& info) noexcept -> Nullable<Id> = 0;
+        virtual auto CreateTexture(const LSTextureInfo& info) noexcept -> Nullable<GuidUL> = 0;
 
         /**
          * @brief Prepares the Context's commands for the render queue to be presented

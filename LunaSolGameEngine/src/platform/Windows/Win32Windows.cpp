@@ -57,11 +57,6 @@ namespace LS::Win32
         }
     }
 
-    LS::LSWindowHandle Win32Window::GetHandleToWindow() const
-    {
-        return m_winHandle;
-    }
-
     LRESULT Win32Window::HandleWinMessage(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
     {
         if (!m_bIsOpen)
@@ -252,7 +247,7 @@ namespace LS::Win32
         // AdjustWindowRectExForDPI may also be worth considering //
         auto hresult = AdjustWindowRectEx(&rt, style, false, 0);
 
-        if (hresult)
+        if (!hresult)
         {
             auto error = GetLastError();
             auto eResult = HRESULT_FROM_WIN32(error);

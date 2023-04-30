@@ -17,7 +17,7 @@ export namespace LS
         virtual ~IPipelineFactory() = default;
 
         [[nodiscard]]
-        virtual auto CreatePipelineState(const PipelineDescriptor& pipeline) noexcept -> Nullable <Id> = 0;
+        virtual auto CreatePipelineState(const PipelineDescriptor& pipeline) noexcept -> Nullable <GuidUL> = 0;
     };
 
     auto BuildPipelienFactory(Ref<ILSDevice>& pDevice) noexcept -> Ref<IPipelineFactory>;

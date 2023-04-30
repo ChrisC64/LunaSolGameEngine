@@ -27,7 +27,6 @@ export namespace LS::Win32
         void Show() noexcept final;
         void Close() noexcept final;
         void PollEvent() noexcept final;
-        LSWindowHandle GetHandleToWindow() const final;
         LRESULT HandleWinMessage(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam);
 
         HWND Hwnd()

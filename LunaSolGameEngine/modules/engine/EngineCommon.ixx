@@ -12,8 +12,16 @@ export import Engine.EngineCodes;
 export import Engine.DXCamera;
 #endif
 
+export namespace LS::Global
+{
+    const constinit auto FRAME_COUNT = 3u;
+    const constinit auto NUM_CONTEXT = 3u;
+    const constinit auto THREAD_COUNT = 4u;
+}
+
 namespace LS
 {
+
     /**
      * @brief Creates the device with the supported rendering type
      * @param api @link LS::DEVICE_API type to use
@@ -48,6 +56,7 @@ namespace LS
         LSApp& operator=(LSApp&&) = default;
 
         void Initialize(int argCount, char* argsV[]);
+        void Initialize();
         void Run();
 
         Ref<LSWindowBase> Window;
@@ -78,6 +87,14 @@ namespace LS
     {
         CommandArgs = std::vector<std::string_view>(argsV + 1, argsV + argCount);
 
+        if (InitFunc)
+        {
+            InitFunc();
+        }
+    }
+    
+    void LSApp::Initialize()
+    {
         if (InitFunc)
         {
             InitFunc();

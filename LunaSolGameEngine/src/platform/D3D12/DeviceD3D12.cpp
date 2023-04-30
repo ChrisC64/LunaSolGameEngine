@@ -14,7 +14,6 @@
 #include <exception>
 #include <iostream>
 
-
 import D3D12Lib;
 import DXGIHelper;
 import Data.LSDataTypes;
@@ -39,6 +38,21 @@ public:
 private:
     const HRESULT m_hr;
 };
+
+DeviceD3D12::DeviceD3D12(const D3D12Settings settings) : m_Settings(settings)
+{
+}
+
+bool LS::Win32::DeviceD3D12::Initialize(uint32_t width, uint32_t height, std::wstring_view title, WRL::ComPtr<IDXGIAdapter> displayAdapter) noexcept
+{
+    if (!CreateDevice(displayAdapter))
+    {
+        return false;
+    }
+
+    InitWindow(width, height, title);
+    return true;
+}
 
 bool DeviceD3D12::CreateDevice(WRL::ComPtr<IDXGIAdapter> displayAdpater /* = nullptr*/) noexcept
 {
@@ -108,6 +122,13 @@ void DeviceD3D12::InitWindow(uint32_t width, uint32_t height, std::wstring_view 
     CreateSwapchain();
 }
 
+void LS::Win32::DeviceD3D12::TakeWindow(Ref<Win32Window>& window) noexcept
+{
+    assert(window);
+    m_pWindow = std::move(window);
+    CreateSwapchain();
+}
+
 // Private Methods for DeviceD3D12 //
 auto DeviceD3D12::FindCompatDisplay(std::span<WRL::ComPtr<IDXGIAdapter4>> adapters) noexcept -> Nullable<WRL::ComPtr<IDXGIAdapter4>>
 {
@@ -138,7 +159,7 @@ bool DeviceD3D12::CreateCommandQueue() noexcept
     return true;
 }
 
-void LS::Win32::DeviceD3D12::CreateSwapchain() 
+void LS::Win32::DeviceD3D12::CreateSwapchain()
 {
     assert(m_pWindow);
     assert(m_pFactoryDxgi);
@@ -172,4 +193,7 @@ void LS::Win32::DeviceD3D12::CreateSwapchain()
     {
         throw HrException(hr);
     }
+
+    m_pSwapChain->SetMaximumFrameLatency(m_Settings.MinSettings.FrameBufferCount);
+    m_frameIndex = m_pSwapChain->GetCurrentBackBufferIndex();
 }

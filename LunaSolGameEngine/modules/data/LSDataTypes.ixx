@@ -23,8 +23,7 @@ export
     template<class T>
     using Nullable = std::optional<T>;
     using GuidStr = std::string;
-    using GuidLL = uint64_t;
-    using Id = uint64_t;
+    using GuidUL = uint64_t;
 
     namespace LS
     {
@@ -61,15 +60,4 @@ export
             }
         };
     }
-}
-
-export namespace LS
-{
-    enum class ERROR_LEVEL
-    {
-        INFO,
-        WARN,
-        FAIL,
-        CRITICAL
-    };
 }

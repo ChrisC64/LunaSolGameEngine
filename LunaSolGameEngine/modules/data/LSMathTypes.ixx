@@ -420,12 +420,6 @@ export namespace LS
         return lh.x == rh.x && lh.y == rh.y && lh.z == rh.z && lh.w == rh.w;
     }
 
-    // Specialization Overlaods for Vec4 //
-    [[nodiscard]] constexpr auto operator<=>(const Vec4F& lhs, const Vec4F& rhs) noexcept
-    {
-        return 0;
-    }
-
     template<class T>
         requires IsNumerical<T>
     struct Mat4
