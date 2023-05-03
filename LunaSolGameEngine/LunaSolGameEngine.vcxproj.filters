@@ -162,6 +162,9 @@
     <ClCompile Include="modules\engine\EngineLogger.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\platform\D3D12\ResourceManagerD3D12.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\LSEFramework.h">

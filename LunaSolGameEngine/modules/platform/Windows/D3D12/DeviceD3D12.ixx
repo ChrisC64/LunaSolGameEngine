@@ -26,8 +26,7 @@ export namespace LS::Win32
     class DeviceD3D12
     {
     public:
-        DeviceD3D12() = default;
-        DeviceD3D12(const D3D12Settings settings);
+        DeviceD3D12(SharedRef<D3D12Settings>& settings);
         ~DeviceD3D12() = default;
 
         /**
@@ -59,7 +58,7 @@ export namespace LS::Win32
          * @brief Attaches and takes ownership of a Window for the renderer to use and manage
          * @param window The window to own and use for rendering
         */
-        void TakeWindow(Ref<Win32Window>& window) noexcept;
+        void MoveToWindow(Ref<Win32Window>& window) noexcept;
 
         /**
          * @brief Find a compatible display from the objects provided that meets the minimum feature level in @link D3D12Settings
@@ -67,32 +66,31 @@ export namespace LS::Win32
          * @return optional value that may contain objects or none if there is no display that meets the requirement
         */
         auto FindCompatDisplay(std::span<WRL::ComPtr<IDXGIAdapter4>> adapters) noexcept -> Nullable<WRL::ComPtr<IDXGIAdapter4>>;
-        bool CreateCommandQueue() noexcept;
         void CreateSwapchain();
+
+        void PrintDisplayAdapters();
         
         // Objects of Class // 
-        D3D12Settings        m_Settings{};
-        Ref<Win32Window>     m_pWindow = nullptr;
-        uint64_t             m_frameIndex = 0u;
-        ResourceManagerD3D12 m_resManager;
+        SharedRef<D3D12Settings>        m_pSettings = nullptr;
+        Ref<Win32Window>                m_pWindow = nullptr;
+        uint64_t                        m_frameIndex = 0u;
+        ResourceManagerD3D12            m_resManager;
         //TODO: Build a resource manager for the objects we'll need to create for the Direct3D 12 API
         // ComPtr Objects // 
         WRL::ComPtr<ID3D12Device9>      m_pDevice = nullptr;
         WRL::ComPtr<ID3D12Debug5>       m_pDebug = nullptr;
-        WRL::ComPtr<ID3D12CommandQueue> m_pCommandQueue = nullptr;
         WRL::ComPtr<IDXGISwapChain4>    m_pSwapChain = nullptr;
         WRL::ComPtr<IDXGIFactory7>      m_pFactoryDxgi = nullptr;
 
-
     public: // Public inline functions (mainly getters/setters)
-        D3D12Settings Settings()
+        SharedRef<D3D12Settings> Settings()
         {
-            return m_Settings;
+            return m_pSettings;
         }
 
-        D3D12Settings Settings() const
+        const D3D12Settings* Settings() const
         {
-            return m_Settings;
+            return m_pSettings.get();
         }
 
         auto Window() noexcept -> Win32Window*
@@ -116,3 +114,4 @@ export namespace LS::Win32
 
     };
 }
+

@@ -21,7 +21,7 @@ LS::Log::LSLogger Logger;
 #ifdef _DEBUG
 int main(int argc, char* argv[])
 {
-    std::ofstream myFile("ErrorFile.txt", std::ios::binary);
+    /*std::ofstream myFile("ErrorFile.txt", std::ios::binary);
     if (!myFile.is_open())
     {
         std::cerr << "Failed to open file!";
@@ -29,7 +29,7 @@ int main(int argc, char* argv[])
     }
     std::cerr.rdbuf(myFile.rdbuf());
 
-    std::cerr << "An output to file will occur for cerr\n";
+    std::cerr << "An output to file will occur for cerr\n";*/
 
     LS::Log::TraceError(L"What is this message?!");
 

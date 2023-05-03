@@ -4,9 +4,13 @@ module;
 #include <vector>
 #include <cassert>
 #include <optional>
+#include <format>
+#include <string>
 
 export module DXGIHelper;
 export import Data.LSDataTypes;
+
+import Engine.Logger;
 
 namespace WRL = Microsoft::WRL;
 
@@ -32,13 +36,19 @@ export namespace LS::Win32
      * @return A container containing all display adapters
     */
     [[nodiscard]] auto EnumerateDisplayAdapters(WRL::ComPtr<IDXGIFactory7>& pFactory) noexcept -> std::vector<WRL::ComPtr<IDXGIAdapter4>>;
+
+
+    void LogAdapters(IDXGIFactory4* factory) noexcept;
+    void LogAdapterOutput(IDXGIAdapter* adapter) noexcept;
+    void LogOutputDisplayModes(IDXGIOutput* output, DXGI_FORMAT format) noexcept;
+
 }
 
 module : private;
 
 using namespace LS::Win32;
 
-auto CreateFactory(UINT flags) noexcept -> Nullable<Microsoft::WRL::ComPtr<IDXGIFactory7>>
+auto LS::Win32::CreateFactory(UINT flags) noexcept -> Nullable<Microsoft::WRL::ComPtr<IDXGIFactory7>>
 {
     WRL::ComPtr<IDXGIFactory7> pOut;
     auto result = CreateDXGIFactory2(flags, IID_PPV_ARGS(&pOut));
@@ -47,7 +57,7 @@ auto CreateFactory(UINT flags) noexcept -> Nullable<Microsoft::WRL::ComPtr<IDXGI
     return pOut;
 }
 
-auto EnumerateDiscreteGpuAdapters(Microsoft::WRL::ComPtr<IDXGIFactory7>& pFactory) noexcept -> std::vector<WRL::ComPtr<IDXGIAdapter4>>
+auto LS::Win32::EnumerateDiscreteGpuAdapters(Microsoft::WRL::ComPtr<IDXGIFactory7>& pFactory) noexcept -> std::vector<WRL::ComPtr<IDXGIAdapter4>>
 {
     assert(pFactory);
     WRL::ComPtr<IDXGIAdapter4> adapter;
@@ -72,7 +82,7 @@ auto EnumerateDiscreteGpuAdapters(Microsoft::WRL::ComPtr<IDXGIFactory7>& pFactor
     return out;
 }
 
-auto EnumerateDisplayAdapters(Microsoft::WRL::ComPtr<IDXGIFactory7>& pFactory) noexcept -> std::vector<WRL::ComPtr<IDXGIAdapter4>>
+auto LS::Win32::EnumerateDisplayAdapters(Microsoft::WRL::ComPtr<IDXGIFactory7>& pFactory) noexcept -> std::vector<WRL::ComPtr<IDXGIAdapter4>>
 {
     assert(pFactory);
     std::vector<WRL::ComPtr<IDXGIAdapter4>> out;
@@ -98,4 +108,62 @@ auto EnumerateDisplayAdapters(Microsoft::WRL::ComPtr<IDXGIFactory7>& pFactory) n
     }
 
     return out;
+}
+
+
+void LS::Win32::LogAdapters(IDXGIFactory4* factory) noexcept
+{
+    uint32_t i = 0;
+    IDXGIAdapter* adapter = nullptr;
+    std::vector<IDXGIAdapter*> adapterList;
+    while (factory->EnumAdapters(i, &adapter) != DXGI_ERROR_NOT_FOUND)
+    {
+        DXGI_ADAPTER_DESC desc;
+        adapter->GetDesc(&desc);
+        Log::TraceInfo(std::format(L"*** Adapter {} ***\n", desc.Description));
+        adapterList.emplace_back(adapter);
+        ++i;
+    }
+
+    for (auto a : adapterList)
+    {
+        LogAdapterOutput(a);
+        a->Release();
+    }
+}
+
+void LS::Win32::LogAdapterOutput(IDXGIAdapter* adapter) noexcept
+{
+    uint32_t i = 0;
+    IDXGIOutput* output = nullptr;
+    while (adapter->EnumOutputs(i, &output) != DXGI_ERROR_NOT_FOUND)
+    {
+        DXGI_OUTPUT_DESC desc;
+        output->GetDesc(&desc);
+
+        Log::TraceInfo(std::format(L"\t|| Output ||\nName: {}\n", desc.DeviceName));
+        LogOutputDisplayModes(output, DXGI_FORMAT_B8G8R8A8_UNORM);
+
+        output->Release();
+        ++i;
+    }
+}
+
+void LS::Win32::LogOutputDisplayModes(IDXGIOutput* output, DXGI_FORMAT format) noexcept
+{
+    UINT count = 0;
+    UINT flags = 0;
+
+    output->GetDisplayModeList(format, flags, &count, nullptr);
+    std::vector<DXGI_MODE_DESC> modeList(count);
+    output->GetDisplayModeList(format, flags, &count, &modeList[0]);
+
+    for (auto& x : modeList)
+    {
+        UINT n = x.RefreshRate.Numerator;
+        UINT d = x.RefreshRate.Denominator;
+        std::wstring text = std::format(L"\tResolution (WxH): {}x{}\n\tRefresh Rate: {}", std::to_wstring(x.Width), 
+            std::to_wstring(x.Height), std::to_wstring(n / d));
+        Log::TraceInfo(text);
+    }
 }
