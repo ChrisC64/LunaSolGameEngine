@@ -3,21 +3,15 @@
 #include <wrl/client.h>
 #include <cassert>
 #include <format>
+#include "engine/EngineLogDefines.h"
+#include "platform/Windows/Win32/WinApiUtils.h"
 
 import D3D12Lib;
 import Data.LSDataTypes;
-import Engine.Logger;
 import Platform.Win32Window;
 
 namespace WRL = Microsoft::WRL;
 using namespace LS::Win32;
-
-inline std::string HrToString(HRESULT hr)
-{
-    char s_str[64] = {};
-    sprintf_s(s_str, "HRESULT of 0x%08X", static_cast<UINT>(hr));
-    return std::string(s_str);
-}
 
 class HrException : public std::runtime_error
 {
@@ -97,7 +91,7 @@ bool ResourceManagerD3D12::CreateCommandQueue() noexcept
     auto hr = m_pDevice->CreateCommandQueue(&desc, IID_PPV_ARGS(&m_pCommandQueue));
     if (FAILED(hr))
     {
-        Log::TraceError(std::format(L"Failed to create command queue: {}", HrToString(hr)));
+        LS_LOG_ERROR(std::format(L"Failed to create command queue: {}", HrToWString(hr)));
         return false;
     }
 

@@ -242,8 +242,10 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="inc\engine\EngineLogDefines.h" />
     <ClInclude Include="inc\LSEFramework.h" />
     <ClInclude Include="inc\LSTimer.h" />
+    <ClInclude Include="modules\platform\Windows\Win32\WinApiUtils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

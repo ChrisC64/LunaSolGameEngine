@@ -14,6 +14,7 @@
 #include <exception>
 #include <iostream>
 #include <format>
+#include "platform/Windows/Win32/WinApiUtils.h"
 
 import D3D12Lib;
 import DXGIHelper;
@@ -23,18 +24,6 @@ import Engine.Logger;
 
 using namespace LS::Win32;
 namespace WRL = Microsoft::WRL;
-
-inline std::string HrToString(HRESULT hr)
-{
-    char s_str[64] = {};
-    sprintf_s(s_str, "HRESULT of 0x%08X", static_cast<UINT>(hr));
-    return std::string(s_str);
-}
-
-inline std::wstring HrToWString(HRESULT hr)
-{
-    return std::format(L"HRESULT of {:#x}", static_cast<UINT>(hr));
-}
 
 class HrException : public std::runtime_error
 {

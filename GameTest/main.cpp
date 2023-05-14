@@ -3,10 +3,12 @@
 #include <iostream>
 #include <fstream>
 #include <streambuf>
+#include "engine/EngineLogDefines.h"
+
+#define LS_ENABLE_LOG 1
 import Engine.Logger;
 import MultiPassTestApp;
 
-LS::Log::LSLogger Logger;
 // TODO: Make a cube appear by loading in a .obj or .gltf reader
 // TODO: Consider cleaning up the modules a little
 // TODO: Add a library module for calls like CreateDevice(DEVICE_API) and CreatePipelineFactory(DEVICE_API)
@@ -30,6 +32,7 @@ int main(int argc, char* argv[])
     std::cerr.rdbuf(myFile.rdbuf());
 
     std::cerr << "An output to file will occur for cerr\n";*/
+    LS::Log::InitLog();
 
     LS::Log::TraceError(L"What is this message?!");
 

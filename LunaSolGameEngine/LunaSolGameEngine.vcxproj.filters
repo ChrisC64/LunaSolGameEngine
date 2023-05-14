@@ -173,5 +173,11 @@
     <ClInclude Include="inc\LSTimer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="inc\engine\EngineLogDefines.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="modules\platform\Windows\Win32\WinApiUtils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
