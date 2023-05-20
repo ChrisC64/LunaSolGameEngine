@@ -112,6 +112,10 @@ export namespace LS::Win32
             return m_pWindow.get();
         }
 
+        auto SwapchainWaitableHandle() noexcept -> HANDLE
+        {
+            return m_pSwapChain->GetFrameLatencyWaitableObject();
+        }
     };
 }
 

@@ -17,6 +17,7 @@ export namespace LS::Global
     const constinit auto FRAME_COUNT = 3u;
     const constinit auto NUM_CONTEXT = 3u;
     const constinit auto THREAD_COUNT = 4u;
+    uint32_t FrameIndex = 0u;
 }
 
 namespace LS

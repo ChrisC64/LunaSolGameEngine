@@ -176,7 +176,7 @@
     <ClInclude Include="inc\engine\EngineLogDefines.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="modules\platform\Windows\Win32\WinApiUtils.h">
+    <ClInclude Include="inc\platform\Windows\Win32\WinApiUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -9,6 +9,7 @@
 import D3D12Lib;
 import Data.LSDataTypes;
 import Platform.Win32Window;
+import Engine.Common;
 
 namespace WRL = Microsoft::WRL;
 using namespace LS::Win32;
@@ -69,16 +70,19 @@ void ResourceManagerD3D12::CreateSwapChain(const Win32Window* window) noexcept
     auto hr = m_pFactoryDxgi->CreateSwapChainForHwnd(m_pCommandQueue.Get(), window->Hwnd(), &swapchainDesc1, nullptr, nullptr, &swapchain);
     if (FAILED(hr))
     {
-        throw HrException(hr);
+        LS_LOG_ERROR(std::format(L"Failed to create Swap Chain. Error: {}", HrToWString(hr)));
+        return;
     }
 
     hr = swapchain.As(&m_pSwapChain);
     if (FAILED(hr))
     {
-        throw HrException(hr);
+        LS_LOG_ERROR(std::format(L"Failed to initialize Swap Chain 4 interface com object. Error: {}", HrToWString(hr)));
+        return;
     }
 
     m_pSwapChain->SetMaximumFrameLatency(m_pSettings->MinSettings.FrameBufferCount);
+    LS::Global::FrameIndex = m_pSwapChain->GetCurrentBackBufferIndex();
 }
 
 bool ResourceManagerD3D12::CreateCommandQueue() noexcept
