@@ -1,10 +1,12 @@
 module;
 #include <d3d12.h>
 #include <dxgi1_6.h>
-#include <directx/d3dx12.h>
 #include <span>
 #include <cassert>
+#include <directx/d3dx12.h>
 #include <vector>
+#include "platform/Windows/Win32/WinApiUtils.h"
+#include "engine/EngineLogDefines.h"
 export module D3D12Lib:D3D12Helper;
 
 export namespace LS::Win32
@@ -42,19 +44,24 @@ export namespace LS::Win32
         return D3D12_DESCRIPTOR_HEAP_DESC{ .Type = type, .NumDescriptors = numDescriptors, .Flags = flags, .NodeMask = nodeMask };
     };
 
-    auto CreateRenderTarget(ID3D12Device* device, CD3DX12_CPU_DESCRIPTOR_HANDLE handle, std::span<ID3D12Resource*> rtResources, IDXGISwapChain* swapChain,
-        uint32_t descriptorIncrementSize)
+    auto CreateRenderTarget(ID3D12Device* device, D3D12_CPU_DESCRIPTOR_HANDLE handle, std::span<ID3D12Resource*> rtResources, IDXGISwapChain* swapChain)
     {
         assert(device);
         assert(rtResources.size() > 0);
         assert(swapChain);
 
+        auto descIncSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
         std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> handles(rtResources.size());
         for (auto i = 0u; i < rtResources.size(); i++)
         {
-            auto result = swapChain->GetBuffer(i, IID_PPV_ARGS(&rtResources[i])));
+            auto result = swapChain->GetBuffer(i, IID_PPV_ARGS(&rtResources[i]));
+            if (FAILED(result))
+            {
+                LS_LOG_ERROR(std::format(L"Failed to get buffer at pos: {} when creating render target view. {}", 
+                    i, HrToWString(result)));
+            }
             device->CreateRenderTargetView(rtResources[i], nullptr, handle);
-            handle.Offset(1, descriptorIncrementSize);
+            handle.Offset(1, descIncSize);
             handles[i] = handle;
         }
     }

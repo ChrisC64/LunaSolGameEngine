@@ -32,6 +32,7 @@
 #include <d2d1helper.h>
 #include <d2d1.h>
 #include <wrl/client.h>
+#include <winrt/base.h>
 #include <d2d1.h>
 #include <dwrite_3.h>
 // D3D11 Headers //
