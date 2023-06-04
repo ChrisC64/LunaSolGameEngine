@@ -1,6 +1,10 @@
 module;
-#include "LSEFramework.h"
+#include <vector>
+#include <memory>
+#include <span>
 
+#include <wrl/client.h>
+#include <d3d11_4.h>
 export module D3D11.Device;
 import LSData;
 import Engine.LSDevice;

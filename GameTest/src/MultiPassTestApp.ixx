@@ -4,9 +4,18 @@ module;
 #include <filesystem>
 #include <optional>
 #include <vector>
-#include <wrl/client.h>
-#include "LSTimer.h"
+#include <fstream>
+#include <iostream>
 
+#include <wrl/client.h>
+#include <directxmath/DirectXMath.h>
+#include <directxmath/DirectXColors.h>
+#include <dxgi1_6.h>
+#include <d3d11_4.h>
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
+#include <Windows.h>
+#include "LSTimer.h"
 export module MultiPassTestApp;
 
 export import LSData;
@@ -26,7 +35,6 @@ export namespace gt
     using namespace std::chrono;
     using namespace std::chrono_literals;
     using namespace DirectX;
-
 
 #ifdef DEBUG
     const std::string shader_path = R"(build\x64\Debug\)";
@@ -173,7 +181,8 @@ namespace gt
         }
 
         Microsoft::WRL::ComPtr<ID3D11InputLayout> pPosColUvIP;
-        device.CreateInputLayout(posColorUvDesc.data(), posColorUvDesc.size(), {}, pPosColUvIP.ReleaseAndGetAddressOf());
+        device.CreateInputLayout(posColorUvDesc.data(), static_cast<uint32_t>(posColorUvDesc.size()), 
+            {}, pPosColUvIP.ReleaseAndGetAddressOf());
     }
 
     int Init()
@@ -358,7 +367,7 @@ namespace gt
         auto fsQuadVS = L"FullScreenQuad.cso";
 
         std::array<wchar_t, _MAX_PATH> modulePath{};
-        if (!GetModuleFileName(nullptr, modulePath.data(), modulePath.size()))
+        if (!GetModuleFileName(nullptr, modulePath.data(), static_cast<DWORD>(modulePath.size())))
         {
             throw std::runtime_error("Failed to find module path\n");
         }
@@ -453,13 +462,13 @@ namespace gt
         }
 
         ComPtr<ID3D11InputLayout> pPosIL;
-        if (FAILED(g_device.CreateInputLayout(posColorDesc.data(), posColorDesc.size(), vsData2, &pPosIL)))
+        if (FAILED(g_device.CreateInputLayout(posColorDesc.data(), static_cast<uint32_t>(posColorDesc.size()), vsData2, &pPosIL)))
         {
             throw std::runtime_error("Failed to create input layout from device\n");
         }
 
         ComPtr<ID3D11InputLayout> pPosColTexIL;
-        if (FAILED(g_device.CreateInputLayout(posColorUvDesc.data(), posColorUvDesc.size(), vsData, &pPosColTexIL)))
+        if (FAILED(g_device.CreateInputLayout(posColorUvDesc.data(), static_cast<uint32_t>(posColorUvDesc.size()), vsData, &pPosColTexIL)))
         {
             throw std::runtime_error("Failed to create input layout from device\n");
         }
@@ -504,7 +513,7 @@ namespace gt
 
         // TODO: Implement missing setups below that don't have an appropriate function call
         ComPtr<ID3D11Buffer> vertexBuffer;
-        CD3D11_BUFFER_DESC bufferDesc(sizeof(Vertex) * g_triangle.size(), D3D11_BIND_VERTEX_BUFFER);
+        CD3D11_BUFFER_DESC bufferDesc(sizeof(Vertex) * static_cast<UINT>(g_triangle.size()), D3D11_BIND_VERTEX_BUFFER);
         D3D11_SUBRESOURCE_DATA subData{ .pSysMem = g_triangle.data(), .SysMemPitch = 0, .SysMemSlicePitch = 0 };
         result = g_device.CreateBuffer(&bufferDesc, &subData, &vertexBuffer);
         if (FAILED(result))
@@ -521,7 +530,7 @@ namespace gt
 
         // Informs how the GPU about the buffer types - we have two Matrix and Index Buffers here, the Vertex was created earlier above //
         CD3D11_BUFFER_DESC matBD(sizeof(float) * 16, D3D11_BIND_CONSTANT_BUFFER);
-        CD3D11_BUFFER_DESC indexBD(g_indices.size() * sizeof(g_indices.front()), D3D11_BIND_INDEX_BUFFER);
+        CD3D11_BUFFER_DESC indexBD(static_cast<UINT>(g_indices.size()) * sizeof(g_indices.front()), D3D11_BIND_INDEX_BUFFER);
         CD3D11_BUFFER_DESC colorBD(sizeof(float) * 4, D3D11_BIND_CONSTANT_BUFFER);
 
         // Ready the GPU Data //
@@ -593,7 +602,7 @@ namespace gt
         SetRenderTarget(context2.Get(), defaultRTView.Get(), dsView.Get());
         ClearRT(context2.Get(), defaultRTView.Get(), g_blue);
         ClearDS(context2.Get(), dsView.Get());
-        DrawIndexed(context2.Get(), g_indices.size(), 0, 0);
+        DrawIndexed(context2.Get(), static_cast<uint32_t>(g_indices.size()), 0, 0);
         // END SECOND CONTEXT DRAW // 
 
         FLOAT color[4]{ 0.0f, 0.0f, 0.0f, 0.0f };

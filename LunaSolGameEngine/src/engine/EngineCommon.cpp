@@ -1,10 +1,10 @@
-#include "LSEFramework.h"
+#include <memory>
+#include <optional>
+#include <string_view>
 
 import Engine.Common;
-#ifdef LS_WINDOWS_BUILD
 import D3D11Lib;
 import Platform.Win32Window;
-#endif
 
 namespace LS
 {

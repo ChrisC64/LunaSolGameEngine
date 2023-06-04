@@ -1,6 +1,12 @@
 module;
-#include "LSEFramework.h"
+#include <vector>
+#include <cstdint>
+#include <memory>
+#include <vector>
+#include <unordered_map>
 
+#include <d3d11_4.h>
+#include <wrl/client.h>
 export module D3D11.PipelineFactory;
 import Helper.PipelineFactory;
 import LSData;

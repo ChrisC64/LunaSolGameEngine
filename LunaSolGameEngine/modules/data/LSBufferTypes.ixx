@@ -1,5 +1,7 @@
 module;
-#include "LSEFramework.h"
+#include <cstdint>
+#include <string>
+
 export module Data.LSBufferTypes;
 import Data.LSDataTypes;
 

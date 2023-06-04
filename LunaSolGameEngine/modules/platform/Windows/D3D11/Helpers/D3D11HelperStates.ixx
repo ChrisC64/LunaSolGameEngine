@@ -1,6 +1,15 @@
 module;
-#include "LSEFramework.h"
+#include <d3d11_4.h>
+#include <wrl/client.h>
+#include <optional>
+#include <directxtk/CommonStates.h>
+#include <cassert>
+#include <stdexcept>
+#include <span>
+#include <array>
 
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
 export module D3D11.HelperStates;
 import Engine.LSDevice;
 import Util.MSUtils;

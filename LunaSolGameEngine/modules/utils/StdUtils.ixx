@@ -1,5 +1,9 @@
 module;
-#include "LSEFramework.h"
+#include <concepts>
+#include <fstream>
+#include <filesystem>
+#include <optional>
+#include <type_traits>
 
 export module Util.StdUtils;
 import Data.LSConcepts;

@@ -1,7 +1,12 @@
 import D3D11.PipelineFactory;
 
-#include "LSEFramework.h"
+#include <cassert>
+#include <optional>
+#include <stdexcept>
+#include <memory>
 
+#include <wrl/client.h>
+#include <d3d11_4.h>
 import Engine.Common;
 import D3D11Lib;
 import LSData;

@@ -1,5 +1,6 @@
 module;
-#include "LSEFramework.h"
+#include <functional>
+#include <string>
 
 export module Engine.LSWindow;
 import Data.LSWindow.Types;

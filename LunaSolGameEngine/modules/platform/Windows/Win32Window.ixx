@@ -1,5 +1,10 @@
 module;
-#include "LSEFramework.h"
+#include <cstdint>
+#include <string_view>
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
+#include <Windows.h>
+
 
 export module Platform.Win32Window;
 import LSData;

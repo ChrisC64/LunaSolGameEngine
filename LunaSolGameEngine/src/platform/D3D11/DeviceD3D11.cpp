@@ -1,11 +1,21 @@
-#include "LSEFramework.h"
+#include <d3d11_4.h>
+#include <wrl/client.h>
+#include <cassert>
+#include <exception>
+#include <stdexcept>
+#include <iostream>
+#include <format>
 
+#include "engine/EngineLogDefines.h"
+
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
+#include <Windows.h>
 import D3D11.Device;
 import D3D11.RenderFuncD3D11;
 import Util.MSUtils;
 import LSData;
 import Util.HLSLUtils;
-
 namespace WRL = Microsoft::WRL;
 
 using namespace LS::Win32;
@@ -16,7 +26,9 @@ DeviceD3D11::~DeviceD3D11()
     {
         HRESULT hr = m_pDebug->ReportLiveDeviceObjects(D3D11_RLDO_DETAIL);
         if (FAILED(hr))
-            TRACE("Failed to report live objects!\n");
+        {
+            LS_LOG_DEBUG("Failed to report live objects!\n");
+        }
         Utils::ComRelease(m_pDebug.GetAddressOf());
     }
 #endif

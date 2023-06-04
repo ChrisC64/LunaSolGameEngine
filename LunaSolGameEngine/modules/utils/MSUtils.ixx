@@ -1,5 +1,10 @@
 module;
-#include "LSEFramework.h"
+#include <string>
+#include <d3d11_4.h>
+#include <stdexcept>
+#include <wrl/client.h>
+
+#include <dxguids/dxguids.h>
 export module Util.MSUtils;
 
 //Utility functions for Microsoft specific stuff //

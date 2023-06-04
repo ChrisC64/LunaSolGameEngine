@@ -1,8 +1,10 @@
 module;
-#include "LSEFramework.h"
 #include <exception>
-#include <fmt/format.h>
+#include <format>
 #include <cmath>
+#include <array>
+#include <compare>
+
 export module Data.LSMath.Types;
 import Data.LSConcepts;
 
@@ -431,7 +433,7 @@ export namespace LS
         constexpr T& at(size_t x, size_t y) {
             if (x * 4 + y >= Mat.size())
             {
-                std::string msg = fmt::format("Out of range access for Matrix: {},{}\n", x, y);
+                std::string msg = std::format("Out of range access for Matrix: {},{}\n", x, y);
                 throw std::out_of_range(msg);
             }
             return Mat[x * 4 + y];
@@ -452,7 +454,7 @@ export namespace LS
         {
             if (idx >= Mat.size())
             {
-                std::string msg = fmt::format("Out of range access for Matrix: {}\n", idx);
+                std::string msg = std::format("Out of range access for Matrix: {}\n", idx);
                 throw std::out_of_range(msg);
             }
             return Mat[idx];
@@ -462,7 +464,7 @@ export namespace LS
         {
             if (row > 3)
             {
-                std::string msg = fmt::format("Out of range access for Matrix Row: {}\n", row);
+                std::string msg = std::format("Out of range access for Matrix Row: {}\n", row);
                 throw std::out_of_range(msg);
             }
             Vec4<T> out;
@@ -478,7 +480,7 @@ export namespace LS
         {
             if (col > 3)
             {
-                std::string msg = fmt::format("Out of range access for Matrix Column: {}\n", col);
+                std::string msg = std::format("Out of range access for Matrix Column: {}\n", col);
                 throw std::out_of_range(msg);
             }
             Vec4<T> out;
@@ -501,7 +503,7 @@ export namespace LS
         {
             if (x * 3 + y >= Mat.size())
             {
-                std::string msg = fmt::format("Out of range access for Matrix: {},{}\n", x, y);
+                std::string msg = std::format("Out of range access for Matrix: {},{}\n", x, y);
                 throw std::out_of_range(msg);
             }
             return Mat[x * y];
@@ -521,7 +523,7 @@ export namespace LS
         {
             if (idx >= Mat.size())
             {
-                std::string msg = fmt::format("Out of range access for Matrix: {}\n", idx);
+                std::string msg = std::format("Out of range access for Matrix: {}\n", idx);
                 throw std::out_of_range(msg);
             }
             return Mat[idx];
@@ -531,7 +533,7 @@ export namespace LS
         {
             if (row > 2)
             {
-                std::string msg = fmt::format("Out of range access for Matrix Row: {}\n", row);
+                std::string msg = std::format("Out of range access for Matrix Row: {}\n", row);
                 throw std::out_of_range(msg);
             }
             Vec3<T> out;
@@ -546,7 +548,7 @@ export namespace LS
         {
             if (col > 2)
             {
-                std::string msg = fmt::format("Out of range access for Matrix Column: {}\n", col);
+                std::string msg = std::format("Out of range access for Matrix Column: {}\n", col);
                 throw std::out_of_range(msg);
             }
             Vec3<T> out;
@@ -567,7 +569,7 @@ export namespace LS
         constexpr T& at(uint32_t x, uint32_t y) noexcept(x * 2 + y < Mat.size()) {
             if constexpr (x * 2 + y > Mat.size())
             {
-                std::string msg = fmt::format("Out of range access for Matrix: {},{}\n", x, y);
+                std::string msg = std::format("Out of range access for Matrix: {},{}\n", x, y);
                 throw std::out_of_range(msg);
             }
             return Mat[x * y];
@@ -586,7 +588,7 @@ export namespace LS
         {
             if (idx >= Mat.size())
             {
-                std::string msg = fmt::format("Out of range access for Matrix: {}\n", idx);
+                std::string msg = std::format("Out of range access for Matrix: {}\n", idx);
                 throw std::out_of_range(msg);
             }
             return Mat[idx];
@@ -596,7 +598,7 @@ export namespace LS
         {
             if (row > 1)
             {
-                std::string msg = fmt::format("Out of range access for Matrix Row: {}\n", row);
+                std::string msg = std::format("Out of range access for Matrix Row: {}\n", row);
                 throw std::out_of_range(msg);
             }
             Vec2<T> out;
@@ -610,7 +612,7 @@ export namespace LS
         {
             if (col > 1)
             {
-                std::string msg = fmt::format("Out of range access for Matrix Column: {}\n", col);
+                std::string msg = std::format("Out of range access for Matrix Column: {}\n", col);
                 throw std::out_of_range(msg);
             }
             Vec2<T> out;

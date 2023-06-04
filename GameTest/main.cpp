@@ -1,9 +1,12 @@
-#include "LSEFramework.h"
 #include "LSTimer.h"
 #include <iostream>
 #include <fstream>
 #include <streambuf>
 #include "engine/EngineLogDefines.h"
+
+#ifndef _DEBUG
+#include <Windows.h>
+#endif // 
 
 #define LS_ENABLE_LOG 1
 import Engine.Logger;

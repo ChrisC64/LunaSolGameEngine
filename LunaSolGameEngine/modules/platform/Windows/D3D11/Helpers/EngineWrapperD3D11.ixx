@@ -1,5 +1,8 @@
 module;
-#include "LSEFramework.h"
+#include <cstdint>
+#include <dxgi1_6.h>
+#include <d3d11_4.h>
+#include <stdexcept>
 export module D3D11.EngineWrapperD3D11;
 
 import LSData;

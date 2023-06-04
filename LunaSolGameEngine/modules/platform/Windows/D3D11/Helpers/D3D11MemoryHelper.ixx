@@ -1,5 +1,10 @@
 module;
-#include "LSEFramework.h"
+#include <optional>
+#include <cstdint>
+#include <cassert>
+#include <d3d11_4.h>
+#include <span>
+#include <stdexcept>
 
 export module D3D11.MemoryHelper;
 import LSData;

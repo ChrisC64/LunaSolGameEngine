@@ -1,9 +1,9 @@
 module;
-#include "LSEFramework.h"
-
+#include <cstdint>
+#include <compare>
 export module Engine.LSCamera;
 import Data.LSMath.Types;
-using namespace DirectX;
+
 export namespace LS
 {
     struct LSCamera

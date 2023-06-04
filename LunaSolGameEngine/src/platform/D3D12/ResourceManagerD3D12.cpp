@@ -28,7 +28,7 @@ ResourceManagerD3D12::ResourceManagerD3D12(WRL::ComPtr<ID3D12Device9>& device, S
 {
 }
 
-void ResourceManagerD3D12::CreateDeviceDependentResources(WRL::ComPtr<ID3D12Device9>& pDevice) noexcept
+void ResourceManagerD3D12::CreateDeviceDependentResources([[maybe_unused]] WRL::ComPtr<ID3D12Device9>& pDevice) noexcept
 {
     assert(m_pDevice);
     if (!m_pDevice)

@@ -1,5 +1,6 @@
 module;
-#include "LSEFramework.h"
+#include <concepts>
+#include <type_traits>
 
 export module Data.LSConcepts;
 

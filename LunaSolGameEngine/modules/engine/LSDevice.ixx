@@ -1,5 +1,11 @@
 module;
-#include "LSEFramework.h"
+#include <cstdint>
+#include <functional>
+#include <queue>
+#include <memory>
+#include <vector>
+#include <unordered_map>
+#include <string>
 export module Engine.LSDevice;
 
 import Engine.LSWindow;

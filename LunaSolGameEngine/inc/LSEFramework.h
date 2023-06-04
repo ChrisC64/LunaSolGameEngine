@@ -28,6 +28,11 @@
 #define NOMINMAX
 #include <Windows.h>
 #include <windowsx.h>
+// DirectX Libraries //
+#include <directxmath/DirectXMath.h>
+#include <directxmath/DirectXColors.h>
+#include <directxtk/CommonStates.h>
+#include <d3dcompiler.h>
 // DirectX/Windows Headers //
 #include <d2d1helper.h>
 #include <d2d1.h>
@@ -40,12 +45,6 @@
 
 // DXGI Interfaces
 #include <dxgi1_6.h>
-
-// DirectX Libraries //
-#include <directxmath/DirectXMath.h>
-#include <directxmath/DirectXColors.h>
-#include <directxtk/CommonStates.h>
-#include <d3dcompiler.h>
 
 // libs to include //
 #pragma comment(lib, "d2d1")

@@ -1,5 +1,12 @@
 module;
-#include "LSEFramework.h"
+#include <filesystem>
+#include <string>
+#include <fstream>
+#include <cstdint>
+#include <vector>
+#include <ranges>
+#include <span>
+#include <format>
 
 export module Data.LSShader;
 

@@ -1,4 +1,8 @@
-#include "LSEFramework.h"
+#include <iostream>
+#include <format>
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
+#include <windowsx.h>
 
 import Platform.Win32Window;
 import Util.StdUtils;

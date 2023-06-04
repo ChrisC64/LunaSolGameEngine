@@ -1,6 +1,14 @@
 module;
-#include "LSEFramework.h"
+#include <cassert>
+#include <array>
+#include <span>
+#include <d3d11_4.h>
+#include <wrl/client.h>
+#include <limits>
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
 
+#pragma comment(lib, "d3d11")
 export module D3D11.RenderFuncD3D11;
 import Util.MSUtils;
 import LSData;
@@ -8,6 +16,9 @@ import Engine.LSDevice;
 
 namespace WRL = Microsoft::WRL;
 
+#define NOMINMAX
+#undef max
+#undef min
 export namespace LS::Win32
 {
     // CLEAR //
@@ -190,7 +201,7 @@ export namespace LS::Win32
     {
         assert(pContext);
         assert(!buffers.empty());
-        assert(buffers.size() <= std::numeric_limits<uint32_t>::max());
+        //assert(buffers.size() <= std::numeric_limits<uint32_t>::max());
         if (buffers.empty() && buffers.size() <= std::numeric_limits<uint32_t>::max())
             return;
 

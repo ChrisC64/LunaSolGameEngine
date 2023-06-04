@@ -1,6 +1,16 @@
 module;
-#include "LSEFramework.h"
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
+#include <string_view>
+#include <filesystem>
+#include <vector>
+#include <cstddef>
+#include <cstdint>
+#include <span>
 
+#include <d3dcompiler.h>
+#include <windows.h>
+#include <d3d11_4.h>
 export module D3D11.Utils;
 
 import D3D11.EngineWrapperD3D11;

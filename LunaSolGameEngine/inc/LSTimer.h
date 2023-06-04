@@ -1,5 +1,6 @@
 #pragma once
-#include "LSEFramework.h"
+#include <cstdint>
+#include <chrono>
 
 using namespace std::chrono;
 using namespace std::chrono_literals;

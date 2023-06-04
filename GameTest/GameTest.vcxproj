@@ -84,7 +84,7 @@
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)build\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>intermediate\$(Platform)\$(Configuration)\</IntDir>
-    <IncludePath>$(SolutionDir)GameTest;$(SolutionDir)LunaSolGameEngine\inc;$(SolutionDir)LunaSolGameEngine\modules;$(VC_IncludePath);$(WindowsSDK_IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)GameTest;$(SolutionDir)LunaSolGameEngine\inc;$(SolutionDir)LunaSolGameEngine\modules</IncludePath>
     <PublicIncludeDirectories>
     </PublicIncludeDirectories>
     <PublicModuleDirectories>
@@ -94,11 +94,14 @@
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)build\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>intermediate\$(Platform)\$(Configuration)\</IntDir>
-    <IncludePath>$(ProjectDir);$(SolutionDir)LunaSolGameEngine\inc;$(SolutionDir)LunaSolGameEngine\modules;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <IncludePath>$(ProjectDir);$(SolutionDir)LunaSolGameEngine\inc;$(SolutionDir)LunaSolGameEngine\modules</IncludePath>
     <PublicIncludeDirectories>
     </PublicIncludeDirectories>
     <PublicModuleDirectories>
     </PublicModuleDirectories>
+  </PropertyGroup>
+  <PropertyGroup Label="Vcpkg">
+    <VcpkgEnableManifest>true</VcpkgEnableManifest>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -144,7 +147,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>LunaSolGameEngine.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>LunaSolGameEngine.lib;dxguid.lib;d3dcompiler.lib;d3d11.lib;Dxgi.lib;dwrite.lib;d2d1.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(OutDir);</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
@@ -157,14 +160,14 @@
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions);LS_WINDOWS_BUILD</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)GameTest;$(SolutionDir)LunaSolGameEngine\inc;$(SolutionDir)LunaSolGameEngine\modules;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)GameTest;$(SolutionDir)LunaSolGameEngine\inc;$(SolutionDir)LunaSolGameEngine\modules;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>LunaSolGameEngine.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>LunaSolGameEngine.lib;dxguid.lib;d3dcompiler.lib;d3d11.lib;Dxgi.lib;dwrite.lib;d2d1.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(OutDir);</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>

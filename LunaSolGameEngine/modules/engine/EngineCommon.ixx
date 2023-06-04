@@ -1,5 +1,11 @@
 module;
-#include "LSEFramework.h"
+#include <optional>
+#include <string_view>
+#include <cstdint>
+#include <functional>
+#include <vector>
+#include <memory>
+
 export module Engine.Common;
 
 export import LSData;

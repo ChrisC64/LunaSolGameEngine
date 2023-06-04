@@ -244,3 +244,6 @@ ModelManifest.xml
 # FAKE - F# Make
 .fake/
 /.vscode/c_cpp_properties.json
+
+# VCPKG installs
+/vcpkg_installed
