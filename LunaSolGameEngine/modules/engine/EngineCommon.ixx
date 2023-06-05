@@ -46,7 +46,7 @@ namespace LS
 
     export 
     {
-        using AppInitFunc = std::function<int()>;
+        using AppInitFunc = std::function<ENGINE_CODE()>;
         using AppRunFunc = std::function<void()>;
     }
 
@@ -62,8 +62,8 @@ namespace LS
         LSApp(LSApp&&) = default;
         LSApp& operator=(LSApp&&) = default;
 
-        void Initialize(int argCount, char* argsV[]);
-        void Initialize();
+        ENGINE_CODE Initialize(int argCount, char* argsV[]);
+        ENGINE_CODE Initialize();
         void Run();
 
         Ref<LSWindowBase> Window;
@@ -90,22 +90,24 @@ namespace LS
         Window = BuildWindow(width, height, title);
     }
 
-    void LSApp::Initialize(int argCount, char* argsV[])
+    ENGINE_CODE LSApp::Initialize(int argCount, char* argsV[])
     {
         CommandArgs = std::vector<std::string_view>(argsV + 1, argsV + argCount);
 
         if (InitFunc)
         {
-            InitFunc();
+            return InitFunc();
         }
+        return ENGINE_CODE::LS_SUCCESS;
     }
     
-    void LSApp::Initialize()
+    ENGINE_CODE LSApp::Initialize()
     {
         if (InitFunc)
         {
-            InitFunc();
+            return InitFunc();
         }
+        return ENGINE_CODE::LS_SUCCESS;
     }
 
     void LSApp::Run()

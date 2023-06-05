@@ -3,6 +3,9 @@
 #include <fstream>
 #include <streambuf>
 #include "engine/EngineLogDefines.h"
+#include <format>
+#include <cstdint>
+#include <bitset>
 
 #ifndef _DEBUG
 #include <Windows.h>
@@ -10,8 +13,9 @@
 
 #define LS_ENABLE_LOG 1
 import Engine.Logger;
-import MultiPassTestApp;
-
+import Engine.EngineCodes;
+//import MultiPassTestApp;
+import CubeApp;
 // TODO: Make a cube appear by loading in a .obj or .gltf reader
 // TODO: Consider cleaning up the modules a little
 // TODO: Add a library module for calls like CreateDevice(DEVICE_API) and CreatePipelineFactory(DEVICE_API)
@@ -36,10 +40,9 @@ int main(int argc, char* argv[])
 
     std::cerr << "An output to file will occur for cerr\n";*/
     LS::Log::InitLog();
-
-    LS::Log::TraceError(L"What is this message?!");
-
-    gt::App->Initialize(argc, argv);
+    auto appcode = gt::App->Initialize(argc, argv);
+    if (!LS::IsSuccessCode(appcode))
+        return -1;
     gt::App->Run();
 }
 
@@ -48,7 +51,10 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 {
     LS::Log::TraceError(L"What is this message?!");
     LS::Log::TraceError(std::format(L"A format string appears! {}", 42));
-    gt::App->Initialize();
+    auto appcode = gt::App->Initialize();
+    if (!LS::IsSuccessCode(appcode))
+        return -1;
+
     gt::App->Run();
 
     return WM_QUIT;

@@ -105,10 +105,9 @@ export namespace gt
 
     LS::LSShaderInputSignature g_PosColorUv, g_PosColor;
 
-    int Init();
+    LS::ENGINE_CODE Init();
     void Run();
-    auto App = InitializeApp(SCREEN_WIDTH, SCREEN_HEIGHT, L"AppTest",
-        std::move(Init), std::move(Run));
+    auto App = InitializeApp(SCREEN_WIDTH, SCREEN_HEIGHT, L"AppTest", std::move(Init), std::move(Run));
 
     LS::Win32::DeviceD3D11 g_device;
     ComPtr<ID3D11CommandList> command1, command2;
@@ -185,8 +184,10 @@ namespace gt
             {}, pPosColUvIP.ReleaseAndGetAddressOf());
     }
 
-    int Init()
+    LS::ENGINE_CODE Init()
     {
+        using enum LS::ENGINE_CODE;
+
         std::cout << "Hello Luna Sol Game Engine!\n";
         auto& window = App->Window;
         //Ref<LSWindowBase> window = LS::BuildWindow(SCREEN_WIDTH, SCREEN_HEIGHT, L"Hello App");
@@ -234,18 +235,18 @@ namespace gt
         ComPtr<ID3D11Texture2D> pRenderTargetTexture;
         auto texResult = g_device.GetDevice()->CreateTexture2D(&textureDesc, NULL, &pRenderTargetTexture);
         if (FAILED(texResult))
-            return -20;
+            return RESOURCE_CREATION_FAILED;
 
         ComPtr<ID3D11Texture2D> pTexture;
         textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
         texResult = g_device.GetDevice()->CreateTexture2D(&textureDesc, NULL, &pTexture);
         if (FAILED(texResult))
-            return -21;
+            return RESOURCE_CREATION_FAILED;
 
         ComPtr<ID3D11Texture2D> pTexture2;
         texResult = g_device.GetDevice()->CreateTexture2D(&textureDesc, NULL, &pTexture2);
         if (FAILED(texResult))
-            return -22;
+            return RESOURCE_CREATION_FAILED;
         // TODO: Create SRVs that point to the 2 or 3 textures we make from above
         ComPtr<ID3D11ShaderResourceView> pTexturRenderTargetSRV;
         ComPtr<ID3D11ShaderResourceView> pTextureView1;
@@ -261,17 +262,17 @@ namespace gt
         auto srvResult = g_device.GetDevice()->CreateShaderResourceView(pRenderTargetTexture.Get(), &texresView, &pTexturRenderTargetSRV);
         if (FAILED(srvResult))
         {
-            return -23;
+            return RESOURCE_CREATION_FAILED;
         }
         srvResult = g_device.GetDevice()->CreateShaderResourceView(pTexture.Get(), &texresView, &pTextureView1);
         if (FAILED(srvResult))
         {
-            return -24;
+            return RESOURCE_CREATION_FAILED;
         }
         srvResult = g_device.GetDevice()->CreateShaderResourceView(pTexture2.Get(), &texresView, &pTextureView2);
         if (FAILED(srvResult))
         {
-            return -25;
+            return RESOURCE_CREATION_FAILED;
         }
 
         ComPtr<ID3D11SamplerState> pSampler;
@@ -281,7 +282,7 @@ namespace gt
         samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
         auto samplerResult = g_device.GetDevice()->CreateSamplerState(&samplerDesc, &pSampler);
         if (FAILED(samplerResult))
-            return -26;
+            return RESOURCE_CREATION_FAILED;
 
         // END TEXTURE STUFF //
 
@@ -311,7 +312,7 @@ namespace gt
         ComPtr<ID3D11DepthStencilView> dsView;
         auto dsResult = g_device.CreateDepthStencilViewForSwapchain(defaultRTView.Get(), &dsView);
         if (FAILED(dsResult))
-            return -3;
+            return RESOURCE_CREATION_FAILED;
 
         CD3D11_DEPTH_STENCIL_DESC defaultDepthDesc(CD3D11_DEFAULT{});
         ComPtr<ID3D11DepthStencilState> defaultState;
@@ -344,7 +345,7 @@ namespace gt
 
         result = g_device.CreateBlendState(blendDesc, &blendState);
         if (FAILED(result))
-            return -4;
+            return RESOURCE_CREATION_FAILED;
 
         auto createDeferredContext = [&]() -> ComPtr<ID3D11DeviceContext>
         {
@@ -386,27 +387,27 @@ namespace gt
         // Vertex Shaders //
         auto vsDataOpt = ReadShaderFile(vsPath);
         if (!vsDataOpt)
-            return -1;
+            return FILE_ERROR;
         auto& vsData = vsDataOpt.value();
         auto vsData2Opt = ReadShaderFile(vsPath2);
         if (!vsData2Opt)
-            return -1;
+            return FILE_ERROR;
         auto& vsData2 = vsData2Opt.value();
         auto psDataOpt = ReadShaderFile(psPath);
         if (!psDataOpt)
-            return -1;
+            return FILE_ERROR;
         auto& psData = psDataOpt.value();
         auto psData2Opt = ReadShaderFile(psPath2);
         if (!psData2Opt)
-            return -1;
+            return FILE_ERROR;
         auto& psData2 = psData2Opt.value();
         auto texPSDataOpt = ReadShaderFile(texPSPath);
         if (!texPSDataOpt)
-            return -1;
+            return FILE_ERROR;
         auto& texPSData = texPSDataOpt.value();
         auto fsQuadOpt = ReadShaderFile(fsQuadPath);
         if (!fsQuadOpt)
-            return -1;
+            return FILE_ERROR;
         auto& fsQuadData = fsQuadOpt.value();
 
         // END SHADER FILE OPERATIONS //
@@ -421,22 +422,22 @@ namespace gt
 
         auto shaderResult = CreateVertexShader(g_device, vsShader2, vsData);
         if (!shaderResult)
-            return -2;
+            return FILE_ERROR;
         shaderResult = CreateVertexShader(g_device, vsShader, vsData2);
         if (!shaderResult)
-            return -2;
+            return FILE_ERROR;
         shaderResult = CreatePixelShader(g_device, psShader, psData);
         if (!shaderResult)
-            return -2;
+            return FILE_ERROR;
         shaderResult = CreatePixelShader(g_device, psShader2, psData2);
         if (!shaderResult)
-            return -2;
+            return FILE_ERROR;
         shaderResult = CreatePixelShader(g_device, texPS, texPSData);
         if (!shaderResult)
-            return -2;
+            return FILE_ERROR;
         shaderResult = CreateVertexShader(g_device, fsQuadShader, fsQuadData);
         if (!shaderResult)
-            return -2;
+            return FILE_ERROR;
 
         // Build Shader Input Signatures //
         g_PosColorUv.AddElement(LS::ShaderElement{ .ShaderData = SHADER_DATA_TYPE::FLOAT4, .SemanticName {"POSITION"},
@@ -518,7 +519,7 @@ namespace gt
         result = g_device.CreateBuffer(&bufferDesc, &subData, &vertexBuffer);
         if (FAILED(result))
         {
-            return -2;
+            return RESOURCE_CREATION_FAILED;
         }
 
         // Camera //
@@ -653,16 +654,16 @@ namespace gt
         //ComPtr<ID3D11CommandList> command1, command2;
         auto hr = context1->FinishCommandList(FALSE, &command1);
         if (FAILED(hr))
-            return EXIT_FAILURE;
+            return LS_ERROR;
 
         hr = context2->FinishCommandList(FALSE, &command2);
         if (FAILED(hr))
-            return EXIT_FAILURE;
+            return LS_ERROR;
 
         // Show Window and Start Timer - duh... //
         window->Show();
         g_timer.Start();
-        return 1;
+        return LS_SUCCESS;
     }
 
     void Run()

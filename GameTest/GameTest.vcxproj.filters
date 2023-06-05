@@ -34,4 +34,7 @@
     <FxCompile Include="shaders\VertexShader2.hlsl" />
     <FxCompile Include="shaders\FullScreenQuad.hlsl" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
 </Project>
