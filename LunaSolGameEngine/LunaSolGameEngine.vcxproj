@@ -146,7 +146,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <AdditionalIncludeDirectories>$(ProjectDir)inc;$(ProjectDir)modules</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)inc;$(ProjectDir)modules;</AdditionalIncludeDirectories>
       <TreatWarningAsError>false</TreatWarningAsError>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>LSEFramework.h</PrecompiledHeaderFile>
@@ -188,6 +188,8 @@
     <ClCompile Include="modules\engine\GeometryMath.ixx" />
     <ClCompile Include="modules\engine\MathLib.ixx" />
     <ClCompile Include="modules\engine\MatrixMath.ixx" />
+    <ClCompile Include="modules\geometry\GeometryGenerator.ixx" />
+    <ClCompile Include="modules\helper\IOHelper.ixx" />
     <ClCompile Include="modules\helper\LSCommonTypes.ixx" />
     <ClCompile Include="modules\data\LSConcepts.ixx" />
     <ClCompile Include="modules\data\DataLib.ixx" />

@@ -293,6 +293,46 @@ HRESULT DeviceD3D11::CreateInputLayout(const D3D11_INPUT_ELEMENT_DESC* elemDesc,
     return m_pDevice->CreateInputLayout(elemDesc, elemSize, byteCode.data(), byteCode.size(), ppInputLayout);
 }
 
+HRESULT DeviceD3D11::CreateRTVFromBackBuffer(ID3D11RenderTargetView** ppRTV) noexcept
+{
+    assert(m_pSwapchain);
+    assert(m_pDevice);
+    WRL::ComPtr<ID3D11Texture2D> backBuffer;
+    
+    HRESULT hr = m_pSwapchain->GetBuffer(0, IID_PPV_ARGS(&backBuffer));
+    if (FAILED(hr))
+    {
+        LS_LOG_DEBUG(L"Failed to get back buffer from swap chain");
+        return hr;
+    }
+
+    D3D11_TEXTURE2D_DESC swapDesc;
+    backBuffer->GetDesc(&swapDesc);
+    CD3D11_RENDER_TARGET_VIEW_DESC cdesc(backBuffer.Get(), D3D11_RTV_DIMENSION_TEXTURE2D, swapDesc.Format);
+
+    return m_pDevice->CreateRenderTargetView(backBuffer.Get(), &cdesc, ppRTV);
+}
+
+HRESULT DeviceD3D11::CreateRTVFromBackBuffer(ID3D11RenderTargetView1** ppRTV) noexcept
+{
+    assert(m_pSwapchain);
+    assert(m_pDevice);
+    WRL::ComPtr<ID3D11Texture2D> backBuffer;
+    
+    HRESULT hr = m_pSwapchain->GetBuffer(0, IID_PPV_ARGS(&backBuffer));
+    if (FAILED(hr))
+    {
+        LS_LOG_DEBUG(L"Failed to get back buffer from swap chain");
+        return hr;
+    }
+
+    D3D11_TEXTURE2D_DESC swapDesc;
+    backBuffer->GetDesc(&swapDesc);
+    CD3D11_RENDER_TARGET_VIEW_DESC1 cdesc(backBuffer.Get(), D3D11_RTV_DIMENSION_TEXTURE2D, swapDesc.Format);
+
+    return m_pDevice->CreateRenderTargetView1(backBuffer.Get(), &cdesc, ppRTV);
+}
+
 HRESULT DeviceD3D11::CreateRenderTargetView(ID3D11Resource* pResource, ID3D11RenderTargetView** ppRTView,
     const D3D11_RENDER_TARGET_VIEW_DESC* rtvDesc) noexcept
 {

@@ -147,8 +147,8 @@ export namespace LS::Win32
      * @param indexOffset the offset from the index buffer to start at
      * @param vertexOffset the number applied to the index count when reading (for non-interleaved types usually)
      */
-    constexpr void DrawIndexed(ID3D11DeviceContext* pContext, uint32_t indexCount, uint32_t indexOffset,
-        uint32_t vertexOffset) noexcept
+    constexpr void DrawIndexed(ID3D11DeviceContext* pContext, uint32_t indexCount, uint32_t indexOffset = 0,
+        uint32_t vertexOffset = 0) noexcept
     {
         assert(pContext);
         pContext->DrawIndexed(indexCount, indexOffset, vertexOffset);

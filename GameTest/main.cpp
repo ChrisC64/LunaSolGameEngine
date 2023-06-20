@@ -14,8 +14,9 @@
 #define LS_ENABLE_LOG 1
 import Engine.Logger;
 import Engine.EngineCodes;
+import DX11CubeApp;
 //import MultiPassTestApp;
-import CubeApp;
+//import CubeApp;
 // TODO: Make a cube appear by loading in a .obj or .gltf reader
 // TODO: Consider cleaning up the modules a little
 // TODO: Add a library module for calls like CreateDevice(DEVICE_API) and CreatePipelineFactory(DEVICE_API)

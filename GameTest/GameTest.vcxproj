@@ -179,8 +179,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="src\CubeApp.ixx" />
-    <ClCompile Include="src\MultiPassTestApp.ixx" />
+    <ClCompile Include="src\DX11Test\DX11CubeApp.ixx" />
+    <ClCompile Include="src\DX12Test\CubeApp.ixx" />
+    <ClCompile Include="src\DX11Test\MultiPassTestApp.ixx" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="shaders\FullScreenQuad.hlsl">

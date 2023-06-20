@@ -43,6 +43,13 @@ namespace LS::DX
         {
             Projection = XMMatrixPerspectiveFovLH(XMConvertToRadians(45.0f), static_cast<float>(width / height), farZ, nearZ);
             View = XMMatrixLookAtLH(position, target, up);
+            Width = width;
+            Height = height;
+            Position = position;
+            Up = up;
+            Target = target;
+            FarZ = farZ;
+            NearZ = nearZ;
         }
 
         xmmat InvProj()
@@ -53,6 +60,16 @@ namespace LS::DX
         xmmat InvView()
         {
             return XMMatrixInverse(nullptr, View);
+        }
+
+        void UpdateProjection(float fovY = 45.0f)
+        {
+            Projection = XMMatrixPerspectiveFovLH(XMConvertToRadians(fovY), static_cast<float>(Width / Height), FarZ, NearZ);
+        }
+
+        void UpdateView()
+        {
+            View = XMMatrixLookAtLH(Position, Target, Up);
         }
 
     };

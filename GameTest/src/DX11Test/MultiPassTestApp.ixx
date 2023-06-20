@@ -107,7 +107,7 @@ export namespace gt
 
     LS::ENGINE_CODE Init();
     void Run();
-    auto App = InitializeApp(SCREEN_WIDTH, SCREEN_HEIGHT, L"AppTest", std::move(Init), std::move(Run));
+    auto App = CreateAppRef(SCREEN_WIDTH, SCREEN_HEIGHT, L"AppTest", std::move(Init), std::move(Run));
 
     LS::Win32::DeviceD3D11 g_device;
     ComPtr<ID3D11CommandList> command1, command2;

@@ -7,7 +7,7 @@ using namespace std::chrono_literals;
 
 namespace LS
 {
-    template<class Rep, int64_t Numerator, int64_t Denominator>
+    template <class Rep, int64_t Numerator, int64_t Denominator>
     class LSTimer
     {
         using Ratio = std::ratio<Numerator, Denominator>;
@@ -20,6 +20,7 @@ namespace LS
                 return;
             m_bIsStopped = false;
             m_startTP = steady_clock::now();
+            m_currentTP = m_startTP;
         }
 
         void Tick()

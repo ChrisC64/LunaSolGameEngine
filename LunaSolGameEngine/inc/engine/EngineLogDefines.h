@@ -1,6 +1,7 @@
 #pragma once
 import Engine.Logger;
-
+//TODO: Not working as expected, because I suck at preprocessor stuff. Okay, so it seems
+// the definitions of Trace___ are not included. I'll work this out later. 
 namespace LS::Log
 {
 #if LS_ENABLE_LOG 

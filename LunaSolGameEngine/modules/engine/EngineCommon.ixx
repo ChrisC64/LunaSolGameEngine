@@ -76,7 +76,7 @@ namespace LS
         AppRunFunc RunFunc;
     };
 
-    export auto InitializeApp(uint32_t width, uint32_t height, 
+    export auto CreateAppRef(uint32_t width, uint32_t height, 
         std::wstring_view title, AppInitFunc&& initFunc, AppRunFunc&& runFunc) -> Ref<LSApp>;
 }
 
@@ -118,7 +118,7 @@ namespace LS
         }
     }
 
-    auto InitializeApp(uint32_t width, uint32_t height, std::wstring_view title, AppInitFunc&& initFunc, AppRunFunc&& runFunc) -> Ref<LSApp>
+    auto CreateAppRef(uint32_t width, uint32_t height, std::wstring_view title, AppInitFunc&& initFunc, AppRunFunc&& runFunc) -> Ref<LSApp>
     {
         //LSApp out(width, height, title, std::move(initFunc), std::move(runFunc));
         auto out = std::make_unique<LSApp>(width, height, title, std::move(initFunc), std::move(runFunc));

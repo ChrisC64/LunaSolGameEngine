@@ -23,7 +23,7 @@ import Data.LSDataTypes;
 
 export namespace LS::Utils
 {
-    constexpr DXGI_FORMAT FindDXGIFormat(D3D11_SIGNATURE_PARAMETER_DESC desc) noexcept
+    constexpr auto FindDXGIFormat(D3D11_SIGNATURE_PARAMETER_DESC desc) noexcept -> DXGI_FORMAT
     {
         DXGI_FORMAT format = DXGI_FORMAT_UNKNOWN;
         if (desc.Mask == 1)
@@ -66,7 +66,7 @@ export namespace LS::Utils
         return format;
     }
 
-    constexpr Nullable<std::vector<D3D11_INPUT_ELEMENT_DESC>> BuildFromReflection(std::span<std::byte> fileData)
+    constexpr auto BuildFromReflection(std::span<std::byte> fileData) -> Nullable<std::vector<D3D11_INPUT_ELEMENT_DESC>>
     {
         if (fileData.empty())
         {

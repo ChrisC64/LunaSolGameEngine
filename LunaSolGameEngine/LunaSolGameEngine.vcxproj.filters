@@ -162,6 +162,12 @@
     <ClCompile Include="src\platform\D3D12\ResourceManagerD3D12.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="modules\geometry\GeometryGenerator.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\helper\IOHelper.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\LSTimer.h">
@@ -171,9 +177,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="inc\platform\Windows\Win32\WinApiUtils.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\dev\vcpkg\installed\x64-windows\include\directxmath\DirectXMath.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

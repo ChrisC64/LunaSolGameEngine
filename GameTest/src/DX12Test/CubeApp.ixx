@@ -180,7 +180,7 @@ namespace gt
     void Render(float r, float g, float b, float a);
     void OnDestroy();
 
-    export auto App = InitializeApp(800, 600, L"Cube App", std::move(Init), std::move(Run));
+    export auto App = CreateAppRef(800, 600, L"Cube App", std::move(Init), std::move(Run));
     export LS::ENGINE_CODE Init()
     {
         using enum LS::ENGINE_CODE;
@@ -413,26 +413,6 @@ namespace gt
 
 module : private;
 using namespace gt;
-
-//LS::ENGINE_CODE Init()
-//{
-//    using enum LS::ENGINE_CODE;
-//    if (!CreateDevice((HWND)App->Window->GetHandleToWindow(), App->Window->GetWidth(), App->Window->GetHeight()))
-//        return LS_ERROR;
-//
-//    return LS_SUCCESS;
-//}
-//
-//void Run()
-//{
-//    auto& window = App->Window;
-//    while (window->IsOpen())
-//    {
-//        window->PollEvent();
-//        Render(1.0f, 1.0f, 0.0f, 1.0f);
-//
-//    }
-//}
 
 bool gt::CreateDevice(HWND hwnd, uint32_t x, uint32_t y)
 {
