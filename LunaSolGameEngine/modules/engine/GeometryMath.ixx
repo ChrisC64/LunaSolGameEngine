@@ -10,24 +10,46 @@ export namespace LS::Math
     constexpr float LS_1DIV2PI = 0.159154943f;
     constexpr float LS_PIDIV2 = 1.570796327f;
     constexpr float LS_PIDIV4 = 0.785398163f;
+    constexpr float LS_RADIANS = LS_PI / 180.0f;
+    constexpr float LS_DEGREES = 180 / LS_PI;
 
-    consteval float ConvertToDegrees(float radians)
+    consteval float ConstEvalToDegrees(float radians)
     {
-        return radians * (180.0f / LS_PI);
+        return radians * LS_DEGREES;
     }
     
-    consteval float ConvertToRadians(float degrees)
+    consteval float ConstEvalToRadians(float degrees)
     {
-        return degrees * (LS_PI / 180.0f);
+        return degrees * LS_RADIANS;
     }
     
-    consteval double ConvertToDegreesD(double radians)
+    consteval double ConstEvalToDegreesDouble(double radians)
     {
-        return radians * (180.0 / LS_PI);
+        return radians * LS_DEGREES;
     }
     
-    consteval double ConvertToRadiansD(double degrees)
+    consteval double ConstEvalToRadiansDouble(double degrees)
     {
-        return degrees * (LS_PI / 180.0);
+        return degrees * LS_RADIANS;
+    }
+    
+    constexpr float ToDegrees(float radians)
+    {
+        return radians * LS_DEGREES;
+    }
+    
+    constexpr float ToRadians(float degrees)
+    {
+        return degrees * LS_RADIANS;
+    }
+    
+    constexpr double ToDegreesDouble(double radians)
+    {
+        return radians * LS_DEGREES;
+    }
+    
+    constexpr double ToRadiansDouble(double degrees)
+    {
+        return degrees * LS_RADIANS;
     }
 }

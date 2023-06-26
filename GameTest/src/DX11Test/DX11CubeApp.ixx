@@ -29,6 +29,7 @@ export import Helper.PipelineFactory;
 import Engine.Logger;
 import Helper.IO;
 import GeometryGenerator;
+import MathLib;
 
 export namespace gt
 {
@@ -104,10 +105,11 @@ export namespace gt
     void UpdateCubeTransform()
     {
         XMMATRIX scale = XMMatrixScalingFromVector(g_Cube.Scale);
-        XMMATRIX rot = XMMatrixRotationRollPitchYawFromVector(g_Cube.Rotation);
-        XMMATRIX transform = XMMatrixTranslationFromVector(g_Cube.Position);
+        //XMMATRIX rot = XMMatrixRotationRollPitchYawFromVector(g_Cube.Rotation);
+        XMMATRIX rot = XMMatrixRotationQuaternion(g_Cube.Rotation);
+        XMMATRIX translation = XMMatrixTranslationFromVector(g_Cube.Position);
 
-        g_Cube.Transform = XMMatrixMultiply(transform, XMMatrixMultiply(scale, rot));
+        g_Cube.Transform = XMMatrixMultiply(translation, XMMatrixMultiply(scale, rot));
     }
 
     void InitCube()
@@ -131,12 +133,19 @@ export namespace gt
 
     void RotateCube(uint64_t elapsed)
     {
-        auto interpolation = elapsed / 100.0f;
+        /*auto interpolation = elapsed / 1000.0f;
         auto start = XMQuaternionRotationRollPitchYaw(0.0f, 0.0f, 0.0f);
-        auto end = XMQuaternionRotationRollPitchYaw(360.0f, 0.0f, 0.0f);
+        auto end = XMQuaternionRotationRollPitchYaw(0.0f, 360.0f, 0.0f);
         auto slerp = XMQuaternionSlerp(start, end, interpolation);
 
-        g_Cube.Rotation = XMQuaternionRotationRollPitchYawFromVector(slerp);
+        g_Cube.Rotation = XMQuaternionRotationRollPitchYawFromVector(slerp);*/
+        if (elapsed == 0)
+            return;
+        auto radians = LS::Math::ToRadians(10 / elapsed);
+        XMVECTOR rotationAxis = XMVectorSet(0.450f, 1.0f, 0.250f, 1.0f);
+        auto rotQuat = XMQuaternionRotationAxis(rotationAxis, radians);
+        g_Cube.Rotation = XMQuaternionMultiply(g_Cube.Rotation, rotQuat);
+
     }
 
     void UpdateCamera()
@@ -158,7 +167,7 @@ export namespace gt
     ComPtr<ID3D11Buffer> indexBuffer;
     void PreDraw(ComPtr<ID3D11DeviceContext4>& context);
     void DrawScene(ComPtr<ID3D11DeviceContext4>& context);
-
+    //TODO: Create common colors in Engine Common or make color conceptl
     std::array<float, 4> g_red = { 1.0f, 0.0f, 0.0f, 1.0f };
     std::array<float, 4> g_green = { 0.0f, 1.0f, 0.0f, 1.0f };
     std::array<float, 4> g_blue = { 0.0f, 0.0f, 1.0f, 1.0f };
@@ -331,17 +340,20 @@ void gt::Run()
     auto context = g_device.GetImmediateContext();
     while (App->Window->IsOpen())
     {
-        App->Window->PollEvent();
         auto elapsed = g_timer.GetTotalTimeTicked();
-        std::cout << "Elapsed: " << elapsed.count() << "\n";
+        auto deltaTime = g_timer.GetDeltaTime();
+        App->Window->PollEvent();
+        g_timer.Tick();
+        
+        RotateCube(deltaTime.count());
+        UpdateCubeTransform();
+        UpdateCamera();
+
+        std::cout << std::format("Elapsed: {}\n\tDelta: {}\n", elapsed.count(), deltaTime.count());
         PreDraw(context);
         DrawScene(context);
         Present1(g_device.GetSwapChain().Get(), 1);
 
-        g_timer.Tick();
-        RotateCube(elapsed.count());
-        UpdateCubeTransform();
-        UpdateCamera();
 
         // Update Buffers //
         LS::Win32::UpdateSubresource(context.Get(), g_modelBuffer.Get(), 0, &g_camera.Mvp);
