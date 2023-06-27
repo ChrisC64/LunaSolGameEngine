@@ -27,24 +27,27 @@ export namespace LS::Win32
         void CreateSwapchainAsTexture(const LS::LSWindowBase* window, PIXEL_COLOR_FORMAT format = PIXEL_COLOR_FORMAT::RGBA8_UNORM, uint32_t bufferSize = 2);
         void PrintDisplays(const std::vector<WRL::ComPtr<IDXGIAdapter>>& adapters);
 
-        HRESULT CreateDeferredContext(ID3D11DeviceContext** pDeferredContext) noexcept;
-        HRESULT CreateDeferredContext2(ID3D11DeviceContext2** ppDeferredContext) noexcept;
-        HRESULT CreateDeferredContext3(ID3D11DeviceContext3** ppDeferredContext) noexcept;
-        HRESULT CreateInputLayout(const D3D11_INPUT_ELEMENT_DESC* elemDesc, uint32_t elemSize, std::span<std::byte> byteCode, ID3D11InputLayout** ppInputLayout);
-        HRESULT CreateRTVFromBackBuffer(ID3D11RenderTargetView** ppRTV) noexcept;
-        HRESULT CreateRTVFromBackBuffer(ID3D11RenderTargetView1** ppRTV) noexcept;
-        HRESULT CreateRenderTargetView(ID3D11Resource* pResource, ID3D11RenderTargetView** ppRTView, const D3D11_RENDER_TARGET_VIEW_DESC* rtvDesc = nullptr) noexcept;
-        HRESULT CreateRenderTargetView1(ID3D11Resource* pResource, ID3D11RenderTargetView1** ppRTView, const D3D11_RENDER_TARGET_VIEW_DESC1* rtvDesc = nullptr) noexcept;
-        HRESULT CreateDepthStencilView(ID3D11RenderTargetView* pRenderTargetView, ID3D11Resource* pResource, ID3D11DepthStencilView** ppDepthStencil, const D3D11_DEPTH_STENCIL_VIEW_DESC* pDesc = nullptr) noexcept;
-        HRESULT CreateDepthStencilViewForSwapchain(ID3D11RenderTargetView* pRenderTargetView, ID3D11DepthStencilView** ppDepthStencil, DXGI_FORMAT format = DXGI_FORMAT_D24_UNORM_S8_UINT) noexcept;
-        HRESULT CreateDepthStencilState(const D3D11_DEPTH_STENCIL_DESC& depthStencilDesc, ID3D11DepthStencilState** ppDepthStencilState) noexcept;
-        HRESULT CreateBlendState(const D3D11_BLEND_DESC& blendDesc, ID3D11BlendState** ppBlendState) noexcept;
-        HRESULT CreateBuffer(const D3D11_BUFFER_DESC* pDesc, const D3D11_SUBRESOURCE_DATA* pInitialData, ID3D11Buffer** ppBuffer) noexcept;
+        [[nodiscard]] auto CreateDeferredContext(ID3D11DeviceContext** pDeferredContext) noexcept -> HRESULT;
+        [[nodiscard]] auto CreateDeferredContext2(ID3D11DeviceContext2** ppDeferredContext) noexcept -> HRESULT;
+        [[nodiscard]] auto CreateDeferredContext3(ID3D11DeviceContext3** ppDeferredContext) noexcept -> HRESULT;
+        [[nodiscard]] auto CreateInputLayout(const D3D11_INPUT_ELEMENT_DESC* elemDesc, uint32_t elemSize, std::span<std::byte> byteCode, ID3D11InputLayout** ppInputLayout) -> HRESULT;
+        [[nodiscard]] auto CreateRTVFromBackBuffer(ID3D11RenderTargetView** ppRTV) noexcept -> HRESULT;
+        [[nodiscard]] auto CreateRTVFromBackBuffer(ID3D11RenderTargetView1** ppRTV) noexcept -> HRESULT;
+        [[nodiscard]] auto CreateRenderTargetView(ID3D11Resource* pResource, ID3D11RenderTargetView** ppRTView, const D3D11_RENDER_TARGET_VIEW_DESC* rtvDesc = nullptr) noexcept -> HRESULT;
+        [[nodiscard]] auto CreateRenderTargetView1(ID3D11Resource* pResource, ID3D11RenderTargetView1** ppRTView, const D3D11_RENDER_TARGET_VIEW_DESC1* rtvDesc = nullptr) noexcept -> HRESULT;
+        [[nodiscard]] auto CreateDepthStencilView(ID3D11RenderTargetView* pRenderTargetView, ID3D11Resource* pResource, ID3D11DepthStencilView** ppDepthStencil, const D3D11_DEPTH_STENCIL_VIEW_DESC* pDesc = nullptr) noexcept -> HRESULT;
+        [[nodiscard]] auto CreateDepthStencilViewForSwapchain(ID3D11RenderTargetView* pRenderTargetView, ID3D11DepthStencilView** ppDepthStencil, DXGI_FORMAT format = DXGI_FORMAT_D24_UNORM_S8_UINT) noexcept -> HRESULT;
+        [[nodiscard]] auto CreateDepthStencilState(const D3D11_DEPTH_STENCIL_DESC& depthStencilDesc, ID3D11DepthStencilState** ppDepthStencilState) noexcept -> HRESULT;
+        [[nodiscard]] auto CreateBlendState(const D3D11_BLEND_DESC& blendDesc, ID3D11BlendState** ppBlendState) noexcept -> HRESULT;
+        [[nodiscard]] auto CreateBuffer(const D3D11_BUFFER_DESC* pDesc, const D3D11_SUBRESOURCE_DATA* pInitialData, ID3D11Buffer** ppBuffer) noexcept -> HRESULT;
+        [[nodiscard]] auto CreateVertexBuffer(const void* pData, uint32_t byteWidth, ID3D11Buffer** ppBuffer, D3D11_USAGE usage = D3D11_USAGE::D3D11_USAGE_DEFAULT, uint32_t cpuAccess = 0, uint32_t miscFlags = 0, uint32_t structureByteStride = 0) noexcept -> HRESULT;
+        [[nodiscard]] auto CreateIndexBuffer(const void* pData, uint32_t bytes, ID3D11Buffer** ppBuffer, D3D11_USAGE usage = D3D11_USAGE::D3D11_USAGE_DEFAULT, uint32_t cpuAccess = 0, uint32_t miscFlags = 0, uint32_t structureByteStride = 0) noexcept -> HRESULT;
+        [[nodiscard]] auto CreateConstantBuffer(const void* pData, uint32_t byteWidth, ID3D11Buffer** ppBuffer, D3D11_USAGE usage = D3D11_USAGE::D3D11_USAGE_DEFAULT, uint32_t cpuAccess = 0, uint32_t miscFlags = 0, uint32_t structureByteStride = 0) noexcept -> HRESULT;
 
-        WRL::ComPtr<ID3D11Device5>           GetDevice() const noexcept;
-        WRL::ComPtr<ID3D11DeviceContext4>    GetImmediateContext() const noexcept;
-        ID3D11DeviceContext*                 GetImmediateContextPtr() const noexcept;
-        WRL::ComPtr<IDXGISwapChain1>         GetSwapChain() const noexcept;
+        [[nodiscard]] auto GetDevice() const noexcept -> WRL::ComPtr<ID3D11Device5>;
+        [[nodiscard]] auto GetImmediateContext() const noexcept -> WRL::ComPtr<ID3D11DeviceContext4>;
+        [[nodiscard]] auto GetImmediateContextPtr() const noexcept -> ID3D11DeviceContext*;
+        [[nodiscard]] auto GetSwapChain() const noexcept -> WRL::ComPtr<IDXGISwapChain1>;
 
         // Inherited by ILSDevice //
         [[nodiscard]] 

@@ -255,13 +255,7 @@ LS::ENGINE_CODE gt::Init()
     // Vertex Buffer //
     LS::Log::TraceDebug(L"Creating buffers...");
     
-    CD3D11_BUFFER_DESC vbDesc(32 * 8, D3D11_BIND_VERTEX_BUFFER);
-    D3D11_SUBRESOURCE_DATA subData;
-    subData.pSysMem = g_Cube.Verts.data();
-    subData.SysMemPitch = 0;
-    subData.SysMemSlicePitch = 0;
-
-    bool bufferResult = g_device.CreateBuffer(&vbDesc, &subData, &vertexBuffer);
+    auto bufferResult = g_device.CreateVertexBuffer(g_Cube.Verts.data(), sizeof(g_Cube.Verts), &vertexBuffer);
     if (FAILED(bufferResult))
     {
         LS::Log::TraceError(L"Failed to create vertex buffer");
@@ -269,13 +263,7 @@ LS::ENGINE_CODE gt::Init()
     }
 
     // Index Buffer //
-    
-    CD3D11_BUFFER_DESC indexBD(static_cast<UINT>(g_indexData.size()) * sizeof(g_indexData.front()), D3D11_BIND_INDEX_BUFFER);
-    D3D11_SUBRESOURCE_DATA indexSbd;
-    indexSbd.pSysMem = g_indexData.data();
-    indexSbd.SysMemPitch = 0;
-    indexSbd.SysMemSlicePitch = 0;
-    bufferResult = g_device.CreateBuffer(&indexBD, &indexSbd, &indexBuffer);
+    bufferResult = g_device.CreateIndexBuffer(g_indexData.data(), sizeof(g_indexData), &indexBuffer);
     if (FAILED(bufferResult))
     {
         LS::Log::TraceError(L"Failed to create index buffer.");
@@ -291,10 +279,24 @@ LS::ENGINE_CODE gt::Init()
     projSd.pSysMem = &g_camera.Projection;
     modelSd.pSysMem = &g_camera.Mvp;
 
-    g_device.CreateBuffer(&matBd, &viewSd, &g_viewBuffer);
-    g_device.CreateBuffer(&matBd, &projSd, &g_projBuffer);
-    g_device.CreateBuffer(&matBd, &modelSd, &g_modelBuffer);
-
+    bufferResult = g_device.CreateBuffer(&matBd, &viewSd, &g_viewBuffer);
+    if (FAILED(bufferResult))
+    {
+        LS::Log::TraceError(L"Failed to create View matrix buffer");
+        return RESOURCE_CREATION_FAILED;
+    }
+    bufferResult = g_device.CreateBuffer(&matBd, &projSd, &g_projBuffer);
+    if (FAILED(bufferResult))
+    {
+        LS::Log::TraceError(L"Failed to create Projection matrix buffer");
+        return RESOURCE_CREATION_FAILED;
+    }
+    bufferResult = g_device.CreateBuffer(&matBd, &modelSd, &g_modelBuffer);
+    if (FAILED(bufferResult))
+    {
+        LS::Log::TraceError(L"Failed to create Model matrix buffer");
+        return RESOURCE_CREATION_FAILED;
+    }
     LS::Log::TraceDebug(L"Buffers created!!");
     // Rasterizer Creation // 
     LS::Log::TraceDebug(L"Building rasterizer state...");
@@ -353,7 +355,6 @@ void gt::Run()
         PreDraw(context);
         DrawScene(context);
         Present1(g_device.GetSwapChain().Get(), 1);
-
 
         // Update Buffers //
         LS::Win32::UpdateSubresource(context.Get(), g_modelBuffer.Get(), 0, &g_camera.Mvp);

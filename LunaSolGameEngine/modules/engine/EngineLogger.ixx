@@ -104,7 +104,10 @@ export namespace LS::Log
      * @brief Sets the log level to show messages of a certain level and higher only
      * @param level The MINIMUM level to show only
     */
-    void SetLogLevel(LOG_LEVEL level);
+    void SetLogLevel(LOG_LEVEL level)
+    {
+        LoggingLevel = level;
+    }
 }
 
 module : private;

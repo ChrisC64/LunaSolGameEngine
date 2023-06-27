@@ -51,6 +51,14 @@ export namespace LS
         VIDEO_ENCODER
     };
 
+    enum class CPU_RESOURCE_ACCESS : uint8_t
+    {
+        UNDEFINED = 0,
+        WRITE_ONLY = 1,
+        READ_ONLY = 2,
+        WRITE_AND_READ = 3
+    };
+
     //TODO: Add constraints to this... because I don't know what but I'm sure I"ll think of some later!
     template<class TObject>
     class LSBuffer
@@ -62,6 +70,7 @@ export namespace LS
         size_t                  m_count{ 0 };
         BUFFER_USAGE            m_usage{ BUFFER_USAGE::DEFAULT_RW }; // @brief details how the data will be used
         BUFFER_BIND_TYPE        m_bindType{ BUFFER_BIND_TYPE::UNKNOWN }; // @brief Information on what stage in the graphics pipeline this buffer is used
+        CPU_RESOURCE_ACCESS     m_cpuAccess{ CPU_RESOURCE_ACCESS::UNDEFINED };
 
     public:
         LSBuffer(Ref<TObject> obj, std::string_view name, size_t stride = 0, size_t count = 0) :
@@ -77,49 +86,54 @@ export namespace LS
             m_bufferObject.release();
         }
 
-        const std::byte* GetData() const
+        auto GetData() const -> const std::byte*
         {
             return reinterpret_cast<const std::byte*>(m_bufferObject.get());
         }
 
-        const TObject* GetTypePtr() const
+        auto GetTypePtr() const -> const TObject*
         {
             return m_bufferObject.get();
         }
 
-        std::string_view GetBufferName() const
+        auto GetBufferName() const -> std::string_view
         {
             return m_bufferName;
         }
 
-        constexpr size_t GetSizeOfType() const
+        constexpr auto GetSizeOfType() const -> size_t
         {
             return sizeof(TObject);
         }
 
-        constexpr size_t GetSizeInBytes() const
+        constexpr auto GetSizeInBytes() const -> size_t
         {
             return sizeof(*m_bufferObject);
         }
 
-        constexpr size_t GetStride() const
+        constexpr auto GetStride() const -> size_t
         {
             return m_stride;
         }
 
-        constexpr size_t GetCount() const
+        constexpr auto GetCount() const -> size_t
         {
             return m_count;
         }
 
-        constexpr BUFFER_USAGE GetUsage() const
+        constexpr auto GetUsage() const -> BUFFER_USAGE
         {
             return m_usage;
         }
 
-        constexpr BUFFER_PIPELINE_STAGES GetPipelineStage() const
+        constexpr auto GetPipelineStage() const -> BUFFER_PIPELINE_STAGES
         {
             return m_bindType;
+        }
+
+        constexpr auto GetCpuAccess() const -> CPU_RESOURCE_ACCESS
+        {
+            return m_cpuAccess;
         }
     };
 }

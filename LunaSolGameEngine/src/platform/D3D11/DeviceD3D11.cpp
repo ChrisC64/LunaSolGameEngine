@@ -13,6 +13,7 @@
 #include <Windows.h>
 import D3D11.Device;
 import D3D11.RenderFuncD3D11;
+import D3D11.MemoryHelper;
 import Util.MSUtils;
 import LSData;
 import Util.HLSLUtils;
@@ -265,35 +266,35 @@ void LS::Win32::DeviceD3D11::PrintDisplays(const std::vector<WRL::ComPtr<IDXGIAd
     }
 }
 
-HRESULT DeviceD3D11::CreateDeferredContext(ID3D11DeviceContext** ppDeferredContext) noexcept
+auto DeviceD3D11::CreateDeferredContext(ID3D11DeviceContext** ppDeferredContext) noexcept -> HRESULT
 {
     if (!m_pDevice)
         return E_NOT_SET; // Device is not set
     return m_pDevice->CreateDeferredContext(0, ppDeferredContext);
 }
 
-HRESULT DeviceD3D11::CreateDeferredContext2(ID3D11DeviceContext2** ppDeferredContext) noexcept
+auto DeviceD3D11::CreateDeferredContext2(ID3D11DeviceContext2** ppDeferredContext) noexcept -> HRESULT
 {
     if (!m_pDevice)
         return E_NOT_SET; // Device is not set
     return m_pDevice->CreateDeferredContext2(0, ppDeferredContext);
 }
 
-HRESULT DeviceD3D11::CreateDeferredContext3(ID3D11DeviceContext3** ppDeferredContext) noexcept
+auto DeviceD3D11::CreateDeferredContext3(ID3D11DeviceContext3** ppDeferredContext) noexcept -> HRESULT
 {
     if (!m_pDevice)
         return E_NOT_SET; // Device is not set
     return m_pDevice->CreateDeferredContext3(0, ppDeferredContext);
 }
 
-HRESULT DeviceD3D11::CreateInputLayout(const D3D11_INPUT_ELEMENT_DESC* elemDesc, uint32_t elemSize, std::span<std::byte> byteCode, ID3D11InputLayout** ppInputLayout)
+auto DeviceD3D11::CreateInputLayout(const D3D11_INPUT_ELEMENT_DESC* elemDesc, uint32_t elemSize, std::span<std::byte> byteCode, ID3D11InputLayout** ppInputLayout) -> HRESULT
 {
     if (!m_pDevice)
         return E_NOT_SET;
     return m_pDevice->CreateInputLayout(elemDesc, elemSize, byteCode.data(), byteCode.size(), ppInputLayout);
 }
 
-HRESULT DeviceD3D11::CreateRTVFromBackBuffer(ID3D11RenderTargetView** ppRTV) noexcept
+auto DeviceD3D11::CreateRTVFromBackBuffer(ID3D11RenderTargetView** ppRTV) noexcept -> HRESULT
 {
     assert(m_pSwapchain);
     assert(m_pDevice);
@@ -313,7 +314,7 @@ HRESULT DeviceD3D11::CreateRTVFromBackBuffer(ID3D11RenderTargetView** ppRTV) noe
     return m_pDevice->CreateRenderTargetView(backBuffer.Get(), &cdesc, ppRTV);
 }
 
-HRESULT DeviceD3D11::CreateRTVFromBackBuffer(ID3D11RenderTargetView1** ppRTV) noexcept
+auto DeviceD3D11::CreateRTVFromBackBuffer(ID3D11RenderTargetView1** ppRTV) noexcept -> HRESULT
 {
     assert(m_pSwapchain);
     assert(m_pDevice);
@@ -333,8 +334,8 @@ HRESULT DeviceD3D11::CreateRTVFromBackBuffer(ID3D11RenderTargetView1** ppRTV) no
     return m_pDevice->CreateRenderTargetView1(backBuffer.Get(), &cdesc, ppRTV);
 }
 
-HRESULT DeviceD3D11::CreateRenderTargetView(ID3D11Resource* pResource, ID3D11RenderTargetView** ppRTView,
-    const D3D11_RENDER_TARGET_VIEW_DESC* rtvDesc) noexcept
+auto DeviceD3D11::CreateRenderTargetView(ID3D11Resource* pResource, ID3D11RenderTargetView** ppRTView,
+    const D3D11_RENDER_TARGET_VIEW_DESC* rtvDesc) noexcept -> HRESULT
 {
     assert(m_pDevice);
     assert(pResource);
@@ -342,7 +343,7 @@ HRESULT DeviceD3D11::CreateRenderTargetView(ID3D11Resource* pResource, ID3D11Ren
     return m_pDevice->CreateRenderTargetView(pResource, rtvDesc, ppRTView);
 }
 
-HRESULT DeviceD3D11::CreateRenderTargetView1(ID3D11Resource* pResource, ID3D11RenderTargetView1** ppRTView, const D3D11_RENDER_TARGET_VIEW_DESC1* rtvDesc) noexcept
+auto DeviceD3D11::CreateRenderTargetView1(ID3D11Resource* pResource, ID3D11RenderTargetView1** ppRTView, const D3D11_RENDER_TARGET_VIEW_DESC1* rtvDesc) noexcept -> HRESULT
 {
     assert(m_pDevice);
     assert(pResource);
@@ -350,8 +351,8 @@ HRESULT DeviceD3D11::CreateRenderTargetView1(ID3D11Resource* pResource, ID3D11Re
     return m_pDevice->CreateRenderTargetView1(pResource, rtvDesc, ppRTView);
 }
 
-HRESULT DeviceD3D11::CreateDepthStencilView([[maybe_unused]] ID3D11RenderTargetView* pRenderTargetView, ID3D11Resource* pResource,
-    ID3D11DepthStencilView** ppDepthStencil, const D3D11_DEPTH_STENCIL_VIEW_DESC* pDesc /*= nullptr*/) noexcept
+auto DeviceD3D11::CreateDepthStencilView([[maybe_unused]] ID3D11RenderTargetView* pRenderTargetView, ID3D11Resource* pResource,
+    ID3D11DepthStencilView** ppDepthStencil, const D3D11_DEPTH_STENCIL_VIEW_DESC* pDesc /*= nullptr*/) noexcept -> HRESULT
 {
     assert(m_pDevice);
     assert(pRenderTargetView);
@@ -359,7 +360,7 @@ HRESULT DeviceD3D11::CreateDepthStencilView([[maybe_unused]] ID3D11RenderTargetV
     return m_pDevice->CreateDepthStencilView(pResource, pDesc, ppDepthStencil);
 }
 
-HRESULT DeviceD3D11::CreateDepthStencilViewForSwapchain([[maybe_unused]] ID3D11RenderTargetView* pRenderTargetView, ID3D11DepthStencilView** ppDepthStencil, DXGI_FORMAT format /*= DXGI_FORMAT_D24_UNORM_S8_UINT*/) noexcept
+auto DeviceD3D11::CreateDepthStencilViewForSwapchain([[maybe_unused]] ID3D11RenderTargetView* pRenderTargetView, ID3D11DepthStencilView** ppDepthStencil, DXGI_FORMAT format /*= DXGI_FORMAT_D24_UNORM_S8_UINT*/) noexcept -> HRESULT
 {
     assert(m_pDevice);
     assert(pRenderTargetView);
@@ -382,20 +383,20 @@ HRESULT DeviceD3D11::CreateDepthStencilViewForSwapchain([[maybe_unused]] ID3D11R
     return m_pDevice->CreateDepthStencilView(depthBuffer.Get(), nullptr, ppDepthStencil);
 }
 
-HRESULT DeviceD3D11::CreateDepthStencilState(const D3D11_DEPTH_STENCIL_DESC& depthStencilDesc, ID3D11DepthStencilState** ppDepthStencilState) noexcept
+auto DeviceD3D11::CreateDepthStencilState(const D3D11_DEPTH_STENCIL_DESC& depthStencilDesc, ID3D11DepthStencilState** ppDepthStencilState) noexcept -> HRESULT
 {
     assert(m_pDevice);
 
     return m_pDevice->CreateDepthStencilState(&depthStencilDesc, ppDepthStencilState);
 }
 
-HRESULT DeviceD3D11::CreateBlendState(const D3D11_BLEND_DESC& blendDesc, ID3D11BlendState** ppBlendState) noexcept
+auto DeviceD3D11::CreateBlendState(const D3D11_BLEND_DESC& blendDesc, ID3D11BlendState** ppBlendState) noexcept -> HRESULT
 {
     assert(m_pDevice);
     return m_pDevice->CreateBlendState(&blendDesc, ppBlendState);
 }
 
-HRESULT DeviceD3D11::CreateBuffer(const D3D11_BUFFER_DESC* pDesc, const D3D11_SUBRESOURCE_DATA* pInitialData, ID3D11Buffer** ppBuffer) noexcept
+auto DeviceD3D11::CreateBuffer(const D3D11_BUFFER_DESC* pDesc, const D3D11_SUBRESOURCE_DATA* pInitialData, ID3D11Buffer** ppBuffer) noexcept -> HRESULT
 {
     assert(m_pDevice);
 
@@ -407,22 +408,44 @@ HRESULT DeviceD3D11::CreateBuffer(const D3D11_BUFFER_DESC* pDesc, const D3D11_SU
     return m_pDevice->CreateBuffer(pDesc, pInitialData, ppBuffer);
 }
 
-Microsoft::WRL::ComPtr<ID3D11Device5> DeviceD3D11::GetDevice() const noexcept
+auto LS::Win32::DeviceD3D11::CreateVertexBuffer(const void* pData, uint32_t byteWidth, ID3D11Buffer** ppBuffer, 
+    D3D11_USAGE usage, uint32_t cpuAccess, uint32_t miscFlags, uint32_t structureByteStride) noexcept -> HRESULT
+{
+    assert(m_pDevice);
+
+    return CreateVertexBufferD3D11(m_pDevice.Get(), ppBuffer, pData, byteWidth, usage, cpuAccess, miscFlags, structureByteStride);
+}
+
+auto LS::Win32::DeviceD3D11::CreateIndexBuffer(const void* pData, uint32_t bytes, ID3D11Buffer** ppBuffer, D3D11_USAGE usage, uint32_t cpuAccess, uint32_t miscFlags, uint32_t structureByteStride) noexcept -> HRESULT
+{
+    assert(m_pDevice);
+    
+    return CreateIndexBufferD3D11(m_pDevice.Get(), ppBuffer, pData, bytes, usage, cpuAccess, miscFlags, structureByteStride);;
+}
+
+auto LS::Win32::DeviceD3D11::CreateConstantBuffer(const void* pData, uint32_t byteWidth, ID3D11Buffer** ppBuffer, D3D11_USAGE usage, uint32_t cpuAccess, uint32_t miscFlags, uint32_t structureByteStride) noexcept -> HRESULT
+{
+    assert(m_pDevice);
+
+    return CreateConstantBufferD3D11(m_pDevice.Get(), ppBuffer, pData, byteWidth, usage, cpuAccess, miscFlags, structureByteStride);
+}
+
+auto DeviceD3D11::GetDevice() const noexcept -> Microsoft::WRL::ComPtr<ID3D11Device5>
 {
     return m_pDevice;
 }
 
-Microsoft::WRL::ComPtr<ID3D11DeviceContext4> DeviceD3D11::GetImmediateContext() const noexcept
+auto DeviceD3D11::GetImmediateContext() const noexcept -> Microsoft::WRL::ComPtr<ID3D11DeviceContext4>
 {
     return m_pImmediateContext;
 }
 
-ID3D11DeviceContext* DeviceD3D11::GetImmediateContextPtr() const noexcept
+auto DeviceD3D11::GetImmediateContextPtr() const noexcept -> ID3D11DeviceContext*
 {
     return m_pImmediateContext.Get();
 }
 
-Microsoft::WRL::ComPtr<IDXGISwapChain1> DeviceD3D11::GetSwapChain() const noexcept
+auto DeviceD3D11::GetSwapChain() const noexcept -> Microsoft::WRL::ComPtr<IDXGISwapChain1>
 {
     return m_pSwapchain;
 }
