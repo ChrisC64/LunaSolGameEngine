@@ -22,7 +22,7 @@ export import LSData;
 export import Engine.Common;
 export import D3D11Lib;
 export import Platform.Win32Window;
-export import Util.HLSLUtils;
+//export import Util.HLSLUtils;
 export import Helper.LSCommonTypes;
 export import Helper.PipelineFactory;
 
@@ -31,7 +31,6 @@ export namespace gt
     using namespace Microsoft::WRL;
     using namespace LS;
     using namespace LS::Win32;
-    using namespace LS::Utils;
     using namespace std::chrono;
     using namespace std::chrono_literals;
     using namespace DirectX;
@@ -138,7 +137,7 @@ namespace gt
 
     auto CreateVertexShader(const LS::Win32::DeviceD3D11& device, ComPtr<ID3D11VertexShader>& shader, std::vector<std::byte>& byteCode) -> bool
     {
-        auto vsResult = CompileVertexShaderFromByteCode(device.GetDevice().Get(), byteCode, &shader);
+        auto vsResult = CreateVertexShaderFromByteCode(device.GetDevice().Get(), byteCode, &shader);
         if (FAILED(vsResult))
         {
             return false;
@@ -148,7 +147,7 @@ namespace gt
 
     auto CreatePixelShader(const LS::Win32::DeviceD3D11& device, ComPtr<ID3D11PixelShader>& shader, std::vector<std::byte>& byteCode) -> bool
     {
-        auto psResult = CompilePixelShaderFromByteCode(device.GetDevice().Get(), byteCode, &shader);
+        auto psResult = CreatePixelShaderFromByteCode(device.GetDevice().Get(), byteCode, &shader);
         if (FAILED(psResult))
         {
             return false;

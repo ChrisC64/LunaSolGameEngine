@@ -20,6 +20,7 @@ export import Engine.DXCamera;
 
 export namespace LS::Global
 {
+    //TODO: Not sure I like this, let's consider altering later
     const constinit auto FRAME_COUNT = 3u;
     const constinit auto NUM_CONTEXT = 3u;
     const constinit auto THREAD_COUNT = 4u;

@@ -69,7 +69,7 @@ PipelineStateDX11 LS::Win32::D3D11PipelineFactory::CreatePipelineD3D11(const Pip
         case VERTEX:
         {
             WRL::ComPtr<ID3D11VertexShader> pShader;
-            HRESULT hr = CompileVertexShaderFromByteCode(device, data, &pShader);
+            HRESULT hr = CreateVertexShaderFromByteCode(device, data, &pShader);
             if (FAILED(hr))
             {
                 break;
@@ -80,7 +80,7 @@ PipelineStateDX11 LS::Win32::D3D11PipelineFactory::CreatePipelineD3D11(const Pip
         case PIXEL:
         {
             WRL::ComPtr<ID3D11PixelShader> pShader;
-            HRESULT hr = CompilePixelShaderFromByteCode(device, data, &pShader);
+            HRESULT hr = CreatePixelShaderFromByteCode(device, data, &pShader);
             if (FAILED(hr))
             {
                 break;

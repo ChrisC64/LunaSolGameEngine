@@ -25,7 +25,6 @@ export import LSData;
 export import Engine.Common;
 export import D3D11Lib;
 export import Platform.Win32Window;
-export import Util.HLSLUtils;
 export import Helper.LSCommonTypes;
 export import Helper.PipelineFactory;
 

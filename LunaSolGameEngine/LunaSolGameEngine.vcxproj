@@ -213,13 +213,12 @@
     <ClCompile Include="modules\platform\Windows\D3D11\Helpers\D3D11HelperStates.ixx" />
     <ClCompile Include="modules\platform\Windows\D3D11\D3D11Lib.ixx" />
     <ClCompile Include="modules\platform\Windows\D3D11\Helpers\D3D11MemoryHelper.ixx" />
-    <ClCompile Include="modules\platform\Windows\D3D11\Helpers\D3DUtils.ixx" />
+    <ClCompile Include="modules\platform\Windows\D3D11\Helpers\D3D11Utils.ixx" />
     <ClCompile Include="modules\platform\Windows\D3D11\DeviceD3D11.ixx" />
     <ClCompile Include="modules\platform\Windows\D3D11\RenderFuncs.ixx" />
     <ClCompile Include="modules\platform\Windows\D3D12\DeviceD3D12.ixx" />
     <ClCompile Include="modules\platform\Windows\DirectX\DXMatrixUtils.ixx" />
     <ClCompile Include="modules\platform\Windows\DXGI\DXGIHelper.ixx" />
-    <ClCompile Include="modules\utils\HLSLUtils.ixx" />
     <ClCompile Include="modules\utils\MSUtils.ixx" />
     <ClCompile Include="modules\utils\StdUtils.ixx" />
     <ClCompile Include="modules\platform\Windows\Win32Window.ixx" />
