@@ -1,7 +1,12 @@
 import D3D11.PipelineFactory;
 
-#include "LSEFramework.h"
+#include <cassert>
+#include <optional>
+#include <stdexcept>
+#include <memory>
 
+#include <wrl/client.h>
+#include <d3d11_4.h>
 import Engine.Common;
 import D3D11Lib;
 import LSData;
@@ -14,16 +19,16 @@ void D3D11PipelineFactory::Init(SharedRef<DeviceD3D11>& device) noexcept
     m_pDevice = device;
 }
 
-bool D3D11PipelineFactory::CreatePipelineState(const PipelineDescriptor& pipeline) noexcept
+auto D3D11PipelineFactory::CreatePipelineState(const PipelineDescriptor& pipeline) noexcept -> Nullable <GuidUL>
 {
     assert(m_pDevice);
     if (!m_pDevice)
-        return false;
+        return std::nullopt;
 
     auto pipelineD3D = CreatePipelineD3D11(pipeline);
 
     m_pipelines.emplace_back(pipelineD3D);
-    return true;
+    return std::nullopt;
 }
 //TODO: Breka up and put conversion functions into stand alone functions so we can reuse them.
 PipelineStateDX11 LS::Win32::D3D11PipelineFactory::CreatePipelineD3D11(const PipelineDescriptor& pipeline)
@@ -64,7 +69,7 @@ PipelineStateDX11 LS::Win32::D3D11PipelineFactory::CreatePipelineD3D11(const Pip
         case VERTEX:
         {
             WRL::ComPtr<ID3D11VertexShader> pShader;
-            HRESULT hr = CompileVertexShaderFromByteCode(device, data, &pShader);
+            HRESULT hr = CreateVertexShaderFromByteCode(device, data, &pShader);
             if (FAILED(hr))
             {
                 break;
@@ -75,7 +80,7 @@ PipelineStateDX11 LS::Win32::D3D11PipelineFactory::CreatePipelineD3D11(const Pip
         case PIXEL:
         {
             WRL::ComPtr<ID3D11PixelShader> pShader;
-            HRESULT hr = CompilePixelShaderFromByteCode(device, data, &pShader);
+            HRESULT hr = CreatePixelShaderFromByteCode(device, data, &pShader);
             if (FAILED(hr))
             {
                 break;

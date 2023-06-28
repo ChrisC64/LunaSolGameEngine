@@ -1,6 +1,11 @@
 module;
-#include "LSEFramework.h"
-
+#include <cstdint>
+#include <functional>
+#include <queue>
+#include <memory>
+#include <vector>
+#include <unordered_map>
+#include <string>
 export module Engine.LSDevice;
 
 import Engine.LSWindow;
@@ -18,6 +23,7 @@ namespace LS
 
     export enum class DEVICE_API
     {
+        NONE,
         DIRECTX_11,
         DIRECTX_12,
     };
@@ -391,8 +397,11 @@ namespace LS
         
         /**
          * @brief Finalize the work and prepare it for presentation to the render target
+         * @param syncInterval the frame to sync with, 0 = immediate, and N means to wait N frames before producing
         */
-        virtual void Present() noexcept = 0;
+        virtual void Present(uint32_t syncInterval) noexcept = 0;
+
+        virtual void Finish() noexcept = 0;
     };
 
     /**
@@ -419,7 +428,7 @@ namespace LS
          * @return true if successful, false if failed.
         */
         [[nodiscard]] virtual bool InitDevice(const LSDeviceSettings& settings) noexcept = 0;
-        [[nodiscard]] virtual auto CreateContext() noexcept -> LSOptional<Ref<ILSContext>> = 0;
+        [[nodiscard]] virtual auto CreateContext() noexcept -> Nullable<Ref<ILSContext>> = 0;
         virtual void Shutdown() noexcept = 0;
 
     };
@@ -442,6 +451,8 @@ namespace LS
          * @return the context object 
         */
         virtual auto CreateContext() noexcept -> Ref<ILSContext> = 0;
+
+        virtual auto CreateTexture(const LSTextureInfo& info) noexcept -> Nullable<GuidUL> = 0;
 
         /**
          * @brief Prepares the Context's commands for the render queue to be presented

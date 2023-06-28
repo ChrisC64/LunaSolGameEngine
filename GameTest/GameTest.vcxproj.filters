@@ -18,6 +18,15 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\DX11Test\MultiPassTestApp.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DX12Test\CubeApp.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DX11Test\DX11CubeApp.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="shaders\VertexShader.hlsl" />
@@ -26,5 +35,9 @@
     <FxCompile Include="shaders\PixelShader2.hlsl" />
     <FxCompile Include="shaders\ScreenQuad.hlsl" />
     <FxCompile Include="shaders\VertexShader2.hlsl" />
+    <FxCompile Include="shaders\FullScreenQuad.hlsl" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
 </Project>

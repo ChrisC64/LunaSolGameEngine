@@ -1,12 +1,17 @@
 module;
-#include "LSEFramework.h"
+#include <vector>
+#include <cstdint>
+#include <memory>
+#include <vector>
+#include <unordered_map>
 
+#include <d3d11_4.h>
+#include <wrl/client.h>
 export module D3D11.PipelineFactory;
 import Helper.PipelineFactory;
 import LSData;
 import Engine.Common;
 import Util;
-import Engine.LSDefinitions;
 import D3D11.Device;
 
 namespace WRL = Microsoft::WRL;
@@ -68,7 +73,7 @@ export namespace LS::Win32
 
         void Init(SharedRef<DeviceD3D11>& device) noexcept;
         [[nodiscard]]
-        virtual bool CreatePipelineState(const PipelineDescriptor& pipeline) noexcept final;
+        auto CreatePipelineState(const PipelineDescriptor& pipeline) noexcept -> Nullable <GuidUL> final;
 
         PipelineStateDX11 CreatePipelineD3D11(const PipelineDescriptor& pipeline);
 

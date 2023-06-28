@@ -2,6 +2,7 @@ struct VS_OUTPUT
 {
     float4 Pos : SV_POSITION;
     float4 Color : COLOR;
+    float2 Uv : TEXCOORD;
 };
 
 struct VS_INPUT
@@ -35,6 +36,7 @@ VS_OUTPUT main(VS_INPUT input)
     matrix mvp = mul(Projection, mul(View, Model));
     output.Pos = mul(mvp, input.Pos);
     output.Color = ModelColor;
+    output.Uv = float2(0.0f, 0.0f);
     return output;
 }
 

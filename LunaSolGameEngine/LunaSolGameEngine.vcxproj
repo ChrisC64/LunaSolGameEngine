@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="..\packages\Microsoft.Direct3D.D3D12.1.610.3\build\native\Microsoft.Direct3D.D3D12.props" Condition="Exists('..\packages\Microsoft.Direct3D.D3D12.1.610.3\build\native\Microsoft.Direct3D.D3D12.props')" />
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -72,8 +73,8 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>$(SolutionDir)build\$(Configuration)\</OutDir>
-    <IntDir>intermediate\$(Platform)\$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)build\$(Configuration)</OutDir>
+    <IntDir>intermediate\$(Platform)\$(Configuration)</IntDir>
     <IncludePath>$(ProjectDir)inc;$(ProjectDir)modules;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -93,6 +94,9 @@
     <OutDir>$(SolutionDir)build\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>intermediate\$(Platform)\$(Configuration)\</IntDir>
     <IncludePath>$(ProjectDir)inc;$(ProjectDir)modules;$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Label="Vcpkg">
+    <VcpkgEnableManifest>true</VcpkgEnableManifest>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -146,6 +150,7 @@
       <TreatWarningAsError>false</TreatWarningAsError>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>LSEFramework.h</PrecompiledHeaderFile>
+      <ShowIncludes>false</ShowIncludes>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -175,45 +180,51 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="modules\data\khronos_standards\gltfParser.ixx" />
     <ClCompile Include="modules\data\LSBufferTypes.ixx" />
-    <ClCompile Include="modules\engine\LSDefinitions.ixx" />
+    <ClCompile Include="modules\data\LSDataTypes.ixx" />
+    <ClCompile Include="modules\engine\EngineLogger.ixx" />
+    <ClCompile Include="modules\engine\EngineCodes.ixx" />
+    <ClCompile Include="modules\engine\GeometryMath.ixx" />
+    <ClCompile Include="modules\engine\MathLib.ixx" />
+    <ClCompile Include="modules\engine\MatrixMath.ixx" />
+    <ClCompile Include="modules\geometry\GeometryGenerator.ixx" />
+    <ClCompile Include="modules\helper\IOHelper.ixx" />
     <ClCompile Include="modules\helper\LSCommonTypes.ixx" />
     <ClCompile Include="modules\data\LSConcepts.ixx" />
     <ClCompile Include="modules\data\DataLib.ixx" />
     <ClCompile Include="modules\data\LSShader.ixx" />
-    <ClCompile Include="modules\data\LSTextureDesc.ixx" />
+    <ClCompile Include="modules\data\LSTextureTypes.ixx" />
     <ClCompile Include="modules\data\LSWindowTypes.ixx" />
     <ClCompile Include="modules\engine\EngineCommon.ixx" />
-    <ClCompile Include="modules\engine\LSApp.ixx" />
-    <ClCompile Include="modules\engine\LSBuffer.ixx" />
     <ClCompile Include="modules\engine\LSCamera.ixx" />
     <ClCompile Include="modules\engine\LSDevice.ixx" />
-    <ClCompile Include="modules\engine\LSScene.ixx" />
     <ClCompile Include="modules\engine\LSWindow.ixx" />
     <ClCompile Include="modules\data\LSMathTypes.ixx" />
     <ClCompile Include="modules\helper\PipelineFactory.ixx" />
+    <ClCompile Include="modules\platform\Windows\D3D12\D3D12Common.ixx" />
+    <ClCompile Include="modules\platform\Windows\D3D12\D3D12Helper.ixx" />
+    <ClCompile Include="modules\platform\Windows\D3D12\D3D12Lib.ixx" />
+    <ClCompile Include="modules\platform\Windows\D3D12\ResourceManagerD3D12.ixx" />
+    <ClCompile Include="modules\platform\Windows\DirectX\DXCamera.ixx" />
+    <ClCompile Include="modules\platform\Windows\DirectX\DXMathLib.ixx" />
     <ClCompile Include="modules\platform\Windows\D3D11\Helpers\EngineWrapperD3D11.ixx" />
     <ClCompile Include="modules\platform\Windows\D3D11\PipelineFactoryD3D11.ixx" />
     <ClCompile Include="modules\platform\Windows\D3D11\Helpers\D3D11HelperStates.ixx" />
     <ClCompile Include="modules\platform\Windows\D3D11\D3D11Lib.ixx" />
     <ClCompile Include="modules\platform\Windows\D3D11\Helpers\D3D11MemoryHelper.ixx" />
-    <ClCompile Include="modules\platform\Windows\D3D11\Helpers\D3DUtils.ixx" />
+    <ClCompile Include="modules\platform\Windows\D3D11\Helpers\D3D11Utils.ixx" />
     <ClCompile Include="modules\platform\Windows\D3D11\DeviceD3D11.ixx" />
-    <ClCompile Include="modules\platform\Windows\D3D11\RenderD3D11.ixx" />
+    <ClCompile Include="modules\platform\Windows\D3D11\RenderFuncs.ixx" />
     <ClCompile Include="modules\platform\Windows\D3D12\DeviceD3D12.ixx" />
-    <ClCompile Include="modules\platform\Windows\D3D12\RenderD3D12.ixx" />
-    <ClCompile Include="modules\platform\Windows\Win32Lib.ixx" />
-    <ClCompile Include="modules\utils\HLSLUtils.ixx" />
+    <ClCompile Include="modules\platform\Windows\DirectX\DXMatrixUtils.ixx" />
+    <ClCompile Include="modules\platform\Windows\DXGI\DXGIHelper.ixx" />
     <ClCompile Include="modules\utils\MSUtils.ixx" />
     <ClCompile Include="modules\utils\StdUtils.ixx" />
     <ClCompile Include="modules\platform\Windows\Win32Window.ixx" />
     <ClCompile Include="modules\utils\Util.ixx" />
-    <ClCompile Include="src\LSEFramework.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
-    </ClCompile>
+    <ClCompile Include="src\engine\EngineCommon.cpp" />
+    <ClCompile Include="src\helper\PipelineFactory.cpp" />
     <ClCompile Include="src\platform\D3D11\DeviceD3D11.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
@@ -221,6 +232,8 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="src\platform\D3D11\PipelineFactoryD3D11.cpp" />
+    <ClCompile Include="src\platform\D3D12\DeviceD3D12.cpp" />
+    <ClCompile Include="src\platform\D3D12\ResourceManagerD3D12.cpp" />
     <ClCompile Include="src\platform\Windows\Win32Windows.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
@@ -229,13 +242,22 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="inc\LSBuffer.h" />
-    <ClInclude Include="inc\LSEFramework.h" />
+    <ClInclude Include="inc\engine\EngineLogDefines.h" />
     <ClInclude Include="inc\LSTimer.h" />
-    <ClInclude Include="inc\LSTypeDefs.h" />
-    <ClInclude Include="inc\platform\Windows\D3D11\LSConverters.h" />
+    <ClInclude Include="inc\platform\Windows\Win32\WinApiUtils.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
+    <Import Project="..\packages\Microsoft.Direct3D.D3D12.1.610.3\build\native\Microsoft.Direct3D.D3D12.targets" Condition="Exists('..\packages\Microsoft.Direct3D.D3D12.1.610.3\build\native\Microsoft.Direct3D.D3D12.targets')" />
   </ImportGroup>
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\packages\Microsoft.Direct3D.D3D12.1.610.3\build\native\Microsoft.Direct3D.D3D12.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Direct3D.D3D12.1.610.3\build\native\Microsoft.Direct3D.D3D12.props'))" />
+    <Error Condition="!Exists('..\packages\Microsoft.Direct3D.D3D12.1.610.3\build\native\Microsoft.Direct3D.D3D12.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Direct3D.D3D12.1.610.3\build\native\Microsoft.Direct3D.D3D12.targets'))" />
+  </Target>
 </Project>

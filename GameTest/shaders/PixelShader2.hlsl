@@ -12,5 +12,5 @@ SamplerState imageSampler : register(s0);
 
 float4 main(VS_OUTPUT input) : SV_Target
 {
-    return image.Sample(imageSampler, input.uv) + float4(0.0f, 1.0f, 0.0f, 1.0f);
+    return image.Sample(imageSampler, input.uv) + float4(0.0f, 0.0f, 1.0f, 1.0f);
 }

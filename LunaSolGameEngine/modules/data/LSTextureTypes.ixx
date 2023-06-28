@@ -1,7 +1,9 @@
 module;
-#include "LSEFramework.h"
+#include <cstdint>
+#include <array>
+#include <vector>
 
-export module Data.LSTextureDesc;
+export module Data.LSTextureTypes;
 
 export namespace LS
 {

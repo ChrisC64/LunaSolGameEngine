@@ -1,5 +1,6 @@
 module;
-#include "LSEFramework.h"
+#include <concepts>
+#include <type_traits>
 
 export module Data.LSConcepts;
 
@@ -16,6 +17,9 @@ export namespace LS
 	concept IsUnsigned = IsIntegral<T> && std::is_unsigned_v<T>;
 	template<class T>
 	concept IsFloatingPoint = std::is_floating_point_v<T>;
+
+	template<class T>
+	concept IsNumerical = std::is_integral_v<T> || std::is_floating_point_v<T>;
 
 	template<class T>
 	concept Addable = requires (T x) { x + x; };

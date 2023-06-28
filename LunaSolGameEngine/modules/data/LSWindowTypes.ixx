@@ -1,5 +1,9 @@
 module;
-#include "LSEFramework.h"
+#include <cstdint>
+#include <array>
+#include <vector>
+#include <functional>
+
 export module Data.LSWindow.Types;
 
 export namespace LS

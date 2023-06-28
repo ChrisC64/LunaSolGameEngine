@@ -1,33 +1,21 @@
 module;
-#include "LSEFramework.h"
+#include <cstdint>
+#include <string_view>
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
+#include <Windows.h>
+
 
 export module Platform.Win32Window;
-
+import LSData;
 import Engine.LSWindow;
-//TODO: My idea is to see if I can restrict access to outside users. The window
-// that is created would just be based off the build type, normally this is accomplished with
-// preprocessor directives and what's included or not. Perhaps this isn't something I need to do?
-// I can just control which files are compiled with what build I suppose, instead. 
-namespace LS
-{
-    namespace Win32
-    {
-        class Win32Window;
-    };
 
-    export Ref<LS::Win32::Win32Window> LSCreateWindow(uint32_t width, uint32_t height,
-        std::wstring_view title)
-    {
-        return std::make_unique<LS::Win32::Win32Window>(width, height, title);
-    }
-}
-
-namespace LS::Win32
+export namespace LS::Win32
 {
     //TODO: Would I want to make this so I can have the user only see the above LSCreateWindow()
     // and yet still construct this for the object I need in the Win32Window.cpp file where we
     // grab the pointer to the class so we can use the class' internal WndProc handler. 
-    export class Win32Window : public LS::LSWindowBase
+    class Win32Window final : public LS::LSWindowBase
     {
     public:
         
@@ -40,22 +28,33 @@ namespace LS::Win32
         ~Win32Window() = default;
 
         // Inherited via LSWindowBase
-        virtual void Show() override;
-        virtual void Close() override;
-        virtual void PollEvent() override;
-        virtual LSWindowHandle GetHandleToWindow() const override;
+        void ClearDisplay() noexcept final;
+        void Show() noexcept final;
+        void Close() noexcept final;
+        void PollEvent() noexcept final;
         LRESULT HandleWinMessage(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam);
 
+        HWND Hwnd()
+        {
+            return m_hwnd;
+        }
+
+        HWND Hwnd() const
+        {
+            return m_hwnd;
+        }
     private:
         HINSTANCE m_hInstance;
+        HWND m_hwnd;
         uint32_t m_prevWidth = 0u;
         uint32_t m_prevHeight = 0u;
         bool m_bIsResizing = false;
         MSG m_msg;
+        HBRUSH m_bgBrush;
         void Initialize(uint32_t width, uint32_t height, std::wstring_view title);
         void OnKeyPress(WPARAM wp);
         void OnKeyRelease(WPARAM wp);
-        inline void GetScreenCoordinates(LPARAM lp, int& x, int& y);
+        void GetScreenCoordinates(LPARAM lp, int& x, int& y);
         void OnMouseMove(int x, int y);
         void OnMouseClick(UINT msg, int x, int y);
         void OnMouseRelease(UINT msg, int x, int y);

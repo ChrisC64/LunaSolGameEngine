@@ -24,9 +24,6 @@
     <ClCompile Include="modules\data\LSMathTypes.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="modules\engine\LSApp.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="modules\engine\LSDevice.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -36,7 +33,7 @@
     <ClCompile Include="modules\data\LSConcepts.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="modules\data\LSTextureDesc.ixx">
+    <ClCompile Include="modules\data\LSTextureTypes.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="modules\platform\Windows\Win32Window.ixx">
@@ -51,16 +48,10 @@
     <ClCompile Include="modules\platform\Windows\D3D12\DeviceD3D12.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="modules\engine\LSScene.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="modules\engine\LSCamera.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="modules\platform\Windows\D3D11\RenderD3D11.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="modules\platform\Windows\D3D12\RenderD3D12.ixx">
+    <ClCompile Include="modules\platform\Windows\D3D11\RenderFuncs.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\platform\D3D11\DeviceD3D11.cpp">
@@ -78,9 +69,6 @@
     <ClCompile Include="modules\platform\Windows\D3D11\Helpers\D3D11MemoryHelper.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\LSEFramework.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="modules\helper\LSCommonTypes.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -93,25 +81,13 @@
     <ClCompile Include="modules\engine\EngineCommon.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="modules\platform\Windows\Win32Lib.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="modules\platform\Windows\D3D11\Helpers\D3DUtils.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="modules\utils\HLSLUtils.ixx">
+    <ClCompile Include="modules\platform\Windows\D3D11\Helpers\D3D11Utils.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="modules\data\LSBufferTypes.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="modules\engine\LSBuffer.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="modules\helper\PipelineFactory.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="modules\engine\LSDefinitions.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="modules\platform\Windows\D3D11\PipelineFactoryD3D11.ixx">
@@ -126,22 +102,82 @@
     <ClCompile Include="modules\platform\Windows\D3D11\Helpers\EngineWrapperD3D11.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\engine\EngineCommon.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\data\LSDataTypes.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\helper\PipelineFactory.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\platform\Windows\DirectX\DXMathLib.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\platform\Windows\DirectX\DXMatrixUtils.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\engine\MathLib.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\engine\MatrixMath.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\engine\GeometryMath.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\platform\Windows\DirectX\DXCamera.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\data\khronos_standards\gltfParser.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\platform\Windows\D3D12\D3D12Lib.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\engine\EngineCodes.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\platform\Windows\DXGI\DXGIHelper.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\platform\D3D12\DeviceD3D12.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\platform\Windows\D3D12\ResourceManagerD3D12.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\platform\Windows\D3D12\D3D12Helper.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\platform\Windows\D3D12\D3D12Common.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\engine\EngineLogger.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\platform\D3D12\ResourceManagerD3D12.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\geometry\GeometryGenerator.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\helper\IOHelper.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="inc\LSEFramework.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="inc\LSTimer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="inc\LSTypeDefs.h">
+    <ClInclude Include="inc\engine\EngineLogDefines.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="inc\LSBuffer.h">
+    <ClInclude Include="inc\platform\Windows\Win32\WinApiUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="inc\platform\Windows\D3D11\LSConverters.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
 </Project>

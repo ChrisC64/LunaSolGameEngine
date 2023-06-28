@@ -1,18 +1,29 @@
 module;
-#include "LSEFramework.h"
+#include <cassert>
+#include <array>
+#include <span>
+#include <d3d11_4.h>
+#include <wrl/client.h>
+#include <limits>
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
 
-export module D3D11.RenderD3D11;
+#pragma comment(lib, "d3d11")
+export module D3D11.RenderFuncD3D11;
 import Util.MSUtils;
 import LSData;
 import Engine.LSDevice;
 
 namespace WRL = Microsoft::WRL;
 
+#define NOMINMAX
+#undef max
+#undef min
 export namespace LS::Win32
 {
     // CLEAR //
     constexpr void ClearRT(ID3D11DeviceContext* pContext, ID3D11RenderTargetView* pRTView,
-        std::array<float, 4>& color) noexcept
+        std::array<float, 4> color) noexcept
     {
         assert(pContext);
         assert(pRTView);
@@ -31,10 +42,10 @@ export namespace LS::Win32
             return;
         pContext->ClearDepthStencilView(pDSView, flags, depth, stencil);
     }
-
+    //TODO: Fix noexcept and return error code instead
     [[nodiscard]]
-    constexpr ID3D11RenderTargetView* CreateRenderTargetView(ID3D11Device* pDevice, ID3D11Resource* pResource,
-        const D3D11_RENDER_TARGET_VIEW_DESC* rtvDesc = nullptr) noexcept
+    constexpr auto CreateRenderTargetView(ID3D11Device* pDevice, ID3D11Resource* pResource,
+        const D3D11_RENDER_TARGET_VIEW_DESC* rtvDesc = nullptr) noexcept -> ID3D11RenderTargetView*
     {
         assert(pDevice);
         assert(pResource);
@@ -45,10 +56,10 @@ export namespace LS::Win32
             Utils::ThrowIfFailed(hr, "Failed to create render target view");
         return pRTView;
     }
-
+    //TODO: Fix noexcept and return error code instead
     [[nodiscard]]
-    constexpr ID3D11RenderTargetView1* CreateRenderTargetView1(ID3D11Device3* pDevice, ID3D11Resource* pResource,
-        const D3D11_RENDER_TARGET_VIEW_DESC1* rtvDesc = nullptr) noexcept
+    constexpr auto CreateRenderTargetView1(ID3D11Device3* pDevice, ID3D11Resource* pResource,
+        const D3D11_RENDER_TARGET_VIEW_DESC1* rtvDesc = nullptr) noexcept -> ID3D11RenderTargetView1*
     {
         assert(pDevice);
         assert(pResource);
@@ -136,8 +147,8 @@ export namespace LS::Win32
      * @param indexOffset the offset from the index buffer to start at
      * @param vertexOffset the number applied to the index count when reading (for non-interleaved types usually)
      */
-    constexpr void DrawIndexed(ID3D11DeviceContext* pContext, uint32_t indexCount, uint32_t indexOffset,
-        uint32_t vertexOffset) noexcept
+    constexpr void DrawIndexed(ID3D11DeviceContext* pContext, uint32_t indexCount, uint32_t indexOffset = 0,
+        uint32_t vertexOffset = 0) noexcept
     {
         assert(pContext);
         pContext->DrawIndexed(indexCount, indexOffset, vertexOffset);
@@ -190,7 +201,7 @@ export namespace LS::Win32
     {
         assert(pContext);
         assert(!buffers.empty());
-        assert(buffers.size() <= std::numeric_limits<uint32_t>::max());
+        //assert(buffers.size() <= std::numeric_limits<uint32_t>::max());
         if (buffers.empty() && buffers.size() <= std::numeric_limits<uint32_t>::max())
             return;
 
