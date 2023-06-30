@@ -2,7 +2,7 @@ module;
 #include <array>
 #include <string>
 export module GeometryGenerator;
-import Data.LSMath.Types;
+import Data.LSMathTypes;
 import Data.LSConcepts;
 
 export namespace LS::Geo::Generator

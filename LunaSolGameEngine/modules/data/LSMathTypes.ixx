@@ -5,7 +5,7 @@ module;
 #include <array>
 #include <compare>
 
-export module Data.LSMath.Types;
+export module Data.LSMathTypes;
 import Data.LSConcepts;
 
 export namespace LS

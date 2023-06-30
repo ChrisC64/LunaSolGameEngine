@@ -1,4 +1,11 @@
 module;
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
+#include <Windows.h>
+#include <wrl/client.h>
+#include <directxmath/DirectXMath.h>
+#include <directxmath/DirectXColors.h>
+#include <dxgi1_6.h>
 #include <array>
 #include <cstdint>
 #include <filesystem>
@@ -7,40 +14,53 @@ module;
 #include <fstream>
 #include <iostream>
 #include <format>
-
-#include <wrl/client.h>
-#include <directxmath/DirectXMath.h>
-#include <directxmath/DirectXColors.h>
-#include <dxgi1_6.h>
 #include <d3d11_4.h>
-#define WIN32_LEAN_AND_MEAN
-#define NOMINMAX
-#include <Windows.h>
+
 #include "LSTimer.h"
 
 export module DX11CubeApp;
 
-export import Engine.Common;
-export import D3D11Lib;
-export import Platform.Win32Window;
-export import Helper.LSCommonTypes;
-export import Helper.PipelineFactory;
+import Engine.Common;
+import D3D11Lib;
+import Platform.Win32Window;
+import Helper.LSCommonTypes;
 import Engine.Logger;
 import Helper.IO;
 import GeometryGenerator;
 import MathLib;
+import DirectXCommon;
 
-export namespace gt
+using namespace Microsoft::WRL;
+using namespace LS;
+using namespace LS::Win32;
+using namespace std::chrono;
+using namespace std::chrono_literals;
+using namespace DirectX;
+
+struct Vertex
 {
-    using namespace Microsoft::WRL;
-    using namespace LS;
-    using namespace LS::Win32;
-    using namespace std::chrono;
-    using namespace std::chrono_literals;
-    using namespace DirectX;
+    LS::Vec4<float> Position;
+    LS::Vec4<float> Color;
+};
+
+struct Cube
+{
+    std::array<Vertex, 8> Verts;
+    std::array<uint32_t, 36> Indices;
+    XMVECTOR Position;
+    XMVECTOR Scale;
+    XMVECTOR Rotation;
+    XMMATRIX Transform;
+};
+
+namespace gt
+{
+    export LS::ENGINE_CODE Init();
+    export void Run();
 
     constexpr auto SCREEN_WIDTH = 1920u;
     constexpr auto SCREEN_HEIGHT = 1080u;
+    export auto App = CreateAppRef(SCREEN_WIDTH, SCREEN_HEIGHT, L"DX11 Cube App", std::move(Init), std::move(Run));
 
 #ifdef DEBUG
     const std::string shader_path = R"(build\x64\Debug\)";
@@ -48,31 +68,11 @@ export namespace gt
     const std::string shader_path = R"(build\x64\Release\)";
 #endif
 
-    struct Vertex
-    {
-        LS::Vec4<float> Position;
-        LS::Vec4<float> Color;
-    };
-
-    struct Cube
-    {
-        std::array<Vertex, 8> Verts;
-        std::array<uint32_t, 36> Indices;
-        XMVECTOR Position;
-        XMVECTOR Scale;
-        XMVECTOR Rotation;
-        XMMATRIX Transform;
-    };
-    LS::ENGINE_CODE Init();
-    void Run();
-
-    auto App = CreateAppRef(SCREEN_WIDTH, SCREEN_HEIGHT, L"DX11 Cube App", std::move(Init), std::move(Run));
-
     LS::Win32::DeviceD3D11 g_device;
     Cube g_Cube;
     XMVECTOR g_UpVec = XMVectorSet(0.0f, 1.0f, 0.0f, 1.0f);
     XMVECTOR g_LookAtDefault = XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
-    DX::DXCamera g_camera(SCREEN_WIDTH, SCREEN_HEIGHT, XMVectorSet(0.0f, 0.0f, -5.0f, 1.0f), g_LookAtDefault, g_UpVec, 100.0f);
+    LS::DX::DXCamera g_camera(SCREEN_WIDTH, SCREEN_HEIGHT, XMVectorSet(0.0f, 0.0f, -5.0f, 1.0f), g_LookAtDefault, g_UpVec, 100.0f);
     constexpr auto g_indexData = Geo::Generator::CreateCubeIndexArray();
 
     auto CreateVertexShader(const LS::Win32::DeviceD3D11& device, ComPtr<ID3D11VertexShader>& shader, std::vector<std::byte>& byteCode) -> bool
@@ -131,12 +131,6 @@ export namespace gt
 
     void RotateCube(uint64_t elapsed)
     {
-        /*auto interpolation = elapsed / 1000.0f;
-        auto start = XMQuaternionRotationRollPitchYaw(0.0f, 0.0f, 0.0f);
-        auto end = XMQuaternionRotationRollPitchYaw(0.0f, 360.0f, 0.0f);
-        auto slerp = XMQuaternionSlerp(start, end, interpolation);
-
-        g_Cube.Rotation = XMQuaternionRotationRollPitchYawFromVector(slerp);*/
         if (elapsed == 0)
             return;
         auto radians = LS::Math::ToRadians(10 / elapsed);
@@ -152,6 +146,13 @@ export namespace gt
         g_camera.UpdateProjection();
         g_camera.UpdateView();
     }
+
+    void OnKeyboardDown(LS::InputKeyDown input);
+    void OnKeyboardUp(LS::InputKeyUp input);
+    void OnMouseDown(LS::InputMouseDown input);
+    void OnMouseUp(LS::InputMouseUp input);
+    void OnMouseMove(uint32_t x, uint32_t y);
+    void OnMouseWheel(LS::InputMouseWheelScroll input);
 
     LS::LSTimer<std::uint64_t, 1ul, 1000ul> g_timer;
     ComPtr<ID3D11Buffer> g_viewBuffer, g_projBuffer, g_modelBuffer;
@@ -171,10 +172,10 @@ export namespace gt
     std::array<float, 4> g_blue = { 0.0f, 0.0f, 1.0f, 1.0f };
     std::array<float, 4> g_black = { 0.0f, 0.0f, 0.0f, 1.0f };
     std::array<float, 4> g_white = { 1.0f, 1.0f, 1.0f, 1.0f };
-
 }
 
 module : private;
+using namespace gt;
 
 LS::ENGINE_CODE gt::Init()
 {
@@ -182,6 +183,8 @@ LS::ENGINE_CODE gt::Init()
 
     auto& window = App->Window;
 
+    RegisterKeyboardInput(App, OnKeyboardDown, OnKeyboardUp);
+    RegisterMouseInput(App, OnMouseDown, OnMouseUp, OnMouseWheel, OnMouseMove);
     g_device.CreateDevice();
 
     auto immContext = g_device.GetImmediateContext();
@@ -252,7 +255,7 @@ LS::ENGINE_CODE gt::Init()
     // Buffer Creation //
     // Vertex Buffer //
     LS::Log::TraceDebug(L"Creating buffers...");
-    
+
     auto bufferResult = g_device.CreateVertexBuffer(g_Cube.Verts.data(), sizeof(g_Cube.Verts), &vertexBuffer);
     if (FAILED(bufferResult))
     {
@@ -304,12 +307,12 @@ LS::ENGINE_CODE gt::Init()
         LS::Log::TraceError(L"Failed to create rasterizer state");
         return RESOURCE_CREATION_FAILED;
     }
-    
+
     rsSolid.Attach(rsSolidOpt.value());
     LS::Log::TraceDebug(L"Rasterizer state completed!!");
     // Render Target Creation //
     LS::Log::TraceDebug(L"Building render target view....");
-    
+
     HRESULT hr = g_device.CreateRTVFromBackBuffer(rtv.GetAddressOf());
     if (FAILED(hr))
     {
@@ -319,7 +322,7 @@ LS::ENGINE_CODE gt::Init()
     LS::Log::TraceDebug(L"Render target view created!!");
     // Depth Stencil //
     LS::Log::TraceDebug(L"Building depth stencil....");
-    
+
     auto dsResult = g_device.CreateDepthStencilViewForSwapchain(rtv.Get(), &dsView);
     if (FAILED(dsResult))
         return RESOURCE_CREATION_FAILED;
@@ -344,12 +347,12 @@ void gt::Run()
         auto deltaTime = g_timer.GetDeltaTime();
         App->Window->PollEvent();
         g_timer.Tick();
-        
+
         RotateCube(deltaTime.count());
         UpdateCubeTransform();
         UpdateCamera();
 
-        std::cout << std::format("Elapsed: {}\n\tDelta: {}\n", elapsed.count(), deltaTime.count());
+        //std::cout << std::format("Elapsed: {}\n\tDelta: {}\n", elapsed.count(), deltaTime.count());
         PreDraw(context);
         DrawScene(context);
         Present1(g_device.GetSwapChain().Get(), 1);
@@ -357,6 +360,39 @@ void gt::Run()
         // Update Buffers //
         LS::Win32::UpdateSubresource(context.Get(), g_modelBuffer.Get(), 0, &g_camera.Mvp);
     }
+}
+
+void gt::OnKeyboardDown(LS::InputKeyDown input)
+{
+    using enum LS::LS_INPUT_KEY;
+    if (input.Key == ESCAPE)
+    {
+        App->Window->Close();
+    }
+}
+
+void gt::OnKeyboardUp(LS::InputKeyUp input)
+{
+}
+
+void gt::OnMouseDown(LS::InputMouseDown input)
+{
+    std::cout << std::format("Mouse Down at: {}, {}\n", input.X, input.Y);
+}
+
+void gt::OnMouseUp(LS::InputMouseUp input)
+{
+    std::cout << std::format("Mouse Up at: {}, {}\n", input.X, input.Y);
+}
+
+void gt::OnMouseMove(uint32_t x, uint32_t y)
+{
+    std::cout << std::format("Mouse Move: ({}, {})\n", x, y);
+}
+
+void gt::OnMouseWheel(LS::InputMouseWheelScroll input)
+{
+    std::cout << std::format("Mouse Wheel Scroll: {}\n", input.Delta);
 }
 
 void gt::PreDraw(ComPtr<ID3D11DeviceContext4>& context)

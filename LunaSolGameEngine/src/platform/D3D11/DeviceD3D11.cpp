@@ -15,6 +15,7 @@ import D3D11.Device;
 import D3D11.RenderFuncD3D11;
 import D3D11.MemoryHelper;
 import D3D11.Utils;
+import D3D11.EngineWrapperD3D11;
 import Util.MSUtils;
 import LSData;
 namespace WRL = Microsoft::WRL;
@@ -216,7 +217,7 @@ void DeviceD3D11::CreateSwapchainAsTexture(const LS::LSWindowBase* window, PIXEL
     };
 
     D3D11_TEXTURE2D_DESC rtDesc;
-    rtDesc.Format = FindDXGIFormat(format);
+    rtDesc.Format = ToDxgiFormat(format);
     rtDesc.ArraySize = 1;
     rtDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
     rtDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;

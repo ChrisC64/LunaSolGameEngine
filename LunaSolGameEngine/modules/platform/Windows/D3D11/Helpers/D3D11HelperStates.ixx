@@ -18,10 +18,7 @@ import Data.LSDataTypes;
 
 export namespace LS::Win32
 {
-    // TODO:Consider Building a PIMPL method instead for these creation methods?
-    // TODO: The create methods from CommonStates return pointers to owned ComPtr objects in a shared resource pool.
-    // This factory class means that I cannot just take the pointers as given unless I have it release the ownership or copy
-    // the com pointers. I should re-evaluate how I would want to use them. 
+    // TODO: Avoid using the Create___ for common states and just return common states object for use
 
     // Generator Methods //
     // Rasterizer States //
@@ -564,7 +561,6 @@ export namespace LS::Win32
             pContext->DSSetSamplers(startSlot, numSamplers, pSamplerState.front());
             break;
         default:
-            //TODO: Handle error 
             break;
         }
     }

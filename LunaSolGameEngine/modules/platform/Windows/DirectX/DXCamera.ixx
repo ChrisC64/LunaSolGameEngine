@@ -1,6 +1,6 @@
 module;
 #include <directxmath/DirectXMath.h>
-export module Engine.DXCamera;
+export module DirectXCommon:DXCamera;
 
 namespace LS::DX
 {

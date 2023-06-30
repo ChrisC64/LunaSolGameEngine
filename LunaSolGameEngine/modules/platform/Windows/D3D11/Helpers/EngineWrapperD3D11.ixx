@@ -8,10 +8,13 @@ export module D3D11.EngineWrapperD3D11;
 import LSData;
 import Engine.LSDevice;
 
+/**
+ * @brief A list of conversion functions from Engine common types to DirectX/DXGI formats 
+*/
 export namespace LS
 {
     [[nodiscard]]
-    constexpr auto FromPixelColorFormat(PIXEL_COLOR_FORMAT format) -> DXGI_FORMAT
+    constexpr auto ToDxgiFormat(PIXEL_COLOR_FORMAT format) -> DXGI_FORMAT
     {
         using enum PIXEL_COLOR_FORMAT;
         switch (format)
@@ -209,5 +212,31 @@ export namespace LS
             break;
         }
         return out;
+    }
+
+    [[nodiscard]]
+    constexpr auto FindDXGIFormat(SHADER_DATA_TYPE shaderData) -> DXGI_FORMAT
+    {
+        using SDT = LS::SHADER_DATA_TYPE;
+
+        switch (shaderData)
+        {
+        case SDT::FLOAT:		return DXGI_FORMAT_R32_FLOAT;
+        case SDT::FLOAT2:		return DXGI_FORMAT_R32G32_FLOAT;
+        case SDT::FLOAT3:		return DXGI_FORMAT_R32G32B32_FLOAT;
+        case SDT::FLOAT4:		return DXGI_FORMAT_R32G32B32A32_FLOAT;
+        case SDT::INT:			return DXGI_FORMAT_R32_SINT;
+        case SDT::INT2:			return DXGI_FORMAT_R32G32_SINT;
+        case SDT::INT3:			return DXGI_FORMAT_R32G32B32_SINT;
+        case SDT::INT4:			return DXGI_FORMAT_R32G32B32A32_SINT;
+        case SDT::UINT:			return DXGI_FORMAT_R32_UINT;
+        case SDT::UINT2:		return DXGI_FORMAT_R32G32_UINT;
+        case SDT::UINT3:		return DXGI_FORMAT_R32G32B32_UINT;
+        case SDT::UINT4:		return DXGI_FORMAT_R32G32B32A32_UINT;
+        case SDT::BOOL:			return DXGI_FORMAT_R32_SINT;// HLSL Bools are 4 bytes 
+        default:
+            throw std::runtime_error("Unsuported DXGI FORMAT for data type.\n");
+            break;
+        }
     }
 }

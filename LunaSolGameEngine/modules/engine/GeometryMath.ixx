@@ -1,6 +1,6 @@
 export module MathLib:GeometryMath;
 
-import Data.LSMath.Types;
+import Data.LSMathTypes;
 
 export namespace LS::Math
 {

@@ -3,7 +3,7 @@ module;
 #include <string>
 
 export module Engine.LSWindow;
-import Data.LSWindow.Types;
+import Data.LSInput;
 import Data.LSDataTypes;
 
 export namespace LS
@@ -66,15 +66,54 @@ export namespace LS
             return m_winHandle;
         }
 
+        void RegisterKeyboardDown(LSOnKeyboardDown keyboardDown)
+        {
+            m_onKeyDown = keyboardDown;
+        }
+
+        void RegisterKeyboardUp(LSOnKeyboardUp keyboardUp)
+        {
+            m_onKeyUp = keyboardUp;
+        }
+
+        void RegisterMouseDown(LSOnMouseDown mouseDown)
+        {
+            m_onMouseDown = mouseDown;
+        }
+
+        void RegisterMouseUp(LSOnMouseUp mouseUp)
+        {
+            m_onMouseUp = mouseUp;
+        }
+
+        void RegisterMouseWheel(LSOnMouseWheelScroll mouseWheel)
+        {
+            m_onMWScroll = mouseWheel;
+        }
+
+        void RegisterWindowEventCallback(OnWindowEvent callback)
+        {
+            m_onWindowEvent = callback;
+        }
+
+        void RegisterCursorMoveCallback(CursorMoveCallback callback)
+        {
+            m_onCursorMove = callback;
+        }
+
     protected:
         std::wstring m_title;
         uint32_t m_width;
         uint32_t m_height;
         bool m_bIsOpen = false;
-        KeyboardCallback m_onKeyboardInput;
-        MouseButtonCallback m_onMouseInput;
+
         CursorMoveCallback m_onCursorMove;
-        MouseWheelScrollCallback m_onMouseWheelScroll;
+        LSOnKeyboardDown m_onKeyDown;
+        LSOnKeyboardUp m_onKeyUp;
+        LSOnMouseDown m_onMouseDown;
+        LSOnMouseUp m_onMouseUp;
+        LSOnMouseWheelScroll m_onMWScroll;
+
         LSWindowHandle m_winHandle;
         OnWindowEvent m_onWindowEvent;
         //@brief The color to fill the window background
@@ -85,32 +124,6 @@ export namespace LS
             m_title(title),
             m_bIsOpen(false)
         {
-        }
-
-        // Callback Functions //
-        void RegisterKeyboardCallback(KeyboardCallback callback)
-        {
-            m_onKeyboardInput = callback;
-        }
-
-        void RegisterMouseButtonCallback(MouseButtonCallback callback)
-        {
-            m_onMouseInput = callback;
-        }
-
-        void RegisterCursorMoveCallback(CursorMoveCallback callback)
-        {
-            m_onCursorMove = callback;
-        }
-
-        void RegisterMouseScrollCallback(MouseWheelScrollCallback callback)
-        {
-            m_onMouseWheelScroll = callback;
-        }
-
-        void RegisterWindowEventCallback(OnWindowEvent callback)
-        {
-            m_onWindowEvent = callback;
         }
     };
 }

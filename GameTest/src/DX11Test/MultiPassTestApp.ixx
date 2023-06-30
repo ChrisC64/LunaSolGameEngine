@@ -18,13 +18,14 @@ module;
 #include "LSTimer.h"
 export module MultiPassTestApp;
 
-export import LSData;
-export import Engine.Common;
-export import D3D11Lib;
-export import Platform.Win32Window;
-//export import Util.HLSLUtils;
-export import Helper.LSCommonTypes;
-export import Helper.PipelineFactory;
+import LSData;
+import Engine.Common;
+import D3D11Lib;
+import Platform.Win32Window;
+import Helper.LSCommonTypes;
+import Helper.PipelineFactory;
+
+import DirectXCommon;
 
 export namespace gt
 {
@@ -179,8 +180,12 @@ namespace gt
         }
 
         Microsoft::WRL::ComPtr<ID3D11InputLayout> pPosColUvIP;
-        device.CreateInputLayout(posColorUvDesc.data(), static_cast<uint32_t>(posColorUvDesc.size()), 
+        HRESULT hr = device.CreateInputLayout(posColorUvDesc.data(), static_cast<uint32_t>(posColorUvDesc.size()), 
             {}, pPosColUvIP.ReleaseAndGetAddressOf());
+        if (FAILED(hr))
+        {
+            throw std::runtime_error("Failed to create input layou");
+        }
     }
 
     LS::ENGINE_CODE Init()
@@ -230,7 +235,6 @@ namespace gt
         textureDesc.MiscFlags = 0;
         textureDesc.Usage = D3D11_USAGE_DEFAULT;
         textureDesc.SampleDesc.Count = 1;
-        // TODO: Create 2 or 3 textures (one per context) that is blank and empty
         ComPtr<ID3D11Texture2D> pRenderTargetTexture;
         auto texResult = g_device.GetDevice()->CreateTexture2D(&textureDesc, NULL, &pRenderTargetTexture);
         if (FAILED(texResult))
@@ -246,7 +250,6 @@ namespace gt
         texResult = g_device.GetDevice()->CreateTexture2D(&textureDesc, NULL, &pTexture2);
         if (FAILED(texResult))
             return RESOURCE_CREATION_FAILED;
-        // TODO: Create SRVs that point to the 2 or 3 textures we make from above
         ComPtr<ID3D11ShaderResourceView> pTexturRenderTargetSRV;
         ComPtr<ID3D11ShaderResourceView> pTextureView1;
         ComPtr<ID3D11ShaderResourceView> pTextureView2;
@@ -553,13 +556,26 @@ namespace gt
 
         // Initialize Buffers //
         ComPtr<ID3D11Buffer> viewBuffer, projBuffer, modelBuffer, indexBuffer, colorRedBuffer, colorGreenBuffer, colorBlueBuffer;
-        g_device.CreateBuffer(&matBD, &viewSRD, &viewBuffer);
-        g_device.CreateBuffer(&matBD, &projSRD, &projBuffer);
-        g_device.CreateBuffer(&matBD, &modelSRD, &modelBuffer);
-        g_device.CreateBuffer(&indexBD, &indexSRD, &indexBuffer);
-        g_device.CreateBuffer(&colorBD, &colorRedSRD, &colorRedBuffer);
-        g_device.CreateBuffer(&colorBD, &colorGreenSRD, &colorGreenBuffer);
-        g_device.CreateBuffer(&colorBD, &colorBlueSRD, &colorBlueBuffer);
+        HRESULT hr = g_device.CreateBuffer(&matBD, &viewSRD, &viewBuffer);
+        auto hrCheck = [](HRESULT hr, std::string_view msg) {
+            if (FAILED(hr))
+            {
+                throw std::runtime_error(msg.data());
+            }
+        };
+        hrCheck(hr, "Failed to create view buffer");
+        hr = g_device.CreateBuffer(&matBD, &projSRD, &projBuffer);
+        hrCheck(hr, "Failed to create projection buffer");
+        hr = g_device.CreateBuffer(&matBD, &modelSRD, &modelBuffer);
+        hrCheck(hr, "Failed to create model buffer");
+        hr = g_device.CreateBuffer(&indexBD, &indexSRD, &indexBuffer);
+        hrCheck(hr, "Failed to create index buffer");
+        hr = g_device.CreateBuffer(&colorBD, &colorRedSRD, &colorRedBuffer);
+        hrCheck(hr, "Failed to create red color buffer");
+        hr = g_device.CreateBuffer(&colorBD, &colorGreenSRD, &colorGreenBuffer);
+        hrCheck(hr, "Failed to create green color buffer");
+        hr = g_device.CreateBuffer(&colorBD, &colorBlueSRD, &colorBlueBuffer);
+        hrCheck(hr, "Failed to create blue color buffer");
 
         UINT stride = sizeof(Vertex);
         /// SET PIPELINE STATE ///
@@ -651,7 +667,7 @@ namespace gt
         //---------------------- IMMEDIATE CONTEXT END ---------------------------//
 
         //ComPtr<ID3D11CommandList> command1, command2;
-        auto hr = context1->FinishCommandList(FALSE, &command1);
+        hr = context1->FinishCommandList(FALSE, &command1);
         if (FAILED(hr))
             return LS_ERROR;
 

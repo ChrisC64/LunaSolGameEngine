@@ -21,12 +21,12 @@ module;
 
 export module CubeApp;
 
-export import LSData;
-export import Engine.Common;
-export import D3D11Lib;
-export import Platform.Win32Window;
-export import Helper.LSCommonTypes;
-export import Helper.PipelineFactory;
+import LSData;
+import Engine.Common;
+import D3D11Lib;
+import Platform.Win32Window;
+import Helper.LSCommonTypes;
+import Helper.PipelineFactory;
 
 
 inline std::string HrToString(HRESULT hr)

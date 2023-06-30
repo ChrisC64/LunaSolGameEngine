@@ -5,7 +5,6 @@ module;
 #define NOMINMAX
 #include <Windows.h>
 
-
 export module Platform.Win32Window;
 import LSData;
 import Engine.LSWindow;
@@ -55,7 +54,8 @@ export namespace LS::Win32
         void OnKeyPress(WPARAM wp);
         void OnKeyRelease(WPARAM wp);
         void GetScreenCoordinates(LPARAM lp, int& x, int& y);
-        void OnMouseMove(int x, int y);
+        void GetScreenCoordinates(LPPOINT ppoint);
+        void OnMouseMove(uint32_t x, uint32_t y);
         void OnMouseClick(UINT msg, int x, int y);
         void OnMouseRelease(UINT msg, int x, int y);
         void OnMouseWheelScroll(short zDelta);

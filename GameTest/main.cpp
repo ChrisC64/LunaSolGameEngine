@@ -11,7 +11,6 @@
 #include <Windows.h>
 #endif // 
 
-#define LS_ENABLE_LOG 1
 import Engine.Logger;
 import Engine.EngineCodes;
 import DX11CubeApp;

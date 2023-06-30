@@ -111,9 +111,6 @@
     <ClCompile Include="src\helper\PipelineFactory.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="modules\platform\Windows\DirectX\DXMathLib.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="modules\platform\Windows\DirectX\DXMatrixUtils.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -163,6 +160,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="modules\helper\IOHelper.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\platform\Windows\DirectX\DirectXCommon.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
