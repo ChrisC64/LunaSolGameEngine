@@ -222,11 +222,11 @@ export namespace LS
     */
     using LSMouseWheelScrollCallback = std::function<void(int64_t delta)>;
 
-    using LSOnKeyboardDown = std::function<void(LS::InputKeyDown input)>;
-    using LSOnKeyboardUp = std::function<void(LS::InputKeyUp input)>;
-    using LSOnMouseDown = std::function<void(LS::InputMouseDown input)>;
-    using LSOnMouseUp = std::function<void(LS::InputMouseUp input)>;
-    using LSOnMouseWheelScroll = std::function<void(LS::InputMouseWheelScroll input)>;
+    using LSOnKeyboardDown = std::function<void(const LS::InputKeyDown& input)>;
+    using LSOnKeyboardUp = std::function<void(const LS::InputKeyUp& input)>;
+    using LSOnMouseDown = std::function<void(const LS::InputMouseDown& input)>;
+    using LSOnMouseUp = std::function<void(const LS::InputMouseUp& input)>;
+    using LSOnMouseWheelScroll = std::function<void(const LS::InputMouseWheelScroll& input)>;
 
     /**
     * @brief The Window Event Callback

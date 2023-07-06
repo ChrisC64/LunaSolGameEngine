@@ -160,7 +160,12 @@ namespace LS::Win32
         case(WM_MOUSEWHEEL):
         {
             auto zDelta = GET_WHEEL_DELTA_WPARAM(wparam);
-            OnMouseWheelScroll(zDelta);
+            int x;
+            int y;
+            //TODO: Invalid, need to look up how to obtain coordinates correctly because the LPARAM
+            // looks lik it may not have the correct coordiantes
+            GetScreenCoordinates(lparam, x, y);
+            OnMouseWheelScroll(zDelta, x, y);
             break;
         }
         case(WM_SIZE):
@@ -311,29 +316,6 @@ namespace LS::Win32
         y = GET_Y_LPARAM(lp);
     }
 
-    void Win32Window::GetScreenCoordinates(LPPOINT ppoint)
-    {
-        assert(m_hwnd);
-        if (!m_hwnd)
-        {
-            ppoint->x = 0;
-            ppoint->y = 0;
-            return;
-        }
-        //TODO: Fix logic, because we aren't getting client area (window area that excludes the title/menu/border area)
-        // correctly. Plus do I want this if say we already track mouse position?
-        RECT rect;
-        if (!ScreenToClient(m_hwnd, ppoint))
-        {
-            ppoint->x = 0;
-            ppoint->y = 0;
-            return;
-        }
-
-        /*ppoint->x = rect.right - rect.left;
-        ppoint->y = rect.bottom - rect.top;*/
-    }
-
     void Win32Window::OnMouseMove(uint32_t x, uint32_t y)
     {
         TrackMouse(reinterpret_cast<HWND>(m_winHandle));
@@ -349,8 +331,6 @@ namespace LS::Win32
             return;
         using M = LS::LS_INPUT_MOUSE;
 
-        POINT p;
-        GetScreenCoordinates(&p);
         M input;
         switch (msg)
         {
@@ -367,7 +347,7 @@ namespace LS::Win32
             input = M::NONE;
             break;
         }
-        InputMouseDown md{ .X = (uint32_t)p.x, .Y = (uint32_t)p.y, .Button = input, .IsHandled = false };
+        InputMouseDown md{ .X = (uint32_t)x, .Y = (uint32_t)y, .Button = input, .IsHandled = false };
         m_onMouseDown(md);
     }
 
@@ -377,38 +357,34 @@ namespace LS::Win32
             return;
         using M = LS::LS_INPUT_MOUSE;
 
-        POINT p;
-        GetScreenCoordinates(&p);
         M input;
         switch (msg)
         {
-        case WM_LBUTTONDOWN:
+        case WM_LBUTTONUP:
             input = M::LMB;
             break;
-        case WM_MBUTTONDOWN:
+        case WM_MBUTTONUP:
             input = M::MMB;
             break;
-        case WM_RBUTTONDOWN:
+        case WM_RBUTTONUP:
             input = M::RMB;
             break;
         default:
             input = M::NONE;
             break;
         }
-        InputMouseUp md{ .X = (uint32_t)p.x, .Y = (uint32_t)p.y, .Button = input, .IsHandled = false };
+        InputMouseUp md{ .X = (uint32_t)x, .Y = (uint32_t)y, .Button = input, .IsHandled = false };
         m_onMouseUp(md);
     }
 
-    void Win32Window::OnMouseWheelScroll(short zDelta)
+    void Win32Window::OnMouseWheelScroll(short zDelta, int x, int y)
     {
         if (!m_onMWScroll)
             return;
 
         double diff = zDelta / 120.0f;
-        POINT point;
-        GetScreenCoordinates(&point);
 
-        InputMouseWheelScroll input{ .X = (uint32_t)point.x, .Y = (uint32_t)point.y, .Delta = diff, .IsHandled = false };
+        InputMouseWheelScroll input{ .X = (uint32_t)x, .Y = (uint32_t)y, .Delta = diff, .IsHandled = false };
         m_onMWScroll(input);
     }
 

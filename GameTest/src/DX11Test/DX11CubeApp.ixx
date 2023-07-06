@@ -14,6 +14,9 @@ module;
 #include <fstream>
 #include <iostream>
 #include <format>
+#include <compare>
+#include <cmath>
+#include <unordered_map>
 #include <d3d11_4.h>
 
 #include "LSTimer.h"
@@ -29,6 +32,7 @@ import Helper.IO;
 import GeometryGenerator;
 import MathLib;
 import DirectXCommon;
+import LSData;
 
 using namespace Microsoft::WRL;
 using namespace LS;
@@ -70,10 +74,21 @@ namespace gt
 
     LS::Win32::DeviceD3D11 g_device;
     Cube g_Cube;
-    XMVECTOR g_UpVec = XMVectorSet(0.0f, 1.0f, 0.0f, 1.0f);
-    XMVECTOR g_LookAtDefault = XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
-    LS::DX::DXCamera g_camera(SCREEN_WIDTH, SCREEN_HEIGHT, XMVectorSet(0.0f, 0.0f, -5.0f, 1.0f), g_LookAtDefault, g_UpVec, 100.0f);
+    XMVECTOR g_UpVec = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+    XMVECTOR g_LookAtDefault = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
+    LS::DX::DXCamera g_camera(SCREEN_WIDTH, SCREEN_HEIGHT, XMVectorSet(0.0f, 0.0f, -5.0f, 0.0f), g_LookAtDefault, g_UpVec, 120.0f);
     constexpr auto g_indexData = Geo::Generator::CreateCubeIndexArray();
+    LS::LSTimer<std::uint64_t, 1ul, 1000ul> g_timer;
+    ComPtr<ID3D11Buffer> g_viewBuffer, g_projBuffer, g_modelBuffer;
+    ComPtr<ID3D11VertexShader> vertShader;
+    ComPtr<ID3D11PixelShader> pixShader;
+    ComPtr<ID3D11RasterizerState2> rsSolid;
+    ComPtr<ID3D11RenderTargetView1> rtv;
+    ComPtr<ID3D11DepthStencilView> dsView;
+    ComPtr<ID3D11InputLayout> inputLayout;
+    ComPtr<ID3D11Buffer> vertexBuffer;
+    ComPtr<ID3D11Buffer> indexBuffer;
+    std::unordered_map<LS::LS_INPUT_KEY, bool> g_keysPressedMap;
 
     auto CreateVertexShader(const LS::Win32::DeviceD3D11& device, ComPtr<ID3D11VertexShader>& shader, std::vector<std::byte>& byteCode) -> bool
     {
@@ -135,9 +150,8 @@ namespace gt
             return;
         auto radians = LS::Math::ToRadians(10 / elapsed);
         XMVECTOR rotationAxis = XMVectorSet(0.450f, 1.0f, 0.250f, 1.0f);
-        auto rotQuat = XMQuaternionRotationAxis(rotationAxis, radians);
+        auto rotQuat = XMQuaternionRotationNormal(rotationAxis, radians);
         g_Cube.Rotation = XMQuaternionMultiply(g_Cube.Rotation, rotQuat);
-
     }
 
     void UpdateCamera()
@@ -147,23 +161,45 @@ namespace gt
         g_camera.UpdateView();
     }
 
-    void OnKeyboardDown(LS::InputKeyDown input);
-    void OnKeyboardUp(LS::InputKeyUp input);
-    void OnMouseDown(LS::InputMouseDown input);
-    void OnMouseUp(LS::InputMouseUp input);
-    void OnMouseMove(uint32_t x, uint32_t y);
-    void OnMouseWheel(LS::InputMouseWheelScroll input);
+    void UpdateMovement()
+    {
+        using enum LS::LS_INPUT_KEY;
+        LS::Vec3F movement;
+        auto dt = g_timer.GetDeltaTime().count() * 1'000.0f;
+        float movespeed = 300.0f / dt;
+        for (auto [k, p] : g_keysPressedMap)
+        {
+            if (k == W && p)
+            {
+                movement.z += movespeed;
+            }
+            if (k == S && p)
+            {
+                movement.z += -movespeed;
+            }
+            if (k == A && p)
+            {
+                movement.x += -movespeed;
+            }
+            if (k == D && p)
+            {
+                movement.x += movespeed;
+            }
+        }
 
-    LS::LSTimer<std::uint64_t, 1ul, 1000ul> g_timer;
-    ComPtr<ID3D11Buffer> g_viewBuffer, g_projBuffer, g_modelBuffer;
-    ComPtr<ID3D11VertexShader> vertShader;
-    ComPtr<ID3D11PixelShader> pixShader;
-    ComPtr<ID3D11RasterizerState2> rsSolid;
-    ComPtr<ID3D11RenderTargetView1> rtv;
-    ComPtr<ID3D11DepthStencilView> dsView;
-    ComPtr<ID3D11InputLayout> inputLayout;
-    ComPtr<ID3D11Buffer> vertexBuffer;
-    ComPtr<ID3D11Buffer> indexBuffer;
+        //g_camera.TranslatePosition(movement);
+        g_camera.Walk(movement.z);
+        g_camera.Strafe(movement.x);
+    }
+
+    void OnKeyboardDown(const LS::InputKeyDown& input);
+    void OnKeyboardUp(const LS::InputKeyUp& input);
+    void OnMouseDown(const LS::InputMouseDown& input);
+    void OnMouseUp(const LS::InputMouseUp& input);
+    void OnMouseMove(uint32_t x, uint32_t y);
+    void OnMouseWheel(const LS::InputMouseWheelScroll& input);
+
+
     void PreDraw(ComPtr<ID3D11DeviceContext4>& context);
     void DrawScene(ComPtr<ID3D11DeviceContext4>& context);
     //TODO: Create common colors in Engine Common or make color conceptl
@@ -182,6 +218,8 @@ LS::ENGINE_CODE gt::Init()
     using enum LS::ENGINE_CODE;
 
     auto& window = App->Window;
+    LS::ColorRGB bgColor(1.0f, 0.0f, 0.0f);
+    window->SetBackgroundColor(bgColor);
 
     RegisterKeyboardInput(App, OnKeyboardDown, OnKeyboardUp);
     RegisterMouseInput(App, OnMouseDown, OnMouseUp, OnMouseWheel, OnMouseMove);
@@ -348,51 +386,94 @@ void gt::Run()
         App->Window->PollEvent();
         g_timer.Tick();
 
+        UpdateMovement();
         RotateCube(deltaTime.count());
         UpdateCubeTransform();
         UpdateCamera();
 
-        //std::cout << std::format("Elapsed: {}\n\tDelta: {}\n", elapsed.count(), deltaTime.count());
         PreDraw(context);
         DrawScene(context);
         Present1(g_device.GetSwapChain().Get(), 1);
 
         // Update Buffers //
         LS::Win32::UpdateSubresource(context.Get(), g_modelBuffer.Get(), 0, &g_camera.Mvp);
+        LS::Win32::UpdateSubresource(context.Get(), g_viewBuffer.Get(), 0, &g_camera.View);
     }
 }
 
-void gt::OnKeyboardDown(LS::InputKeyDown input)
+void gt::OnKeyboardDown(const LS::InputKeyDown& input)
 {
     using enum LS::LS_INPUT_KEY;
     if (input.Key == ESCAPE)
     {
         App->Window->Close();
     }
+
+    g_keysPressedMap.insert_or_assign(input.Key, true);
 }
 
-void gt::OnKeyboardUp(LS::InputKeyUp input)
+void gt::OnKeyboardUp(const LS::InputKeyUp& input)
 {
+    g_keysPressedMap.insert_or_assign(input.Key, false);
+}
+static LS::Vec2<uint32_t> g_lastPoint;
+static bool IsLMBDown = false;
+
+void gt::OnMouseDown(const LS::InputMouseDown& input)
+{
+    //std::cout << std::format("Mouse Down at: {}, {}\n", input.X, input.Y);
+    if (input.Button == LS::LS_INPUT_MOUSE::LMB)
+    {
+        std::cout << "LMB Down!\n";
+        g_lastPoint.x = input.X;
+        g_lastPoint.y = input.Y;
+        IsLMBDown = true;
+    }
 }
 
-void gt::OnMouseDown(LS::InputMouseDown input)
+void gt::OnMouseUp(const LS::InputMouseUp& input)
 {
-    std::cout << std::format("Mouse Down at: {}, {}\n", input.X, input.Y);
-}
-
-void gt::OnMouseUp(LS::InputMouseUp input)
-{
-    std::cout << std::format("Mouse Up at: {}, {}\n", input.X, input.Y);
+    //std::cout << std::format("Mouse Up at: {}, {}\n", input.X, input.Y);
+    if (input.Button == LS::LS_INPUT_MOUSE::LMB)
+    {
+        std::cout << "LMB Up!\n";
+        g_lastPoint.x = input.X;
+        g_lastPoint.y = input.Y;
+        IsLMBDown = false;
+    }
 }
 
 void gt::OnMouseMove(uint32_t x, uint32_t y)
 {
-    std::cout << std::format("Mouse Move: ({}, {})\n", x, y);
+    //std::cout << std::format("Mouse Move: ({}, {})\n", x, y);
+
+    if (IsLMBDown)
+    {
+        int lx = x - g_lastPoint.x;
+        int ly = y - g_lastPoint.y;
+        auto dt = g_timer.GetDeltaTime().count() / 1'000.0f;
+        float mx = lx * 10.5f * dt;
+        float my = ly * 8.75f * dt;
+        // Normalize between screen size //
+        /*auto nx = px / (float)SCREEN_WIDTH;
+        auto ny = py / (float)SCREEN_HEIGHT;*/
+        //float nx = x / (float)SCREEN_WIDTH;
+        //float ny = y / (float)SCREEN_HEIGHT;
+        LS::Vec3F rotation = { .x = 0.0f, .y = 1.0f, .z = 0.0f };
+
+        //auto value = nx / 360.0;
+        //auto value = std::lerp(0.0f, 360.0f, nx);
+        std::cout << "Value: " << mx << "\n";
+        g_camera.RotateYaw(mx);
+        g_camera.RotatePitch(my);
+        g_lastPoint.x = x;
+        g_lastPoint.y = y;
+    }
 }
 
-void gt::OnMouseWheel(LS::InputMouseWheelScroll input)
+void gt::OnMouseWheel(const LS::InputMouseWheelScroll& input)
 {
-    std::cout << std::format("Mouse Wheel Scroll: {}\n", input.Delta);
+    std::cout << std::format("Mouse Wheel Scroll: {}, Coords: {}, {}\n", input.Delta, input.X, input.Y);
 }
 
 void gt::PreDraw(ComPtr<ID3D11DeviceContext4>& context)

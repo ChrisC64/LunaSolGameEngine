@@ -35,7 +35,7 @@ export namespace LS
 
         void SetBackgroundColor(ColorRGB color)
         {
-            m_bgColor = std::move(color);
+            m_bgColor = color;
         }
 
         /**

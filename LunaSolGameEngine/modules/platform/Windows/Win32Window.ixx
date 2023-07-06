@@ -54,11 +54,10 @@ export namespace LS::Win32
         void OnKeyPress(WPARAM wp);
         void OnKeyRelease(WPARAM wp);
         void GetScreenCoordinates(LPARAM lp, int& x, int& y);
-        void GetScreenCoordinates(LPPOINT ppoint);
         void OnMouseMove(uint32_t x, uint32_t y);
         void OnMouseClick(UINT msg, int x, int y);
         void OnMouseRelease(UINT msg, int x, int y);
-        void OnMouseWheelScroll(short zDelta);
+        void OnMouseWheelScroll(short zDelta, int x, int y);
         int ToWindowsKey(LS::LS_INPUT_KEY key);
         LS::LS_INPUT_KEY ToInputKey(WPARAM wparam);
         void TrackMouse(HWND hwnd);
