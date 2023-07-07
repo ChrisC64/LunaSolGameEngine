@@ -107,11 +107,14 @@ export namespace LS
         GAIN_FOCUS, // @brief window is active 
         LEAVE_WINDOW, // @brief cursor moves out of window region
         ENTER_WINDOW, // @brief cursor has moved back into window region
-        RESIZE_WINDOW, // @brief the window has changed size 
         CLOSE_WINDOW, // @brief the window has been closed
         MINIMIZED_WINDOW, //@brief the window has been minimized
         RESTORED_WINDOW, //@brief the window has been restored from minimized
-        MAXIMIZED_WINDOW //@brief the window has been maximized
+        MAXIMIZED_WINDOW, //@brief the window has been maximized
+        WINDOW_RESIZE_START, //@brief the start of a window resize event
+        WINDOW_RESIZE_END, //@brief the window has been resized
+        WINDOW_MOVE_START, //@brief the window is being moved
+        WINDOW_MOVE_END, //@brief the window has finished moving
     };
 
     struct InputKeyDown
@@ -152,47 +155,6 @@ export namespace LS
 
     // TYPEDEFS //
     /**
-    * @brief The keyboard callback signature for function pointers
-    *
-    * A keyboard callback is initiated when any key press or release
-    * is made by the Window's messaging system.
-    * @code
-    * void function_name(int key, short mod, short action)
-    * @endcode
-    *
-    * @param key They keyboard key belonging to @ref LS_INPUT_KEY
-    * @param mod The modifier's being held by LS_INPUT_MODS
-    * @param action The action of the key based on LS_INPUT_ACTION
-    */
-    using KeyboardCallback = std::function<void(int32_t key, int16_t mods, int8_t action)>;
-
-    /**
-     * @brief A keyboard callback where commands are passed through the enumerated defined types. This handles keyboard process
-     * and returns the individual key. Modifiers has been removed and will just be passed as normal keys here.
-    */
-    using LSKeyboardCallback = std::function<void(LS::LS_INPUT_KEY key, LS::LS_INPUT_ACTION action)>;
-
-    /**
-    * @brief The mouse button callback signature for function pointers
-    *
-    * A mouse callback is initiated when any key press or release
-    * is made by the Window's messaging system.
-    * @code
-    * void function_name(int button, short mod, short action)
-    * @endcode
-    *
-    * @param button They mouse button belonging to @ref LS_INPUT_MOUSE
-    * @param mod The modifier's being held by LS_INPUT_MODS
-    * @param action The action of the key based on LS_INPUT_ACTION
-    * @param x the x coordinate of the screen click
-    * @param y the y coordinate of the screen click
-    */
-    using MouseButtonCallback = std::function<void(int32_t button, int32_t mod, int16_t action, int32_t x, int32_t y)>;
-
-
-    using LSMouseButtonCallback = std::function<void(LS::LS_INPUT_MOUSE button, LS::LS_INPUT_ACTION action, uint32_t x, uint32_t y)>;
-
-    /**
     * @brief The cursor move callback function signature
     *
     * A cursor move is fired when the mouse cursor is moved
@@ -203,19 +165,7 @@ export namespace LS
     * @param xPos the current X position of the cursor starting at 0 from the left
     * @param yPos the current Y position of the cursor starting at 0 from the top
     */
-    using CursorMoveCallback = std::function<void(uint32_t x, uint32_t y)>;
-
-    /**
-    * @brief The scroll of the mouse wheel
-    *
-    * When the mouse wheel scrolls, this event is fired.
-    * @code
-    * void function_name(double zDelta)
-    * @endcode
-    *
-    * @param zDelta the delta change of the scroll wheel
-    */
-    using MouseWheelScrollCallback = std::function<void(double delta)>;
+    using LSOnMouseMove = std::function<void(uint32_t x, uint32_t y)>;
 
     /**
      * @brief A mouse scroll wheel callback that passes over an integer value that is system dependent

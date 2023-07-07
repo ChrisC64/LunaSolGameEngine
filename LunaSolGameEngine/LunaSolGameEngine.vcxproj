@@ -217,6 +217,7 @@
     <ClCompile Include="modules\platform\Windows\D3D11\DeviceD3D11.ixx" />
     <ClCompile Include="modules\platform\Windows\D3D11\RenderFuncs.ixx" />
     <ClCompile Include="modules\platform\Windows\D3D12\DeviceD3D12.ixx" />
+    <ClCompile Include="modules\platform\Windows\DirectX\DXCameraController.ixx" />
     <ClCompile Include="modules\platform\Windows\DirectX\DXMatrixUtils.ixx" />
     <ClCompile Include="modules\platform\Windows\DXGI\DXGIHelper.ixx" />
     <ClCompile Include="modules\utils\MSUtils.ixx" />

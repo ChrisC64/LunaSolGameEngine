@@ -76,7 +76,7 @@ namespace LS
         std::wstring_view title, AppInitFunc&& initFunc, AppRunFunc&& runFunc) -> Ref<LSApp>;
 
     export void RegisterKeyboardInput(Ref<LSApp>& app, LSOnKeyboardDown onKeyDown, LSOnKeyboardUp onKeyUp);
-    export void RegisterMouseInput(Ref<LSApp>& app, LSOnMouseDown onMouseDown, LSOnMouseUp onMouseUp, LSOnMouseWheelScroll mouseWheel, CursorMoveCallback cursorMove);
+    export void RegisterMouseInput(Ref<LSApp>& app, LSOnMouseDown onMouseDown, LSOnMouseUp onMouseUp, LSOnMouseWheelScroll mouseWheel, LSOnMouseMove cursorMove);
 }
 
 module : private;
@@ -130,13 +130,13 @@ namespace LS
         app->Window->RegisterKeyboardDown(onKeyDown);
         app->Window->RegisterKeyboardUp(onKeyUp);
     }
-    void RegisterMouseInput(Ref<LSApp>& app, LSOnMouseDown onMouseDown, LSOnMouseUp onMouseUp, LSOnMouseWheelScroll mouseWheel, CursorMoveCallback cursorMove)
+    void RegisterMouseInput(Ref<LSApp>& app, LSOnMouseDown onMouseDown, LSOnMouseUp onMouseUp, LSOnMouseWheelScroll mouseWheel, LSOnMouseMove cursorMove)
     {
         if (!app)
             return;
         app->Window->RegisterMouseDown(onMouseDown);
         app->Window->RegisterMouseUp(onMouseUp);
         app->Window->RegisterMouseWheel(mouseWheel);
-        app->Window->RegisterCursorMoveCallback(cursorMove);
+        app->Window->RegisterMouseMoveCallback(cursorMove);
     }
 }

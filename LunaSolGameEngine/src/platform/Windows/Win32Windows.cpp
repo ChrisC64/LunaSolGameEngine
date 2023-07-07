@@ -189,13 +189,18 @@ namespace LS::Win32
                 if (m_onWindowEvent)
                     m_onWindowEvent(LS::LS_WINDOW_EVENT::RESTORED_WINDOW);
             }
+            else
+            {
+                if (m_onWindowEvent)
+                    m_onWindowEvent(LS::LS_WINDOW_EVENT::WINDOW_RESIZE_END);
+            }
             break;
         }
         case (WM_SIZING):
         {
             m_bIsResizing = true;
             if (m_onWindowEvent)
-                m_onWindowEvent(LS::LS_WINDOW_EVENT::RESIZE_WINDOW);
+                m_onWindowEvent(LS::LS_WINDOW_EVENT::WINDOW_RESIZE_START);
             break;
         }
         case (WM_ENTERSIZEMOVE):
@@ -561,13 +566,5 @@ namespace LS::Win32
         tme.dwHoverTime = 1;
         tme.hwndTrack = hwnd;
         TrackMouseEvent(&tme);
-    }
-
-    void Win32Window::ResizeWindow(uint32_t width, uint32_t height)
-    {
-        m_width = width;
-        m_height = height;
-        if (m_onWindowEvent)
-            m_onWindowEvent(LS::LS_WINDOW_EVENT::RESIZE_WINDOW);
     }
 }

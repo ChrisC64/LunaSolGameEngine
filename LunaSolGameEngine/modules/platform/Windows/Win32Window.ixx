@@ -61,6 +61,5 @@ export namespace LS::Win32
         int ToWindowsKey(LS::LS_INPUT_KEY key);
         LS::LS_INPUT_KEY ToInputKey(WPARAM wparam);
         void TrackMouse(HWND hwnd);
-        void ResizeWindow(uint32_t width, uint32_t height);
     };
 }

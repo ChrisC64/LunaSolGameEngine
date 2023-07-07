@@ -165,6 +165,9 @@
     <ClCompile Include="modules\platform\Windows\DirectX\DirectXCommon.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="modules\platform\Windows\DirectX\DXCameraController.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\LSTimer.h">

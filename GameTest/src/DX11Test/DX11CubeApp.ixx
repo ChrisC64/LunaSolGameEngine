@@ -76,7 +76,8 @@ namespace gt
     Cube g_Cube;
     XMVECTOR g_UpVec = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
     XMVECTOR g_LookAtDefault = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
-    LS::DX::DXCamera g_camera(SCREEN_WIDTH, SCREEN_HEIGHT, XMVectorSet(0.0f, 0.0f, -5.0f, 0.0f), g_LookAtDefault, g_UpVec, 120.0f);
+    LS::DX::DXCamera g_camera(SCREEN_WIDTH, SCREEN_HEIGHT, XMVectorSet(0.0f, 0.0f, -5.0f, 0.0f), g_LookAtDefault, g_UpVec, 30.0f);
+    LS::DX::FreeFlyCameraControllerDX g_cameraController(g_camera);
     constexpr auto g_indexData = Geo::Generator::CreateCubeIndexArray();
     LS::LSTimer<std::uint64_t, 1ul, 1000ul> g_timer;
     ComPtr<ID3D11Buffer> g_viewBuffer, g_projBuffer, g_modelBuffer;
@@ -157,8 +158,14 @@ namespace gt
     void UpdateCamera()
     {
         g_camera.Mvp = g_Cube.Transform;
-        g_camera.UpdateProjection();
+        g_cameraController.UpdateProjection();
         g_camera.UpdateView();
+        XMFLOAT3 rightVec;
+        XMFLOAT3 upVec;
+        XMFLOAT3 forwardVec;
+        XMStoreFloat3(&rightVec, g_camera.Right);
+        XMStoreFloat3(&upVec, g_camera.Up);
+        XMStoreFloat3(&forwardVec, g_camera.Forward);
     }
 
     void UpdateMovement()
@@ -188,8 +195,9 @@ namespace gt
         }
 
         //g_camera.TranslatePosition(movement);
-        g_camera.Walk(movement.z);
-        g_camera.Strafe(movement.x);
+        g_cameraController.Walk(movement.z);
+        g_cameraController.Strafe(movement.x);
+        //g_camera.Move(LS::Vec3F{.x = movement.x, .y = 0.0f, .z = movement.z});
     }
 
     void OnKeyboardDown(const LS::InputKeyDown& input);
@@ -198,6 +206,7 @@ namespace gt
     void OnMouseUp(const LS::InputMouseUp& input);
     void OnMouseMove(uint32_t x, uint32_t y);
     void OnMouseWheel(const LS::InputMouseWheelScroll& input);
+    void OnWindowEvent(LS::LS_WINDOW_EVENT ev);
 
 
     void PreDraw(ComPtr<ID3D11DeviceContext4>& context);
@@ -223,10 +232,15 @@ LS::ENGINE_CODE gt::Init()
 
     RegisterKeyboardInput(App, OnKeyboardDown, OnKeyboardUp);
     RegisterMouseInput(App, OnMouseDown, OnMouseUp, OnMouseWheel, OnMouseMove);
+    window->RegisterWindowEventCallback(OnWindowEvent);
     g_device.CreateDevice();
 
     auto immContext = g_device.GetImmediateContext();
-
+    /*LS::LSSwapchainInfo swapchain;
+    swapchain.Width = window->GetWidth();
+    swapchain.Height = window->GetHeight();
+    HWND hwnd = (HWND)window->GetHandleToWindow();
+    g_device.CreateSwapchain(hwnd, swapchain);*/
     g_device.CreateSwapchain(window.get());
 
     LS::Log::TraceDebug(L"Compiling shaders....");
@@ -396,8 +410,9 @@ void gt::Run()
         Present1(g_device.GetSwapChain().Get(), 1);
 
         // Update Buffers //
-        LS::Win32::UpdateSubresource(context.Get(), g_modelBuffer.Get(), 0, &g_camera.Mvp);
-        LS::Win32::UpdateSubresource(context.Get(), g_viewBuffer.Get(), 0, &g_camera.View);
+        LS::Win32::UpdateSubresource(context.Get(), g_modelBuffer.Get(), &g_camera.Mvp);
+        LS::Win32::UpdateSubresource(context.Get(), g_viewBuffer.Get(),  &g_camera.View);
+        LS::Win32::UpdateSubresource(context.Get(), g_projBuffer.Get(),  &g_camera.Projection);
     }
 }
 
@@ -453,7 +468,7 @@ void gt::OnMouseMove(uint32_t x, uint32_t y)
         int ly = y - g_lastPoint.y;
         auto dt = g_timer.GetDeltaTime().count() / 1'000.0f;
         float mx = lx * 10.5f * dt;
-        float my = ly * 8.75f * dt;
+        float my = ly * 10.75f * dt;
         // Normalize between screen size //
         /*auto nx = px / (float)SCREEN_WIDTH;
         auto ny = py / (float)SCREEN_HEIGHT;*/
@@ -464,16 +479,40 @@ void gt::OnMouseMove(uint32_t x, uint32_t y)
         //auto value = nx / 360.0;
         //auto value = std::lerp(0.0f, 360.0f, nx);
         std::cout << "Value: " << mx << "\n";
-        g_camera.RotateYaw(mx);
-        g_camera.RotatePitch(my);
+        g_cameraController.RotateYaw(mx);
+        g_cameraController.RotatePitch(my);
         g_lastPoint.x = x;
         g_lastPoint.y = y;
     }
 }
 
+static double deltaCounter = 50.0;
 void gt::OnMouseWheel(const LS::InputMouseWheelScroll& input)
 {
     std::cout << std::format("Mouse Wheel Scroll: {}, Coords: {}, {}\n", input.Delta, input.X, input.Y);
+    const auto upperBounds = 120.0f;
+    const auto lowerBounds = 30.0f;
+    const auto counterLimit = 100.0;
+
+    deltaCounter += input.Delta * 2.0f;
+
+    if (deltaCounter > counterLimit)
+        deltaCounter = counterLimit;
+    if (deltaCounter < 0.0)
+        deltaCounter = 0.0;
+
+    auto value = std::lerp(lowerBounds, upperBounds, deltaCounter / counterLimit);
+
+    g_camera.FovVertical = value;
+}
+
+void gt::OnWindowEvent(LS::LS_WINDOW_EVENT ev)
+{
+    using enum LS::LS_WINDOW_EVENT;
+    if (ev == WINDOW_RESIZE_END)
+    {
+
+    }
 }
 
 void gt::PreDraw(ComPtr<ID3D11DeviceContext4>& context)
@@ -484,6 +523,7 @@ void gt::PreDraw(ComPtr<ID3D11DeviceContext4>& context)
     SetTopology(context.Get(), D3D11_PRIMITIVE_TOPOLOGY::D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     SetInputlayout(context.Get(), inputLayout.Get());
     SetViewport(context.Get(), static_cast<float>(App->Window->GetWidth()), static_cast<float>(App->Window->GetHeight()));
+    //SetViewport(context.Get(), static_cast<float>(App->Window->GetWidth()), static_cast<float>(App->Window->GetHeight() - 100.0f), 0.0f, 100.0f);
     // Bind to State //
     BindVS(context.Get(), vertShader.Get());
     BindPS(context.Get(), pixShader.Get());

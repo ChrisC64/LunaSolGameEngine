@@ -96,7 +96,7 @@ export namespace LS
             m_onWindowEvent = callback;
         }
 
-        void RegisterCursorMoveCallback(CursorMoveCallback callback)
+        void RegisterMouseMoveCallback(LSOnMouseMove callback)
         {
             m_onCursorMove = callback;
         }
@@ -107,7 +107,7 @@ export namespace LS
         uint32_t m_height;
         bool m_bIsOpen = false;
 
-        CursorMoveCallback m_onCursorMove;
+        LSOnMouseMove m_onCursorMove;
         LSOnKeyboardDown m_onKeyDown;
         LSOnKeyboardUp m_onKeyUp;
         LSOnMouseDown m_onMouseDown;
