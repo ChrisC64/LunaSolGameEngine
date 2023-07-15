@@ -174,23 +174,47 @@ namespace LS::Win32
             m_height = GET_Y_LPARAM(lparam);
             if (wparam == SIZE_MAXIMIZED)
             {
+                std::cout << "SIZE_MAXIMIZED\n";
+                if (m_bIsMinimized)
+                {
+                    m_bIsMinimized = false;
+                }
                 if (m_onWindowEvent)
                     m_onWindowEvent(LS::LS_WINDOW_EVENT::MAXIMIZED_WINDOW);
             }
             else if (wparam == SIZE_MINIMIZED)
             {
-                m_bIsResizing = true;
+                std::cout << "SIZE_MINIMIZED\n";
+                if (!m_bIsMinimized)
+                {
+                    m_bIsMinimized = true;
+                }
                 if (m_onWindowEvent)
                     m_onWindowEvent(LS::LS_WINDOW_EVENT::MINIMIZED_WINDOW);
             }
             else if (wparam == SIZE_RESTORED)
             {
-                m_bIsResizing = false;
-                if (m_onWindowEvent)
-                    m_onWindowEvent(LS::LS_WINDOW_EVENT::RESTORED_WINDOW);
+                std::cout << "SIZE_RESTORED\n";
+                if (m_bIsResizing)
+                {
+                    // Window was being resized by user, now they have stopped resizing the window
+                    m_bIsResizing = false;
+                    std::cout << "WINDOW RESIZE END\n";
+                    if (m_onWindowEvent)
+                        m_onWindowEvent(LS::LS_WINDOW_EVENT::WINDOW_RESIZE_END);
+                }
+                if (m_bIsMinimized)
+                {
+                    // Window was minimized but is now being restored out from minimization
+                    m_bIsMinimized = false;
+                    std::cout << "RESTORED WINDOW\n";
+                    if (m_onWindowEvent)
+                        m_onWindowEvent(LS::LS_WINDOW_EVENT::RESTORED_WINDOW);
+                }
             }
             else
             {
+                std::cout << "RESIZE_END\n";
                 if (m_onWindowEvent)
                     m_onWindowEvent(LS::LS_WINDOW_EVENT::WINDOW_RESIZE_END);
             }

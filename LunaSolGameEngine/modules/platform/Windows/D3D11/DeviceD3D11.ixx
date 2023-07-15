@@ -25,7 +25,9 @@ export namespace LS::Win32
         void CreateSwapchain(HWND winHandle, const LS::LSSwapchainInfo& swapchainInfo);
         void CreateSwapchain(const LS::LSWindowBase* window, PIXEL_COLOR_FORMAT format = PIXEL_COLOR_FORMAT::RGBA8_UNORM, uint32_t bufferSize = 2);
         void CreateSwapchainAsTexture(const LS::LSWindowBase* window, PIXEL_COLOR_FORMAT format = PIXEL_COLOR_FORMAT::RGBA8_UNORM, uint32_t bufferSize = 2);
+        auto ResizeSwapchain(uint32_t width, uint32_t height) noexcept -> HRESULT;
         void PrintDisplays(const std::vector<WRL::ComPtr<IDXGIAdapter>>& adapters);
+        void DebugPrintLiveObjects();
 
         [[nodiscard]] auto CreateDeferredContext(ID3D11DeviceContext** pDeferredContext) noexcept -> HRESULT;
         [[nodiscard]] auto CreateDeferredContext2(ID3D11DeviceContext2** ppDeferredContext) noexcept -> HRESULT;
@@ -56,7 +58,7 @@ export namespace LS::Win32
         [[nodiscard]] 
         virtual auto CreateContext() noexcept -> Nullable<Ref<LS::ILSContext>> final;
         virtual void Shutdown() noexcept final;
-
+        
     private:
         bool                                            m_bIsInitialized = false;
         WRL::ComPtr<ID3D11Device5>                      m_pDevice = nullptr;
@@ -66,5 +68,6 @@ export namespace LS::Win32
         WRL::ComPtr<ID3D11Texture2D>                    m_pBackBufferFrame = nullptr;
         WRL::ComPtr<ID3D11DepthStencilView>             m_pDepthStencil = nullptr;// @brief depth stencil based on back buffer
         D3D_FEATURE_LEVEL                               m_featureLevel{};
+        LS::LSSwapchainInfo                             m_swapchainLS;
     };
 }

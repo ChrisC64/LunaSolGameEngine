@@ -163,7 +163,7 @@ void DeviceD3D11::CreateDevice(WRL::ComPtr<IDXGIAdapter> displayAdapter, bool is
 void DeviceD3D11::CreateSwapchain(HWND winHandle, const LS::LSSwapchainInfo& swapchainInfo)
 {
     using namespace Microsoft::WRL;
-
+    m_swapchainLS = swapchainInfo;
     auto swDesc1 = BuildSwapchainDesc1(swapchainInfo);
     WRL::ComPtr<IDXGIDevice1> dxgiDevice1;
     auto hr = Utils::QueryInterfaceFor(m_pDevice, dxgiDevice1);
@@ -189,7 +189,7 @@ void DeviceD3D11::CreateSwapchain(HWND winHandle, const LS::LSSwapchainInfo& swa
     Utils::ThrowIfFailed(hr, "Failed to create swap chain for HWND in DX11 Device");
 }
 
-void DeviceD3D11::CreateSwapchain(const LSWindowBase* window, PIXEL_COLOR_FORMAT format, uint32_t bufferSize)
+void DeviceD3D11::CreateSwapchain(const LSWindowBase* window, PIXEL_COLOR_FORMAT format /*PIXEL_COLOR_FORMAT::RGBA8_UNORM*/, uint32_t bufferSize /*2*/)
 {
     LS::LSSwapchainInfo info{
         .BufferSize = bufferSize,
@@ -204,7 +204,7 @@ void DeviceD3D11::CreateSwapchain(const LSWindowBase* window, PIXEL_COLOR_FORMAT
     CreateSwapchain(static_cast<HWND>(window->GetHandleToWindow()), info);
 }
 
-void DeviceD3D11::CreateSwapchainAsTexture(const LS::LSWindowBase* window, PIXEL_COLOR_FORMAT format, uint32_t bufferSize)
+void DeviceD3D11::CreateSwapchainAsTexture(const LS::LSWindowBase* window, PIXEL_COLOR_FORMAT format /*PIXEL_COLOR_FORMAT::RGBA8_UNORM*/, uint32_t bufferSize /*2*/)
 {
     LS::LSSwapchainInfo info{
         .BufferSize = bufferSize,
@@ -236,6 +236,24 @@ void DeviceD3D11::CreateSwapchainAsTexture(const LS::LSWindowBase* window, PIXEL
     }
 }
 
+auto LS::Win32::DeviceD3D11::ResizeSwapchain(uint32_t width, uint32_t height) noexcept -> HRESULT
+{
+    assert(m_pSwapchain);
+    if (!m_pSwapchain)
+        return E_POINTER;
+    if (m_pBackBufferFrame)
+    {
+        m_pBackBufferFrame = nullptr;
+    }
+    m_swapchainLS.Width = width;
+    m_swapchainLS.Height = height;
+
+    const auto bufferSize = m_swapchainLS.BufferSize;
+    const auto format = ToDxgiFormat(m_swapchainLS.PixelFormat);
+    return m_pSwapchain->ResizeBuffers(bufferSize, width, height, format, 0);
+    //return m_pSwapchain->ResizeBuffers(0, 0, 0, DXGI_FORMAT_UNKNOWN, 0);
+}
+
 void LS::Win32::DeviceD3D11::PrintDisplays(const std::vector<WRL::ComPtr<IDXGIAdapter>>& adapters)
 {
 
@@ -265,6 +283,21 @@ void LS::Win32::DeviceD3D11::PrintDisplays(const std::vector<WRL::ComPtr<IDXGIAd
         o->GetDesc(&desc);
         print(desc);
     }
+}
+
+void LS::Win32::DeviceD3D11::DebugPrintLiveObjects()
+{
+#ifdef _DEBUG
+    if (m_pDebug)
+    {
+        HRESULT hr = m_pDebug->ReportLiveDeviceObjects(D3D11_RLDO_DETAIL);
+        if (FAILED(hr))
+        {
+            LS_LOG_DEBUG("Failed to report live objects!\n");
+        }
+        Utils::ComRelease(m_pDebug.GetAddressOf());
+    }
+#endif
 }
 
 auto DeviceD3D11::CreateDeferredContext(ID3D11DeviceContext** ppDeferredContext) noexcept -> HRESULT
@@ -366,8 +399,12 @@ auto DeviceD3D11::CreateDepthStencilViewForSwapchain([[maybe_unused]] ID3D11Rend
     assert(m_pDevice);
     assert(pRenderTargetView);
     assert(m_pSwapchain);
-
+    //TODO: Why did I want to save the back buffer frame? Maybe reconsider and remove. 
     auto result = m_pSwapchain->GetBuffer(0, IID_PPV_ARGS(&m_pBackBufferFrame));
+#ifdef _DEBUG
+    std::string debug = "Back Buffer Texture2D";
+    m_pBackBufferFrame->SetPrivateData(WKPDID_D3DDebugObjectName, debug.size(), debug.data());
+#endif
     if (FAILED(result))
         return result;
 

@@ -48,6 +48,7 @@ export namespace LS::Win32
         uint32_t m_prevWidth = 0u;
         uint32_t m_prevHeight = 0u;
         bool m_bIsResizing = false;
+        bool m_bIsMinimized = false;
         MSG m_msg;
         HBRUSH m_bgBrush;
         void Initialize(uint32_t width, uint32_t height, std::wstring_view title);

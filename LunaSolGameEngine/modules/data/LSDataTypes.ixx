@@ -8,7 +8,7 @@ export module Data.LSDataTypes;
 export
 {
     // Typedefs //
-// Reference Pointers //
+    // Reference Pointers //
     template <class T, typename Deleter = std::default_delete<T>>
     using Ref = std::unique_ptr<T, Deleter>;
     template <class T, typename Deleter>

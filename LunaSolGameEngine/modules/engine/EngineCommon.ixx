@@ -66,7 +66,8 @@ namespace LS
 
         Ref<LSWindowBase> Window;
         std::vector<std::string_view> CommandArgs;
-
+        bool IsRunning = false;
+        bool IsPaused = false;
     private:
         AppInitFunc InitFunc;
         AppRunFunc RunFunc;
@@ -111,6 +112,7 @@ namespace LS
 
     void LSApp::Run()
     {
+        IsRunning = true;
         if (RunFunc)
         {
             RunFunc();

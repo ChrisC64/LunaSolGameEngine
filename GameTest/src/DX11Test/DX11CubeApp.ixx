@@ -17,6 +17,10 @@ module;
 #include <compare>
 #include <cmath>
 #include <unordered_map>
+#include <mutex>
+#include <condition_variable>
+#include <barrier>
+#include <thread>
 #include <d3d11_4.h>
 
 #include "LSTimer.h"
@@ -76,7 +80,7 @@ namespace gt
     Cube g_Cube;
     XMVECTOR g_UpVec = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
     XMVECTOR g_LookAtDefault = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
-    LS::DX::DXCamera g_camera(SCREEN_WIDTH, SCREEN_HEIGHT, XMVectorSet(0.0f, 0.0f, -5.0f, 0.0f), g_LookAtDefault, g_UpVec, 30.0f);
+    LS::DX::DXCamera g_camera(SCREEN_WIDTH, SCREEN_HEIGHT, XMVectorSet(0.0f, 0.0f, -5.0f, 0.0f), g_LookAtDefault, g_UpVec, 90.0f);
     LS::DX::FreeFlyCameraControllerDX g_cameraController(g_camera);
     constexpr auto g_indexData = Geo::Generator::CreateCubeIndexArray();
     LS::LSTimer<std::uint64_t, 1ul, 1000ul> g_timer;
@@ -89,7 +93,11 @@ namespace gt
     ComPtr<ID3D11InputLayout> inputLayout;
     ComPtr<ID3D11Buffer> vertexBuffer;
     ComPtr<ID3D11Buffer> indexBuffer;
+    ComPtr<ID3D11DeviceContext4> g_immContext;
     std::unordered_map<LS::LS_INPUT_KEY, bool> g_keysPressedMap;
+    std::mutex g_pauseMutex;
+    std::condition_variable g_pauseCondition;
+    std::barrier g_pauseSync(1, []() noexcept { std::cout << "Pause sync complete.\n"; });
 
     auto CreateVertexShader(const LS::Win32::DeviceD3D11& device, ComPtr<ID3D11VertexShader>& shader, std::vector<std::byte>& byteCode) -> bool
     {
@@ -211,6 +219,7 @@ namespace gt
 
     void PreDraw(ComPtr<ID3D11DeviceContext4>& context);
     void DrawScene(ComPtr<ID3D11DeviceContext4>& context);
+    void HandleResize(uint32_t width, uint32_t height);
     //TODO: Create common colors in Engine Common or make color conceptl
     std::array<float, 4> g_red = { 1.0f, 0.0f, 0.0f, 1.0f };
     std::array<float, 4> g_green = { 0.0f, 1.0f, 0.0f, 1.0f };
@@ -235,7 +244,7 @@ LS::ENGINE_CODE gt::Init()
     window->RegisterWindowEventCallback(OnWindowEvent);
     g_device.CreateDevice();
 
-    auto immContext = g_device.GetImmediateContext();
+    g_immContext = g_device.GetImmediateContext();
     /*LS::LSSwapchainInfo swapchain;
     swapchain.Width = window->GetWidth();
     swapchain.Height = window->GetHeight();
@@ -379,11 +388,11 @@ LS::ENGINE_CODE gt::Init()
     if (FAILED(dsResult))
         return RESOURCE_CREATION_FAILED;
 
-    CD3D11_DEPTH_STENCIL_DESC defaultDepthDesc(CD3D11_DEFAULT{});
-    ComPtr<ID3D11DepthStencilState> defaultState;
-    auto dss = CreateDepthStencilState(g_device.GetDevice().Get(), defaultDepthDesc).value();
-    defaultState.Attach(dss);
-    LS::Log::TraceDebug(L"Depth stencil created!!");
+    //CD3D11_DEPTH_STENCIL_DESC defaultDepthDesc(CD3D11_DEFAULT{});
+    //ComPtr<ID3D11DepthStencilState> defaultState;
+    //auto dss = CreateDepthStencilState(g_device.GetDevice().Get(), defaultDepthDesc).value();
+    //defaultState.Attach(dss);
+    //LS::Log::TraceDebug(L"Depth stencil created!!");
 
     return LS_SUCCESS;
 }
@@ -392,9 +401,15 @@ void gt::Run()
 {
     App->Window->Show();
     g_timer.Start();
-    auto context = g_device.GetImmediateContext();
     while (App->Window->IsOpen())
     {
+        if (App->IsPaused)
+        {
+            std::cout << "Paused app!\n";
+            using std::chrono::operator""ms;
+            std::this_thread::sleep_for(100ms);
+            continue;
+        }
         auto elapsed = g_timer.GetTotalTimeTicked();
         auto deltaTime = g_timer.GetDeltaTime();
         App->Window->PollEvent();
@@ -405,14 +420,14 @@ void gt::Run()
         UpdateCubeTransform();
         UpdateCamera();
 
-        PreDraw(context);
-        DrawScene(context);
+        PreDraw(g_immContext);
+        DrawScene(g_immContext);
         Present1(g_device.GetSwapChain().Get(), 1);
 
         // Update Buffers //
-        LS::Win32::UpdateSubresource(context.Get(), g_modelBuffer.Get(), &g_camera.Mvp);
-        LS::Win32::UpdateSubresource(context.Get(), g_viewBuffer.Get(),  &g_camera.View);
-        LS::Win32::UpdateSubresource(context.Get(), g_projBuffer.Get(),  &g_camera.Projection);
+        LS::Win32::UpdateSubresource(g_immContext.Get(), g_modelBuffer.Get(), &g_camera.Mvp);
+        LS::Win32::UpdateSubresource(g_immContext.Get(), g_viewBuffer.Get(), &g_camera.View);
+        LS::Win32::UpdateSubresource(g_immContext.Get(), g_projBuffer.Get(), &g_camera.Projection);
     }
 }
 
@@ -509,10 +524,35 @@ void gt::OnMouseWheel(const LS::InputMouseWheelScroll& input)
 void gt::OnWindowEvent(LS::LS_WINDOW_EVENT ev)
 {
     using enum LS::LS_WINDOW_EVENT;
-    if (ev == WINDOW_RESIZE_END)
+    switch (ev)
     {
-
+    case CLOSE_WINDOW:
+    {
+        App->IsRunning = false;
+        App->IsPaused = true;
     }
+    break;
+    case WINDOW_RESIZE_START:
+    {
+        App->IsPaused = true;
+        break;
+    }
+    case WINDOW_RESIZE_END:
+    {
+        const auto width = App->Window->GetWidth();
+        const auto height = App->Window->GetHeight();
+        HandleResize(width, height);
+    }
+    break;
+    case MAXIMIZED_WINDOW:
+    {
+        const auto width = App->Window->GetWidth();
+        const auto height = App->Window->GetHeight();
+        HandleResize(width, height);
+    }
+    break;
+    }
+
 }
 
 void gt::PreDraw(ComPtr<ID3D11DeviceContext4>& context)
@@ -540,4 +580,45 @@ void gt::PreDraw(ComPtr<ID3D11DeviceContext4>& context)
 void gt::DrawScene(ComPtr<ID3D11DeviceContext4>& context)
 {
     DrawIndexed(context.Get(), g_indexData.size());
+}
+
+void gt::HandleResize(uint32_t width, uint32_t height)
+{
+    App->IsPaused = true;
+    ClearDeviceDependentResources(g_immContext.Get());
+    if (rtv)
+    {
+        rtv = nullptr;
+    }
+    if (dsView)
+    {
+        dsView = nullptr;
+    }
+    using std::chrono::operator""ms;
+    std::this_thread::sleep_for(50ms);
+
+    HRESULT hr = g_device.ResizeSwapchain(width, height);
+    if (FAILED(hr))
+    {
+        LS::Log::TraceError(L"Failed to resize the swapchain buffer");
+        g_device.DebugPrintLiveObjects();
+        goto exit_resize;
+    }
+    g_device.CreateSwapchain(App->Window.get());
+    hr = g_device.CreateRTVFromBackBuffer(rtv.GetAddressOf());
+    if (FAILED(hr))
+    {
+        LS::Log::TraceError(L"Failed to create render target view from backbuffer");
+        g_device.DebugPrintLiveObjects();
+        goto exit_resize;
+    }
+    hr = g_device.CreateDepthStencilViewForSwapchain(rtv.Get(), &dsView);
+    if (FAILED(hr))
+    {
+        LS::Log::TraceError(L"Failed to create depth stencil view from backbuffer");
+        g_device.DebugPrintLiveObjects();
+        goto exit_resize;
+    }
+exit_resize:
+    App->IsPaused = false;
 }

@@ -396,4 +396,18 @@ export namespace LS::Win32
 
         return inputs;
     }
+
+    /**
+     * @brief Helps prepare for a screen resize by discarding necessary states that need to be removed when handling a window resize event
+     * @param pContext 
+    */
+    constexpr void ClearDeviceDependentResources(ID3D11DeviceContext* pContext)
+    {
+        assert(pContext);
+        if (!pContext)
+            return;
+        pContext->ClearState();
+        pContext->OMSetRenderTargets(0, nullptr, nullptr);
+        pContext->Flush();
+    }
 }
