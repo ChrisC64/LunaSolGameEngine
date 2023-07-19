@@ -18,13 +18,14 @@ module;
 #include "LSTimer.h"
 export module MultiPassTestApp;
 
-export import LSData;
-export import Engine.Common;
-export import D3D11Lib;
-export import Platform.Win32Window;
-//export import Util.HLSLUtils;
-export import Helper.LSCommonTypes;
-export import Helper.PipelineFactory;
+import LSData;
+import Engine.Common;
+import D3D11Lib;
+import Platform.Win32Window;
+import Helper.LSCommonTypes;
+import Helper.PipelineFactory;
+
+import DirectXCommon;
 
 export namespace gt
 {
@@ -104,7 +105,7 @@ export namespace gt
 
     LS::LSShaderInputSignature g_PosColorUv, g_PosColor;
 
-    LS::ENGINE_CODE Init();
+    LS::System::ErrorCode Init();
     void Run();
     auto App = CreateAppRef(SCREEN_WIDTH, SCREEN_HEIGHT, L"AppTest", std::move(Init), std::move(Run));
 
@@ -179,14 +180,16 @@ namespace gt
         }
 
         Microsoft::WRL::ComPtr<ID3D11InputLayout> pPosColUvIP;
-        device.CreateInputLayout(posColorUvDesc.data(), static_cast<uint32_t>(posColorUvDesc.size()), 
+        HRESULT hr = device.CreateInputLayout(posColorUvDesc.data(), static_cast<uint32_t>(posColorUvDesc.size()), 
             {}, pPosColUvIP.ReleaseAndGetAddressOf());
+        if (FAILED(hr))
+        {
+            throw std::runtime_error("Failed to create input layou");
+        }
     }
 
-    LS::ENGINE_CODE Init()
+    LS::System::ErrorCode Init()
     {
-        using enum LS::ENGINE_CODE;
-
         std::cout << "Hello Luna Sol Game Engine!\n";
         auto& window = App->Window;
         //Ref<LSWindowBase> window = LS::BuildWindow(SCREEN_WIDTH, SCREEN_HEIGHT, L"Hello App");
@@ -230,23 +233,21 @@ namespace gt
         textureDesc.MiscFlags = 0;
         textureDesc.Usage = D3D11_USAGE_DEFAULT;
         textureDesc.SampleDesc.Count = 1;
-        // TODO: Create 2 or 3 textures (one per context) that is blank and empty
         ComPtr<ID3D11Texture2D> pRenderTargetTexture;
         auto texResult = g_device.GetDevice()->CreateTexture2D(&textureDesc, NULL, &pRenderTargetTexture);
         if (FAILED(texResult))
-            return RESOURCE_CREATION_FAILED;
+            return System::FailErrorCode(System::ErrorCodeCategory::GENERAL, "Failed to crete render target texture");
 
         ComPtr<ID3D11Texture2D> pTexture;
         textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
         texResult = g_device.GetDevice()->CreateTexture2D(&textureDesc, NULL, &pTexture);
         if (FAILED(texResult))
-            return RESOURCE_CREATION_FAILED;
+            return System::FailErrorCode(System::ErrorCodeCategory::GENERAL, "Failed to texture shader resource");
 
         ComPtr<ID3D11Texture2D> pTexture2;
         texResult = g_device.GetDevice()->CreateTexture2D(&textureDesc, NULL, &pTexture2);
         if (FAILED(texResult))
-            return RESOURCE_CREATION_FAILED;
-        // TODO: Create SRVs that point to the 2 or 3 textures we make from above
+            return System::FailErrorCode(System::ErrorCodeCategory::GENERAL, "Failed to create texture");
         ComPtr<ID3D11ShaderResourceView> pTexturRenderTargetSRV;
         ComPtr<ID3D11ShaderResourceView> pTextureView1;
         ComPtr<ID3D11ShaderResourceView> pTextureView2;
@@ -261,17 +262,17 @@ namespace gt
         auto srvResult = g_device.GetDevice()->CreateShaderResourceView(pRenderTargetTexture.Get(), &texresView, &pTexturRenderTargetSRV);
         if (FAILED(srvResult))
         {
-            return RESOURCE_CREATION_FAILED;
+            return System::FailErrorCode(System::ErrorCodeCategory::GENERAL, "Failed to create shader resource view");
         }
         srvResult = g_device.GetDevice()->CreateShaderResourceView(pTexture.Get(), &texresView, &pTextureView1);
         if (FAILED(srvResult))
         {
-            return RESOURCE_CREATION_FAILED;
+            return System::FailErrorCode(System::ErrorCodeCategory::GENERAL, "Failed to create shader resource view for texture");
         }
         srvResult = g_device.GetDevice()->CreateShaderResourceView(pTexture2.Get(), &texresView, &pTextureView2);
         if (FAILED(srvResult))
         {
-            return RESOURCE_CREATION_FAILED;
+            return System::FailErrorCode(System::ErrorCodeCategory::GENERAL, "Failed to create shader resource view for texture 2");
         }
 
         ComPtr<ID3D11SamplerState> pSampler;
@@ -281,7 +282,7 @@ namespace gt
         samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
         auto samplerResult = g_device.GetDevice()->CreateSamplerState(&samplerDesc, &pSampler);
         if (FAILED(samplerResult))
-            return RESOURCE_CREATION_FAILED;
+            return System::FailErrorCode(System::ErrorCodeCategory::GENERAL, "Failed to create sampler");
 
         // END TEXTURE STUFF //
 
@@ -311,7 +312,7 @@ namespace gt
         ComPtr<ID3D11DepthStencilView> dsView;
         auto dsResult = g_device.CreateDepthStencilViewForSwapchain(defaultRTView.Get(), &dsView);
         if (FAILED(dsResult))
-            return RESOURCE_CREATION_FAILED;
+            return System::FailErrorCode(System::ErrorCodeCategory::GENERAL, "Failed to crete depth stencil view");
 
         CD3D11_DEPTH_STENCIL_DESC defaultDepthDesc(CD3D11_DEFAULT{});
         ComPtr<ID3D11DepthStencilState> defaultState;
@@ -344,7 +345,7 @@ namespace gt
 
         result = g_device.CreateBlendState(blendDesc, &blendState);
         if (FAILED(result))
-            return RESOURCE_CREATION_FAILED;
+            return System::FailErrorCode(System::ErrorCodeCategory::GENERAL, "Failed to crete blend state");
 
         auto createDeferredContext = [&]() -> ComPtr<ID3D11DeviceContext>
         {
@@ -386,27 +387,27 @@ namespace gt
         // Vertex Shaders //
         auto vsDataOpt = ReadShaderFile(vsPath);
         if (!vsDataOpt)
-            return FILE_ERROR;
+            return System::FailErrorCode(System::ErrorCodeCategory::GENERAL, "Failed to read vertex shader 2");
         auto& vsData = vsDataOpt.value();
         auto vsData2Opt = ReadShaderFile(vsPath2);
         if (!vsData2Opt)
-            return FILE_ERROR;
+            return System::FailErrorCode(System::ErrorCodeCategory::GENERAL, "Failed to read vertex shader 1");
         auto& vsData2 = vsData2Opt.value();
         auto psDataOpt = ReadShaderFile(psPath);
         if (!psDataOpt)
-            return FILE_ERROR;
+            return System::FailErrorCode(System::ErrorCodeCategory::GENERAL, "Failed to read pixel shader");
         auto& psData = psDataOpt.value();
         auto psData2Opt = ReadShaderFile(psPath2);
         if (!psData2Opt)
-            return FILE_ERROR;
+            return System::FailErrorCode(System::ErrorCodeCategory::GENERAL, "Failed to read pixel shader 2");
         auto& psData2 = psData2Opt.value();
         auto texPSDataOpt = ReadShaderFile(texPSPath);
         if (!texPSDataOpt)
-            return FILE_ERROR;
+            return System::FailErrorCode(System::ErrorCodeCategory::GENERAL, "Failed to read texture shader");
         auto& texPSData = texPSDataOpt.value();
         auto fsQuadOpt = ReadShaderFile(fsQuadPath);
         if (!fsQuadOpt)
-            return FILE_ERROR;
+            return System::FailErrorCode(System::ErrorCodeCategory::GENERAL, "Failed to read full screen quad shader");
         auto& fsQuadData = fsQuadOpt.value();
 
         // END SHADER FILE OPERATIONS //
@@ -421,22 +422,22 @@ namespace gt
 
         auto shaderResult = CreateVertexShader(g_device, vsShader2, vsData);
         if (!shaderResult)
-            return FILE_ERROR;
+            return System::FailErrorCode(System::ErrorCodeCategory::GENERAL, "Failed to create vertex shader");
         shaderResult = CreateVertexShader(g_device, vsShader, vsData2);
         if (!shaderResult)
-            return FILE_ERROR;
+            return System::FailErrorCode(System::ErrorCodeCategory::GENERAL, "Failed to create vertex shader 2");
         shaderResult = CreatePixelShader(g_device, psShader, psData);
         if (!shaderResult)
-            return FILE_ERROR;
+            return System::FailErrorCode(System::ErrorCodeCategory::GENERAL, "Failed to create pixel shader");
         shaderResult = CreatePixelShader(g_device, psShader2, psData2);
         if (!shaderResult)
-            return FILE_ERROR;
+            return System::FailErrorCode(System::ErrorCodeCategory::GENERAL, "Failed to create pixel shader 2");
         shaderResult = CreatePixelShader(g_device, texPS, texPSData);
         if (!shaderResult)
-            return FILE_ERROR;
+            return System::FailErrorCode(System::ErrorCodeCategory::GENERAL, "Failed to create texture shader");
         shaderResult = CreateVertexShader(g_device, fsQuadShader, fsQuadData);
         if (!shaderResult)
-            return FILE_ERROR;
+            return System::FailErrorCode(System::ErrorCodeCategory::GENERAL, "Failed to create full screen quad shader");
 
         // Build Shader Input Signatures //
         g_PosColorUv.AddElement(LS::ShaderElement{ .ShaderData = SHADER_DATA_TYPE::FLOAT4, .SemanticName {"POSITION"},
@@ -518,7 +519,7 @@ namespace gt
         result = g_device.CreateBuffer(&bufferDesc, &subData, &vertexBuffer);
         if (FAILED(result))
         {
-            return RESOURCE_CREATION_FAILED;
+            return System::FailErrorCode(System::ErrorCodeCategory::GENERAL, "Failed to create vertex buffer");
         }
 
         // Camera //
@@ -553,13 +554,26 @@ namespace gt
 
         // Initialize Buffers //
         ComPtr<ID3D11Buffer> viewBuffer, projBuffer, modelBuffer, indexBuffer, colorRedBuffer, colorGreenBuffer, colorBlueBuffer;
-        g_device.CreateBuffer(&matBD, &viewSRD, &viewBuffer);
-        g_device.CreateBuffer(&matBD, &projSRD, &projBuffer);
-        g_device.CreateBuffer(&matBD, &modelSRD, &modelBuffer);
-        g_device.CreateBuffer(&indexBD, &indexSRD, &indexBuffer);
-        g_device.CreateBuffer(&colorBD, &colorRedSRD, &colorRedBuffer);
-        g_device.CreateBuffer(&colorBD, &colorGreenSRD, &colorGreenBuffer);
-        g_device.CreateBuffer(&colorBD, &colorBlueSRD, &colorBlueBuffer);
+        HRESULT hr = g_device.CreateBuffer(&matBD, &viewSRD, &viewBuffer);
+        auto hrCheck = [](HRESULT hr, std::string_view msg) {
+            if (FAILED(hr))
+            {
+                throw std::runtime_error(msg.data());
+            }
+        };
+        hrCheck(hr, "Failed to create view buffer");
+        hr = g_device.CreateBuffer(&matBD, &projSRD, &projBuffer);
+        hrCheck(hr, "Failed to create projection buffer");
+        hr = g_device.CreateBuffer(&matBD, &modelSRD, &modelBuffer);
+        hrCheck(hr, "Failed to create model buffer");
+        hr = g_device.CreateBuffer(&indexBD, &indexSRD, &indexBuffer);
+        hrCheck(hr, "Failed to create index buffer");
+        hr = g_device.CreateBuffer(&colorBD, &colorRedSRD, &colorRedBuffer);
+        hrCheck(hr, "Failed to create red color buffer");
+        hr = g_device.CreateBuffer(&colorBD, &colorGreenSRD, &colorGreenBuffer);
+        hrCheck(hr, "Failed to create green color buffer");
+        hr = g_device.CreateBuffer(&colorBD, &colorBlueSRD, &colorBlueBuffer);
+        hrCheck(hr, "Failed to create blue color buffer");
 
         UINT stride = sizeof(Vertex);
         /// SET PIPELINE STATE ///
@@ -651,18 +665,18 @@ namespace gt
         //---------------------- IMMEDIATE CONTEXT END ---------------------------//
 
         //ComPtr<ID3D11CommandList> command1, command2;
-        auto hr = context1->FinishCommandList(FALSE, &command1);
+        hr = context1->FinishCommandList(FALSE, &command1);
         if (FAILED(hr))
-            return LS_ERROR;
+            return System::FailErrorCode(System::ErrorCodeCategory::GENERAL, "Failed to create command list");
 
         hr = context2->FinishCommandList(FALSE, &command2);
         if (FAILED(hr))
-            return LS_ERROR;
+            return System::FailErrorCode(System::ErrorCodeCategory::GENERAL, "Failed to create command list");
 
         // Show Window and Start Timer - duh... //
         window->Show();
         g_timer.Start();
-        return LS_SUCCESS;
+        return System::SuccessErrorCode();
     }
 
     void Run()

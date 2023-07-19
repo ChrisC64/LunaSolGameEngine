@@ -11,7 +11,6 @@
 #include <Windows.h>
 #endif // 
 
-#define LS_ENABLE_LOG 1
 import Engine.Logger;
 import Engine.EngineCodes;
 import DX11CubeApp;
@@ -42,8 +41,11 @@ int main(int argc, char* argv[])
     std::cerr << "An output to file will occur for cerr\n";*/
     LS::Log::InitLog();
     auto appcode = gt::App->Initialize(argc, argv);
-    if (!LS::IsSuccessCode(appcode))
+    if (!appcode)
+    {
+        std::cout << appcode.Message() << "\n";
         return -1;
+    }
     gt::App->Run();
 }
 

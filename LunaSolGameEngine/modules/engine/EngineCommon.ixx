@@ -14,9 +14,6 @@ export import Engine.LSDevice;
 export import Engine.LSWindow;
 export import Engine.LSCamera;
 export import Engine.EngineCodes;
-#ifdef LS_WINDOWS_BUILD
-export import Engine.DXCamera;
-#endif
 
 export namespace LS::Global
 {
@@ -45,15 +42,15 @@ namespace LS
     */
     export auto BuildWindow(uint32_t width, uint32_t height, std::wstring_view title) noexcept -> Ref<LSWindowBase>;
 
-    export 
+    export
     {
-        using AppInitFunc = std::function<ENGINE_CODE()>;
+        using AppInitFunc = std::function<LS::System::ErrorCode()>;
         using AppRunFunc = std::function<void()>;
     }
 
     struct LSApp
     {
-        LSApp(uint32_t width, uint32_t height, 
+        LSApp(uint32_t width, uint32_t height,
             std::wstring_view title, AppInitFunc&& initFunc, AppRunFunc&& runFunc);
         ~LSApp() = default;
 
@@ -63,22 +60,24 @@ namespace LS
         LSApp(LSApp&&) = default;
         LSApp& operator=(LSApp&&) = default;
 
-        ENGINE_CODE Initialize(int argCount, char* argsV[]);
-        ENGINE_CODE Initialize();
+        System::ErrorCode Initialize(int argCount, char* argsV[]);
+        System::ErrorCode Initialize();
         void Run();
 
         Ref<LSWindowBase> Window;
-
-    protected:
         std::vector<std::string_view> CommandArgs;
-
+        bool IsRunning = false;
+        bool IsPaused = false;
     private:
         AppInitFunc InitFunc;
         AppRunFunc RunFunc;
     };
 
-    export auto CreateAppRef(uint32_t width, uint32_t height, 
+    export auto CreateAppRef(uint32_t width, uint32_t height,
         std::wstring_view title, AppInitFunc&& initFunc, AppRunFunc&& runFunc) -> Ref<LSApp>;
+
+    export void RegisterKeyboardInput(Ref<LSApp>& app, LSOnKeyboardDown onKeyDown, LSOnKeyboardUp onKeyUp);
+    export void RegisterMouseInput(Ref<LSApp>& app, LSOnMouseDown onMouseDown, LSOnMouseUp onMouseUp, LSOnMouseWheelScroll mouseWheel, LSOnMouseMove cursorMove);
 }
 
 module : private;
@@ -91,7 +90,7 @@ namespace LS
         Window = BuildWindow(width, height, title);
     }
 
-    ENGINE_CODE LSApp::Initialize(int argCount, char* argsV[])
+    System::ErrorCode LSApp::Initialize(int argCount, char* argsV[])
     {
         CommandArgs = std::vector<std::string_view>(argsV + 1, argsV + argCount);
 
@@ -99,20 +98,21 @@ namespace LS
         {
             return InitFunc();
         }
-        return ENGINE_CODE::LS_SUCCESS;
+        return System::ErrorCode(System::ErrorStatus::SUCCESS, System::ErrorCodeCategory::GENERAL, "App initialized");
     }
-    
-    ENGINE_CODE LSApp::Initialize()
+
+    System::ErrorCode LSApp::Initialize()
     {
         if (InitFunc)
         {
             return InitFunc();
         }
-        return ENGINE_CODE::LS_SUCCESS;
+        return System::ErrorCode(System::ErrorStatus::SUCCESS, System::ErrorCodeCategory::GENERAL, "App initialized");
     }
 
     void LSApp::Run()
     {
+        IsRunning = true;
         if (RunFunc)
         {
             RunFunc();
@@ -121,8 +121,24 @@ namespace LS
 
     auto CreateAppRef(uint32_t width, uint32_t height, std::wstring_view title, AppInitFunc&& initFunc, AppRunFunc&& runFunc) -> Ref<LSApp>
     {
-        //LSApp out(width, height, title, std::move(initFunc), std::move(runFunc));
         auto out = std::make_unique<LSApp>(width, height, title, std::move(initFunc), std::move(runFunc));
         return out;
+    }
+
+    void RegisterKeyboardInput(Ref<LSApp>& app, LSOnKeyboardDown onKeyDown, LSOnKeyboardUp onKeyUp)
+    {
+        if (!app)
+            return;
+        app->Window->RegisterKeyboardDown(onKeyDown);
+        app->Window->RegisterKeyboardUp(onKeyUp);
+    }
+    void RegisterMouseInput(Ref<LSApp>& app, LSOnMouseDown onMouseDown, LSOnMouseUp onMouseUp, LSOnMouseWheelScroll mouseWheel, LSOnMouseMove cursorMove)
+    {
+        if (!app)
+            return;
+        app->Window->RegisterMouseDown(onMouseDown);
+        app->Window->RegisterMouseUp(onMouseUp);
+        app->Window->RegisterMouseWheel(mouseWheel);
+        app->Window->RegisterMouseMoveCallback(cursorMove);
     }
 }

@@ -19,6 +19,10 @@ import D3D11.EngineWrapperD3D11;
 import LSData;
 import Engine.LSDevice;
 
+/**
+ * @brief A list of common helper functions that enable us to perform common functions a little more easily. 
+ * Any content related to memory management should be in the D3D11.MemoryHelper module
+*/
 export namespace LS::Win32
 {
     [[nodiscard]]
@@ -222,7 +226,7 @@ export namespace LS::Win32
         out.MipLevels = texture.MipMapLevels;
         //Array size maps to number of mip maps because each mip map is the texture scaled 
         out.ArraySize = texture.MipMapLevels;
-        out.Format = FromPixelColorFormat(texture.PixelFormat);
+        out.Format = ToDxgiFormat(texture.PixelFormat);
         out.SampleDesc = { .Count = texture.SampleCount, .Quality = texture.SampleQuality };
         out.Usage = FindD3D11Usage(usage);
         out.BindFlags = FindD3D11BindFlag(bindType);
@@ -343,7 +347,9 @@ export namespace LS::Win32
             offset = i + 1u;
             break;
         }
-
+        // Case where the text is "POSITION" no 0 is detected, then offset should be greater than end because of this
+        if (offset > end)
+            return 0u;
         auto substr = semanticName.substr(offset, end);
         size_t pos;
         auto result = 0u;
@@ -353,70 +359,14 @@ export namespace LS::Win32
         }
         catch (std::invalid_argument ex)
         {
-            return 0;
+            return 0u;
         }
         catch (std::out_of_range ex)
         {
-            return 0;
+            return 0u;
         }
 
         return result;
-    }
-
-
-    constexpr DXGI_FORMAT FindDXGIFormat(SHADER_DATA_TYPE shaderData)
-    {
-        using SDT = LS::SHADER_DATA_TYPE;
-
-        switch (shaderData)
-        {
-        case SDT::FLOAT:		return DXGI_FORMAT_R32_FLOAT;
-        case SDT::FLOAT2:		return DXGI_FORMAT_R32G32_FLOAT;
-        case SDT::FLOAT3:		return DXGI_FORMAT_R32G32B32_FLOAT;
-        case SDT::FLOAT4:		return DXGI_FORMAT_R32G32B32A32_FLOAT;
-        case SDT::INT:			return DXGI_FORMAT_R32_SINT;
-        case SDT::INT2:			return DXGI_FORMAT_R32G32_SINT;
-        case SDT::INT3:			return DXGI_FORMAT_R32G32B32_SINT;
-        case SDT::INT4:			return DXGI_FORMAT_R32G32B32A32_SINT;
-        case SDT::UINT:			return DXGI_FORMAT_R32_UINT;
-        case SDT::UINT2:		return DXGI_FORMAT_R32G32_UINT;
-        case SDT::UINT3:		return DXGI_FORMAT_R32G32B32_UINT;
-        case SDT::UINT4:		return DXGI_FORMAT_R32G32B32A32_UINT;
-        case SDT::BOOL:			return DXGI_FORMAT_R32_SINT;// HLSL Bools are 4 bytes 
-        default:
-            throw std::runtime_error("Unsuported DXGI FORMAT for data type.\n");
-            break;
-        }
-    }
-
-    constexpr DXGI_FORMAT FindDXGIFormat(PIXEL_COLOR_FORMAT pixFormat)
-    {
-        using enum PIXEL_COLOR_FORMAT;
-        switch (pixFormat)
-        {
-            // 8 RGBA
-        case RGBA8_SINT: return DXGI_FORMAT_R8G8B8A8_SINT;
-        case RGBA8_UINT: return DXGI_FORMAT_R8G8B8A8_UINT;
-        case RGBA8_SNORM: return DXGI_FORMAT_R8G8B8A8_SNORM;
-        case RGBA8_UNORM: return DXGI_FORMAT_R8G8B8A8_UNORM;
-        case RGBA8_UNKNOWN: return DXGI_FORMAT_R8G8B8A8_TYPELESS;
-            // 16 RGBA
-        case RGBA16_FLOAT: return DXGI_FORMAT_R16G16B16A16_FLOAT;
-        case RGBA16_SINT: return DXGI_FORMAT_R16G16B16A16_SINT;
-        case RGBA16_UINT: return DXGI_FORMAT_R16G16B16A16_UINT;
-        case RGBA16_UNORM: return DXGI_FORMAT_R16G16B16A16_UNORM;
-        case RGBA16_SNORM: return DXGI_FORMAT_R16G16B16A16_SNORM;
-            // 32 RGBA
-        case RGBA32_FLOAT: return DXGI_FORMAT_R32G32B32A32_FLOAT;
-        case RGBA32_SINT: return DXGI_FORMAT_R32G32B32A32_SINT;
-        case RGBA32_UINT: return DXGI_FORMAT_R32G32B32A32_UINT;
-        case RGBA32_UNKNOWN: return DXGI_FORMAT_R32G32B32A32_TYPELESS;
-            // 8 BGRA
-        case BGRA8_UNORM: return DXGI_FORMAT_B8G8R8A8_UNORM;
-        case BGRA8_UNKNOWN: return DXGI_FORMAT_B8G8R8A8_TYPELESS;
-        default:
-            throw std::runtime_error("Unknown PIXEL COLOR FORMAT enum passed for DXGI FORMAT conversion.\n");
-        }
     }
 
     constexpr auto BuildFromShaderElements(std::span<ShaderElement> elements) noexcept -> Nullable<std::vector<D3D11_INPUT_ELEMENT_DESC>>
@@ -445,5 +395,19 @@ export namespace LS::Win32
             return std::nullopt;
 
         return inputs;
+    }
+
+    /**
+     * @brief Helps prepare for a screen resize by discarding necessary states that need to be removed when handling a window resize event
+     * @param pContext 
+    */
+    constexpr void ClearDeviceDependentResources(ID3D11DeviceContext* pContext)
+    {
+        assert(pContext);
+        if (!pContext)
+            return;
+        pContext->ClearState();
+        pContext->OMSetRenderTargets(0, nullptr, nullptr);
+        pContext->Flush();
     }
 }

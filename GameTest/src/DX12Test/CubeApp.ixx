@@ -21,12 +21,12 @@ module;
 
 export module CubeApp;
 
-export import LSData;
-export import Engine.Common;
-export import D3D11Lib;
-export import Platform.Win32Window;
-export import Helper.LSCommonTypes;
-export import Helper.PipelineFactory;
+import LSData;
+import Engine.Common;
+import D3D11Lib;
+import Platform.Win32Window;
+import Helper.LSCommonTypes;
+import Helper.PipelineFactory;
 
 
 inline std::string HrToString(HRESULT hr)
@@ -75,7 +75,7 @@ export struct VertexPT
 
 namespace gt
 {
-    export LS::ENGINE_CODE Init();
+    export LS::System::ErrorCode Init();
     export void Run();
 
     namespace WRL = Microsoft::WRL;
@@ -179,14 +179,15 @@ namespace gt
     void Render(float r, float g, float b, float a);
     void OnDestroy();
 
-    export auto App = CreateAppRef(800, 600, L"Cube App", std::move(Init), std::move(Run));
-    export LS::ENGINE_CODE Init()
-    {
-        using enum LS::ENGINE_CODE;
-        if (!CreateDevice((HWND)App->Window->GetHandleToWindow(), App->Window->GetWidth(), App->Window->GetHeight()))
-            return LS_ERROR;
+    export auto App = LS::CreateAppRef(800, 600, L"Cube App", std::move(Init), std::move(Run));
 
-        return LS_SUCCESS;
+    using namespace LS;
+    export LS::System::ErrorCode Init()
+    {
+        if (!CreateDevice((HWND)App->Window->GetHandleToWindow(), App->Window->GetWidth(), App->Window->GetHeight()))
+            return System::FailErrorCode(System::ErrorCodeCategory::GENERAL, "Failed to create device.");
+
+        return System::SuccessErrorCode();
     }
     export void Run()
     {

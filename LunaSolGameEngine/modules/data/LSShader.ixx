@@ -156,7 +156,7 @@ export namespace LS
             break;
         }
     }
-
+    //TODO: Use a fixed size, like uint64_t or int64_t 
     inline size_t HashShaderElement(ShaderElement const& elem) noexcept
     {
         std::size_t h1 = Utils::HashEnum(elem.ShaderData);
@@ -170,7 +170,6 @@ export namespace LS
         return out;
     }
 
-    //TODO: Implement Shader parser and setup (Input Layout) to make things easier when handling Shaders (HLSL for now)
     struct LSShaderFile
     {
         SHADER_TYPE				m_shaderType;//@brief Shader type

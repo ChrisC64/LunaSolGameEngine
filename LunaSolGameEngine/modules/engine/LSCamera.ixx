@@ -2,12 +2,18 @@ module;
 #include <cstdint>
 #include <compare>
 export module Engine.LSCamera;
-import Data.LSMath.Types;
+import Data.LSMathTypes;
 
 export namespace LS
 {
     struct LSCamera
     {
+        uint32_t Width;
+        uint32_t Height;
+        float FovVertical;//Vertical FOV in radians
+        float FovHorizontal;//Horizontal FOV in radians
+        float NearZ = 0.1f;
+        float FarZ = 100.0f;
         LS::Mat4F Projection;
         LS::Mat4F View;
         LS::Mat4F Mvp;
@@ -17,12 +23,6 @@ export namespace LS
         LS::Vec4F Position;
         LS::Vec4F LookAt;
         LS::Vec4F Up;
-        uint32_t Width;
-        uint32_t Height;
-        float FovAngleV;//Vertical FOV in radians
-        float FovAngleH;//Horizontal FOV in radians
-        float NearZ = 0.1f;
-        float FarZ = 100.0f;
 
         LSCamera() = default;
         ~LSCamera() = default;

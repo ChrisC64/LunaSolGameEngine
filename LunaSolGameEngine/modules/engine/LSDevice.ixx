@@ -264,8 +264,8 @@ namespace LS
         uint32_t            Height;
         PIXEL_COLOR_FORMAT  PixelFormat{ PIXEL_COLOR_FORMAT::RGBA8_UNORM };
         bool                IsStereoScopic{ false };
-        uint16_t            MSCount{ 1 };
-        uint16_t            MSQuality{ 0 };
+        uint16_t            MSCount{ 1u };
+        uint16_t            MSQuality{ 0u };
     };
 
     export struct LSDeviceInfo
@@ -309,13 +309,13 @@ namespace LS
 
     export struct LSDeviceSettings
     {
-        int32_t FPSTarget;
-        bool IsVSync;
-        int32_t FrameBufferCount;
-        LSTextureInfo RenderTargetDesc;
-        LSSwapchainInfo SwapchainInfo;
+        uint32_t FPSTarget;
+        uint32_t FrameBufferCount;
         DEVICE_TYPE DeviceType;
         DEVICE_API DeviceApi;
+        LSTextureInfo RenderTargetDesc;
+        LSSwapchainInfo SwapchainInfo;
+        bool IsVSync;
         LS::LSWindowHandle WindowHandle;
     };
 

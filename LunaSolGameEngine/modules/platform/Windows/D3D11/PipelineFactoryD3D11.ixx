@@ -30,7 +30,6 @@ export namespace LS::Win32
     struct TextureD3D11
     {
         uint16_t                    BindSlot;
-        //TODO: Should I try Variant with 1D/2D/3D texture instead for a little more...saftey?
         WRL::ComPtr<ID3D11Resource> Texture;
     };
 

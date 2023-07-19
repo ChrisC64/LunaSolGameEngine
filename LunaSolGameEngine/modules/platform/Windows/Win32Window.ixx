@@ -5,7 +5,6 @@ module;
 #define NOMINMAX
 #include <Windows.h>
 
-
 export module Platform.Win32Window;
 import LSData;
 import Engine.LSWindow;
@@ -49,19 +48,19 @@ export namespace LS::Win32
         uint32_t m_prevWidth = 0u;
         uint32_t m_prevHeight = 0u;
         bool m_bIsResizing = false;
+        bool m_bIsMinimized = false;
         MSG m_msg;
         HBRUSH m_bgBrush;
         void Initialize(uint32_t width, uint32_t height, std::wstring_view title);
         void OnKeyPress(WPARAM wp);
         void OnKeyRelease(WPARAM wp);
         void GetScreenCoordinates(LPARAM lp, int& x, int& y);
-        void OnMouseMove(int x, int y);
+        void OnMouseMove(uint32_t x, uint32_t y);
         void OnMouseClick(UINT msg, int x, int y);
         void OnMouseRelease(UINT msg, int x, int y);
-        void OnMouseWheelScroll(short zDelta);
+        void OnMouseWheelScroll(short zDelta, int x, int y);
         int ToWindowsKey(LS::LS_INPUT_KEY key);
         LS::LS_INPUT_KEY ToInputKey(WPARAM wparam);
         void TrackMouse(HWND hwnd);
-        void ResizeWindow(uint32_t width, uint32_t height);
     };
 }
