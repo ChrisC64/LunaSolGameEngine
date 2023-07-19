@@ -40,7 +40,7 @@ int main(int argc, char* argv[])
 
     std::cerr << "An output to file will occur for cerr\n";*/
     LS::Log::InitLog();
-    auto appcode = gt::App->Initialize(argc, argv);
+    LS::System::ErrorCode appcode = gt::App->Initialize(argc, argv);
     if (!appcode)
     {
         std::cout << appcode.Message() << "\n";

@@ -98,7 +98,7 @@ namespace LS
         {
             return InitFunc();
         }
-        return System::ErrorCode(System::ErrorStatus::SUCCESS, System::ErrorCodeCategory::GENERAL, "App initialized");
+        return System::ErrorCode(System::ErrorStatus::SUCCESS, System::ErrorCategory::GENERAL, "App initialized");
     }
 
     System::ErrorCode LSApp::Initialize()
@@ -107,7 +107,7 @@ namespace LS
         {
             return InitFunc();
         }
-        return System::ErrorCode(System::ErrorStatus::SUCCESS, System::ErrorCodeCategory::GENERAL, "App initialized");
+        return System::ErrorCode(System::ErrorStatus::SUCCESS, System::ErrorCategory::GENERAL, "App initialized");
     }
 
     void LSApp::Run()

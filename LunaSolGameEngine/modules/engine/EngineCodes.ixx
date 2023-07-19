@@ -47,7 +47,7 @@ export namespace LS
 
     export namespace System
     {
-        enum class ErrorCodeCategory
+        enum class ErrorCategory
         {
             GENERAL = 0x0, //@brief A basic error code meant for any general category types
             GPU,//@brief Graphics Processing Unit (Device) issues
@@ -70,20 +70,19 @@ export namespace LS
         protected:
             const std::string ErrorMsg;
             ErrorStatus ErrStatus = ErrorStatus::ERROR;
-            ErrorCodeCategory ErrCategory = ErrorCodeCategory::GENERAL;
+            ErrorCategory ErrCategory = ErrorCategory::GENERAL;
 
         public:
 
-            explicit ErrorCode(LS::System::ErrorStatus status, LS::System::ErrorCodeCategory category, std::string_view msg) : ErrStatus(status),
+            ErrorCode(LS::System::ErrorStatus status, LS::System::ErrorCategory category, std::string_view msg) : ErrStatus(status),
                 ErrCategory(category),
                 ErrorMsg(msg)
             {}
             
-            explicit ErrorCode(const ErrorCode* sec) : ErrStatus(sec->ErrStatus),
+            /*explicit ErrorCode(const ErrorCode* sec) : ErrStatus(sec->ErrStatus),
                 ErrCategory(sec->ErrCategory),
                 ErrorMsg(sec->ErrorMsg)
-            {}
-
+            {}*/
 
             auto Message() const noexcept -> const std::string_view
             {
@@ -104,7 +103,7 @@ export namespace LS
         class SuccessErrorCode : public ErrorCode
         {
         public:
-            SuccessErrorCode(ErrorCodeCategory category = ErrorCodeCategory::GENERAL, std::string_view msg = "") :
+            SuccessErrorCode(ErrorCategory category = ErrorCategory::GENERAL, std::string_view msg = "") :
                 ErrorCode(ErrorStatus::SUCCESS, category, msg)
             {}
         };
@@ -112,7 +111,7 @@ export namespace LS
         class FailErrorCode : public ErrorCode
         {
         public:
-            FailErrorCode(ErrorCodeCategory category = ErrorCodeCategory::GENERAL, std::string_view msg = "") :
+            FailErrorCode(ErrorCategory category = ErrorCategory::GENERAL, std::string_view msg = "") :
                 ErrorCode(ErrorStatus::ERROR, category, msg)
             {}
         };
