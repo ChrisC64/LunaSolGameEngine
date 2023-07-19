@@ -234,6 +234,7 @@ using namespace LS;
 
 LS::System::ErrorCode gt::Init()
 {
+    using enum LS::System::ErrorStatus;
     auto& window = App->Window;
     LS::ColorRGB bgColor(1.0f, 0.0f, 0.0f);
     window->SetBackgroundColor(bgColor);
@@ -256,8 +257,8 @@ LS::System::ErrorCode gt::Init()
     std::array<wchar_t, _MAX_PATH> modulePath{};
     if (!GetModuleFileName(nullptr, modulePath.data(), static_cast<DWORD>(modulePath.size())))
     {
-        //return LS::System::ErrorCode(LS::System::ErrorStatus::ERROR, LS::System::ErrorCodeCategory::GENERAL, "Failed to find module path.");
-        return LS::System::FailErrorCode(LS::System::ErrorCodeCategory::GENERAL, "Failed to find module path.");
+        //return LS::System::ErrorCode(ERROR, LS::System::ErrorCategory::GENERAL, "Failed to find module path.");
+        return LS::System::FailErrorCode(LS::System::ErrorCategory::GENERAL, "Failed to find module path.");
     }
 
     std::wstring path = std::wstring(modulePath.data());
@@ -269,16 +270,16 @@ LS::System::ErrorCode gt::Init()
     Nullable<std::vector<std::byte>> vsFile = LS::IO::ReadFile(vsPath);
     if (!vsFile)
     {
-        //return System::ErrorCode(System::ErrorStatus::ERROR, System::ErrorCodeCategory::GENERAL, "Failed to read VertexShader.cso file");;
-        return LS::System::FailErrorCode(System::ErrorCodeCategory::GENERAL, "Failed to read VertexShader.cso file");;
+        //return System::ErrorCode(System::ErrorStatus::ERROR, System::ErrorCategory::GENERAL, "Failed to read VertexShader.cso file");;
+        return LS::System::FailErrorCode(System::ErrorCategory::GENERAL, "Failed to read VertexShader.cso file");;
     }
     std::vector<std::byte> vsData = vsFile.value();
 
     Nullable<std::vector<std::byte>> psFile = LS::IO::ReadFile(psPath);
     if (!psFile)
     {
-        //return System::ErrorCode(System::ErrorStatus::ERROR, System::ErrorCodeCategory::GENERAL, "Failed to read PixelShader.cso");
-        return LS::System::FailErrorCode(System::ErrorCodeCategory::GENERAL, "Failed to read PixelShader.cso");
+        //return System::ErrorCode(System::ErrorStatus::ERROR, System::ErrorCategory::GENERAL, "Failed to read PixelShader.cso");
+        return LS::System::FailErrorCode(System::ErrorCategory::GENERAL, "Failed to read PixelShader.cso");
     }
     std::vector<std::byte> psData = psFile.value();
 
@@ -286,16 +287,16 @@ LS::System::ErrorCode gt::Init()
     if (!shaderResult)
     {
         LS::Log::TraceError(L"Failed to create vertex shader");
-        //return System::ErrorCode(System::ErrorStatus::ERROR, System::ErrorCodeCategory::GENERAL, "Failed to create vertex shader");
-        return LS::System::FailErrorCode(System::ErrorCodeCategory::GENERAL, "Failed to create vertex shader");
+        //return System::ErrorCode(System::ErrorStatus::ERROR, System::ErrorCategory::GENERAL, "Failed to create vertex shader");
+        return LS::System::FailErrorCode(System::ErrorCategory::GENERAL, "Failed to create vertex shader");
     }
 
     shaderResult = CreatePixelShader(g_device, pixShader, psData);
     if (!shaderResult)
     {
         LS::Log::TraceError(L"Failed to create pixel shader");
-        //return System::ErrorCode(System::ErrorStatus::ERROR, System::ErrorCodeCategory::GENERAL, "Failed to create pixel shader");
-        return LS::System::FailErrorCode(System::ErrorCodeCategory::GENERAL, "Failed to create pixel shader");
+        //return System::ErrorCode(System::ErrorStatus::ERROR, System::ErrorCategory::GENERAL, "Failed to create pixel shader");
+        return LS::System::FailErrorCode(System::ErrorCategory::GENERAL, "Failed to create pixel shader");
     }
     LS::Log::TraceDebug(L"Shader Compilation Complete!!");
 
@@ -304,8 +305,8 @@ LS::System::ErrorCode gt::Init()
     if (!reflectResult)
     {
         LS::Log::TraceError(L"Failed to create input layout for Vertex shader");
-        //return System::ErrorCode(System::ErrorStatus::ERROR, System::ErrorCodeCategory::GENERAL, "Failed to create input layout from reflection.");
-        return LS::System::FailErrorCode(System::ErrorCodeCategory::GENERAL, "Failed to create input layout from reflection.");
+        //return System::ErrorCode(System::ErrorStatus::ERROR, System::ErrorCategory::GENERAL, "Failed to create input layout from reflection.");
+        return LS::System::FailErrorCode(System::ErrorCategory::GENERAL, "Failed to create input layout from reflection.");
     }
 
     std::vector<D3D11_INPUT_ELEMENT_DESC> inputDescs = reflectResult.value();
@@ -313,8 +314,8 @@ LS::System::ErrorCode gt::Init()
     if (FAILED(ilResult))
     {
         LS::Log::TraceError(L"Failed to create input layout");
-        //return System::ErrorCode(System::ErrorStatus::ERROR, System::ErrorCodeCategory::GENERAL, "Failed to create input layout");
-        return LS::System::FailErrorCode(System::ErrorCodeCategory::GENERAL, "Failed to create input layout");
+        //return System::ErrorCode(System::ErrorStatus::ERROR, System::ErrorCategory::GENERAL, "Failed to create input layout");
+        return LS::System::FailErrorCode(System::ErrorCategory::GENERAL, "Failed to create input layout");
     }
     // Init Cube and Camera //
     InitCube();
@@ -327,8 +328,8 @@ LS::System::ErrorCode gt::Init()
     if (FAILED(bufferResult))
     {
         LS::Log::TraceError(L"Failed to create vertex buffer");
-        //return System::ErrorCode(System::ErrorStatus::ERROR, System::ErrorCodeCategory::GENERAL, "Failed to create vertex buffer");
-        return LS::System::FailErrorCode(System::ErrorCodeCategory::GENERAL, "Failed to create vertex buffer");
+        //return System::ErrorCode(System::ErrorStatus::ERROR, System::ErrorCategory::GENERAL, "Failed to create vertex buffer");
+        return LS::System::FailErrorCode(System::ErrorCategory::GENERAL, "Failed to create vertex buffer");
     }
 
     // Index Buffer //
@@ -336,8 +337,8 @@ LS::System::ErrorCode gt::Init()
     if (FAILED(bufferResult))
     {
         LS::Log::TraceError(L"Failed to create index buffer.");
-        //return System::ErrorCode(System::ErrorStatus::ERROR, System::ErrorCodeCategory::GENERAL, "Failed to create index buffer");
-        return LS::System::FailErrorCode(System::ErrorCodeCategory::GENERAL, "Failed to create index buffer");
+        //return System::ErrorCode(System::ErrorStatus::ERROR, System::ErrorCategory::GENERAL, "Failed to create index buffer");
+        return LS::System::FailErrorCode(System::ErrorCategory::GENERAL, "Failed to create index buffer");
     }
 
     // Camera Buffers //
@@ -353,22 +354,22 @@ LS::System::ErrorCode gt::Init()
     if (FAILED(bufferResult))
     {
         LS::Log::TraceError(L"Failed to create View matrix buffer");
-        //return System::ErrorCode(System::ErrorStatus::ERROR, System::ErrorCodeCategory::GENERAL, "Failed to create view matrix buffer");
-        return LS::System::FailErrorCode(System::ErrorCodeCategory::GENERAL, "Failed to create view matrix buffer");
+        //return System::ErrorCode(System::ErrorStatus::ERROR, System::ErrorCategory::GENERAL, "Failed to create view matrix buffer");
+        return LS::System::FailErrorCode(System::ErrorCategory::GENERAL, "Failed to create view matrix buffer");
     }
     bufferResult = g_device.CreateBuffer(&matBd, &projSd, &g_projBuffer);
     if (FAILED(bufferResult))
     {
         LS::Log::TraceError(L"Failed to create Projection matrix buffer");
-        //return System::ErrorCode(System::ErrorStatus::ERROR, System::ErrorCodeCategory::GENERAL, "Failed to create projection matrix buffer");
-        return LS::System::FailErrorCode(System::ErrorCodeCategory::GENERAL, "Failed to create projection matrix buffer");
+        //return System::ErrorCode(System::ErrorStatus::ERROR, System::ErrorCategory::GENERAL, "Failed to create projection matrix buffer");
+        return LS::System::FailErrorCode(System::ErrorCategory::GENERAL, "Failed to create projection matrix buffer");
     }
     bufferResult = g_device.CreateBuffer(&matBd, &modelSd, &g_modelBuffer);
     if (FAILED(bufferResult))
     {
         LS::Log::TraceError(L"Failed to create Model matrix buffer");
-        //return System::ErrorCode(System::ErrorStatus::ERROR, System::ErrorCodeCategory::GENERAL, "Failed to create model matrix buffer");
-        return LS::System::FailErrorCode(System::ErrorCodeCategory::GENERAL, "Failed to create model matrix buffer");
+        //return System::ErrorCode(System::ErrorStatus::ERROR, System::ErrorCategory::GENERAL, "Failed to create model matrix buffer");
+        return LS::System::FailErrorCode(System::ErrorCategory::GENERAL, "Failed to create model matrix buffer");
     }
     LS::Log::TraceDebug(L"Buffers created!!");
     // Rasterizer Creation // 
@@ -377,8 +378,8 @@ LS::System::ErrorCode gt::Init()
     if (!rsSolidOpt)
     {
         LS::Log::TraceError(L"Failed to create rasterizer state");
-        //return System::ErrorCode(System::ErrorStatus::ERROR, System::ErrorCodeCategory::GENERAL, "Failed to create rasterizer state");
-        return LS::System::FailErrorCode(System::ErrorCodeCategory::GENERAL, "Failed to create rasterizer state");
+        //return System::ErrorCode(System::ErrorStatus::ERROR, System::ErrorCategory::GENERAL, "Failed to create rasterizer state");
+        return LS::System::FailErrorCode(System::ErrorCategory::GENERAL, "Failed to create rasterizer state");
     }
 
     rsSolid.Attach(rsSolidOpt.value());
@@ -390,8 +391,8 @@ LS::System::ErrorCode gt::Init()
     if (FAILED(hr))
     {
         LS::Log::TraceError(L"Failed to create render target view from backbuffer");
-        //return System::ErrorCode(System::ErrorStatus::ERROR, System::ErrorCodeCategory::GENERAL, "Failed to create render target from back buffer");
-        return LS::System::FailErrorCode(System::ErrorCodeCategory::GENERAL, "Failed to create render target from back buffer");
+        //return System::ErrorCode(System::ErrorStatus::ERROR, System::ErrorCategory::GENERAL, "Failed to create render target from back buffer");
+        return LS::System::FailErrorCode(System::ErrorCategory::GENERAL, "Failed to create render target from back buffer");
     }
     LS::Log::TraceDebug(L"Render target view created!!");
     // Depth Stencil //
@@ -400,8 +401,8 @@ LS::System::ErrorCode gt::Init()
     auto dsResult = g_device.CreateDepthStencilViewForSwapchain(rtv.Get(), &dsView);
     if (FAILED(dsResult))
     {
-        //return System::ErrorCode(System::ErrorStatus::ERROR, System::ErrorCodeCategory::GENERAL, "Failed to create depth stencil");
-        return LS::System::FailErrorCode(System::ErrorCodeCategory::GENERAL, "Failed to create depth stencil");
+        //return System::ErrorCode(System::ErrorStatus::ERROR, System::ErrorCategory::GENERAL, "Failed to create depth stencil");
+        return LS::System::FailErrorCode(System::ErrorCategory::GENERAL, "Failed to create depth stencil");
     }
     //CD3D11_DEPTH_STENCIL_DESC defaultDepthDesc(CD3D11_DEFAULT{});
     //ComPtr<ID3D11DepthStencilState> defaultState;
@@ -421,7 +422,6 @@ void gt::Run()
         if (App->IsPaused)
         {
             std::cout << "Paused app!\n";
-            using std::chrono::operator""ms;
             std::this_thread::sleep_for(100ms);
             continue;
         }

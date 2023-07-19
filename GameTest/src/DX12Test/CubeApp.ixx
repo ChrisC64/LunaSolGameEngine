@@ -185,7 +185,7 @@ namespace gt
     export LS::System::ErrorCode Init()
     {
         if (!CreateDevice((HWND)App->Window->GetHandleToWindow(), App->Window->GetWidth(), App->Window->GetHeight()))
-            return System::FailErrorCode(System::ErrorCodeCategory::GENERAL, "Failed to create device.");
+            return System::FailErrorCode(System::ErrorCategory::GENERAL, "Failed to create device.");
 
         return System::SuccessErrorCode();
     }
