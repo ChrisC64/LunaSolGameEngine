@@ -74,7 +74,8 @@ export namespace LS
 
         public:
 
-            ErrorCode(LS::System::ErrorStatus status, LS::System::ErrorCategory category, std::string_view msg) : ErrStatus(status),
+            constexpr ErrorCode(LS::System::ErrorStatus status, LS::System::ErrorCategory category, std::string_view msg) noexcept 
+                : ErrStatus(status),
                 ErrCategory(category),
                 ErrorMsg(msg)
             {}

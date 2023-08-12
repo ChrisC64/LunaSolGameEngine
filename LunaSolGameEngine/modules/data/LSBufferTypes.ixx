@@ -13,7 +13,7 @@ export namespace LS
      */
     enum class BUFFER_USAGE : uint16_t
     {
-        DEFAULT_RW, // @brief Buffer can be read and written by the GPU. 
+        DEFAULT_RW = 0, // @brief Buffer can be read and written by the GPU. 
         CONSTANT,// @brief Buffer is meant to be used by shader's constant buffers
         IMMUTABLE, // @brief Buffer lives on GPU but can never be changed after initialization, and remains the same
         DYNAMIC, // @brief Buffer can be modified by CPU and read by the GPU only. 
@@ -26,7 +26,7 @@ export namespace LS
      */
     enum class BUFFER_PIPELINE_STAGES : uint16_t
     {
-        UNDEFINED,
+        UNDEFINED = 0,
         VERTEX, // @brief Buffer can be used for vertex pipeline
         INDEX, // @brief Buffer can be used for index pipeline
         HULL, // @brief Buffer is used for Hull-shader pipeline
@@ -38,7 +38,7 @@ export namespace LS
 
     enum class BUFFER_BIND_TYPE : uint16_t
     {
-        UNKNOWN,
+        UNKNOWN = 0,
         VERTEX, // @brief A vertex buffer for geometry
         INDEX, // @brief An index buffer accompanying a vertex buffer
         CONSTANT_BUFFER, // @brief Shader constant buffer

@@ -126,9 +126,6 @@
     <ClCompile Include="modules\platform\Windows\DirectX\DXCamera.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="modules\data\khronos_standards\gltfParser.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="modules\platform\Windows\D3D12\D3D12Lib.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -166,6 +163,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="modules\platform\Windows\DirectX\DXCameraController.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\data\serialize\WavefrontObj.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

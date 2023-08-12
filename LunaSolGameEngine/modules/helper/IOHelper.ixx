@@ -13,6 +13,19 @@ import Data.LSDataTypes;
 
 export namespace LS::IO
 {
+    /**
+     * @brief Flags for describing how a file should be opened
+    */
+    enum class FileOpenFlags : uint16_t
+    {
+        Append = 0x1,//@brief add to the end of the file
+        Binary = 0x2,//@brief open as a binary file
+        Read = 0x4,//@brief Open for reading 
+        Write = 0x8,//@brief Open for writing
+        AtTheEnd = 0x10,//@brief Open with the position at the end of the file
+        ClearContent = 0x20//@brief Clear contents of an existing file
+    };
+
     auto ReadFile(std::filesystem::path path) -> Nullable<std::vector<std::byte>>
     {
         if (!std::filesystem::exists(path))

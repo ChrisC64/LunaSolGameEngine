@@ -48,8 +48,11 @@ namespace LS
         using AppRunFunc = std::function<void()>;
     }
 
+    export struct LSApp;
+
     struct LSApp
     {
+        LSApp() = default;
         LSApp(uint32_t width, uint32_t height,
             std::wstring_view title, AppInitFunc&& initFunc, AppRunFunc&& runFunc);
         ~LSApp() = default;
