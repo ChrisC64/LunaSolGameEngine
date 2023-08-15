@@ -80,11 +80,6 @@ export namespace LS
                 ErrorMsg(msg)
             {}
             
-            /*explicit ErrorCode(const ErrorCode* sec) : ErrStatus(sec->ErrStatus),
-                ErrCategory(sec->ErrCategory),
-                ErrorMsg(sec->ErrorMsg)
-            {}*/
-
             auto Message() const noexcept -> const std::string_view
             {
                 return ErrorMsg.data();
@@ -99,9 +94,34 @@ export namespace LS
             {
                 return ErrStatus == ErrorStatus::SUCCESS;
             }
+
+            bool IsError() const
+            {
+                return ErrStatus == ErrorStatus::ERROR;
+            }
         };
 
-        class SuccessErrorCode : public ErrorCode
+        constexpr auto CreateFailCode(std::string_view message, ErrorCategory category = ErrorCategory::GENERAL) noexcept -> ErrorCode
+        {
+            return ErrorCode(ErrorStatus::ERROR, category, message);
+        }
+        
+        constexpr auto CreateFailCode() noexcept -> ErrorCode
+        {
+            return ErrorCode(ErrorStatus::ERROR, ErrorCategory::GENERAL, "");
+        }
+
+        constexpr auto CreateSuccessCode(std::string_view message, ErrorCategory category = ErrorCategory::GENERAL) noexcept -> ErrorCode
+        {
+            return ErrorCode(ErrorStatus::SUCCESS, category, message);
+        }
+        
+        constexpr auto CreateSuccessCode() noexcept -> ErrorCode
+        {
+            return ErrorCode(ErrorStatus::SUCCESS, ErrorCategory::GENERAL, "");
+        }
+
+        /*class SuccessErrorCode : public ErrorCode
         {
         public:
             SuccessErrorCode(ErrorCategory category = ErrorCategory::GENERAL, std::string_view msg = "") :
@@ -115,6 +135,6 @@ export namespace LS
             FailErrorCode(ErrorCategory category = ErrorCategory::GENERAL, std::string_view msg = "") :
                 ErrorCode(ErrorStatus::ERROR, category, msg)
             {}
-        };
+        };*/
     }// end namespace System
 }// end namespace LS

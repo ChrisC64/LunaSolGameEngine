@@ -236,18 +236,18 @@ namespace gt
         ComPtr<ID3D11Texture2D> pRenderTargetTexture;
         auto texResult = g_device.GetDevice()->CreateTexture2D(&textureDesc, NULL, &pRenderTargetTexture);
         if (FAILED(texResult))
-            return System::FailErrorCode(System::ErrorCategory::GENERAL, "Failed to crete render target texture");
+            return System::CreateFailCode("Failed to crete render target texture");
 
         ComPtr<ID3D11Texture2D> pTexture;
         textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
         texResult = g_device.GetDevice()->CreateTexture2D(&textureDesc, NULL, &pTexture);
         if (FAILED(texResult))
-            return System::FailErrorCode(System::ErrorCategory::GENERAL, "Failed to texture shader resource");
+            return System::CreateFailCode("Failed to texture shader resource");
 
         ComPtr<ID3D11Texture2D> pTexture2;
         texResult = g_device.GetDevice()->CreateTexture2D(&textureDesc, NULL, &pTexture2);
         if (FAILED(texResult))
-            return System::FailErrorCode(System::ErrorCategory::GENERAL, "Failed to create texture");
+            return System::CreateFailCode("Failed to create texture");
         ComPtr<ID3D11ShaderResourceView> pTexturRenderTargetSRV;
         ComPtr<ID3D11ShaderResourceView> pTextureView1;
         ComPtr<ID3D11ShaderResourceView> pTextureView2;
@@ -262,17 +262,17 @@ namespace gt
         auto srvResult = g_device.GetDevice()->CreateShaderResourceView(pRenderTargetTexture.Get(), &texresView, &pTexturRenderTargetSRV);
         if (FAILED(srvResult))
         {
-            return System::FailErrorCode(System::ErrorCategory::GENERAL, "Failed to create shader resource view");
+            return System::CreateFailCode("Failed to create shader resource view");
         }
         srvResult = g_device.GetDevice()->CreateShaderResourceView(pTexture.Get(), &texresView, &pTextureView1);
         if (FAILED(srvResult))
         {
-            return System::FailErrorCode(System::ErrorCategory::GENERAL, "Failed to create shader resource view for texture");
+            return System::CreateFailCode("Failed to create shader resource view for texture");
         }
         srvResult = g_device.GetDevice()->CreateShaderResourceView(pTexture2.Get(), &texresView, &pTextureView2);
         if (FAILED(srvResult))
         {
-            return System::FailErrorCode(System::ErrorCategory::GENERAL, "Failed to create shader resource view for texture 2");
+            return System::CreateFailCode("Failed to create shader resource view for texture 2");
         }
 
         ComPtr<ID3D11SamplerState> pSampler;
@@ -282,7 +282,7 @@ namespace gt
         samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
         auto samplerResult = g_device.GetDevice()->CreateSamplerState(&samplerDesc, &pSampler);
         if (FAILED(samplerResult))
-            return System::FailErrorCode(System::ErrorCategory::GENERAL, "Failed to create sampler");
+            return System::CreateFailCode("Failed to create sampler");
 
         // END TEXTURE STUFF //
 
@@ -312,7 +312,7 @@ namespace gt
         ComPtr<ID3D11DepthStencilView> dsView;
         auto dsResult = g_device.CreateDepthStencilViewForSwapchain(defaultRTView.Get(), &dsView);
         if (FAILED(dsResult))
-            return System::FailErrorCode(System::ErrorCategory::GENERAL, "Failed to crete depth stencil view");
+            return System::CreateFailCode("Failed to crete depth stencil view");
 
         CD3D11_DEPTH_STENCIL_DESC defaultDepthDesc(CD3D11_DEFAULT{});
         ComPtr<ID3D11DepthStencilState> defaultState;
@@ -345,7 +345,7 @@ namespace gt
 
         result = g_device.CreateBlendState(blendDesc, &blendState);
         if (FAILED(result))
-            return System::FailErrorCode(System::ErrorCategory::GENERAL, "Failed to crete blend state");
+            return System::CreateFailCode("Failed to crete blend state");
 
         auto createDeferredContext = [&]() -> ComPtr<ID3D11DeviceContext>
         {
@@ -387,27 +387,27 @@ namespace gt
         // Vertex Shaders //
         auto vsDataOpt = ReadShaderFile(vsPath);
         if (!vsDataOpt)
-            return System::FailErrorCode(System::ErrorCategory::GENERAL, "Failed to read vertex shader 2");
+            return System::CreateFailCode("Failed to read vertex shader 2");
         auto& vsData = vsDataOpt.value();
         auto vsData2Opt = ReadShaderFile(vsPath2);
         if (!vsData2Opt)
-            return System::FailErrorCode(System::ErrorCategory::GENERAL, "Failed to read vertex shader 1");
+            return System::CreateFailCode("Failed to read vertex shader 1");
         auto& vsData2 = vsData2Opt.value();
         auto psDataOpt = ReadShaderFile(psPath);
         if (!psDataOpt)
-            return System::FailErrorCode(System::ErrorCategory::GENERAL, "Failed to read pixel shader");
+            return System::CreateFailCode("Failed to read pixel shader");
         auto& psData = psDataOpt.value();
         auto psData2Opt = ReadShaderFile(psPath2);
         if (!psData2Opt)
-            return System::FailErrorCode(System::ErrorCategory::GENERAL, "Failed to read pixel shader 2");
+            return System::CreateFailCode("Failed to read pixel shader 2");
         auto& psData2 = psData2Opt.value();
         auto texPSDataOpt = ReadShaderFile(texPSPath);
         if (!texPSDataOpt)
-            return System::FailErrorCode(System::ErrorCategory::GENERAL, "Failed to read texture shader");
+            return System::CreateFailCode("Failed to read texture shader");
         auto& texPSData = texPSDataOpt.value();
         auto fsQuadOpt = ReadShaderFile(fsQuadPath);
         if (!fsQuadOpt)
-            return System::FailErrorCode(System::ErrorCategory::GENERAL, "Failed to read full screen quad shader");
+            return System::CreateFailCode("Failed to read full screen quad shader");
         auto& fsQuadData = fsQuadOpt.value();
 
         // END SHADER FILE OPERATIONS //
@@ -422,22 +422,22 @@ namespace gt
 
         auto shaderResult = CreateVertexShader(g_device, vsShader2, vsData);
         if (!shaderResult)
-            return System::FailErrorCode(System::ErrorCategory::GENERAL, "Failed to create vertex shader");
+            return System::CreateFailCode("Failed to create vertex shader");
         shaderResult = CreateVertexShader(g_device, vsShader, vsData2);
         if (!shaderResult)
-            return System::FailErrorCode(System::ErrorCategory::GENERAL, "Failed to create vertex shader 2");
+            return System::CreateFailCode("Failed to create vertex shader 2");
         shaderResult = CreatePixelShader(g_device, psShader, psData);
         if (!shaderResult)
-            return System::FailErrorCode(System::ErrorCategory::GENERAL, "Failed to create pixel shader");
+            return System::CreateFailCode("Failed to create pixel shader");
         shaderResult = CreatePixelShader(g_device, psShader2, psData2);
         if (!shaderResult)
-            return System::FailErrorCode(System::ErrorCategory::GENERAL, "Failed to create pixel shader 2");
+            return System::CreateFailCode("Failed to create pixel shader 2");
         shaderResult = CreatePixelShader(g_device, texPS, texPSData);
         if (!shaderResult)
-            return System::FailErrorCode(System::ErrorCategory::GENERAL, "Failed to create texture shader");
+            return System::CreateFailCode("Failed to create texture shader");
         shaderResult = CreateVertexShader(g_device, fsQuadShader, fsQuadData);
         if (!shaderResult)
-            return System::FailErrorCode(System::ErrorCategory::GENERAL, "Failed to create full screen quad shader");
+            return System::CreateFailCode("Failed to create full screen quad shader");
 
         // Build Shader Input Signatures //
         g_PosColorUv.AddElement(LS::ShaderElement{ .ShaderData = SHADER_DATA_TYPE::FLOAT4, .SemanticName {"POSITION"},
@@ -519,7 +519,7 @@ namespace gt
         result = g_device.CreateBuffer(&bufferDesc, &subData, &vertexBuffer);
         if (FAILED(result))
         {
-            return System::FailErrorCode(System::ErrorCategory::GENERAL, "Failed to create vertex buffer");
+            return System::CreateFailCode("Failed to create vertex buffer");
         }
 
         // Camera //
@@ -667,16 +667,16 @@ namespace gt
         //ComPtr<ID3D11CommandList> command1, command2;
         hr = context1->FinishCommandList(FALSE, &command1);
         if (FAILED(hr))
-            return System::FailErrorCode(System::ErrorCategory::GENERAL, "Failed to create command list");
+            return System::CreateFailCode("Failed to create command list");
 
         hr = context2->FinishCommandList(FALSE, &command2);
         if (FAILED(hr))
-            return System::FailErrorCode(System::ErrorCategory::GENERAL, "Failed to create command list");
+            return System::CreateFailCode("Failed to create command list");
 
         // Show Window and Start Timer - duh... //
         window->Show();
         g_timer.Start();
-        return System::SuccessErrorCode();
+        return System::CreateSuccessCode();
     }
 
     void Run()
