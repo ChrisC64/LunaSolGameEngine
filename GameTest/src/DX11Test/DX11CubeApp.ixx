@@ -21,6 +21,9 @@ module;
 #include <condition_variable>
 #include <barrier>
 #include <thread>
+#include <iterator>
+#include <string>
+#include <ranges>
 #include <d3d11_4.h>
 
 #include "LSTimer.h"
@@ -37,9 +40,11 @@ import GeometryGenerator;
 import MathLib;
 import DirectXCommon;
 import LSData;
+import LSE.Serialize.WavefrontObj;
 
 using namespace Microsoft::WRL;
 using namespace LS;
+using namespace LS::System;
 using namespace LS::Win32;
 using namespace std::chrono;
 using namespace std::chrono_literals;
@@ -91,14 +96,17 @@ namespace gt
     ComPtr<ID3D11RenderTargetView1> rtv;
     ComPtr<ID3D11DepthStencilView> dsView;
     ComPtr<ID3D11InputLayout> inputLayout;
+    ComPtr<ID3D11InputLayout> objIL;
     ComPtr<ID3D11Buffer> vertexBuffer;
+    ComPtr<ID3D11Buffer> objVB;
     ComPtr<ID3D11Buffer> indexBuffer;
+    ComPtr<ID3D11Buffer> objIB;
     ComPtr<ID3D11DeviceContext4> g_immContext;
     std::unordered_map<LS::LS_INPUT_KEY, bool> g_keysPressedMap;
     std::mutex g_pauseMutex;
     std::condition_variable g_pauseCondition;
     std::barrier g_pauseSync(1, []() noexcept { std::cout << "Pause sync complete.\n"; });
-
+    LS::Serialize::WavefrontObj m_objFile;
     auto CreateVertexShader(const LS::Win32::DeviceD3D11& device, ComPtr<ID3D11VertexShader>& shader, std::vector<std::byte>& byteCode) -> bool
     {
         auto vsResult = CreateVertexShaderFromByteCode(device.GetDevice().Get(), byteCode, &shader);
@@ -202,10 +210,8 @@ namespace gt
             }
         }
 
-        //g_camera.TranslatePosition(movement);
         g_cameraController.Walk(movement.z);
         g_cameraController.Strafe(movement.x);
-        //g_camera.Move(LS::Vec3F{.x = movement.x, .y = 0.0f, .z = movement.z});
     }
 
     void OnKeyboardDown(const LS::InputKeyDown& input);
@@ -226,6 +232,13 @@ namespace gt
     std::array<float, 4> g_blue = { 0.0f, 0.0f, 1.0f, 1.0f };
     std::array<float, 4> g_black = { 0.0f, 0.0f, 0.0f, 1.0f };
     std::array<float, 4> g_white = { 1.0f, 1.0f, 1.0f, 1.0f };
+
+    std::vector<float> g_objVert;
+    std::vector<float> g_objNormals;
+    std::vector<float> g_objUvCoords;
+    std::vector<int> g_objIndices;
+
+    void ReadOBJFile(std::filesystem::path path);
 }
 
 module : private;
@@ -257,8 +270,8 @@ LS::System::ErrorCode gt::Init()
     std::array<wchar_t, _MAX_PATH> modulePath{};
     if (!GetModuleFileName(nullptr, modulePath.data(), static_cast<DWORD>(modulePath.size())))
     {
-        //return LS::System::ErrorCode(ERROR, LS::System::ErrorCategory::GENERAL, "Failed to find module path.");
-        return LS::System::FailErrorCode(LS::System::ErrorCategory::GENERAL, "Failed to find module path.");
+        //return ErrorCode(ERROR, ErrorCategory::GENERAL, "Failed to find module path.");
+        return CreateFailCode("Failed to find module path.");
     }
 
     std::wstring path = std::wstring(modulePath.data());
@@ -270,16 +283,14 @@ LS::System::ErrorCode gt::Init()
     Nullable<std::vector<std::byte>> vsFile = LS::IO::ReadFile(vsPath);
     if (!vsFile)
     {
-        //return System::ErrorCode(System::ErrorStatus::ERROR, System::ErrorCategory::GENERAL, "Failed to read VertexShader.cso file");;
-        return LS::System::FailErrorCode(System::ErrorCategory::GENERAL, "Failed to read VertexShader.cso file");;
+        return CreateFailCode("Failed to read VertexShader.cso file");;
     }
     std::vector<std::byte> vsData = vsFile.value();
 
     Nullable<std::vector<std::byte>> psFile = LS::IO::ReadFile(psPath);
     if (!psFile)
     {
-        //return System::ErrorCode(System::ErrorStatus::ERROR, System::ErrorCategory::GENERAL, "Failed to read PixelShader.cso");
-        return LS::System::FailErrorCode(System::ErrorCategory::GENERAL, "Failed to read PixelShader.cso");
+        return CreateFailCode("Failed to read PixelShader.cso");
     }
     std::vector<std::byte> psData = psFile.value();
 
@@ -287,16 +298,14 @@ LS::System::ErrorCode gt::Init()
     if (!shaderResult)
     {
         LS::Log::TraceError(L"Failed to create vertex shader");
-        //return System::ErrorCode(System::ErrorStatus::ERROR, System::ErrorCategory::GENERAL, "Failed to create vertex shader");
-        return LS::System::FailErrorCode(System::ErrorCategory::GENERAL, "Failed to create vertex shader");
+        return CreateFailCode("Failed to create vertex shader");
     }
 
     shaderResult = CreatePixelShader(g_device, pixShader, psData);
     if (!shaderResult)
     {
         LS::Log::TraceError(L"Failed to create pixel shader");
-        //return System::ErrorCode(System::ErrorStatus::ERROR, System::ErrorCategory::GENERAL, "Failed to create pixel shader");
-        return LS::System::FailErrorCode(System::ErrorCategory::GENERAL, "Failed to create pixel shader");
+        return CreateFailCode("Failed to create pixel shader");
     }
     LS::Log::TraceDebug(L"Shader Compilation Complete!!");
 
@@ -305,8 +314,7 @@ LS::System::ErrorCode gt::Init()
     if (!reflectResult)
     {
         LS::Log::TraceError(L"Failed to create input layout for Vertex shader");
-        //return System::ErrorCode(System::ErrorStatus::ERROR, System::ErrorCategory::GENERAL, "Failed to create input layout from reflection.");
-        return LS::System::FailErrorCode(System::ErrorCategory::GENERAL, "Failed to create input layout from reflection.");
+        return CreateFailCode("Failed to create input layout from reflection.");
     }
 
     std::vector<D3D11_INPUT_ELEMENT_DESC> inputDescs = reflectResult.value();
@@ -314,8 +322,7 @@ LS::System::ErrorCode gt::Init()
     if (FAILED(ilResult))
     {
         LS::Log::TraceError(L"Failed to create input layout");
-        //return System::ErrorCode(System::ErrorStatus::ERROR, System::ErrorCategory::GENERAL, "Failed to create input layout");
-        return LS::System::FailErrorCode(System::ErrorCategory::GENERAL, "Failed to create input layout");
+        return CreateFailCode("Failed to create input layout");
     }
     // Init Cube and Camera //
     InitCube();
@@ -328,8 +335,7 @@ LS::System::ErrorCode gt::Init()
     if (FAILED(bufferResult))
     {
         LS::Log::TraceError(L"Failed to create vertex buffer");
-        //return System::ErrorCode(System::ErrorStatus::ERROR, System::ErrorCategory::GENERAL, "Failed to create vertex buffer");
-        return LS::System::FailErrorCode(System::ErrorCategory::GENERAL, "Failed to create vertex buffer");
+        return CreateFailCode("Failed to create vertex buffer");
     }
 
     // Index Buffer //
@@ -337,8 +343,7 @@ LS::System::ErrorCode gt::Init()
     if (FAILED(bufferResult))
     {
         LS::Log::TraceError(L"Failed to create index buffer.");
-        //return System::ErrorCode(System::ErrorStatus::ERROR, System::ErrorCategory::GENERAL, "Failed to create index buffer");
-        return LS::System::FailErrorCode(System::ErrorCategory::GENERAL, "Failed to create index buffer");
+        return CreateFailCode("Failed to create index buffer");
     }
 
     // Camera Buffers //
@@ -354,32 +359,28 @@ LS::System::ErrorCode gt::Init()
     if (FAILED(bufferResult))
     {
         LS::Log::TraceError(L"Failed to create View matrix buffer");
-        //return System::ErrorCode(System::ErrorStatus::ERROR, System::ErrorCategory::GENERAL, "Failed to create view matrix buffer");
-        return LS::System::FailErrorCode(System::ErrorCategory::GENERAL, "Failed to create view matrix buffer");
+        return CreateFailCode("Failed to create view matrix buffer");
     }
     bufferResult = g_device.CreateBuffer(&matBd, &projSd, &g_projBuffer);
     if (FAILED(bufferResult))
     {
         LS::Log::TraceError(L"Failed to create Projection matrix buffer");
-        //return System::ErrorCode(System::ErrorStatus::ERROR, System::ErrorCategory::GENERAL, "Failed to create projection matrix buffer");
-        return LS::System::FailErrorCode(System::ErrorCategory::GENERAL, "Failed to create projection matrix buffer");
+        return CreateFailCode("Failed to create projection matrix buffer");
     }
     bufferResult = g_device.CreateBuffer(&matBd, &modelSd, &g_modelBuffer);
     if (FAILED(bufferResult))
     {
         LS::Log::TraceError(L"Failed to create Model matrix buffer");
-        //return System::ErrorCode(System::ErrorStatus::ERROR, System::ErrorCategory::GENERAL, "Failed to create model matrix buffer");
-        return LS::System::FailErrorCode(System::ErrorCategory::GENERAL, "Failed to create model matrix buffer");
+        return CreateFailCode("Failed to create model matrix buffer");
     }
     LS::Log::TraceDebug(L"Buffers created!!");
     // Rasterizer Creation // 
     LS::Log::TraceDebug(L"Building rasterizer state...");
-    Nullable<ID3D11RasterizerState2*> rsSolidOpt = CreateRasterizerState2(g_device.GetDevice().Get(), SolidFill_BackCull_CCFront_DCE);
+    Nullable<ID3D11RasterizerState2*> rsSolidOpt = CreateRasterizerState2(g_device.GetDevice().Get(), SolidFill_BackCull_CCWFront_DCE);
     if (!rsSolidOpt)
     {
         LS::Log::TraceError(L"Failed to create rasterizer state");
-        //return System::ErrorCode(System::ErrorStatus::ERROR, System::ErrorCategory::GENERAL, "Failed to create rasterizer state");
-        return LS::System::FailErrorCode(System::ErrorCategory::GENERAL, "Failed to create rasterizer state");
+        return CreateFailCode("Failed to create rasterizer state");
     }
 
     rsSolid.Attach(rsSolidOpt.value());
@@ -391,8 +392,7 @@ LS::System::ErrorCode gt::Init()
     if (FAILED(hr))
     {
         LS::Log::TraceError(L"Failed to create render target view from backbuffer");
-        //return System::ErrorCode(System::ErrorStatus::ERROR, System::ErrorCategory::GENERAL, "Failed to create render target from back buffer");
-        return LS::System::FailErrorCode(System::ErrorCategory::GENERAL, "Failed to create render target from back buffer");
+        return CreateFailCode("Failed to create render target from back buffer");
     }
     LS::Log::TraceDebug(L"Render target view created!!");
     // Depth Stencil //
@@ -401,8 +401,7 @@ LS::System::ErrorCode gt::Init()
     auto dsResult = g_device.CreateDepthStencilViewForSwapchain(rtv.Get(), &dsView);
     if (FAILED(dsResult))
     {
-        //return System::ErrorCode(System::ErrorStatus::ERROR, System::ErrorCategory::GENERAL, "Failed to create depth stencil");
-        return LS::System::FailErrorCode(System::ErrorCategory::GENERAL, "Failed to create depth stencil");
+        return CreateFailCode("Failed to create depth stencil");
     }
     //CD3D11_DEPTH_STENCIL_DESC defaultDepthDesc(CD3D11_DEFAULT{});
     //ComPtr<ID3D11DepthStencilState> defaultState;
@@ -410,7 +409,47 @@ LS::System::ErrorCode gt::Init()
     //defaultState.Attach(dss);
     //LS::Log::TraceDebug(L"Depth stencil created!!");
 
-    return System::SuccessErrorCode();
+    ReadOBJFile("res/cube_face1.obj");
+
+    Vertex vd;
+    std::vector<Vertex> tvd;
+    LS::Vec4<float> color = { .x = 1.0f, .y = 0.4f, .z = 0.23f, .w = 1.0f };
+    const auto& verts = m_objFile.GetVertices();
+
+    for (auto i = 0u; i < verts.size(); ++i)
+    {
+        vd.Position.x = verts[i].x;
+        vd.Position.y = verts[i].y;
+        vd.Position.z = verts[i].z;
+        vd.Position.w = 1.0f;
+
+        vd.Color = color;
+        tvd.push_back(vd);
+    }
+
+    const auto& faces = m_objFile.GetFaces();
+    for (auto i = 0; i < faces.size(); ++i)
+    {
+        const auto& indices = faces[i].Indices;
+        g_objIndices.insert(g_objIndices.end(), indices.begin(), indices.end());
+    }
+
+    bufferResult = g_device.CreateVertexBuffer(tvd.data(), tvd.size() * sizeof(Vertex), &objVB);
+    if (FAILED(bufferResult))
+    {
+        LS::Log::TraceError(L"Failed to create vertex buffer");
+        return CreateFailCode("Failed to create vertex buffer");
+    }
+
+    // Index Buffer //
+    bufferResult = g_device.CreateIndexBuffer(g_objIndices.data(), g_objIndices.size() * sizeof(int), &objIB);
+    if (FAILED(bufferResult))
+    {
+        LS::Log::TraceError(L"Failed to create index buffer.");
+        return CreateFailCode("Failed to create index buffer");
+    }
+
+    return System::CreateSuccessCode();
 }
 
 void gt::Run()
@@ -466,7 +505,6 @@ static bool IsLMBDown = false;
 
 void gt::OnMouseDown(const LS::InputMouseDown& input)
 {
-    //std::cout << std::format("Mouse Down at: {}, {}\n", input.X, input.Y);
     if (input.Button == LS::LS_INPUT_MOUSE::LMB)
     {
         std::cout << "LMB Down!\n";
@@ -478,7 +516,6 @@ void gt::OnMouseDown(const LS::InputMouseDown& input)
 
 void gt::OnMouseUp(const LS::InputMouseUp& input)
 {
-    //std::cout << std::format("Mouse Up at: {}, {}\n", input.X, input.Y);
     if (input.Button == LS::LS_INPUT_MOUSE::LMB)
     {
         std::cout << "LMB Up!\n";
@@ -490,8 +527,6 @@ void gt::OnMouseUp(const LS::InputMouseUp& input)
 
 void gt::OnMouseMove(uint32_t x, uint32_t y)
 {
-    //std::cout << std::format("Mouse Move: ({}, {})\n", x, y);
-
     if (IsLMBDown)
     {
         int lx = x - g_lastPoint.x;
@@ -510,7 +545,7 @@ void gt::OnMouseMove(uint32_t x, uint32_t y)
         //auto value = std::lerp(0.0f, 360.0f, nx);
         std::cout << "Value: " << mx << "\n";
         g_cameraController.RotateYaw(mx);
-        g_cameraController.RotatePitch(my);
+        g_cameraController.RotatePitch(-my);
         g_lastPoint.x = x;
         g_lastPoint.y = y;
     }
@@ -582,8 +617,13 @@ void gt::PreDraw(ComPtr<ID3D11DeviceContext4>& context)
     // Bind to State //
     BindVS(context.Get(), vertShader.Get());
     BindPS(context.Get(), pixShader.Get());
-    SetVertexBuffer(context.Get(), vertexBuffer.Get(), 0, sizeof(Vertex));
-    SetIndexBuffer(context.Get(), indexBuffer.Get());
+    
+    /*SetVertexBuffer(context.Get(), vertexBuffer.Get(), 0, sizeof(Vertex));
+    SetIndexBuffer(context.Get(), indexBuffer.Get());*/
+    
+    SetVertexBuffer(context.Get(), objVB.Get(), 0, sizeof(Vertex));
+    SetIndexBuffer(context.Get(), objIB.Get());
+    
     BindVSConstantBuffer(context.Get(), 0, g_viewBuffer.Get());
     BindVSConstantBuffer(context.Get(), 1, g_projBuffer.Get());
     BindVSConstantBuffer(context.Get(), 2, g_modelBuffer.Get());
@@ -594,7 +634,7 @@ void gt::PreDraw(ComPtr<ID3D11DeviceContext4>& context)
 
 void gt::DrawScene(ComPtr<ID3D11DeviceContext4>& context)
 {
-    DrawIndexed(context.Get(), g_indexData.size());
+    DrawIndexed(context.Get(), g_objIndices.size());
 }
 
 void gt::HandleResize(uint32_t width, uint32_t height)
@@ -636,4 +676,20 @@ void gt::HandleResize(uint32_t width, uint32_t height)
     }
 exit_resize:
     App->IsPaused = false;
+}
+
+
+void gt::ReadOBJFile(std::filesystem::path path)
+{
+    auto result = m_objFile.LoadFile(path);
+    if (!result)
+    {
+        throw std::runtime_error(result.Message().data());
+    }
+
+    auto loadResult = m_objFile.LoadObject();
+    if (!loadResult)
+    {
+        throw std::runtime_error(loadResult.Message().data());
+    }
 }

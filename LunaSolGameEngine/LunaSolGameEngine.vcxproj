@@ -180,9 +180,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="modules\data\khronos_standards\gltfParser.ixx" />
     <ClCompile Include="modules\data\LSBufferTypes.ixx" />
     <ClCompile Include="modules\data\LSDataTypes.ixx" />
+    <ClCompile Include="modules\data\serialize\WavefrontObj.ixx" />
     <ClCompile Include="modules\engine\EngineLogger.ixx" />
     <ClCompile Include="modules\engine\EngineCodes.ixx" />
     <ClCompile Include="modules\engine\GeometryMath.ixx" />

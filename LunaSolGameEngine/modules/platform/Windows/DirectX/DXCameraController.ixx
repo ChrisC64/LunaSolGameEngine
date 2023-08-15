@@ -33,7 +33,7 @@ export namespace LS::DX
         */
         void Strafe(float units)
         {
-            m_camera.Position = XMVectorMultiplyAdd(XMVectorSet(units, units, units, 0.0f), m_camera.Forward, m_camera.Position);
+            m_camera.Position = XMVectorMultiplyAdd(XMVectorSet(units, units, units, 0.0f), m_camera.Right, m_camera.Position);
         }
 
         /**
