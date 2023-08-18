@@ -17,7 +17,7 @@ import :D3D12Common;
 import :ResourceManagerD3D12;
 
 import Platform.Win32Window;
-import Engine.Common;
+import Engine.App;
 
 namespace WRL = Microsoft::WRL;
 

@@ -6,7 +6,7 @@ module;
 #include <vector>
 #include <memory>
 
-export module Engine.Common;
+export module Engine.App;
 
 export import LSData;
 

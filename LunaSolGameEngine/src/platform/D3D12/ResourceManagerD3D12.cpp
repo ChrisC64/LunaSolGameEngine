@@ -9,7 +9,7 @@
 import D3D12Lib;
 import Data.LSDataTypes;
 import Platform.Win32Window;
-import Engine.Common;
+import Engine.App;
 
 namespace WRL = Microsoft::WRL;
 using namespace LS::Win32;

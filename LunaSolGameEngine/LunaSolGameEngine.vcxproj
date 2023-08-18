@@ -182,6 +182,7 @@
   <ItemGroup>
     <ClCompile Include="modules\data\LSBufferTypes.ixx" />
     <ClCompile Include="modules\data\LSDataTypes.ixx" />
+    <ClCompile Include="modules\data\LSResource.ixx" />
     <ClCompile Include="modules\data\serialize\WavefrontObj.ixx" />
     <ClCompile Include="modules\engine\EngineLogger.ixx" />
     <ClCompile Include="modules\engine\EngineCodes.ixx" />
@@ -196,7 +197,7 @@
     <ClCompile Include="modules\data\LSShader.ixx" />
     <ClCompile Include="modules\data\LSTextureTypes.ixx" />
     <ClCompile Include="modules\data\LSWindowTypes.ixx" />
-    <ClCompile Include="modules\engine\EngineCommon.ixx" />
+    <ClCompile Include="modules\engine\EngineApp.ixx" />
     <ClCompile Include="modules\engine\LSCamera.ixx" />
     <ClCompile Include="modules\engine\LSDevice.ixx" />
     <ClCompile Include="modules\engine\LSWindow.ixx" />

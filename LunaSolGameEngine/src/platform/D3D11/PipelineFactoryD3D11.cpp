@@ -7,7 +7,7 @@ import D3D11.PipelineFactory;
 
 #include <wrl/client.h>
 #include <d3d11_4.h>
-import Engine.Common;
+import Engine.App;
 import D3D11Lib;
 import LSData;
 

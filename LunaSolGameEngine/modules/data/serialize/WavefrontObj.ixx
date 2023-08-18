@@ -10,6 +10,7 @@ module;
 #include <stdexcept>
 #include <ranges>
 #include <iostream>
+#include <algorithm>
 
 //TODO: Consider making Lse prepend for "Engine" stuff instead of just "Engine" like Engine.EngineCodes below.
 export module LSE.Serialize.WavefrontObj;
@@ -111,6 +112,11 @@ export namespace LS::Serialize
             return m_lines;
         }
 
+        void SetClockwise(bool isCounterClockwise) noexcept
+        {
+            IsCounterClockwise = isCounterClockwise;
+        }
+
     private:
         // @brief The lines of the file
         std::vector<std::string> m_lines;
@@ -118,6 +124,7 @@ export namespace LS::Serialize
         std::vector<Vec3F> m_normals;
         std::vector<Vec2F> m_uvs;
         std::vector<Face> m_faces;
+        bool IsCounterClockwise = false;
     };
 }
 
@@ -148,76 +155,6 @@ namespace LS::Serialize
         }
 
         return out;
-    }
-
-    /**
-     * @brief Splits the group of / in a face section (if all values set, should be in v/vt/vn order
-     * @param line a v/vt/vn section of a face (f) line
-     * @return a group of values split into three sections
-    */
-    [[nodiscard]]
-    auto SplitFaceGroup(std::string_view line) -> std::vector<int>
-    {
-        size_t offset = 0;
-        std::vector<int> out;
-        return out;
-        // Ranges //
-        // C++ 20 we cannot create string_view from the view given by split() so we have to do this wonky thing
-//#ifdef __cpp_lib_ranges > 201911L
-//        /*auto view = std::views::split(line, '/') | std::views::transform([](auto&& str)
-//            {
-//                return std::string_view(&*str.begin(), std::ranges::distance(str));
-//            });*/
-//
-//        for (auto&& s : std::views::split(line, '/') | std::views::transform( [](auto&& str)
-//            {
-//                return std::string_view(&*str.begin(), std::ranges::distance(str));
-//            } ) 
-//            )
-//        {
-//            if (s.empty())
-//                continue;
-//
-//            out.emplace_back(std::stoi(s.data()));
-//        }
-//
-//        return out;
-//#else
-        // NO ranges //
-
-        //if (line.size() == 1)
-        //{
-        //    auto sub = line.substr(0, 1);
-        //    auto value = std::stoi(sub.data());
-        //    out.emplace_back(value);
-        //    return out;
-        //}
-        //
-        //auto pos = line.find('/');
-        //while (pos != std::string::npos)
-        //{
-        //    auto substr = line.substr(offset, pos);
-        //    // in a x//v or x/v// scenario, we should skip check for / in the sub string
-        //    if (substr == "/")
-        //    {
-        //        offset = pos + 1;
-        //        pos = line.find('/', offset);
-        //    }
-        //    else if (substr.empty())
-        //    {
-        //        offset++;
-        //        pos = line.find('/', offset);
-        //    }
-        //    else
-        //    {
-        //        out.emplace_back(std::move(substr));
-        //        offset = pos + 1;
-        //        pos = line.find('/', offset);
-        //    }
-        //}
-
-        //return out;
-//#endif
     }
 
     [[nodiscard]]
@@ -416,7 +353,6 @@ namespace LS::Serialize
             else if (token == ObjTokens.at(TokenObj::Face))
             {
                 // parse face
-
                 if (auto fResult = ParseFace(splits); !fResult)
                 {
                     return fResult;
@@ -432,23 +368,21 @@ namespace LS::Serialize
     auto WavefrontObj::ParseFace(std::span<std::string> line) noexcept -> LS::System::ErrorCode
     {
         Face face;
-        // Parses a single line of a face (f) section. First by spaces, then by '/'
-        for (auto& s : line)
-        {
-            if (s == "f")
-            {
-                continue;
-            }
 
-            //TODO: This needs to handle cases where one of the elements is missing: i.e. v//vn, or v/vt// or v 
-            // Faces are organized in Vertex Index, Vertex UV, and Vertex Normal
-            auto split = Split(s, "/");
+        // f will be in this line, so we want 1 less 
+        auto faceCount = line.size() - 1;
+
+        // Skip F and parse each section
+        for (auto p = 1u; p < faceCount + 1; ++p)
+        {
+            auto split = Split(line[p], "/");
             for (auto i = 0u; i < split.size(); ++i)
             {
                 if (split.at(i).empty())
                     continue;
 
                 auto value = std::stoi(split.at(i)) - 1;
+
                 if (i == 0) // Vertex Index
                 {
                     face.Indices.emplace_back(value);
@@ -463,6 +397,13 @@ namespace LS::Serialize
                 }
             }
         }
+
+        // Reverse Index Order //
+        if (IsCounterClockwise)
+        {
+            std::reverse(face.Indices.begin(), face.Indices.end());
+        }
+
         m_faces.emplace_back(face);
 
         return LS::System::CreateSuccessCode();

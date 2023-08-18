@@ -19,7 +19,7 @@ module;
 export module MultiPassTestApp;
 
 import LSData;
-import Engine.Common;
+import Engine.App;
 import D3D11Lib;
 import Platform.Win32Window;
 import Helper.LSCommonTypes;
@@ -208,8 +208,8 @@ namespace gt
         g_device.CreateSwapchain(window.get());
 
         //InitializeShaderInputSignatures(g_device);
-        auto rsSolidOptional = CreateRasterizerState2(g_device.GetDevice().Get(), SolidFill_NoneCull_CCWFront_DCE);
-        auto rsWireframeOptional = CreateRasterizerState2(g_device.GetDevice().Get(), Wireframe_FrontCull_CCWFront_DCE);
+        auto rsSolidOptional = CreateRasterizerState2(g_device.GetDevice().Get(), SolidFill_NoneCull_FCCW_DCE);
+        auto rsWireframeOptional = CreateRasterizerState2(g_device.GetDevice().Get(), Wireframe_FrontCull_FCCW_DCE);
 
         ComPtr<ID3D11RasterizerState2> rsSolid;
         rsSolid.Attach(rsSolidOptional.value_or(nullptr));

@@ -30,7 +30,7 @@ module;
 
 export module DX11CubeApp;
 
-import Engine.Common;
+import Engine.App;
 import D3D11Lib;
 import Platform.Win32Window;
 import Helper.LSCommonTypes;
@@ -258,11 +258,6 @@ LS::System::ErrorCode gt::Init()
     g_device.CreateDevice();
 
     g_immContext = g_device.GetImmediateContext();
-    /*LS::LSSwapchainInfo swapchain;
-    swapchain.Width = window->GetWidth();
-    swapchain.Height = window->GetHeight();
-    HWND hwnd = (HWND)window->GetHandleToWindow();
-    g_device.CreateSwapchain(hwnd, swapchain);*/
     g_device.CreateSwapchain(window.get());
 
     LS::Log::TraceDebug(L"Compiling shaders....");
@@ -376,7 +371,7 @@ LS::System::ErrorCode gt::Init()
     LS::Log::TraceDebug(L"Buffers created!!");
     // Rasterizer Creation // 
     LS::Log::TraceDebug(L"Building rasterizer state...");
-    Nullable<ID3D11RasterizerState2*> rsSolidOpt = CreateRasterizerState2(g_device.GetDevice().Get(), SolidFill_BackCull_CCWFront_DCE);
+    Nullable<ID3D11RasterizerState2*> rsSolidOpt = CreateRasterizerState2(g_device.GetDevice().Get(), SolidFill_BackCull_FCCW_DCE);
     if (!rsSolidOpt)
     {
         LS::Log::TraceError(L"Failed to create rasterizer state");
@@ -403,11 +398,12 @@ LS::System::ErrorCode gt::Init()
     {
         return CreateFailCode("Failed to create depth stencil");
     }
-    //CD3D11_DEPTH_STENCIL_DESC defaultDepthDesc(CD3D11_DEFAULT{});
-    //ComPtr<ID3D11DepthStencilState> defaultState;
-    //auto dss = CreateDepthStencilState(g_device.GetDevice().Get(), defaultDepthDesc).value();
-    //defaultState.Attach(dss);
-    //LS::Log::TraceDebug(L"Depth stencil created!!");
+    /*CD3D11_DEPTH_STENCIL_DESC defaultDepthDesc(CD3D11_DEFAULT{});
+    ComPtr<ID3D11DepthStencilState> defaultState;
+    auto dss = CreateDepthStencilState(g_device.GetDevice().Get(), defaultDepthDesc).value();
+    defaultState.Attach(dss);
+    LS::Log::TraceDebug(L"Depth stencil created!!");
+    SetDepthStencilState(g_immContext.Get(), defaultState.Get(), 1);*/
 
     ReadOBJFile("res/cube_face1.obj");
 
@@ -681,6 +677,7 @@ exit_resize:
 
 void gt::ReadOBJFile(std::filesystem::path path)
 {
+    m_objFile.SetClockwise(true);
     auto result = m_objFile.LoadFile(path);
     if (!result)
     {

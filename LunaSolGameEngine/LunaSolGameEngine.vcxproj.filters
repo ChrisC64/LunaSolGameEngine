@@ -78,7 +78,7 @@
     <ClCompile Include="modules\platform\Windows\D3D11\D3D11Lib.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="modules\engine\EngineCommon.ixx">
+    <ClCompile Include="modules\engine\EngineApp.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="modules\platform\Windows\D3D11\Helpers\D3D11Utils.ixx">
@@ -166,6 +166,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="modules\data\serialize\WavefrontObj.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\data\LSResource.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
