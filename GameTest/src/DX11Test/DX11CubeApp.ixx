@@ -24,8 +24,9 @@ module;
 #include <iterator>
 #include <string>
 #include <ranges>
-#include <d3d11_4.h>
+#include <functional>
 
+#include <d3d11_4.h>
 #include "LSTimer.h"
 
 export module DX11CubeApp;
@@ -41,6 +42,8 @@ import MathLib;
 import DirectXCommon;
 import LSData;
 import LSE.Serialize.WavefrontObj;
+import DX11Systems;
+
 
 using namespace Microsoft::WRL;
 using namespace LS;
@@ -66,14 +69,54 @@ struct Cube
     XMMATRIX Transform;
 };
 
-namespace gt
+namespace gt::dx11
 {
-    export LS::System::ErrorCode Init();
-    export void Run();
+    class DX11CubeApp : LSApp
+    {
+    public:
+        DX11CubeApp() = default;
+        ~DX11CubeApp() = default;
+
+        LS::System::ErrorCode Init();
+        void Run();
+
+    private:
+        LS::Platform::Dx11::BufferCache m_bufferCache;
+
+    public:
+        void PreDraw(ComPtr<ID3D11DeviceContext4>& context);
+        void DrawScene(ComPtr<ID3D11DeviceContext4>& context);
+        void HandleResize(uint32_t width, uint32_t height);
+
+        void OnKeyboardDown(const LS::InputKeyDown& input);
+        void OnKeyboardUp(const LS::InputKeyUp& input);
+        void OnMouseDown(const LS::InputMouseDown& input);
+        void OnMouseUp(const LS::InputMouseUp& input);
+        void OnMouseMove(uint32_t x, uint32_t y);
+        void OnMouseWheel(const LS::InputMouseWheelScroll& input);
+        void OnWindowEvent(LS::LS_WINDOW_EVENT ev);
+        void ReadOBJFile(std::filesystem::path path);
+    };
+
+
+    using namespace std::placeholders;
+
+    DX11CubeApp g_cubeApp;
+    constexpr auto bindInit = std::bind(&gt::dx11::DX11CubeApp::Init, &g_cubeApp);
+    constexpr auto bindRun = std::bind(&gt::dx11::DX11CubeApp::Run, &g_cubeApp);
+    constexpr auto bindResize = std::bind(&gt::dx11::DX11CubeApp::HandleResize, &g_cubeApp, _1, _2);
+    constexpr auto bindOnWindowEvent = std::bind(&gt::dx11::DX11CubeApp::OnWindowEvent, &g_cubeApp, _1);
+    constexpr auto bindOnKeyboardUp = std::bind(&gt::dx11::DX11CubeApp::OnKeyboardUp, &g_cubeApp, _1);
+    constexpr auto bindOnKeyboardDown = std::bind(&gt::dx11::DX11CubeApp::OnKeyboardDown, &g_cubeApp, _1);
+    constexpr auto bindOnMouseDown = std::bind(&gt::dx11::DX11CubeApp::OnMouseDown, &g_cubeApp, _1);
+    constexpr auto bindOnMouseUp = std::bind(&gt::dx11::DX11CubeApp::OnMouseUp, &g_cubeApp, _1);
+    constexpr auto bindOnMouseMove = std::bind(&gt::dx11::DX11CubeApp::OnMouseMove, &g_cubeApp, _1, _2);
+    constexpr auto bindOnMouseWheel = std::bind(&gt::dx11::DX11CubeApp::OnMouseWheel, &g_cubeApp, _1);
 
     constexpr auto SCREEN_WIDTH = 1920u;
     constexpr auto SCREEN_HEIGHT = 1080u;
-    export auto App = CreateAppRef(SCREEN_WIDTH, SCREEN_HEIGHT, L"DX11 Cube App", std::move(Init), std::move(Run));
+
+    export auto App = CreateAppRef(SCREEN_WIDTH, SCREEN_HEIGHT, L"DX11 Cube App", std::move(bindInit), std::move(bindRun));
 
 #ifdef DEBUG
     const std::string shader_path = R"(build\x64\Debug\)";
@@ -89,7 +132,6 @@ namespace gt
     LS::DX::FreeFlyCameraControllerDX g_cameraController(g_camera);
     constexpr auto g_indexData = Geo::Generator::CreateCubeIndexArray();
     LS::LSTimer<std::uint64_t, 1ul, 1000ul> g_timer;
-    ComPtr<ID3D11Buffer> g_viewBuffer, g_projBuffer, g_modelBuffer;
     ComPtr<ID3D11VertexShader> vertShader;
     ComPtr<ID3D11PixelShader> pixShader;
     ComPtr<ID3D11RasterizerState2> rsSolid;
@@ -97,16 +139,14 @@ namespace gt
     ComPtr<ID3D11DepthStencilView> dsView;
     ComPtr<ID3D11InputLayout> inputLayout;
     ComPtr<ID3D11InputLayout> objIL;
-    ComPtr<ID3D11Buffer> vertexBuffer;
-    ComPtr<ID3D11Buffer> objVB;
-    ComPtr<ID3D11Buffer> indexBuffer;
-    ComPtr<ID3D11Buffer> objIB;
     ComPtr<ID3D11DeviceContext4> g_immContext;
+
     std::unordered_map<LS::LS_INPUT_KEY, bool> g_keysPressedMap;
     std::mutex g_pauseMutex;
     std::condition_variable g_pauseCondition;
     std::barrier g_pauseSync(1, []() noexcept { std::cout << "Pause sync complete.\n"; });
     LS::Serialize::WavefrontObj m_objFile;
+    
     auto CreateVertexShader(const LS::Win32::DeviceD3D11& device, ComPtr<ID3D11VertexShader>& shader, std::vector<std::byte>& byteCode) -> bool
     {
         auto vsResult = CreateVertexShaderFromByteCode(device.GetDevice().Get(), byteCode, &shader);
@@ -165,7 +205,7 @@ namespace gt
     {
         if (elapsed == 0)
             return;
-        auto radians = LS::Math::ToRadians(10 / elapsed);
+        auto radians = LS::Math::ToRadians(10 / static_cast<float>(elapsed));
         XMVECTOR rotationAxis = XMVectorSet(0.450f, 1.0f, 0.250f, 1.0f);
         auto rotQuat = XMQuaternionRotationNormal(rotationAxis, radians);
         g_Cube.Rotation = XMQuaternionMultiply(g_Cube.Rotation, rotQuat);
@@ -214,18 +254,6 @@ namespace gt
         g_cameraController.Strafe(movement.x);
     }
 
-    void OnKeyboardDown(const LS::InputKeyDown& input);
-    void OnKeyboardUp(const LS::InputKeyUp& input);
-    void OnMouseDown(const LS::InputMouseDown& input);
-    void OnMouseUp(const LS::InputMouseUp& input);
-    void OnMouseMove(uint32_t x, uint32_t y);
-    void OnMouseWheel(const LS::InputMouseWheelScroll& input);
-    void OnWindowEvent(LS::LS_WINDOW_EVENT ev);
-
-
-    void PreDraw(ComPtr<ID3D11DeviceContext4>& context);
-    void DrawScene(ComPtr<ID3D11DeviceContext4>& context);
-    void HandleResize(uint32_t width, uint32_t height);
     //TODO: Create common colors in Engine Common or make color conceptl
     std::array<float, 4> g_red = { 1.0f, 0.0f, 0.0f, 1.0f };
     std::array<float, 4> g_green = { 0.0f, 1.0f, 0.0f, 1.0f };
@@ -237,24 +265,22 @@ namespace gt
     std::vector<float> g_objNormals;
     std::vector<float> g_objUvCoords;
     std::vector<int> g_objIndices;
-
-    void ReadOBJFile(std::filesystem::path path);
 }
 
 module : private;
 using namespace gt;
 using namespace LS;
 
-LS::System::ErrorCode gt::Init()
+LS::System::ErrorCode gt::dx11::DX11CubeApp::Init()
 {
     using enum LS::System::ErrorStatus;
     auto& window = App->Window;
     LS::ColorRGB bgColor(1.0f, 0.0f, 0.0f);
     window->SetBackgroundColor(bgColor);
 
-    RegisterKeyboardInput(App, OnKeyboardDown, OnKeyboardUp);
-    RegisterMouseInput(App, OnMouseDown, OnMouseUp, OnMouseWheel, OnMouseMove);
-    window->RegisterWindowEventCallback(OnWindowEvent);
+    RegisterKeyboardInput(App, bindOnKeyboardDown, bindOnKeyboardUp);
+    RegisterMouseInput(App, bindOnMouseDown, bindOnMouseUp, bindOnMouseWheel, bindOnMouseMove);
+    window->RegisterWindowEventCallback(bindOnWindowEvent);
     g_device.CreateDevice();
 
     g_immContext = g_device.GetImmediateContext();
@@ -265,7 +291,6 @@ LS::System::ErrorCode gt::Init()
     std::array<wchar_t, _MAX_PATH> modulePath{};
     if (!GetModuleFileName(nullptr, modulePath.data(), static_cast<DWORD>(modulePath.size())))
     {
-        //return ErrorCode(ERROR, ErrorCategory::GENERAL, "Failed to find module path.");
         return CreateFailCode("Failed to find module path.");
     }
 
@@ -322,56 +347,68 @@ LS::System::ErrorCode gt::Init()
     // Init Cube and Camera //
     InitCube();
     UpdateCamera();
+
     // Buffer Creation //
     // Vertex Buffer //
     LS::Log::TraceDebug(L"Creating buffers...");
 
-    auto bufferResult = g_device.CreateVertexBuffer(g_Cube.Verts.data(), sizeof(g_Cube.Verts), &vertexBuffer);
-    if (FAILED(bufferResult))
+    const auto vbOpt = LS::Platform::Dx11::CreateVertexBuffer(g_device.GetDevice().Get(), g_Cube.Verts);
+    if (!vbOpt)
     {
         LS::Log::TraceError(L"Failed to create vertex buffer");
         return CreateFailCode("Failed to create vertex buffer");
     }
 
+    if (const auto result = m_bufferCache.Insert("vertex_buffer", vbOpt.value()); !result)
+    {
+        return result;
+    }
+    
     // Index Buffer //
-    bufferResult = g_device.CreateIndexBuffer(g_indexData.data(), sizeof(g_indexData), &indexBuffer);
-    if (FAILED(bufferResult))
+    const auto ibOpt = LS::Platform::Dx11::CreateIndexBuffer(g_device.GetDevice().Get(), g_indexData);
+    if (!ibOpt)
     {
         LS::Log::TraceError(L"Failed to create index buffer.");
         return CreateFailCode("Failed to create index buffer");
     }
 
+    if (const auto result = m_bufferCache.Insert("index_buffer", ibOpt.value()); !result)
+    {
+        return result;
+    }
+
     // Camera Buffers //
-    CD3D11_BUFFER_DESC matBd(sizeof(float) * 16, D3D11_BIND_CONSTANT_BUFFER);
-    D3D11_SUBRESOURCE_DATA viewSd, projSd, modelSd;
+    auto bufferOptional = LS::Platform::Dx11::CreateConstantBuffer(g_device.GetDevice().Get(), g_camera.View);
+    if (!bufferOptional)
+        return CreateFailCode("Failed to create camera view matrix buffer");
 
-    // Setup Camera Position // 
-    viewSd.pSysMem = &g_camera.View;
-    projSd.pSysMem = &g_camera.Projection;
-    modelSd.pSysMem = &g_camera.Mvp;
+    if (const auto result = m_bufferCache.Insert("cam_view", bufferOptional.value()); !result)
+    {
+        return result;
+    }
 
-    bufferResult = g_device.CreateBuffer(&matBd, &viewSd, &g_viewBuffer);
-    if (FAILED(bufferResult))
+    bufferOptional = LS::Platform::Dx11::CreateConstantBuffer(g_device.GetDevice().Get(), g_camera.Projection);
+    if (!bufferOptional)
+        return CreateFailCode("Failed to create camera projection matrix buffer");
+    
+    if (const auto result = m_bufferCache.Insert("cam_proj", bufferOptional.value()); !result)
     {
-        LS::Log::TraceError(L"Failed to create View matrix buffer");
-        return CreateFailCode("Failed to create view matrix buffer");
+        return result;
     }
-    bufferResult = g_device.CreateBuffer(&matBd, &projSd, &g_projBuffer);
-    if (FAILED(bufferResult))
+
+    bufferOptional = LS::Platform::Dx11::CreateConstantBuffer(g_device.GetDevice().Get(), g_camera.Mvp);
+    if (!bufferOptional)
+        return CreateFailCode("Failed to create camera MVP matrix buffer");
+    
+    if (const auto result = m_bufferCache.Insert("cam_mvp", bufferOptional.value()); !result)
     {
-        LS::Log::TraceError(L"Failed to create Projection matrix buffer");
-        return CreateFailCode("Failed to create projection matrix buffer");
+        return result;
     }
-    bufferResult = g_device.CreateBuffer(&matBd, &modelSd, &g_modelBuffer);
-    if (FAILED(bufferResult))
-    {
-        LS::Log::TraceError(L"Failed to create Model matrix buffer");
-        return CreateFailCode("Failed to create model matrix buffer");
-    }
+
     LS::Log::TraceDebug(L"Buffers created!!");
     // Rasterizer Creation // 
     LS::Log::TraceDebug(L"Building rasterizer state...");
-    Nullable<ID3D11RasterizerState2*> rsSolidOpt = CreateRasterizerState2(g_device.GetDevice().Get(), SolidFill_BackCull_FCCW_DCE);
+    Nullable<ID3D11RasterizerState2*> rsSolidOpt = CreateRasterizerState2(g_device.GetDevice().Get(), SolidFill_BackCull_FCW_DCE);
     if (!rsSolidOpt)
     {
         LS::Log::TraceError(L"Failed to create rasterizer state");
@@ -430,28 +467,52 @@ LS::System::ErrorCode gt::Init()
         g_objIndices.insert(g_objIndices.end(), indices.begin(), indices.end());
     }
 
-    bufferResult = g_device.CreateVertexBuffer(tvd.data(), tvd.size() * sizeof(Vertex), &objVB);
-    if (FAILED(bufferResult))
+    auto objVbOpt = LS::Platform::Dx11::CreateVertexBuffer(g_device.GetDevice().Get(), tvd);
+    if (!objVbOpt)
     {
         LS::Log::TraceError(L"Failed to create vertex buffer");
         return CreateFailCode("Failed to create vertex buffer");
     }
 
+    if (const auto result = m_bufferCache.Insert("obj_vb", objVbOpt.value()); !result)
+    {
+        return result;
+    }
+
     // Index Buffer //
-    bufferResult = g_device.CreateIndexBuffer(g_objIndices.data(), g_objIndices.size() * sizeof(int), &objIB);
-    if (FAILED(bufferResult))
+    auto objIbOpt = LS::Platform::Dx11::CreateIndexBuffer(g_device.GetDevice().Get(), g_objIndices);
+    if (!objIbOpt)
     {
         LS::Log::TraceError(L"Failed to create index buffer.");
         return CreateFailCode("Failed to create index buffer");
     }
 
+    if (const auto result = m_bufferCache.Insert("obj_ib", objIbOpt.value()); !result)
+    {
+        return result;
+    }
+
     return System::CreateSuccessCode();
 }
 
-void gt::Run()
+void gt::dx11::DX11CubeApp::Run()
 {
     App->Window->Show();
     g_timer.Start();
+    auto viewOpt = m_bufferCache.Get("cam_view");
+    auto projOpt = m_bufferCache.Get("cam_proj");
+    auto mvpOpt = m_bufferCache.Get("cam_mvp");
+
+    if (!viewOpt || !projOpt || !mvpOpt)
+    {
+        LS::Log::TraceError(L"Failed to obtain buffers for this operation");
+        return;
+    }
+
+    const auto view = viewOpt.value();
+    const auto proj = projOpt.value();
+    const auto mvp = mvpOpt.value();
+
     while (App->Window->IsOpen())
     {
         if (App->IsPaused)
@@ -475,13 +536,13 @@ void gt::Run()
         Present1(g_device.GetSwapChain().Get(), 1);
 
         // Update Buffers //
-        LS::Win32::UpdateSubresource(g_immContext.Get(), g_modelBuffer.Get(), &g_camera.Mvp);
-        LS::Win32::UpdateSubresource(g_immContext.Get(), g_viewBuffer.Get(), &g_camera.View);
-        LS::Win32::UpdateSubresource(g_immContext.Get(), g_projBuffer.Get(), &g_camera.Projection);
+        LS::Platform::Dx11::UpdateSubresource(g_immContext.Get(), mvp.Get(), &g_camera.Mvp);
+        LS::Platform::Dx11::UpdateSubresource(g_immContext.Get(), view.Get(), &g_camera.View);
+        LS::Platform::Dx11::UpdateSubresource(g_immContext.Get(), proj.Get(), &g_camera.Projection);
     }
 }
 
-void gt::OnKeyboardDown(const LS::InputKeyDown& input)
+void gt::dx11::DX11CubeApp::OnKeyboardDown(const LS::InputKeyDown& input)
 {
     using enum LS::LS_INPUT_KEY;
     if (input.Key == ESCAPE)
@@ -492,14 +553,14 @@ void gt::OnKeyboardDown(const LS::InputKeyDown& input)
     g_keysPressedMap.insert_or_assign(input.Key, true);
 }
 
-void gt::OnKeyboardUp(const LS::InputKeyUp& input)
+void gt::dx11::DX11CubeApp::OnKeyboardUp(const LS::InputKeyUp& input)
 {
     g_keysPressedMap.insert_or_assign(input.Key, false);
 }
 static LS::Vec2<uint32_t> g_lastPoint;
 static bool IsLMBDown = false;
 
-void gt::OnMouseDown(const LS::InputMouseDown& input)
+void gt::dx11::DX11CubeApp::OnMouseDown(const LS::InputMouseDown& input)
 {
     if (input.Button == LS::LS_INPUT_MOUSE::LMB)
     {
@@ -510,7 +571,7 @@ void gt::OnMouseDown(const LS::InputMouseDown& input)
     }
 }
 
-void gt::OnMouseUp(const LS::InputMouseUp& input)
+void gt::dx11::DX11CubeApp::OnMouseUp(const LS::InputMouseUp& input)
 {
     if (input.Button == LS::LS_INPUT_MOUSE::LMB)
     {
@@ -521,7 +582,7 @@ void gt::OnMouseUp(const LS::InputMouseUp& input)
     }
 }
 
-void gt::OnMouseMove(uint32_t x, uint32_t y)
+void gt::dx11::DX11CubeApp::OnMouseMove(uint32_t x, uint32_t y)
 {
     if (IsLMBDown)
     {
@@ -548,7 +609,7 @@ void gt::OnMouseMove(uint32_t x, uint32_t y)
 }
 
 static double deltaCounter = 50.0;
-void gt::OnMouseWheel(const LS::InputMouseWheelScroll& input)
+void gt::dx11::DX11CubeApp::OnMouseWheel(const LS::InputMouseWheelScroll& input)
 {
     std::cout << std::format("Mouse Wheel Scroll: {}, Coords: {}, {}\n", input.Delta, input.X, input.Y);
     const auto upperBounds = 120.0f;
@@ -562,12 +623,12 @@ void gt::OnMouseWheel(const LS::InputMouseWheelScroll& input)
     if (deltaCounter < 0.0)
         deltaCounter = 0.0;
 
-    auto value = std::lerp(lowerBounds, upperBounds, deltaCounter / counterLimit);
+    float value = (float)std::lerp(lowerBounds, upperBounds, deltaCounter / counterLimit);
 
     g_camera.FovVertical = value;
 }
 
-void gt::OnWindowEvent(LS::LS_WINDOW_EVENT ev)
+void gt::dx11::DX11CubeApp::OnWindowEvent(LS::LS_WINDOW_EVENT ev)
 {
     using enum LS::LS_WINDOW_EVENT;
     switch (ev)
@@ -601,8 +662,16 @@ void gt::OnWindowEvent(LS::LS_WINDOW_EVENT ev)
 
 }
 
-void gt::PreDraw(ComPtr<ID3D11DeviceContext4>& context)
+void gt::dx11::DX11CubeApp::PreDraw(ComPtr<ID3D11DeviceContext4>& context)
 {
+    const auto view = m_bufferCache.Get("cam_view").value();
+    const auto proj = m_bufferCache.Get("cam_proj").value();
+    const auto mvp = m_bufferCache.Get("cam_mvp").value();
+    const auto vb = m_bufferCache.Get("vertex_buffer").value();
+    const auto ib = m_bufferCache.Get("index_buffer").value();
+    const auto obj_vb = m_bufferCache.Get("obj_vb").value();
+    const auto obj_ib = m_bufferCache.Get("obj_ib").value();
+
     // Set States and Objects //
     SetRenderTarget(context.Get(), rtv.Get(), dsView.Get());
     SetRasterizerState(context.Get(), rsSolid.Get());
@@ -614,26 +683,27 @@ void gt::PreDraw(ComPtr<ID3D11DeviceContext4>& context)
     BindVS(context.Get(), vertShader.Get());
     BindPS(context.Get(), pixShader.Get());
     
-    /*SetVertexBuffer(context.Get(), vertexBuffer.Get(), 0, sizeof(Vertex));
-    SetIndexBuffer(context.Get(), indexBuffer.Get());*/
+    /*SetVertexBuffer(context.Get(), vb.Get(), 0, sizeof(Vertex));
+    SetIndexBuffer(context.Get(), ib.Get());*/
     
-    SetVertexBuffer(context.Get(), objVB.Get(), 0, sizeof(Vertex));
-    SetIndexBuffer(context.Get(), objIB.Get());
+    SetVertexBuffer(context.Get(), obj_vb.Get(), 0, sizeof(Vertex));
+    SetIndexBuffer(context.Get(), obj_ib.Get());
     
-    BindVSConstantBuffer(context.Get(), 0, g_viewBuffer.Get());
-    BindVSConstantBuffer(context.Get(), 1, g_projBuffer.Get());
-    BindVSConstantBuffer(context.Get(), 2, g_modelBuffer.Get());
+    BindVSConstantBuffer(context.Get(), 0, view.Get());
+    BindVSConstantBuffer(context.Get(), 1, proj.Get());
+    BindVSConstantBuffer(context.Get(), 2, mvp.Get());
     // Draw Setup //
     ClearRT(context.Get(), rtv.Get(), g_blue);
     ClearDS(context.Get(), dsView.Get());
 }
 
-void gt::DrawScene(ComPtr<ID3D11DeviceContext4>& context)
+void gt::dx11::DX11CubeApp::DrawScene(ComPtr<ID3D11DeviceContext4>& context)
 {
-    DrawIndexed(context.Get(), g_objIndices.size());
+    DrawIndexed(context.Get(), (uint32_t)g_objIndices.size());
+    //DrawIndexed(context.Get(), (uint32_t)g_indexData.size());
 }
 
-void gt::HandleResize(uint32_t width, uint32_t height)
+void gt::dx11::DX11CubeApp::HandleResize(uint32_t width, uint32_t height)
 {
     App->IsPaused = true;
     ClearDeviceDependentResources(g_immContext.Get());
@@ -675,7 +745,7 @@ exit_resize:
 }
 
 
-void gt::ReadOBJFile(std::filesystem::path path)
+void gt::dx11::DX11CubeApp::ReadOBJFile(std::filesystem::path path)
 {
     m_objFile.SetClockwise(true);
     auto result = m_objFile.LoadFile(path);

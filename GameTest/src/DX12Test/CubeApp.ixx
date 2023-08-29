@@ -18,6 +18,7 @@ module;
 #include <mutex>
 #include <ranges>
 #include <semaphore>
+#include <functional>
 
 export module CubeApp;
 
@@ -73,10 +74,21 @@ export struct VertexPT
     Vector<float, 2> uv;
 };
 
-namespace gt
+namespace gt::dx12
 {
-    export LS::System::ErrorCode Init();
-    export void Run();
+    class DX12CubeApp : LS::LSApp
+    {
+    public:
+        DX12CubeApp() = default;
+        ~DX12CubeApp() = default;
+
+        LS::System::ErrorCode Init();
+        void Run();
+    };
+
+    DX12CubeApp g_cubeApp;
+    constexpr auto bindInit = std::bind(&gt::dx12::DX12CubeApp::Init, &g_cubeApp);
+    constexpr auto bindRun = std::bind(&gt::dx12::DX12CubeApp::Run, &g_cubeApp);
 
     namespace WRL = Microsoft::WRL;
 
@@ -84,6 +96,7 @@ namespace gt
     using ComPtrArray = std::array<WRL::ComPtr<T>, Size>;
     constexpr auto NUM_CONTEXT = 3;
     constexpr auto FRAME_COUNT = NUM_CONTEXT;
+
     struct FrameContext
     {
         // Manages a heap for the command lists. This cannot be reset while the CommandList is still in flight on the GPU0
@@ -102,6 +115,7 @@ namespace gt
     {
         uint32_t threadIndex;
     };
+
     ThreadParameter m_threadParameters[NUM_CONTEXT];
 
     std::array<FrameContext, FRAME_COUNT>					m_frameContext = {};
@@ -179,17 +193,17 @@ namespace gt
     void Render(float r, float g, float b, float a);
     void OnDestroy();
 
-    export auto App = LS::CreateAppRef(800, 600, L"Cube App", std::move(Init), std::move(Run));
+    export auto App = LS::CreateAppRef(800, 600, L"Cube App", std::move(bindInit), std::move(bindRun));
 
     using namespace LS;
-    export LS::System::ErrorCode Init()
+    export LS::System::ErrorCode DX12CubeApp::Init()
     {
         if (!CreateDevice((HWND)App->Window->GetHandleToWindow(), App->Window->GetWidth(), App->Window->GetHeight()))
             return System::CreateFailCode("Failed to create device.");
 
         return System::CreateSuccessCode();
     }
-    export void Run()
+    export void DX12CubeApp::Run()
     {
         auto& window = App->Window;
         window->Show();
@@ -414,7 +428,7 @@ namespace gt
 module : private;
 using namespace gt;
 
-bool gt::CreateDevice(HWND hwnd, uint32_t x, uint32_t y)
+bool gt::dx12::CreateDevice(HWND hwnd, uint32_t x, uint32_t y)
 {
     // [DEBUG] Enable debug interface
 #ifdef _DEBUG
@@ -540,7 +554,7 @@ bool gt::CreateDevice(HWND hwnd, uint32_t x, uint32_t y)
     return isSuccess;
 }
 
-bool gt::LoadAssets()
+bool gt::dx12::LoadAssets()
 {
     // Create an empty root signature for shader.hlsl
     {
@@ -690,7 +704,7 @@ bool gt::LoadAssets()
     return true;
 }
 
-void gt::LoadVertexDataToGpu()
+void gt::dx12::LoadVertexDataToGpu()
 {
     // For simplicity, I've opted to make two command lists with two separate local command allocators. This is so I can then put these two command lists to work
     // right away, without waiting on one or the other. These jobs only happen once, so it's only done this way for quick and easy, over "correctness" of loading data onto the GPU.
@@ -784,7 +798,7 @@ void gt::LoadVertexDataToGpu()
     }
 }
 
-void gt::GetHardwareAdapter(IDXGIFactory1* pFactory, IDXGIAdapter1** ppAdapter, bool requestHighPerformanceAdapter)
+void gt::dx12::GetHardwareAdapter(IDXGIFactory1* pFactory, IDXGIAdapter1** ppAdapter, bool requestHighPerformanceAdapter)
 {
     *ppAdapter = nullptr;
 
@@ -846,7 +860,7 @@ void gt::GetHardwareAdapter(IDXGIFactory1* pFactory, IDXGIAdapter1** ppAdapter, 
     *ppAdapter = adapter.Detach();
 }
 
-void gt::CreateRenderTarget()
+void gt::dx12::CreateRenderTarget()
 {
     // The handle can now be used to help use build our RTVs - one RTV per frame/back buffer
     CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_pRtvDescHeap->GetCPUDescriptorHandleForHeapStart());
@@ -863,11 +877,11 @@ void gt::CreateRenderTarget()
     m_pCommandAllocator2->SetName(L"Data Command Allocator 2");
 }
 
-void gt::CheckFeatures([[maybe_unused]] std::string& s)
+void gt::dx12::CheckFeatures([[maybe_unused]] std::string& s)
 {
 }
 
-void gt::LogAdapters(IDXGIFactory4* factory)
+void gt::dx12::LogAdapters(IDXGIFactory4* factory)
 {
     uint32_t i = 0;
     IDXGIAdapter* adapter = nullptr;
@@ -895,7 +909,7 @@ void gt::LogAdapters(IDXGIFactory4* factory)
     }
 }
 
-void gt::LogAdapterOutput(IDXGIAdapter* adapter)
+void gt::dx12::LogAdapterOutput(IDXGIAdapter* adapter)
 {
     uint32_t i = 0;
     IDXGIOutput* output = nullptr;
@@ -919,7 +933,7 @@ void gt::LogAdapterOutput(IDXGIAdapter* adapter)
     }
 }
 
-void gt::LogOutputDisplayModes(IDXGIOutput* output, DXGI_FORMAT format)
+void gt::dx12::LogOutputDisplayModes(IDXGIOutput* output, DXGI_FORMAT format)
 {
     UINT count = 0;
     UINT flags = 0;
@@ -944,7 +958,7 @@ void gt::LogOutputDisplayModes(IDXGIOutput* output, DXGI_FORMAT format)
     }
 }
 
-void gt::ExecuteCommandList()
+void gt::dx12::ExecuteCommandList()
 {
     // Execut the command list
     /*ID3D12CommandList* ppCommandLists[] = { m_pCommandList.Get() };
@@ -954,7 +968,7 @@ void gt::ExecuteCommandList()
 }
 
 // Waits for work on the GPU to finish before moving on to the next frame
-void gt::WaitForGpu()
+void gt::dx12::WaitForGpu()
 {
     FrameContext* frameCon = &m_frameContext[m_frameResourceIndex];
 
@@ -1002,44 +1016,44 @@ void gt::WaitForGpu()
 //	MoveToNextFrame();
 //}
 
-void gt::BeginRender()
+void gt::dx12::BeginRender()
 {
     m_pCurrFrameContext = &m_frameContext[m_frameResourceIndex];
     // Reclaims the memory allocated by this allocator for our next usage
     ThrowIfFailed(m_pCurrFrameContext->CommandAllocator[m_frameResourceIndex]->Reset());
 }
 
-void gt::ResetCommandList()
+void gt::dx12::ResetCommandList()
 {
     // Resets a command list to its initial state 
     ThrowIfFailed(m_pCurrFrameContext->CommandList[m_frameResourceIndex]->Reset(m_pCurrFrameContext->CommandAllocator[m_frameResourceIndex].Get(), nullptr));
 }
 
-void gt::SetPipelineState(WRL::ComPtr<ID3D12PipelineState>& pipelineState)
+void gt::dx12::SetPipelineState(WRL::ComPtr<ID3D12PipelineState>& pipelineState)
 {
     m_pCurrFrameContext->CommandList[m_frameResourceIndex]->SetPipelineState(pipelineState.Get());
 }
 
-void gt::SetRootSignature(WRL::ComPtr<ID3D12RootSignature>& rootSignature)
+void gt::dx12::SetRootSignature(WRL::ComPtr<ID3D12RootSignature>& rootSignature)
 {
     m_pCurrFrameContext->CommandList[m_frameResourceIndex]->SetGraphicsRootSignature(rootSignature.Get());
 }
 
-void gt::SetDescriptorHeaps()
+void gt::dx12::SetDescriptorHeaps()
 {
     ID3D12DescriptorHeap* ppHeaps[] = { m_pSrvDescHeap.Get() };
     m_pCurrFrameContext->CommandList[m_frameResourceIndex]->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
     m_pCurrFrameContext->CommandList[m_frameResourceIndex]->SetGraphicsRootDescriptorTable(0, m_pSrvDescHeap->GetGPUDescriptorHandleForHeapStart());
 }
 
-void gt::SetViewport()
+void gt::dx12::SetViewport()
 {
     // Set Viewport
     m_pCurrFrameContext->CommandList[m_frameResourceIndex]->RSSetViewports(1, &m_viewport);
     m_pCurrFrameContext->CommandList[m_frameResourceIndex]->RSSetScissorRects(1, &m_scissorRect);
 }
 
-void gt::ClearRTV(float r, float g, float b, float a)
+void gt::dx12::ClearRTV(float r, float g, float b, float a)
 {
     // This will prep the back buffer as our render target and prepare it for transition
     auto backbufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
@@ -1054,7 +1068,7 @@ void gt::ClearRTV(float r, float g, float b, float a)
 
 }
 
-void gt::SetRTV(FrameContext* frameCon)
+void gt::dx12::SetRTV(FrameContext* frameCon)
 {
     // This will prep the back buffer as our render target and prepare it for transition
     auto backbufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
@@ -1065,14 +1079,14 @@ void gt::SetRTV(FrameContext* frameCon)
     frameCon->CommandList[m_frameResourceIndex]->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
 }
 
-void gt::Draw(D3D12_VERTEX_BUFFER_VIEW& bufferView, uint64_t vertices, uint64_t instances)
+void gt::dx12::Draw(D3D12_VERTEX_BUFFER_VIEW& bufferView, uint64_t vertices, uint64_t instances)
 {
     m_pCurrFrameContext->CommandList[m_frameResourceIndex]->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     m_pCurrFrameContext->CommandList[m_frameResourceIndex]->IASetVertexBuffers(0, 1, &bufferView);
-    m_pCurrFrameContext->CommandList[m_frameResourceIndex]->DrawInstanced(vertices, instances, 0, 0);
+    m_pCurrFrameContext->CommandList[m_frameResourceIndex]->DrawInstanced((UINT)vertices, (UINT)instances, 0, 0);
 }
 
-void gt::PresentRTV()
+void gt::dx12::PresentRTV()
 {
     auto backbufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
 
@@ -1081,12 +1095,12 @@ void gt::PresentRTV()
     m_pCurrFrameContext->CommandList[m_frameResourceIndex]->ResourceBarrier(1, &barrier2);
 }
 
-void gt::CloseCommandList()
+void gt::dx12::CloseCommandList()
 {
     m_pCurrFrameContext->CommandList[m_frameResourceIndex]->Close();
 }
 
-void gt::MoveToNextFrame()
+void gt::dx12::MoveToNextFrame()
 {
     // Get frame context and send to the command queu our fence value 
     auto frameCon = &m_frameContext[m_frameResourceIndex];
@@ -1105,34 +1119,34 @@ void gt::MoveToNextFrame()
     m_frameContext[m_frameResourceIndex].FenceValue = frameCon->FenceValue + 1;
 }
 
-void gt::CreateThreads()
+void gt::dx12::CreateThreads()
 {
     m_drawFinished = CreateEvent(NULL, FALSE, FALSE, L"Draw Finished");
     m_prepWorkDone = CreateEvent(NULL, FALSE, FALSE, L"Prep Work Done");
     // colored triangle
     auto work = [&](uint32_t threadIndex)
-    {
-        while (threadIndex < NUM_CONTEXT)
         {
-            // Prepare allocators
-            WaitForSingleObject(m_prepWorkDone, INFINITE);
-            ThrowIfFailed(m_pCurrFrameContext->CommandAllocator[m_frameResourceIndex]->Reset());
-            ThrowIfFailed(m_pCurrFrameContext->CommandList[m_frameResourceIndex]->Reset(m_pCurrFrameContext->CommandAllocator[m_frameResourceIndex].Get(), m_pPipelineState.Get()));
-            /*for (auto i = 0u; i < Engine::FRAME_COUNT; ++i)
+            while (threadIndex < NUM_CONTEXT)
             {
-                ThrowIfFailed(m_pCurrFrameContext->CommandAllocator[i]->Reset());
-                ThrowIfFailed(m_pCurrFrameContext->CommandList[i]->Reset(m_pCurrFrameContext->CommandAllocator[i].Get(), m_pPipelineState.Get()));
-            }*/
-            SetViewport();
-            ClearRTV(0.0f, 0.0f, 0.0f, 1.0f);
+                // Prepare allocators
+                WaitForSingleObject(m_prepWorkDone, INFINITE);
+                ThrowIfFailed(m_pCurrFrameContext->CommandAllocator[m_frameResourceIndex]->Reset());
+                ThrowIfFailed(m_pCurrFrameContext->CommandList[m_frameResourceIndex]->Reset(m_pCurrFrameContext->CommandAllocator[m_frameResourceIndex].Get(), m_pPipelineState.Get()));
+                /*for (auto i = 0u; i < Engine::FRAME_COUNT; ++i)
+                {
+                    ThrowIfFailed(m_pCurrFrameContext->CommandAllocator[i]->Reset());
+                    ThrowIfFailed(m_pCurrFrameContext->CommandList[i]->Reset(m_pCurrFrameContext->CommandAllocator[i].Get(), m_pPipelineState.Get()));
+                }*/
+                SetViewport();
+                ClearRTV(0.0f, 0.0f, 0.0f, 1.0f);
 
-            m_pCurrFrameContext->CommandList[m_frameResourceIndex]->SetGraphicsRootSignature(m_pRootSignature.Get());
-            m_pCurrFrameContext->CommandList[m_frameResourceIndex]->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-            m_pCurrFrameContext->CommandList[m_frameResourceIndex]->IASetVertexBuffers(0, 1, &m_vertexBufferView);
-            m_pCurrFrameContext->CommandList[m_frameResourceIndex]->DrawInstanced(3, 1, 0, 0);
-            SetEvent(m_drawFinished);
-        }
-    };
+                m_pCurrFrameContext->CommandList[m_frameResourceIndex]->SetGraphicsRootSignature(m_pRootSignature.Get());
+                m_pCurrFrameContext->CommandList[m_frameResourceIndex]->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+                m_pCurrFrameContext->CommandList[m_frameResourceIndex]->IASetVertexBuffers(0, 1, &m_vertexBufferView);
+                m_pCurrFrameContext->CommandList[m_frameResourceIndex]->DrawInstanced(3, 1, 0, 0);
+                SetEvent(m_drawFinished);
+            }
+        };
     m_defaultDrawThread = std::jthread(work, 1);
     // Thread has synchronization events to wait for jobs when it is ready, let it run.
     // Though we will never fully close it correctly, which will be a problem later. Need to investigate stop tokens and 
@@ -1146,7 +1160,7 @@ void gt::CreateThreads()
 
 }
 
-void gt::Render(float r, float g, float b, float a)
+void gt::dx12::Render(float r, float g, float b, float a)
 {
     if (firstRun)
     {
@@ -1180,7 +1194,7 @@ void gt::Render(float r, float g, float b, float a)
     MoveToNextFrame();
 }
 
-void gt::OnDestroy()
+void gt::dx12::OnDestroy()
 {
     WaitForGpu();
 

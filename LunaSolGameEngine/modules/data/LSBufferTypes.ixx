@@ -64,36 +64,33 @@ export namespace LS
     class LSBuffer
     {
     protected:
-        Ref<TObject>            m_bufferObject{ nullptr };
+        TObject                 m_bufferObject;
         std::string             m_bufferName{ "default" };
-        size_t                  m_stride{ 0 };
-        size_t                  m_count{ 0 };
+        size_t                  m_stride{ 0 };// @brief
+        size_t                  m_count{ 0 };// @brief The number of elements that this buffer has
         BUFFER_USAGE            m_usage{ BUFFER_USAGE::DEFAULT_RW }; // @brief details how the data will be used
         BUFFER_BIND_TYPE        m_bindType{ BUFFER_BIND_TYPE::UNKNOWN }; // @brief Information on what stage in the graphics pipeline this buffer is used
         CPU_RESOURCE_ACCESS     m_cpuAccess{ CPU_RESOURCE_ACCESS::UNDEFINED };
 
     public:
-        LSBuffer(Ref<TObject> obj, std::string_view name, size_t stride = 0, size_t count = 0) :
-            m_bufferObject(std::move(obj)),
+        LSBuffer(TObject obj, std::string_view name, size_t stride = 0, size_t count = 0) :
+            m_bufferObject(obj),
             m_bufferName(name.data()),
             m_stride(stride),
             m_count(count)
         {
         }
 
-        ~LSBuffer()
-        {
-            m_bufferObject.release();
-        }
+        ~LSBuffer() = default;
 
         auto GetData() const -> const std::byte*
         {
-            return reinterpret_cast<const std::byte*>(m_bufferObject.get());
+            return reinterpret_cast<const std::byte*>(&m_bufferObject);
         }
 
         auto GetTypePtr() const -> const TObject*
         {
-            return m_bufferObject.get();
+            return &m_bufferObject;
         }
 
         auto GetBufferName() const -> std::string_view
@@ -108,7 +105,7 @@ export namespace LS
 
         constexpr auto GetSizeInBytes() const -> size_t
         {
-            return sizeof(*m_bufferObject);
+            return sizeof(m_bufferObject);
         }
 
         constexpr auto GetStride() const -> size_t
@@ -126,7 +123,7 @@ export namespace LS
             return m_usage;
         }
 
-        constexpr auto GetPipelineStage() const -> BUFFER_PIPELINE_STAGES
+        constexpr auto GetBindStage() const -> BUFFER_PIPELINE_STAGES
         {
             return m_bindType;
         }

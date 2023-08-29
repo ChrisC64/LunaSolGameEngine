@@ -1,46 +1,51 @@
 module;
+#include <concepts>
+#include <type_traits>
 
 export module Data.LSResource;
 
 import Data.LSDataTypes;
 import Engine.App;
-
+//TODO: Not sure if going to keep, my goal was to have something that keeps storage of all resource
+// objects, but I'll probably work to keep separate resources like Buffers, Textures, Sound, etc. 
+// instead of generalizing them. 
 export namespace LS::Resource
 {
     template <class Type>
-    struct Resource
+        requires std::is_destructible<Type>
+    struct LSResource
     {
         GuidUL Guid;
         Type Obj;
     };
 
-    template <class T, class Res = Resource<T>>
-    class ResourceManager
+    template <class T>
+    concept LSLoader = requires(T t, GuidUL g)
+    {
+        { t.Load(t) } -> std::convertible_to<GuidUL>;
+        t.Unload(g);
+    };
+
+    template <class T>
+    class LSResourceManager
     {
     public:
-        ResourceManager() = default;
-        ~ResourceManager() = default;
+        LSResourceManager() = default;
+        ~LSResourceManager() = default;
 
-        ResourceManager(const&) = delete;
-        ResourceManager& operator=(const&) = delete;
+        LSResourceManager(const LSResourceManager&) = delete;
+        LSResourceManager& operator=(const LSResourceManager&) = delete;
 
-        ResourceManager(&&) = default;
-        ResourceManager& operator=(&&) = default;
+        LSResourceManager(LSResourceManager&&) = default;
+        LSResourceManager& operator=(LSResourceManager&&) = default;
 
-        [[nodiscard]]
-        auto Get(GuidUL guid) const noexcept -> Nullable<Ref<T>>;
+        [[nodiscard]] auto GetSharedRef(GuidUL guid) const noexcept -> Nullable<SharedRef<T>>;
+        [[nodiscard]] auto GetWeakRef(GuidUL guid) const noexcept -> Nullable<WeakRef<T>>;
+        [[nodiscard]] auto Insert(GuidUL guid, T&& resource) noexcept -> LS::System::ErrorCode;
+        [[nodiscard]] auto Insert(GuidUL guid, const T& resource) noexcept -> LS::System::ErrorCode;
 
-        [[nodiscard]]
-        auto Set(GuidUL guid, Ref<T> resource) noexcept -> LS::System::ErrorCode;
-        [[nodiscard]]
-        auto Set(GuidUL guid, T&& resource) noexcept -> LS::System::ErrorCode;
-        [[nodiscard]]
-        auto Set(GuidUL guid, const T& resource) noexcept -> LS::System::ErrorCode;
-
-        [[nodiscard]]
-        auto Lock(GuidUL guid) noexcept -> Ref<T>;
-        [[nodiscard]]
-        auto TryLock(GuidUL guid) noexcept -> Nullable<Ref<T>>;
-        void Unlock(GuidUL guid) noexcept;
+        [[nodiscard]] auto Lock(GuidUL guid) noexcept -> WeakRef<T>;
+        [[nodiscard]] auto TryLock(GuidUL guid) noexcept -> Nullable<WeakRef<T>>;
+        [[nodiscard]] auto Unlock(GuidUL guid) noexcept -> LS::System::ErrorCode;
     };
 }

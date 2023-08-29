@@ -4,6 +4,7 @@ module;
 #include <array>
 #include <string>
 #include <string_view>
+
 export module Engine.EngineCodes;
 
 export namespace LS
@@ -68,7 +69,7 @@ export namespace LS
         class ErrorCode
         {
         protected:
-            const std::string ErrorMsg;
+            std::string ErrorMsg;
             ErrorStatus ErrStatus = ErrorStatus::ERROR;
             ErrorCategory ErrCategory = ErrorCategory::GENERAL;
 
@@ -79,6 +80,11 @@ export namespace LS
                 ErrCategory(category),
                 ErrorMsg(msg)
             {}
+
+            [[nodiscard]] ErrorCode& operator=(const ErrorCode&) noexcept = default;
+            [[nodiscard]] ErrorCode& operator=(ErrorCode&&) noexcept = default;
+            [[nodiscard]] ErrorCode(const ErrorCode&) noexcept = default;
+            [[nodiscard]] ErrorCode(ErrorCode&&) noexcept = default;
             
             auto Message() const noexcept -> const std::string_view
             {
@@ -121,20 +127,5 @@ export namespace LS
             return ErrorCode(ErrorStatus::SUCCESS, ErrorCategory::GENERAL, "");
         }
 
-        /*class SuccessErrorCode : public ErrorCode
-        {
-        public:
-            SuccessErrorCode(ErrorCategory category = ErrorCategory::GENERAL, std::string_view msg = "") :
-                ErrorCode(ErrorStatus::SUCCESS, category, msg)
-            {}
-        };
-
-        class FailErrorCode : public ErrorCode
-        {
-        public:
-            FailErrorCode(ErrorCategory category = ErrorCategory::GENERAL, std::string_view msg = "") :
-                ErrorCode(ErrorStatus::ERROR, category, msg)
-            {}
-        };*/
     }// end namespace System
 }// end namespace LS

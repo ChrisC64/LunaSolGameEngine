@@ -16,6 +16,9 @@ export
 
     template <class S>
     using SharedRef = std::shared_ptr<S>;
+    template <class W>
+    using WeakRef = std::weak_ptr<W>;
+
     /**
      * @brief Typedef of a Nullable Object (std::optional wrapper)
      * @tparam T type to wrap in optional object
