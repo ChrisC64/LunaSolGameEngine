@@ -183,6 +183,7 @@
     <ClCompile Include="modules\data\LSBufferTypes.ixx" />
     <ClCompile Include="modules\data\LSDataTypes.ixx" />
     <ClCompile Include="modules\data\LSResource.ixx" />
+    <ClCompile Include="modules\data\serialize\AssimpLoader.ixx" />
     <ClCompile Include="modules\data\serialize\WavefrontObj.ixx" />
     <ClCompile Include="modules\engine\EngineLogger.ixx" />
     <ClCompile Include="modules\engine\EngineCodes.ixx" />
@@ -225,7 +226,7 @@
     <ClCompile Include="modules\utils\StdUtils.ixx" />
     <ClCompile Include="modules\platform\Windows\Win32Window.ixx" />
     <ClCompile Include="modules\utils\Util.ixx" />
-    <ClCompile Include="src\engine\EngineCommon.cpp" />
+    <ClCompile Include="src\engine\EngineApp.cpp" />
     <ClCompile Include="src\helper\PipelineFactory.cpp" />
     <ClCompile Include="src\platform\D3D11\DeviceD3D11.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>

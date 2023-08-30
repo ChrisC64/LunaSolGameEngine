@@ -28,6 +28,10 @@ module;
 
 #include <d3d11_4.h>
 #include "LSTimer.h"
+#include "assimp/Importer.hpp"
+#include "assimp/scene.h"
+#include "assimp/postprocess.h"
+
 
 export module DX11CubeApp;
 
@@ -42,6 +46,7 @@ import MathLib;
 import DirectXCommon;
 import LSData;
 import LSE.Serialize.WavefrontObj;
+import LSE.Serialize.AssimpLoader;
 import DX11Systems;
 
 
@@ -146,6 +151,7 @@ namespace gt::dx11
     std::condition_variable g_pauseCondition;
     std::barrier g_pauseSync(1, []() noexcept { std::cout << "Pause sync complete.\n"; });
     LS::Serialize::WavefrontObj m_objFile;
+    LS::Serialize::AssimpLoader m_assLoader;
     
     auto CreateVertexShader(const LS::Win32::DeviceD3D11& device, ComPtr<ID3D11VertexShader>& shader, std::vector<std::byte>& byteCode) -> bool
     {
@@ -408,7 +414,7 @@ LS::System::ErrorCode gt::dx11::DX11CubeApp::Init()
     LS::Log::TraceDebug(L"Buffers created!!");
     // Rasterizer Creation // 
     LS::Log::TraceDebug(L"Building rasterizer state...");
-    Nullable<ID3D11RasterizerState2*> rsSolidOpt = CreateRasterizerState2(g_device.GetDevice().Get(), SolidFill_BackCull_FCW_DCE);
+    Nullable<ID3D11RasterizerState2*> rsSolidOpt = CreateRasterizerState2(g_device.GetDevice().Get(), SolidFill_BackCull_FCCW_DCE);
     if (!rsSolidOpt)
     {
         LS::Log::TraceError(L"Failed to create rasterizer state");
@@ -446,27 +452,26 @@ LS::System::ErrorCode gt::dx11::DX11CubeApp::Init()
 
     Vertex vd;
     std::vector<Vertex> tvd;
+
+    const auto& meshes = m_assLoader.GetMeshes();
+    std::cout << meshes.size() << " Meshes\n";
+
+    const auto& mesh = meshes[0];
     LS::Vec4<float> color = { .x = 1.0f, .y = 0.4f, .z = 0.23f, .w = 1.0f };
-    const auto& verts = m_objFile.GetVertices();
-
-    for (auto i = 0u; i < verts.size(); ++i)
+    for (auto i = 0u; i < mesh.Vertices.size(); ++i)
     {
-        vd.Position.x = verts[i].x;
-        vd.Position.y = verts[i].y;
-        vd.Position.z = verts[i].z;
+        vd.Position.x = mesh.Vertices[i].x;
+        vd.Position.y = mesh.Vertices[i].y;
+        vd.Position.z = mesh.Vertices[i].z;
         vd.Position.w = 1.0f;
-
         vd.Color = color;
         tvd.push_back(vd);
     }
-
-    const auto& faces = m_objFile.GetFaces();
-    for (auto i = 0; i < faces.size(); ++i)
-    {
-        const auto& indices = faces[i].Indices;
-        g_objIndices.insert(g_objIndices.end(), indices.begin(), indices.end());
-    }
-
+    g_objIndices.clear();
+    g_objIndices.insert(g_objIndices.begin(), mesh.Indices.begin(), mesh.Indices.end());
+    
+    //TODO: I use Vec3F for the vertices which now need to be converted into a Vec4F. Either I allow that to
+    // be placed or I just set it in the shader instead. 
     auto objVbOpt = LS::Platform::Dx11::CreateVertexBuffer(g_device.GetDevice().Get(), tvd);
     if (!objVbOpt)
     {
@@ -480,7 +485,7 @@ LS::System::ErrorCode gt::dx11::DX11CubeApp::Init()
     }
 
     // Index Buffer //
-    auto objIbOpt = LS::Platform::Dx11::CreateIndexBuffer(g_device.GetDevice().Get(), g_objIndices);
+    auto objIbOpt = LS::Platform::Dx11::CreateIndexBuffer(g_device.GetDevice().Get(), mesh.Indices);
     if (!objIbOpt)
     {
         LS::Log::TraceError(L"Failed to create index buffer.");
@@ -747,16 +752,10 @@ exit_resize:
 
 void gt::dx11::DX11CubeApp::ReadOBJFile(std::filesystem::path path)
 {
-    m_objFile.SetClockwise(true);
-    auto result = m_objFile.LoadFile(path);
+    auto result = m_assLoader.Load(path,
+        (uint32_t)aiProcess_CalcTangentSpace | aiProcess_Triangulate | aiProcess_JoinIdenticalVertices | aiProcess_SortByPType | aiProcess_MakeLeftHanded);
     if (!result)
     {
-        throw std::runtime_error(result.Message().data());
-    }
-
-    auto loadResult = m_objFile.LoadObject();
-    if (!loadResult)
-    {
-        throw std::runtime_error(loadResult.Message().data());
+        std::cout << result.Message();
     }
 }

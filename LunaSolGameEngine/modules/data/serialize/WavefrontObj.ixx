@@ -11,6 +11,10 @@ module;
 #include <ranges>
 #include <iostream>
 #include <algorithm>
+#include <functional>
+#include "assimp\Importer.hpp"
+#include "assimp\scene.h"
+#include "assimp\postprocess.h"
 
 //TODO: Consider making Lse prepend for "Engine" stuff instead of just "Engine" like Engine.EngineCodes below.
 export module LSE.Serialize.WavefrontObj;
@@ -86,6 +90,7 @@ export namespace LS::Serialize
         [[nodiscard]] auto LoadFile(const std::filesystem::path file) noexcept -> LS::System::ErrorCode;
         [[nodiscard]] auto LoadObject() noexcept -> LS::System::ErrorCode;
         [[nodiscard]] auto ParseFace(std::span<std::string> line) noexcept -> LS::System::ErrorCode;
+        [[nodiscard]] auto LoadAssimp(const std::filesystem::path file) noexcept -> LS::System::ErrorCode;
 
         auto GetFaces() const noexcept -> const std::vector<Face>
         {
@@ -124,6 +129,7 @@ export namespace LS::Serialize
         std::vector<Vec3F> m_normals;
         std::vector<Vec2F> m_uvs;
         std::vector<Face> m_faces;
+        std::vector<uint32_t> m_indices;
         bool IsCounterClockwise = false;
     };
 }
@@ -406,6 +412,85 @@ namespace LS::Serialize
 
         m_faces.emplace_back(face);
 
+        return LS::System::CreateSuccessCode();
+    }
+
+    [[nodiscard]] 
+    auto WavefrontObj::LoadAssimp(const std::filesystem::path file) noexcept -> LS::System::ErrorCode
+    {
+        Assimp::Importer importer;
+
+        const auto scene = importer.ReadFile(file.string(), aiProcess_CalcTangentSpace | aiProcess_Triangulate | aiProcess_JoinIdenticalVertices | aiProcess_SortByPType | aiProcess_MakeLeftHanded);
+
+        if (!scene)
+        {
+            return LS::System::CreateFailCode(importer.GetErrorString());
+        }
+
+        auto printFaceInfo = [&](const aiFace* face) -> void {
+            if (!face)
+                return;
+
+            std::cout << std::format("        Face has: {} points\n", face->mNumIndices);
+            std::cout << std::format("            Indices:( ", face->mNumIndices);
+
+            Face myFace;
+            for (auto i = 0u; i < face->mNumIndices; i++)
+            {
+                std::cout << std::format("{}, ", face->mIndices[i]);
+                myFace.Indices.push_back(face->mIndices[i]);
+            }
+            std::cout << ")\n";
+            m_faces.emplace_back(myFace);
+            };
+
+        auto printMeshInfo = [&](const aiMesh* mesh) -> void
+            {
+                if (!mesh)
+                    return;
+
+                if (mesh->HasFaces())
+                {
+                    std::cout << std::format("      This mesh has {} faces\n", mesh->mNumFaces);
+                    for (auto i = 0u; i < mesh->mNumFaces; ++i)
+                    {
+                        printFaceInfo(&mesh->mFaces[i]);
+                    }
+                }
+                if (mesh->HasPositions())
+                {
+                    for (auto i = 0u; i < mesh->mNumVertices; ++i)
+                    {
+                        const auto vert = mesh->mVertices[i];
+                        std::cout << std::format("        Vertex {}: ({}, {}, {})\n", i, vert.x, vert.y, vert.z);
+                        Vec3F vertex(vert.x, vert.y, vert.z);
+                        m_vertices.emplace_back(vertex);
+                    }
+                }
+            };
+
+        std::function<void(const aiNode*)> printChildren = [&](const aiNode* child) -> void
+            {
+                std::cout << std::format("Root node found: {}\n", child->mName.C_Str());
+                for (auto i = 0u; i < child->mNumChildren; ++i)
+                {
+                    std::cout << std::format("{: >4}\n", child->mChildren[i]->mName.C_Str());
+                    std::cout << std::format("    Children count: {}\n", child->mNumChildren);
+                    printChildren(child->mChildren[i]);
+                }
+
+                if (child->mNumMeshes > 0)
+                {
+                    std::cout << std::format("Child has meshes: {}\n", child->mNumMeshes);
+                    for (auto j = 0u; j < child->mNumMeshes; ++j)
+                    {
+                        auto index = child->mMeshes[j];
+                        printMeshInfo(scene->mMeshes[index]);
+                    }
+                }
+            };
+
+        printChildren(scene->mRootNode);
         return LS::System::CreateSuccessCode();
     }
 }
