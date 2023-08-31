@@ -78,7 +78,7 @@ void Serialize::AssimpLoader::ProcessFace(const aiFace* face, LSMesh& lsMesh) no
 
 void Serialize::AssimpLoader::ProcessMesh(const aiMesh* mesh, LSMesh& lsMesh) noexcept
 {
-    if (!mesh)
+    if (!mesh || !mesh->HasPositions())
         return;
 
     // Find the Indices of the mesh's faces (a face can be X number of polygons that make up this mesh: i.e. triangles)
@@ -88,49 +88,36 @@ void Serialize::AssimpLoader::ProcessMesh(const aiMesh* mesh, LSMesh& lsMesh) no
     }
 
     // Obtain the mesh's positions (vertices) 
-    if (mesh->HasPositions())
-    {
-        lsMesh.Vertices.resize(mesh->mNumVertices);
-        for (auto i = 0u; i < mesh->mNumVertices; ++i)
-        {
-            const auto vert = mesh->mVertices[i];
-            Vec3F vertex(vert.x, vert.y, vert.z);
-            lsMesh.Vertices.at(i) = vertex;
-        }
-    }
+    // We should always assume there are vertices, otherwise what are we loading?
+    lsMesh.Vertices.resize(mesh->mNumVertices);
+    lsMesh.Normals.resize(mesh->mNumVertices);
+    lsMesh.TexCoords.resize(mesh->mNumVertices);
+    lsMesh.Colors.resize(mesh->mNumVertices);
+    lsMesh.NumUvComponents = mesh->HasTextureCoords(0) ? mesh->mNumUVComponents[0] : 0;
+    lsMesh.MaterialIndex = mesh->mMaterialIndex;
 
-    if (mesh->HasNormals())
+    const aiColor4D Zero4(0.0f, 0.0f, 0.0f, 0.0f);
+    const aiVector3D Zero3(0.0f, 0.0f, 0.0f);
+    
+    for (auto i = 0u; i < mesh->mNumVertices; ++i)
     {
-        lsMesh.Normals.resize(mesh->mNumVertices);
-        for (auto i = 0u; i < mesh->mNumVertices; ++i)
-        {
-            const auto norm = mesh->mNormals[i];
-            Vec3F normal(norm.x, norm.y, norm.z);
-            lsMesh.Normals.at(i) = normal;
-        }
-    }
+        const auto vert = mesh->mVertices[i];
+        Vec3F vertex(vert.x, vert.y, vert.z);
+        lsMesh.Vertices.at(i) = vertex;
 
-    /*if (mesh->HasTextureCoords())
-    {
-        lsMesh.TexCoords.resize(mesh->mNumVertices);
-        for (auto i = 0u; i < mesh->mNumVertices; ++i)
-        {
-            const auto uv = mesh->mNormals[i];
-            Vec3F texcoord(uv.x, uv.y, uv.z);
-            lsMesh.TexCoords.at(i) = texcoord;
-        }
-    }
+        const auto norm = mesh->HasNormals() ? mesh->mNormals[i] : Zero3;
+        Vec3F normal(norm.x, norm.y, norm.z);
+        lsMesh.Normals.at(i) = normal;
 
-    if (mesh->HasVertexColors())
-    {
-        lsMesh.Colors.resize(mesh->mesh->mNumVertices);
-        for (auto i = 0u; i < mesh->mNumVertices; ++i)
-        {
-            const auto color = mesh->mColors[i];
-            Vec4F colors(color.r, color.g, color.b, color.a);
-            lsMesh.Colors.at(i) = colors;
-        }
-    }*/
+        const auto uv = mesh->HasTextureCoords(0) ? mesh->mTextureCoords[0][i] : Zero3;
+        Vec3F texcoord(uv.x, uv.y, uv.z);
+        lsMesh.TexCoords.at(i) = texcoord;
+
+        const auto color = mesh->HasVertexColors(0) ? mesh->mColors[0][i] : Zero4;
+        Vec4F colors(color.r, color.g, color.b, color.a);
+        lsMesh.Colors.at(i) = colors;
+
+    }
 
 }
 
@@ -140,22 +127,25 @@ void Serialize::AssimpLoader::ProcessRootNode(const aiNode* node, const aiScene*
         return;
 
     // Finds the meshes that are in this node 
+    for (auto i = 0u; i < node->mNumMeshes; ++i)
+    {
+        auto index = node->mMeshes[i];
+        LSMesh mesh;
+        ProcessMesh(scene->mMeshes[index], mesh);
+        m_meshes.at(i) = mesh;
+    }
+    
+    // Process the Children 
     for (auto i = 0u; i < node->mNumChildren; ++i)
     {
         auto child = node->mChildren[i];
         ProcessRootNode(child, scene);
     }
 
-    for (auto i = 0u; i < node->mNumMeshes; ++i)
-    {
-        auto index = node->mMeshes[i];
-        LSMesh mesh;
-        ProcessMesh(scene->mMeshes[index], mesh);
-        m_meshes.emplace_back(mesh);
-    }
 }
 
 void Serialize::AssimpLoader::ProcessScene(const aiScene* scene) noexcept
 {
+    m_meshes.resize(scene->mNumMeshes);
     ProcessRootNode(scene->mRootNode, scene);
 }

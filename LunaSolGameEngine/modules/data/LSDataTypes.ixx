@@ -82,6 +82,8 @@ export
         struct LSMesh
         {
             std::string Name;
+            uint32_t NumUvComponents;
+            uint32_t MaterialIndex;
             PrimitiveType PrimType;
             std::vector<uint32_t> Indices;
             std::vector<Vec3F> Vertices;
