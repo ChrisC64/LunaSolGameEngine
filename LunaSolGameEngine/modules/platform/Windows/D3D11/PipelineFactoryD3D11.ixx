@@ -10,7 +10,7 @@ module;
 export module D3D11.PipelineFactory;
 import Helper.PipelineFactory;
 import LSData;
-import Engine.Common;
+import Engine.App;
 import Util;
 import D3D11.Device;
 

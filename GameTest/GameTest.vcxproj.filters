@@ -27,6 +27,12 @@
     <ClCompile Include="src\DX11Test\DX11CubeApp.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\DX11Test\Systems\DX11Systems.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DX11Test\Systems\DX11BufferCache.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="shaders\VertexShader.hlsl" />

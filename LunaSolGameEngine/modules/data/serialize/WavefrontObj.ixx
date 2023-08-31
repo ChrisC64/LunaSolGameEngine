@@ -10,6 +10,11 @@ module;
 #include <stdexcept>
 #include <ranges>
 #include <iostream>
+#include <algorithm>
+#include <functional>
+#include "assimp\Importer.hpp"
+#include "assimp\scene.h"
+#include "assimp\postprocess.h"
 
 //TODO: Consider making Lse prepend for "Engine" stuff instead of just "Engine" like Engine.EngineCodes below.
 export module LSE.Serialize.WavefrontObj;
@@ -85,6 +90,7 @@ export namespace LS::Serialize
         [[nodiscard]] auto LoadFile(const std::filesystem::path file) noexcept -> LS::System::ErrorCode;
         [[nodiscard]] auto LoadObject() noexcept -> LS::System::ErrorCode;
         [[nodiscard]] auto ParseFace(std::span<std::string> line) noexcept -> LS::System::ErrorCode;
+        [[nodiscard]] auto LoadAssimp(const std::filesystem::path file) noexcept -> LS::System::ErrorCode;
 
         auto GetFaces() const noexcept -> const std::vector<Face>
         {
@@ -111,6 +117,11 @@ export namespace LS::Serialize
             return m_lines;
         }
 
+        void SetClockwise(bool isCounterClockwise) noexcept
+        {
+            IsCounterClockwise = isCounterClockwise;
+        }
+
     private:
         // @brief The lines of the file
         std::vector<std::string> m_lines;
@@ -118,6 +129,8 @@ export namespace LS::Serialize
         std::vector<Vec3F> m_normals;
         std::vector<Vec2F> m_uvs;
         std::vector<Face> m_faces;
+        std::vector<uint32_t> m_indices;
+        bool IsCounterClockwise = false;
     };
 }
 
@@ -148,76 +161,6 @@ namespace LS::Serialize
         }
 
         return out;
-    }
-
-    /**
-     * @brief Splits the group of / in a face section (if all values set, should be in v/vt/vn order
-     * @param line a v/vt/vn section of a face (f) line
-     * @return a group of values split into three sections
-    */
-    [[nodiscard]]
-    auto SplitFaceGroup(std::string_view line) -> std::vector<int>
-    {
-        size_t offset = 0;
-        std::vector<int> out;
-        return out;
-        // Ranges //
-        // C++ 20 we cannot create string_view from the view given by split() so we have to do this wonky thing
-//#ifdef __cpp_lib_ranges > 201911L
-//        /*auto view = std::views::split(line, '/') | std::views::transform([](auto&& str)
-//            {
-//                return std::string_view(&*str.begin(), std::ranges::distance(str));
-//            });*/
-//
-//        for (auto&& s : std::views::split(line, '/') | std::views::transform( [](auto&& str)
-//            {
-//                return std::string_view(&*str.begin(), std::ranges::distance(str));
-//            } ) 
-//            )
-//        {
-//            if (s.empty())
-//                continue;
-//
-//            out.emplace_back(std::stoi(s.data()));
-//        }
-//
-//        return out;
-//#else
-        // NO ranges //
-
-        //if (line.size() == 1)
-        //{
-        //    auto sub = line.substr(0, 1);
-        //    auto value = std::stoi(sub.data());
-        //    out.emplace_back(value);
-        //    return out;
-        //}
-        //
-        //auto pos = line.find('/');
-        //while (pos != std::string::npos)
-        //{
-        //    auto substr = line.substr(offset, pos);
-        //    // in a x//v or x/v// scenario, we should skip check for / in the sub string
-        //    if (substr == "/")
-        //    {
-        //        offset = pos + 1;
-        //        pos = line.find('/', offset);
-        //    }
-        //    else if (substr.empty())
-        //    {
-        //        offset++;
-        //        pos = line.find('/', offset);
-        //    }
-        //    else
-        //    {
-        //        out.emplace_back(std::move(substr));
-        //        offset = pos + 1;
-        //        pos = line.find('/', offset);
-        //    }
-        //}
-
-        //return out;
-//#endif
     }
 
     [[nodiscard]]
@@ -416,7 +359,6 @@ namespace LS::Serialize
             else if (token == ObjTokens.at(TokenObj::Face))
             {
                 // parse face
-
                 if (auto fResult = ParseFace(splits); !fResult)
                 {
                     return fResult;
@@ -432,23 +374,21 @@ namespace LS::Serialize
     auto WavefrontObj::ParseFace(std::span<std::string> line) noexcept -> LS::System::ErrorCode
     {
         Face face;
-        // Parses a single line of a face (f) section. First by spaces, then by '/'
-        for (auto& s : line)
-        {
-            if (s == "f")
-            {
-                continue;
-            }
 
-            //TODO: This needs to handle cases where one of the elements is missing: i.e. v//vn, or v/vt// or v 
-            // Faces are organized in Vertex Index, Vertex UV, and Vertex Normal
-            auto split = Split(s, "/");
+        // f will be in this line, so we want 1 less 
+        auto faceCount = line.size() - 1;
+
+        // Skip F and parse each section
+        for (auto p = 1u; p < faceCount + 1; ++p)
+        {
+            auto split = Split(line[p], "/");
             for (auto i = 0u; i < split.size(); ++i)
             {
                 if (split.at(i).empty())
                     continue;
 
                 auto value = std::stoi(split.at(i)) - 1;
+
                 if (i == 0) // Vertex Index
                 {
                     face.Indices.emplace_back(value);
@@ -463,8 +403,94 @@ namespace LS::Serialize
                 }
             }
         }
+
+        // Reverse Index Order //
+        if (IsCounterClockwise)
+        {
+            std::reverse(face.Indices.begin(), face.Indices.end());
+        }
+
         m_faces.emplace_back(face);
 
+        return LS::System::CreateSuccessCode();
+    }
+
+    [[nodiscard]] 
+    auto WavefrontObj::LoadAssimp(const std::filesystem::path file) noexcept -> LS::System::ErrorCode
+    {
+        Assimp::Importer importer;
+
+        const auto scene = importer.ReadFile(file.string(), aiProcess_CalcTangentSpace | aiProcess_Triangulate | aiProcess_JoinIdenticalVertices | aiProcess_SortByPType | aiProcess_MakeLeftHanded);
+
+        if (!scene)
+        {
+            return LS::System::CreateFailCode(importer.GetErrorString());
+        }
+
+        auto printFaceInfo = [&](const aiFace* face) -> void {
+            if (!face)
+                return;
+
+            std::cout << std::format("        Face has: {} points\n", face->mNumIndices);
+            std::cout << std::format("            Indices:( ", face->mNumIndices);
+
+            Face myFace;
+            for (auto i = 0u; i < face->mNumIndices; i++)
+            {
+                std::cout << std::format("{}, ", face->mIndices[i]);
+                myFace.Indices.push_back(face->mIndices[i]);
+            }
+            std::cout << ")\n";
+            m_faces.emplace_back(myFace);
+            };
+
+        auto printMeshInfo = [&](const aiMesh* mesh) -> void
+            {
+                if (!mesh)
+                    return;
+
+                if (mesh->HasFaces())
+                {
+                    std::cout << std::format("      This mesh has {} faces\n", mesh->mNumFaces);
+                    for (auto i = 0u; i < mesh->mNumFaces; ++i)
+                    {
+                        printFaceInfo(&mesh->mFaces[i]);
+                    }
+                }
+                if (mesh->HasPositions())
+                {
+                    for (auto i = 0u; i < mesh->mNumVertices; ++i)
+                    {
+                        const auto vert = mesh->mVertices[i];
+                        std::cout << std::format("        Vertex {}: ({}, {}, {})\n", i, vert.x, vert.y, vert.z);
+                        Vec3F vertex(vert.x, vert.y, vert.z);
+                        m_vertices.emplace_back(vertex);
+                    }
+                }
+            };
+
+        std::function<void(const aiNode*)> printChildren = [&](const aiNode* child) -> void
+            {
+                std::cout << std::format("Root node found: {}\n", child->mName.C_Str());
+                for (auto i = 0u; i < child->mNumChildren; ++i)
+                {
+                    std::cout << std::format("{: >4}\n", child->mChildren[i]->mName.C_Str());
+                    std::cout << std::format("    Children count: {}\n", child->mNumChildren);
+                    printChildren(child->mChildren[i]);
+                }
+
+                if (child->mNumMeshes > 0)
+                {
+                    std::cout << std::format("Child has meshes: {}\n", child->mNumMeshes);
+                    for (auto j = 0u; j < child->mNumMeshes; ++j)
+                    {
+                        auto index = child->mMeshes[j];
+                        printMeshInfo(scene->mMeshes[index]);
+                    }
+                }
+            };
+
+        printChildren(scene->mRootNode);
         return LS::System::CreateSuccessCode();
     }
 }

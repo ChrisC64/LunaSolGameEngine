@@ -2,15 +2,19 @@ module;
 #include <optional>
 #include <cstdint>
 #include <cassert>
+#include <concepts>
 #include <d3d11_4.h>
 #include <span>
+#include <vector>
 #include <stdexcept>
+#include <cassert>
 #include "platform\Windows\Win32\WinApiUtils.h"
 export module D3D11.MemoryHelper;
 import LSData;
 import Engine.Logger;
+import Engine.EngineCodes;
 
-export namespace LS::Win32
+export namespace LS::Platform::Dx11
 {
     /**
     * @brief Finds the D3D11_USAGE type for the given LS::BUFFER_USAGE enum
@@ -86,19 +90,29 @@ export namespace LS::Win32
     {
         D3D11_BUFFER_DESC out{};
         out.ByteWidth = buffer.GetSizeInBytes();
-        out.Usage = FindUsageD3D11(buffer.m_usage);
-        out.BindFlags = FindBufferBindTypeD3D11(buffer.m_bindType);
+        out.Usage = FindUsageD3D11(buffer.GetUsage());
+        out.BindFlags = FindBufferBindTypeD3D11(buffer.GetBindStage());
         out.CPUAccessFlags = 0;
         return out;
     }
 
-    [[nodiscard]] constexpr auto CreateBufferDescD3D11(uint32_t byteWidth, LS::BUFFER_USAGE bufferUsage, LS::BUFFER_BIND_TYPE bindType, LS::CPU_RESOURCE_ACCESS cpuAccess = LS::CPU_RESOURCE_ACCESS::UNDEFINED)
+    template<class T>
+    [[nodiscard]] constexpr auto CreateBufferDescD3D11(const T& obj, D3D11_USAGE usage, UINT bindFlags,
+        UINT cpuAccess = 0, UINT miscFlags = 0, UINT structuredByteStride = 0) noexcept -> D3D11_BUFFER_DESC
     {
-        D3D11_BUFFER_DESC out{};
-        out.ByteWidth = byteWidth;
-        out.Usage = FindUsageD3D11(bufferUsage);
-        out.BindFlags = FindBufferBindTypeD3D11(bindType);
-        out.CPUAccessFlags = FindCpuAccessD3D11(cpuAccess);
+        D3D11_BUFFER_DESC out{
+            .ByteWidth = sizeof(obj), .Usage = usage, .BindFlags = bindFlags,
+            .CPUAccessFlags = cpuAccess, .MiscFlags = miscFlags, .StructureByteStride = structuredByteStride };
+        return out;
+    }
+
+    template<class T>
+    [[nodiscard]] constexpr auto CreateBufferDescD3D11(const std::vector<T>& obj, D3D11_USAGE usage, UINT bindFlags,
+        UINT cpuAccess = 0, UINT miscFlags = 0, UINT structuredByteStride = 0) noexcept -> D3D11_BUFFER_DESC
+    {
+        D3D11_BUFFER_DESC out{
+            .ByteWidth = static_cast<UINT>(sizeof(T) * obj.size()), .Usage = usage, .BindFlags = bindFlags,
+            .CPUAccessFlags = cpuAccess, .MiscFlags = miscFlags, .StructureByteStride = structuredByteStride };
         return out;
     }
 
@@ -171,7 +185,7 @@ export namespace LS::Win32
         pContext->Unmap(pResource, numSubResource);
     }
 
-    constexpr void UpdateSubresource(ID3D11DeviceContext4* pContext, ID3D11Resource* pResource, const void* ptrData, 
+    constexpr void UpdateSubresource(ID3D11DeviceContext4* pContext, ID3D11Resource* pResource, const void* ptrData,
         uint32_t dstSubresource = 0, uint32_t sourceRow = 0, uint32_t sourceDepth = 0, D3D11_BOX* dstBox = nullptr) noexcept
     {
         assert(pContext);
@@ -181,8 +195,8 @@ export namespace LS::Win32
 
         pContext->UpdateSubresource(pResource, dstSubresource, dstBox, ptrData, sourceRow, sourceDepth);
     }
-    
-    constexpr void UpdateSubresource1(ID3D11DeviceContext4* pContext, ID3D11Resource* pResource, const void* ptrData, 
+
+    constexpr void UpdateSubresource1(ID3D11DeviceContext4* pContext, ID3D11Resource* pResource, const void* ptrData,
         uint32_t dstSubresource = 0, uint32_t sourceRow = 0, uint32_t sourceDepth = 0, D3D11_BOX* dstBox = nullptr,
         std::span<D3D11_COPY_FLAGS> copyFlags = {}) noexcept
     {
@@ -203,7 +217,7 @@ export namespace LS::Win32
     }
 
     // Resource Creation Methods //
-    [[nodiscard]] constexpr auto CreateBuffer(ID3D11Device* pDevice, const D3D11_BUFFER_DESC* pDesc, 
+    [[nodiscard]] constexpr auto CreateBufferD3D11(ID3D11Device* pDevice, const D3D11_BUFFER_DESC* pDesc,
         const D3D11_SUBRESOURCE_DATA* pInitialData, ID3D11Buffer** ppBuffer) noexcept -> HRESULT
     {
         assert(pDevice);
@@ -212,7 +226,7 @@ export namespace LS::Win32
     }
 
     [[nodiscard]] constexpr auto CreateVertexBufferD3D11(ID3D11Device* pDevice, ID3D11Buffer** buffer, const void* data, uint32_t byteWidth,
-        D3D11_USAGE bufferUsage = D3D11_USAGE::D3D11_USAGE_DEFAULT, uint32_t cpuAccess = 0, uint32_t miscFlags = 0, 
+        D3D11_USAGE bufferUsage = D3D11_USAGE::D3D11_USAGE_DEFAULT, uint32_t cpuAccess = 0, uint32_t miscFlags = 0,
         uint32_t structureByteStride = 0) noexcept -> HRESULT
     {
         assert(pDevice);
@@ -222,11 +236,11 @@ export namespace LS::Win32
         srd.SysMemPitch = 0;
         srd.SysMemSlicePitch = 0;
 
-        return CreateBuffer(pDevice, &bd, &srd, buffer);
+        return CreateBufferD3D11(pDevice, &bd, &srd, buffer);
     }
 
     [[nodiscard]] constexpr auto CreateIndexBufferD3D11(ID3D11Device* pDevice, ID3D11Buffer** buffer, const void* data, uint32_t bytes,
-        D3D11_USAGE bufferUsage = D3D11_USAGE::D3D11_USAGE_DEFAULT, uint32_t cpuAccess = 0, uint32_t miscFlags = 0, 
+        D3D11_USAGE bufferUsage = D3D11_USAGE::D3D11_USAGE_DEFAULT, uint32_t cpuAccess = 0, uint32_t miscFlags = 0,
         uint32_t structureByteStride = 0) noexcept -> HRESULT
     {
         assert(pDevice);
@@ -236,11 +250,11 @@ export namespace LS::Win32
         srd.SysMemPitch = 0;
         srd.SysMemSlicePitch = 0;
 
-        return CreateBuffer(pDevice, &bd, &srd, buffer);
+        return CreateBufferD3D11(pDevice, &bd, &srd, buffer);
     }
 
     [[nodiscard]] constexpr auto CreateConstantBufferD3D11(ID3D11Device* pDevice, ID3D11Buffer** buffer, const void* data, uint32_t byteWidth,
-        D3D11_USAGE bufferUsage = D3D11_USAGE::D3D11_USAGE_DEFAULT, uint32_t cpuAccess = 0, uint32_t miscFlags = 0, 
+        D3D11_USAGE bufferUsage = D3D11_USAGE::D3D11_USAGE_DEFAULT, uint32_t cpuAccess = 0, uint32_t miscFlags = 0,
         uint32_t structureByteStride = 0) noexcept -> HRESULT
     {
         assert(pDevice);
@@ -251,6 +265,64 @@ export namespace LS::Win32
         srd.SysMemPitch = 0;
         srd.SysMemSlicePitch = 0;
 
-        return CreateBuffer(pDevice, &bd, &srd, buffer);
+        return CreateBufferD3D11(pDevice, &bd, &srd, buffer);
+    }
+
+    template<class T>
+    [[nodiscard]] auto CreateBuffer(ID3D11Device* pDevice, const std::vector<T>& obj, D3D11_USAGE usage = D3D11_USAGE_DEFAULT, UINT bindFlags = 0,
+        uint32_t cpuAccess = 0, uint32_t miscFlags = 0, uint32_t structureByteStride = 0) noexcept -> Nullable<ID3D11Buffer*>
+    {
+        const auto desc = CreateBufferDescD3D11(obj, usage, bindFlags, cpuAccess, miscFlags, structureByteStride);
+        D3D11_SUBRESOURCE_DATA sr;
+        sr.pSysMem = obj.data();
+
+        ID3D11Buffer* pBuffer;
+        const auto hr = pDevice->CreateBuffer(&desc, &sr, &pBuffer);
+        if (FAILED(hr))
+        {
+            return std::nullopt;
+        }
+
+        return pBuffer;
+    }
+
+    template<class T>
+    [[nodiscard]] auto CreateBuffer(ID3D11Device* pDevice, const T& obj, D3D11_USAGE usage = D3D11_USAGE_DEFAULT, UINT bindFlags = 0,
+        uint32_t cpuAccess = 0, uint32_t miscFlags = 0, uint32_t structureByteStride = 0) noexcept -> Nullable<ID3D11Buffer*>
+    {
+        const auto desc = CreateBufferDescD3D11(obj, usage, bindFlags, cpuAccess, miscFlags, structureByteStride);
+        D3D11_SUBRESOURCE_DATA sr;
+        sr.pSysMem = &obj;
+
+        ID3D11Buffer* pBuffer;
+        const auto hr = pDevice->CreateBuffer(&desc, &sr, &pBuffer);
+        if (FAILED(hr))
+        {
+            return std::nullopt;
+        }
+
+        return pBuffer;
+    }
+
+    template<class T>
+    [[nodiscard]] auto CreateVertexBuffer(ID3D11Device* pDevice, const T& obj, D3D11_USAGE usage = D3D11_USAGE_DEFAULT,
+        uint32_t cpuAccess = 0, uint32_t miscFlags = 0, uint32_t structureByteStride = 0) noexcept -> Nullable<ID3D11Buffer*>
+    {
+        assert(sizeof(obj) % 16 == 0);
+        return CreateBuffer(pDevice, obj, usage, (UINT)D3D11_BIND_VERTEX_BUFFER, cpuAccess, miscFlags, structureByteStride);
+    }
+
+    template<class T>
+    [[nodiscard]] auto CreateIndexBuffer(ID3D11Device* pDevice, const T& obj, D3D11_USAGE usage = D3D11_USAGE_DEFAULT,
+        uint32_t cpuAccess = 0, uint32_t miscFlags = 0, uint32_t structureByteStride = 0) noexcept -> Nullable<ID3D11Buffer*>
+    {
+        return CreateBuffer(pDevice, obj, usage, (UINT)D3D11_BIND_INDEX_BUFFER, cpuAccess, miscFlags, structureByteStride);
+    }
+
+    template<class T>
+    [[nodiscard]] auto CreateConstantBuffer(ID3D11Device* pDevice, const T& obj, D3D11_USAGE usage = D3D11_USAGE_DEFAULT,
+        uint32_t cpuAccess = 0, uint32_t miscFlags = 0, uint32_t structureByteStride = 0) noexcept -> Nullable<ID3D11Buffer*>
+    {
+        return CreateBuffer(pDevice, obj, usage, (UINT)D3D11_BIND_CONSTANT_BUFFER, cpuAccess, miscFlags, structureByteStride);
     }
 }

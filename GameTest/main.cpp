@@ -14,6 +14,11 @@
 import Engine.Logger;
 import Engine.EngineCodes;
 import DX11CubeApp;
+import CubeApp;
+import Engine.App;
+import LSData;
+import Helper.LSCommonTypes;
+
 //import MultiPassTestApp;
 //import CubeApp;
 // TODO: Make a cube appear by loading in a .obj or .gltf reader
@@ -26,6 +31,19 @@ import DX11CubeApp;
 // TODO: Start DX12 renderer
 // TODO: Start Vulkan renderer
 // TODO: Examin needed Interfaces and build them
+
+Ref<LS::LSApp>& CreateApp(uint32_t app)
+{
+    switch(app)
+    {
+    case 0:
+        return gt::dx11::App;
+    case 1:
+        return gt::dx12::App;
+    default:
+        return gt::dx11::App;
+    }
+}
 
 #ifdef _DEBUG
 int main(int argc, char* argv[])
@@ -40,13 +58,14 @@ int main(int argc, char* argv[])
 
     std::cerr << "An output to file will occur for cerr\n";*/
     LS::Log::InitLog();
-    LS::System::ErrorCode appcode = gt::App->Initialize(argc, argv);
+    auto& app = CreateApp(0);
+    auto appcode = app->Initialize(argc, argv);
     if (!appcode)
     {
         std::cout << appcode.Message() << "\n";
         return -1;
     }
-    gt::App->Run();
+    app->Run();
 }
 
 #else // I know I don't need this, but wondering if maybe I just should consider supporting this?

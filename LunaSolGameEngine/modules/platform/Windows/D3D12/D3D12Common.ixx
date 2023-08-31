@@ -7,7 +7,7 @@ module;
 
 export module D3D12Lib:D3D12Common;
 
-import Engine.Common;
+import Engine.App;
 
 namespace WRL = Microsoft::WRL;
 export namespace LS::Win32

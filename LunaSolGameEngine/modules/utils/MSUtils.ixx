@@ -22,24 +22,24 @@ export namespace LS::Utils
     }
 #endif LS_WINDOWS_BUILD
 
-    constexpr void SetDebugName([[maybe_unused]] ID3D11DeviceChild* child, [[maybe_unused]] const std::string& name)
+    constexpr void SetDebugName([[maybe_unused]] ID3D11DeviceChild* child, [[maybe_unused]] std::string_view name)
     {
 #ifdef _DEBUG
         if (child)
         {
-            child->SetPrivateData(WKPDID_D3DDebugObjectName, static_cast<UINT>(name.size()), name.c_str());
+            child->SetPrivateData(WKPDID_D3DDebugObjectName, static_cast<UINT>(name.size()), name.data());
         }
 #endif _DEBUG
     }
     // C4100 warning - unused params for both device and name, despite the attribute maybe_unused being flagged
     // the other functions similar to this one do not get flagged.
 #pragma warning(disable :4100)
-    constexpr void SetDebugName([[maybe_unused]] ID3D11Device* device, [[maybe_unused]] const std::string& name)
+    constexpr void SetDebugName([[maybe_unused]] ID3D11Device* device, [[maybe_unused]] std::string_view name)
     {
 #ifdef _DEBUG
         if (device)
         {
-            device->SetPrivateData(WKPDID_D3DDebugObjectName, static_cast<UINT>(name.size()), name.c_str());
+            device->SetPrivateData(WKPDID_D3DDebugObjectName, static_cast<UINT>(name.size()), name.data());
         }
 #endif _DEBUG
         //For some reason when building in release with /WX enabled, this function throws
@@ -48,12 +48,22 @@ export namespace LS::Utils
 #pragma warning(default: 4100)
     }
 
-    constexpr void SetDebugName([[maybe_unused]] IDXGIObject* object, [[maybe_unused]] const std::string& name)
+    constexpr void SetDebugName([[maybe_unused]] IDXGIObject* object, [[maybe_unused]] std::string_view name)
     {
 #ifdef _DEBUG
         if (object)
         {
-            object->SetPrivateData(WKPDID_D3DDebugObjectName, static_cast<UINT>(name.size()), name.c_str());
+            object->SetPrivateData(WKPDID_D3DDebugObjectName, static_cast<UINT>(name.size()), name.data());
+        }
+#endif _DEBUG
+    }
+    
+    constexpr void SetDebugName([[maybe_unused]] ID3D11Resource* object, [[maybe_unused]] std::string_view name)
+    {
+#ifdef _DEBUG
+        if (object)
+        {
+            object->SetPrivateData(WKPDID_D3DDebugObjectName, static_cast<UINT>(name.size()), name.data());
         }
 #endif _DEBUG
     }

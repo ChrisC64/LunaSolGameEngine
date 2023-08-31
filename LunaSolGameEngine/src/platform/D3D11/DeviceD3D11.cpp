@@ -21,6 +21,8 @@ import LSData;
 namespace WRL = Microsoft::WRL;
 
 using namespace LS::Win32;
+using namespace LS::Platform::Dx11;
+
 DeviceD3D11::~DeviceD3D11()
 {
 #ifdef _DEBUG
@@ -403,7 +405,7 @@ auto DeviceD3D11::CreateDepthStencilViewForSwapchain([[maybe_unused]] ID3D11Rend
     auto result = m_pSwapchain->GetBuffer(0, IID_PPV_ARGS(&m_pBackBufferFrame));
 #ifdef _DEBUG
     std::string debug = "Back Buffer Texture2D";
-    m_pBackBufferFrame->SetPrivateData(WKPDID_D3DDebugObjectName, debug.size(), debug.data());
+    m_pBackBufferFrame->SetPrivateData(WKPDID_D3DDebugObjectName, (UINT)debug.size(), debug.data());
 #endif
     if (FAILED(result))
         return result;

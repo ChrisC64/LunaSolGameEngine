@@ -4,6 +4,8 @@ module;
 #include <memory>
 export module Data.LSDataTypes;
 // A list of common data types to define here for use within the engine itself
+import <vector>;
+import Data.LSMathTypes;
 
 export
 {
@@ -16,6 +18,9 @@ export
 
     template <class S>
     using SharedRef = std::shared_ptr<S>;
+    template <class W>
+    using WeakRef = std::weak_ptr<W>;
+
     /**
      * @brief Typedef of a Nullable Object (std::optional wrapper)
      * @tparam T type to wrap in optional object
@@ -63,6 +68,31 @@ export
             uint32_t TopY;
             uint32_t Width;
             uint32_t Height;
+        };
+
+        enum class PrimitiveType : uint32_t
+        {
+            UNKNOWN = 0,
+            LINE,
+            POINT,
+            TRIANGLE,
+            POLYGON
+        };
+
+        struct LSMesh
+        {
+            std::string Name;
+            uint32_t NumUvComponents;
+            uint32_t MaterialIndex;
+            PrimitiveType PrimType;
+            std::vector<uint32_t> Indices;
+            std::vector<Vec3F> Vertices;
+            std::vector<Vec3F> Normals;
+            std::vector<Vec3F> TexCoords;
+            std::vector<Vec4F> Colors;
+            std::vector<Vec3F> Tangents;
+            std::vector<Vec3F> BitTangents;
+            //TODO: Add Texture objects
         };
     }
 }
