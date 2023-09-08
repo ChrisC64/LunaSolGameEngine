@@ -10,20 +10,21 @@ export module D3D12Lib:D3D12Common;
 import Engine.App;
 
 namespace WRL = Microsoft::WRL;
-export namespace LS::Win32
+export namespace LS::Platform::Dx12
 {
     /**
      * @brief Represents minimum basic settings that should be set
     */
     struct MinSettings
     {
-        D3D_FEATURE_LEVEL MaxFeatureLevel = D3D_FEATURE_LEVEL_12_2;
-        D3D_FEATURE_LEVEL MinFeatureLevel = D3D_FEATURE_LEVEL_11_1;
-        D3D_FEATURE_LEVEL CurrFeatureLevel = MinFeatureLevel;
-        const uint32_t FrameBufferCount = Global::FRAME_COUNT;
-        DXGI_FORMAT PixelFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
-        uint32_t    ScreenWidth;
-        uint32_t    ScreenHeight;
+        D3D_FEATURE_LEVEL   MaxFeatureLevel = D3D_FEATURE_LEVEL_12_2;
+        D3D_FEATURE_LEVEL   MinFeatureLevel = D3D_FEATURE_LEVEL_11_1;
+        D3D_FEATURE_LEVEL   CurrFeatureLevel = MinFeatureLevel;
+        uint32_t            FrameBufferCount = 2;
+        DXGI_FORMAT         PixelFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
+        uint32_t            ScreenWidth;
+        uint32_t            ScreenHeight;
+        HWND                Hwnd;
     };
 
     /**
@@ -31,16 +32,16 @@ export namespace LS::Win32
     */
     struct ExSettings
     {
-        DXGI_SWAP_EFFECT SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
-        DXGI_ALPHA_MODE AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
-        DXGI_SCALING Scaling = DXGI_SCALING_STRETCH;
-        bool IsStereoScopic = false;
+        DXGI_SWAP_EFFECT    SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
+        DXGI_ALPHA_MODE     AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
+        DXGI_SCALING        Scaling = DXGI_SCALING_STRETCH;
+        bool                IsStereoScopic = false;
     };
 
     struct D3D12Settings
     {
         MinSettings MinSettings;
-        ExSettings ExSettings;
+        ExSettings  ExSettings;
     };
 
     template<class T, size_t size>

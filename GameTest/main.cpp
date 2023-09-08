@@ -58,7 +58,7 @@ int main(int argc, char* argv[])
 
     std::cerr << "An output to file will occur for cerr\n";*/
     LS::Log::InitLog();
-    auto& app = CreateApp(0);
+    auto& app = CreateApp(1);
     auto appcode = app->Initialize(argc, argv);
     if (!appcode)
     {

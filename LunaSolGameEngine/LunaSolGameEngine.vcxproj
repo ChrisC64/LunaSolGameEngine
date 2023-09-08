@@ -205,8 +205,10 @@
     <ClCompile Include="modules\data\LSMathTypes.ixx" />
     <ClCompile Include="modules\helper\PipelineFactory.ixx" />
     <ClCompile Include="modules\platform\Windows\D3D12\D3D12Common.ixx" />
-    <ClCompile Include="modules\platform\Windows\D3D12\D3D12Helper.ixx" />
+    <ClCompile Include="modules\platform\Windows\D3D12\Helpers\D3D12UtilsDescriptors.ixx" />
     <ClCompile Include="modules\platform\Windows\D3D12\D3D12Lib.ixx" />
+    <ClCompile Include="modules\platform\Windows\D3D12\Helpers\D3D12MemoryHelper.ixx" />
+    <ClCompile Include="modules\platform\Windows\D3D12\Helpers\D3D12UtilsCommandList.ixx" />
     <ClCompile Include="modules\platform\Windows\D3D12\ResourceManagerD3D12.ixx" />
     <ClCompile Include="modules\platform\Windows\DirectX\DirectXCommon.ixx" />
     <ClCompile Include="modules\platform\Windows\DirectX\DXCamera.ixx" />

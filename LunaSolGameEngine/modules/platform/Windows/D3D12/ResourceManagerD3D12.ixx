@@ -11,7 +11,7 @@ import Data.LSDataTypes;
 
 namespace WRL = Microsoft::WRL;
 
-export namespace LS::Win32
+export namespace LS::Platform::Dx12
 {
     class ResourceManagerD3D12
     {
@@ -40,7 +40,7 @@ export namespace LS::Win32
         */
         void CreateWindowSizeDependentResources() noexcept;
 
-        void CreateSwapChain(const Win32Window* window) noexcept;
+        void CreateSwapChain(const Win32::Win32Window* window) noexcept;
 
         bool CreateCommandQueue() noexcept;
 

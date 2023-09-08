@@ -26,9 +26,10 @@ export namespace LS::Win32
     /**
      * @brief Returns any high performance display adapters (discrete or external GPU supported)
      * @param pFactory The IDXGIFactory, must be convertable to a IDXGIFactory6 object
+     * @pram requestHighPerformance To request the high performance GPU (true) or minimum GPU (false), the default is true
      * @return A vector of all Discrete GPU supported displays if any are found.
     */
-    [[nodiscard]] auto EnumerateDiscreteGpuAdapters(WRL::ComPtr<IDXGIFactory7>& pFactory) noexcept -> std::vector<WRL::ComPtr<IDXGIAdapter4>>;
+    [[nodiscard]] auto EnumerateDiscreteGpuAdapters(WRL::ComPtr<IDXGIFactory7>& pFactory, bool requestHighPerformance = true) noexcept -> std::vector<WRL::ComPtr<IDXGIAdapter4>>;
 
     /**
      * @brief Returns any display adapters
@@ -37,11 +38,9 @@ export namespace LS::Win32
     */
     [[nodiscard]] auto EnumerateDisplayAdapters(WRL::ComPtr<IDXGIFactory7>& pFactory) noexcept -> std::vector<WRL::ComPtr<IDXGIAdapter4>>;
 
-
     void LogAdapters(IDXGIFactory4* factory) noexcept;
     void LogAdapterOutput(IDXGIAdapter* adapter) noexcept;
     void LogOutputDisplayModes(IDXGIOutput* output, DXGI_FORMAT format) noexcept;
-
 }
 
 module : private;
@@ -57,13 +56,13 @@ auto LS::Win32::CreateFactory(UINT flags) noexcept -> Nullable<Microsoft::WRL::C
     return pOut;
 }
 
-auto LS::Win32::EnumerateDiscreteGpuAdapters(Microsoft::WRL::ComPtr<IDXGIFactory7>& pFactory) noexcept -> std::vector<WRL::ComPtr<IDXGIAdapter4>>
+auto LS::Win32::EnumerateDiscreteGpuAdapters(Microsoft::WRL::ComPtr<IDXGIFactory7>& pFactory, bool requestHighPerformance /*= true*/) noexcept -> std::vector<WRL::ComPtr<IDXGIAdapter4>>
 {
     assert(pFactory);
     WRL::ComPtr<IDXGIAdapter4> adapter;
     std::vector<WRL::ComPtr<IDXGIAdapter4>> out;
 
-    auto preference = DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE;
+    auto preference = requestHighPerformance ? DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE : DXGI_GPU_PREFERENCE_MINIMUM_POWER;
     for (auto adapterIndex = 0u; SUCCEEDED(pFactory->EnumAdapterByGpuPreference(adapterIndex, preference, IID_PPV_ARGS(&adapter)));
         ++adapterIndex)
     {
@@ -109,7 +108,6 @@ auto LS::Win32::EnumerateDisplayAdapters(Microsoft::WRL::ComPtr<IDXGIFactory7>& 
 
     return out;
 }
-
 
 void LS::Win32::LogAdapters(IDXGIFactory4* factory) noexcept
 {

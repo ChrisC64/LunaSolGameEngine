@@ -13,6 +13,7 @@ import Engine.App;
 
 namespace WRL = Microsoft::WRL;
 using namespace LS::Win32;
+using namespace LS::Platform::Dx12;
 
 class HrException : public std::runtime_error
 {

@@ -198,7 +198,8 @@ namespace gt::dx12
     using namespace LS;
     export LS::System::ErrorCode DX12CubeApp::Init()
     {
-        if (!CreateDevice((HWND)App->Window->GetHandleToWindow(), App->Window->GetWidth(), App->Window->GetHeight()))
+        const auto& window = App->Window;
+        if (!CreateDevice((HWND)window->GetHandleToWindow(), window->GetWidth(), window->GetHeight()))
             return System::CreateFailCode("Failed to create device.");
 
         return System::CreateSuccessCode();
@@ -227,7 +228,7 @@ namespace gt::dx12
     {
         WRL::ComPtr<ID3D12Resource> defaultBuffer;
 
-        // Creat Default Buffer
+        // Creat Default Buffer - this resides on the GPU's dedicated memory (fast)
         auto heapDefault = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
         auto resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(byteSize);
         ThrowIfFailed(device->CreateCommittedResource(
@@ -239,7 +240,8 @@ namespace gt::dx12
             IID_PPV_ARGS(defaultBuffer.GetAddressOf())
         ));
 
-        // Upload type is needed to get the data onto the GPU
+        // Upload type is needed to get the data onto the GPU - this is the GPU's shared memory, which is slow
+        // but grants the GPU/CPU to share this memory to write and read from (slow)
         auto heapUpload = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
         ThrowIfFailed(device->CreateCommittedResource(
             &heapUpload,
@@ -729,7 +731,8 @@ void gt::dx12::LoadVertexDataToGpu()
         // We copy the data from our upload buffer to the default buffer, and the only differenc between the two is the staging - Upload vs Default.
         // Default types are best for static data that isn't changing.
         WRL::ComPtr<ID3D12Resource> uploadBuffer;
-        m_vertexBuffer = CreateDefaultBuffer(m_pDevice.Get(), commandList.Get(), triangleVertices, sizeof(Vertex) * 3, uploadBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, L"default vb");
+        m_vertexBuffer = CreateDefaultBuffer(m_pDevice.Get(), commandList.Get(), triangleVertices, 
+            sizeof(Vertex) * 3, uploadBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, L"default vb");
 
         // We must wait and insure the data has been copied before moving on 
         // After we execute the command list, we need to sync with the GPU and wait to create our buffer view
@@ -750,7 +753,8 @@ void gt::dx12::LoadVertexDataToGpu()
         const UINT vertexBufferSize2 = sizeof(triangleVerticesPT);
 
         WRL::ComPtr<ID3D12Resource> textureUploadBuffer;
-        m_vertexBufferPT = CreateDefaultBuffer(m_pDevice.Get(), commandList2.Get(), triangleVerticesPT, sizeof(VertexPT) * 3, textureUploadBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, L"pt default vb");
+        m_vertexBufferPT = CreateDefaultBuffer(m_pDevice.Get(), commandList2.Get(), triangleVerticesPT, 
+            sizeof(VertexPT) * 3, textureUploadBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, L"pt default vb");
         WRL::ComPtr<ID3D12Resource> textureUploadHeap;
         {
             CreateTileSampleTexture(m_pDevice.Get(), m_texture, 256u, 256u, 4u, textureUploadHeap, commandList2, m_pSrvDescHeap);
