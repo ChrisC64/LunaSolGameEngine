@@ -35,8 +35,19 @@ export namespace LS::Platform::Dx12
          * @param displayAdapter The display to use, if none if provided, it will find the first available display to use
          * @return true if operation was a success, false if an error occurred.
         */
-        auto CreateDevice(Microsoft::WRL::ComPtr<IDXGIAdapter> displayAdapter = nullptr) noexcept -> LS::System::ErrorCode;
+        auto CreateDevice(WRL::ComPtr<IDXGIAdapter> displayAdapter = nullptr) noexcept -> LS::System::ErrorCode;
         
+        auto CreateCommandQueue(D3D12_COMMAND_LIST_TYPE type, D3D12_COMMAND_QUEUE_PRIORITY priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL) noexcept -> WRL::ComPtr<ID3D12CommandQueue>;
+
+        /**
+         * @brief Returns the number of physical adapters (nodes) with this device
+         * @return number of adapters
+        */
+        UINT GetPhysicalAdapterCount() noexcept
+        {
+            return m_pDevice->GetNodeCount();
+        }
+
     private:
         /**
          * @brief Find a compatible display from the objects provided that meets the minimum feature level in @link D3D12Settings

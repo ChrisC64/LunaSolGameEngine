@@ -25,6 +25,7 @@ export namespace LS::Platform::Dx12
         uint32_t            ScreenWidth;
         uint32_t            ScreenHeight;
         HWND                Hwnd;
+        bool                EnableVSync = true;
     };
 
     /**

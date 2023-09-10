@@ -6,11 +6,15 @@ module;
 #include <optional>
 #include <format>
 #include <string>
+#include <d3d12.h>
+#include "platform\Windows\Win32\WinApiUtils.h"
 
 export module DXGIHelper;
 export import Data.LSDataTypes;
 
 import Engine.Logger;
+import Engine.EngineCodes;
+import D3D12Lib;
 
 namespace WRL = Microsoft::WRL;
 
@@ -22,6 +26,9 @@ export namespace LS::Win32
      * @return @link Nullable object of a IDXGIFactory7 instance (see module @link LSdataTypes.ixx)
     */
     [[nodiscard]] auto CreateFactory(UINT flags = 0u) noexcept -> Nullable<WRL::ComPtr<IDXGIFactory7>>;
+
+    [[nodiscard]] auto CreateSwapchainForHwnd(const Platform::Dx12::D3D12Settings& settings,
+        const WRL::ComPtr<IDXGIFactory2>& factory, WRL::ComPtr<ID3D12CommandQueue>& commandQueue) noexcept -> Nullable<WRL::ComPtr<IDXGISwapChain1>>;
 
     /**
      * @brief Returns any high performance display adapters (discrete or external GPU supported)
@@ -37,6 +44,17 @@ export namespace LS::Win32
      * @return A container containing all display adapters
     */
     [[nodiscard]] auto EnumerateDisplayAdapters(WRL::ComPtr<IDXGIFactory7>& pFactory) noexcept -> std::vector<WRL::ComPtr<IDXGIAdapter4>>;
+
+
+
+    // Feature Check Supports //
+
+    /**
+     * @brief Checks if tearing support (i.e. FreeSync/G-Sync) is available
+     * @param pFactory Windows DXGI Factory 
+     * @return An error code with any messages if support is available or not.
+    */
+    [[nodiscard]] auto CheckTearingSupport(const WRL::ComPtr<IDXGIFactory5>& pFactory) noexcept -> LS::System::ErrorCode;
 
     void LogAdapters(IDXGIFactory4* factory) noexcept;
     void LogAdapterOutput(IDXGIAdapter* adapter) noexcept;
@@ -54,6 +72,38 @@ auto LS::Win32::CreateFactory(UINT flags) noexcept -> Nullable<Microsoft::WRL::C
     if (FAILED(result))
         return std::nullopt;
     return pOut;
+}
+
+auto LS::Win32::CreateSwapchainForHwnd(const Platform::Dx12::D3D12Settings& settings, 
+    const WRL::ComPtr<IDXGIFactory2>& factory, WRL::ComPtr<ID3D12CommandQueue>& commandQueue) noexcept -> Nullable<WRL::ComPtr<IDXGISwapChain1>>
+{
+    DXGI_SWAP_CHAIN_DESC1 swapchainDesc1{};
+    swapchainDesc1.BufferCount = settings.MinSettings.FrameBufferCount;
+    swapchainDesc1.Width = static_cast<UINT>(settings.MinSettings.ScreenWidth);
+    swapchainDesc1.Height = static_cast<UINT>(settings.MinSettings.ScreenHeight) ;
+    swapchainDesc1.Format = settings.MinSettings.PixelFormat;
+    swapchainDesc1.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+    swapchainDesc1.SampleDesc = { .Count = 1, .Quality = 0 };
+
+    // If VSync is off, should use FIP_DISCARD not FLIP_SEQUENTIAL
+    swapchainDesc1.SwapEffect = settings.ExSettings.SwapEffect;
+    swapchainDesc1.AlphaMode = settings.ExSettings.AlphaMode;
+    swapchainDesc1.Scaling = settings.ExSettings.Scaling;
+    swapchainDesc1.Stereo = settings.ExSettings.IsStereoScopic ? TRUE : FALSE;
+    // Feature Flags to support // 
+    swapchainDesc1.Flags = DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
+
+    WRL::ComPtr<IDXGISwapChain1> swapchain;
+
+    const auto hr = factory->CreateSwapChainForHwnd(commandQueue.Get(), settings.MinSettings.Hwnd,
+        &swapchainDesc1, nullptr, nullptr, &swapchain);
+
+    if (FAILED(hr))
+    {
+        return std::nullopt;
+    }
+
+    return swapchain;
 }
 
 auto LS::Win32::EnumerateDiscreteGpuAdapters(Microsoft::WRL::ComPtr<IDXGIFactory7>& pFactory, bool requestHighPerformance /*= true*/) noexcept -> std::vector<WRL::ComPtr<IDXGIAdapter4>>
@@ -107,6 +157,20 @@ auto LS::Win32::EnumerateDisplayAdapters(Microsoft::WRL::ComPtr<IDXGIFactory7>& 
     }
 
     return out;
+}
+
+auto LS::Win32::CheckTearingSupport(const WRL::ComPtr<IDXGIFactory5>& pFactory) noexcept -> LS::System::ErrorCode
+{
+    BOOL allowTearing = FALSE;
+
+    const auto hr = pFactory->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &allowTearing, sizeof(allowTearing));
+    if (FAILED(hr))
+    {
+        const auto msg = HrToString(hr);
+        return LS::System::CreateFailCode(msg);
+    }
+
+    return LS::System::CreateSuccessCode();
 }
 
 void LS::Win32::LogAdapters(IDXGIFactory4* factory) noexcept

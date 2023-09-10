@@ -102,6 +102,21 @@ auto DeviceD3D12::CreateDevice(WRL::ComPtr<IDXGIAdapter> displayAdpater /* = nul
     return LS::System::CreateFailCode("Not yet implemented.");
 }
 
+auto LS::Platform::Dx12::DeviceD3D12::CreateCommandQueue(D3D12_COMMAND_LIST_TYPE type, D3D12_COMMAND_QUEUE_PRIORITY priority) noexcept -> WRL::ComPtr<ID3D12CommandQueue>
+{
+    D3D12_COMMAND_QUEUE_DESC desc = {};
+    desc.Type = type;
+    desc.Priority = priority;
+    desc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
+    desc.NodeMask = 0;
+
+    WRL::ComPtr<ID3D12CommandQueue> pQueue;
+    m_pDevice->CreateCommandQueue(&desc, IID_PPV_ARGS(&pQueue));
+
+    return pQueue;
+}
+
+
 // Private Methods for DeviceD3D12 //
 auto DeviceD3D12::FindCompatDisplay(std::span<WRL::ComPtr<IDXGIAdapter4>> adapters) noexcept -> Nullable<WRL::ComPtr<IDXGIAdapter4>>
 {

@@ -466,7 +466,7 @@ bool gt::dx12::CreateDevice(HWND hwnd, uint32_t x, uint32_t y)
         D3D12_COMMAND_QUEUE_DESC desc = {};
         desc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
         desc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
-        desc.NodeMask = 1;
+        desc.NodeMask = 0;
 
         if (m_pDevice->CreateCommandQueue(&desc, IID_PPV_ARGS(&m_pCommandQueue)) != S_OK)
             return false;

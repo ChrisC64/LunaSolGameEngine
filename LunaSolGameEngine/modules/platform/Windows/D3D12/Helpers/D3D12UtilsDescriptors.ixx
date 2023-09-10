@@ -11,12 +11,12 @@ export module D3D12Lib:D3D12Utils.Descriptors;
 
 export namespace LS::Platform::Dx12
 {
-    constexpr auto CreateDescriptorHeap(ID3D12Device* device, const D3D12_DESCRIPTOR_HEAP_DESC* descriptor, ID3D12DescriptorHeap* heap) noexcept -> HRESULT
+
+    constexpr auto CreateDescriptorHeap(ID3D12Device* device, const D3D12_DESCRIPTOR_HEAP_DESC& descriptor, ID3D12DescriptorHeap* heap) noexcept -> HRESULT
     {
         assert(device);
-        assert(descriptor);
         assert(heap);
-        return device->CreateDescriptorHeap(descriptor, IID_PPV_ARGS(&heap));
+        return device->CreateDescriptorHeap(&descriptor, IID_PPV_ARGS(&heap));
     }
 
     // CREATE FUNCTIONS //
