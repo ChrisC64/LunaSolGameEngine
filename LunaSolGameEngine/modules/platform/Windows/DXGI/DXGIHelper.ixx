@@ -7,6 +7,7 @@ module;
 #include <format>
 #include <string>
 #include <d3d12.h>
+#include "engine\EngineLogDefines.h"
 #include "platform\Windows\Win32\WinApiUtils.h"
 
 export module DXGIHelper;
@@ -100,6 +101,7 @@ auto LS::Win32::CreateSwapchainForHwnd(const Platform::Dx12::D3D12Settings& sett
 
     if (FAILED(hr))
     {
+        LS_LOG_ERROR(std::format(L"Failed to create swap chain for HWND. Error Code: {}", HrToWString(hr)));
         return std::nullopt;
     }
 

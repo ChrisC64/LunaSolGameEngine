@@ -180,6 +180,9 @@
     <ClCompile Include="modules\platform\Windows\D3D12\Helpers\D3D12UtilsCommandList.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="modules\platform\Windows\D3D12\Helpers\D3D12UtilsEvents.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\LSTimer.h">

@@ -14,6 +14,7 @@
 #include <exception>
 #include <iostream>
 #include <format>
+#include "engine\EngineLogDefines.h"
 #include "platform/Windows/Win32/WinApiUtils.h"
 
 import D3D12Lib;
@@ -111,11 +112,81 @@ auto LS::Platform::Dx12::DeviceD3D12::CreateCommandQueue(D3D12_COMMAND_LIST_TYPE
     desc.NodeMask = 0;
 
     WRL::ComPtr<ID3D12CommandQueue> pQueue;
-    m_pDevice->CreateCommandQueue(&desc, IID_PPV_ARGS(&pQueue));
+    const auto hr = m_pDevice->CreateCommandQueue(&desc, IID_PPV_ARGS(&pQueue));
+
+    if (FAILED(hr))
+    {
+        // Handle error
+        return nullptr;
+    }
 
     return pQueue;
 }
 
+auto LS::Platform::Dx12::DeviceD3D12::CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE type, uint32_t numDescriptors, bool isShaderVisible) noexcept -> WRL::ComPtr<ID3D12DescriptorHeap>
+{
+    assert(m_pDevice);
+
+    D3D12_DESCRIPTOR_HEAP_DESC desc{};
+    desc.NumDescriptors = numDescriptors;
+    desc.Type = type;
+    desc.Flags = isShaderVisible ? D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE : D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+    desc.NodeMask = 0u;
+
+    WRL::ComPtr<ID3D12DescriptorHeap> heap;
+    const auto hr = m_pDevice->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&heap));
+
+    if (FAILED(hr))
+    {
+        return nullptr;
+    }
+
+    return heap;
+}
+
+auto LS::Platform::Dx12::DeviceD3D12::CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE type) noexcept -> WRL::ComPtr<ID3D12CommandAllocator>
+{
+    assert(m_pDevice);
+
+    WRL::ComPtr<ID3D12CommandAllocator> allocator;
+    const auto hr = m_pDevice->CreateCommandAllocator(type, IID_PPV_ARGS(&allocator));
+    if (FAILED(hr))
+    {
+        const auto msg = HrToWString(hr);
+        LS_LOG_ERROR(std::format(L"Failed to create command allocator: {}", msg))
+        return nullptr;
+    }
+
+    return allocator;
+}
+
+auto LS::Platform::Dx12::DeviceD3D12::CreateCommandList(D3D12_COMMAND_LIST_TYPE type) noexcept -> WRL::ComPtr<ID3D12CommandList>
+{
+    assert(m_pDevice);
+    WRL::ComPtr<ID3D12CommandList> commandList;
+    const auto hr = m_pDevice->CreateCommandList1(0, type, D3D12_COMMAND_LIST_FLAG_NONE, IID_PPV_ARGS(&commandList));
+    if (FAILED(hr))
+    {
+        const auto msg = HrToString(hr);
+        LS_LOG_ERROR(std::format("Failed to create command list: {}", msg));
+        return nullptr;
+    }
+    return commandList;
+}
+
+auto LS::Platform::Dx12::DeviceD3D12::CreateFence(D3D12_FENCE_FLAGS flag /*= D3D12_FENCE_FLAG_NONE*/) noexcept -> WRL::ComPtr<ID3D12Fence>
+{
+    assert(m_pDevice);
+    WRL::ComPtr<ID3D12Fence> fence;
+    const auto hr = m_pDevice->CreateFence(0, flag, IID_PPV_ARGS(&fence));
+    if (FAILED(hr))
+    {
+        const auto msg = HrToString(hr);
+        LS_LOG_ERROR(std::format("Failed to create fence: {}", msg));
+        return nullptr;
+    }
+    return fence;
+}
 
 // Private Methods for DeviceD3D12 //
 auto DeviceD3D12::FindCompatDisplay(std::span<WRL::ComPtr<IDXGIAdapter4>> adapters) noexcept -> Nullable<WRL::ComPtr<IDXGIAdapter4>>
@@ -132,6 +203,7 @@ auto DeviceD3D12::FindCompatDisplay(std::span<WRL::ComPtr<IDXGIAdapter4>> adapte
 
 void DeviceD3D12::CreateSwapchain()
 {
+
 }
 
 void DeviceD3D12::PrintDisplayAdapters()
