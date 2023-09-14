@@ -91,6 +91,7 @@ auto LS::Win32::CreateSwapchainForHwnd(const Platform::Dx12::D3D12Settings& sett
     swapchainDesc1.AlphaMode = settings.ExSettings.AlphaMode;
     swapchainDesc1.Scaling = settings.ExSettings.Scaling;
     swapchainDesc1.Stereo = settings.ExSettings.IsStereoScopic ? TRUE : FALSE;
+    
     // Feature Flags to support // 
     swapchainDesc1.Flags = DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
 

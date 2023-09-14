@@ -6,5 +6,5 @@ export module D3D12.MemoryHelper;
 
 export namespace LS::Platform::Dx12
 {
-
+    //[[nodiscard]] inline auto Allocate()
 }

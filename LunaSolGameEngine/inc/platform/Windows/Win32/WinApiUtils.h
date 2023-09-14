@@ -7,17 +7,17 @@
 #include <Windows.h> 
 namespace LS::Win32
 {
-	inline std::string HrToString(HRESULT hr)
+	[[nodiscard]] inline std::string HrToString(HRESULT hr)
 	{
 		return std::format("HRESULT of {:#x}", static_cast<UINT>(hr));
 	}
 
-	inline std::wstring HrToWString(HRESULT hr)
+	[[nodiscard]] inline std::wstring HrToWString(HRESULT hr)
 	{
 		return std::format(L"HRESULT of {:#x}", static_cast<UINT>(hr));
 	}
 
-	inline HANDLE CreateEventHandler(LPCWSTR name = nullptr, BOOL isManualReset = FALSE, BOOL isSignaled = FALSE) noexcept
+	[[nodiscard]] inline HANDLE CreateEventHandler(LPCWSTR name = nullptr, BOOL isManualReset = FALSE, BOOL isSignaled = FALSE) noexcept
 	{
 		HANDLE eventHandle;
 		eventHandle = ::CreateEventW(NULL, isManualReset, isSignaled, name);

@@ -201,11 +201,6 @@ auto DeviceD3D12::FindCompatDisplay(std::span<WRL::ComPtr<IDXGIAdapter4>> adapte
     return std::nullopt;
 }
 
-void DeviceD3D12::CreateSwapchain()
-{
-
-}
-
 void DeviceD3D12::PrintDisplayAdapters()
 {
     LS::Win32::LogAdapters(m_pFactoryDxgi.Get());

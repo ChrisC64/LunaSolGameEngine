@@ -89,7 +89,7 @@ export namespace LS
 
         auto GetData() const -> const std::byte*
         {
-            return reinterpret_cast<const std::byte*>(&m_bufferObject);
+            return static_cast<const std::byte*>(&m_bufferObject);
         }
 
         auto GetTypePtr() const -> const TObject*
@@ -137,6 +137,8 @@ export namespace LS
             return m_cpuAccess;
         }
     };
+
+    using LSBufferReserve = LSBuffer<void*>;
 
     template <class Buffer>
     class LSBufferCache

@@ -186,7 +186,7 @@ namespace gt::dx12
     void ClearRTV(float r, float g, float b, float a);
     void SetRTV(FrameContext* frameCon);
     void Draw(D3D12_VERTEX_BUFFER_VIEW& bufferView, uint64_t vertices, uint64_t instances = 1u);
-    void PresentRTV();
+    void TansitionRtvToPresent();
     void CloseCommandList();
     void MoveToNextFrame();
     void CreateThreads();
@@ -1009,7 +1009,7 @@ void gt::dx12::WaitForGpu()
 //	SetDescriptorHeaps();
 //	Draw(m_vertexBufferViewPT, 3);
 //	// Prepare to render to the render target
-//	PresentRTV();
+//	TansitionRtvToPresent();
 //	CloseCommandList();
 //	// Throw command list onto the command queue and prepare to send it off
 //	ExecuteCommandList();
@@ -1090,7 +1090,7 @@ void gt::dx12::Draw(D3D12_VERTEX_BUFFER_VIEW& bufferView, uint64_t vertices, uin
     m_pCurrFrameContext->CommandList[m_frameResourceIndex]->DrawInstanced((UINT)vertices, (UINT)instances, 0, 0);
 }
 
-void gt::dx12::PresentRTV()
+void gt::dx12::TansitionRtvToPresent()
 {
     auto backbufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
 
@@ -1183,7 +1183,7 @@ void gt::dx12::Render(float r, float g, float b, float a)
     // where the order of each queue is split between pre work, which is first command list, then some N amount of mid work, followed by the post work.
     // We could learn to take a similar approach. Right now each FrameContext has 3 command allocators (current setting) and command lists.
     // We could make 0 = prep work, 1 = mid (render), 2 = finalization. 
-    PresentRTV();
+    TansitionRtvToPresent();
     // This probably could be handled by the actual thread, before it signals it is done
     // because it belongs to the current command list, and this is out of scope. 
     // However PresentRTV handles the transition, so need to examine how to handle that first

@@ -4,6 +4,7 @@ module;
 #include <span>
 #include <format>
 #include <wrl/client.h>
+#include <d3dx12\d3dx12_barriers.h>
 #include "engine\EngineLogDefines.h"
 #include "platform\Windows\Win32\WinApiUtils.h"
 
@@ -20,7 +21,6 @@ namespace WRL = Microsoft::WRL;
 
 export namespace LS::Platform::Dx12
 {
-
     // SET FUNCTIONS // 
     inline void SetViewPorts(WRL::ComPtr<ID3D12GraphicsCommandList>& command, std::span<D3D12_VIEWPORT> viewports) noexcept
     {
@@ -67,7 +67,7 @@ export namespace LS::Platform::Dx12
      * @param fenceValue The current value to be incremented and pass as the signal to the GPU
      * @return A fence value that should be signaled by the CPU to assure all processes by the GPU are no longer "in-flight"
     */
-    inline auto Signal(WRL::ComPtr<ID3D12CommandQueue>& pQueue, WRL::ComPtr<ID3D12Fence>& pFence,
+    [[nodiscard]] inline auto Signal(WRL::ComPtr<ID3D12CommandQueue>& pQueue, WRL::ComPtr<ID3D12Fence>& pFence,
         uint64_t& fenceValue) noexcept -> uint64_t
     {
         uint64_t fenceValueForSignal = ++fenceValue;
@@ -95,5 +95,30 @@ export namespace LS::Platform::Dx12
         uint64_t fenceValueForSignal = Signal(pQueue, pFence, fenceValue);
 
         WaitForFenceValue(pFence, fenceValueForSignal, fenceEvent);
+    }
+
+    /**
+     * @brief Transitions a resource from current state (before) to next state (after)
+     * @param before The current state this resource is in
+     * @param after The state to transition into
+     * @param pResource The resource
+     * @return D3D12_RESOURCE_BARRIER
+    */
+    [[nodiscard]] inline auto CreateResourceTransition(D3D12_RESOURCE_STATES before, D3D12_RESOURCE_STATES after, ID3D12Resource* pResource) noexcept -> D3D12_RESOURCE_BARRIER
+    {
+        auto transition = CD3DX12_RESOURCE_BARRIER::Transition(pResource, before, after);
+        return transition;
+    }
+
+    /**
+     * @brief Notifies the GPU that the following resources are ready to begin their transitions. 
+     * @param pCommList The Command list to use
+     * @param barriers The barrier(s) to use 1 or more. 
+    */
+    inline void TransitionTo(ID3D12GraphicsCommandList* pCommList, std::span<D3D12_RESOURCE_BARRIER> barriers)
+    {
+        assert(pCommList);
+        assert(barriers.size() > 0);
+        pCommList->ResourceBarrier(barriers.size(), barriers.data());
     }
 }
