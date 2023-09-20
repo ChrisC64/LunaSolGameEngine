@@ -7,6 +7,7 @@ export module D3D12Lib;
 
 export import :D3D12Common;
 export import :D3D12Utils.Descriptors;
-export import :D3D12Utils.CommandList;
+export import :D3D12Utils.Commands;
 export import :Device;
 export import :ResourceManagerD3D12;
+export import :CommandQueueD3D12;

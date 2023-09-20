@@ -1,3 +1,7 @@
+/**
+ * @brief This file contains multiple ways to operate on and utilize the various 
+ * CommandQueues and CommandList objects for DirectX12. 
+*/
 module;
 #include <d3d12.h>
 #include <cassert>
@@ -7,7 +11,7 @@ module;
 #include <d3dx12\d3dx12_barriers.h>
 #include "engine\EngineLogDefines.h"
 #include "platform\Windows\Win32\WinApiUtils.h"
-
+//NOMINMAX doesn't seem to work here. Though this might be because of std
 #ifdef min
 #undef min
 #endif
@@ -15,12 +19,47 @@ module;
 #ifdef max
 #undef max
 #endif
-export module D3D12Lib:D3D12Utils.CommandList;
+export module D3D12Lib:D3D12Utils.Commands;
 
 namespace WRL = Microsoft::WRL;
 
 export namespace LS::Platform::Dx12
 {
+    // Creation Methods //
+
+    [[nodiscard]] inline auto CreateCommandQueue(ID3D12Device* pDevice, D3D12_COMMAND_LIST_TYPE type, D3D12_COMMAND_QUEUE_PRIORITY priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL) noexcept -> WRL::ComPtr<ID3D12CommandQueue>
+    {
+        D3D12_COMMAND_QUEUE_DESC desc = {};
+        desc.Type = type;
+        desc.Priority = priority;
+        desc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
+        desc.NodeMask = 0;
+
+        WRL::ComPtr<ID3D12CommandQueue> pQueue;
+        const auto hr = pDevice->CreateCommandQueue(&desc, IID_PPV_ARGS(&pQueue));
+
+        if (FAILED(hr))
+        {
+            // Handle error
+            return nullptr;
+        }
+
+        return pQueue;
+    }
+
+    /**
+     * @brief Transitions a resource from current state (before) to next state (after)
+     * @param before The current state this resource is in
+     * @param after The state to transition into
+     * @param pResource The resource
+     * @return D3D12_RESOURCE_BARRIER
+    */
+    [[nodiscard]] inline auto CreateResourceTransition(D3D12_RESOURCE_STATES before, D3D12_RESOURCE_STATES after, ID3D12Resource* pResource) noexcept -> D3D12_RESOURCE_BARRIER
+    {
+        auto transition = CD3DX12_RESOURCE_BARRIER::Transition(pResource, before, after);
+        return transition;
+    }
+
     // SET FUNCTIONS // 
     inline void SetViewPorts(WRL::ComPtr<ID3D12GraphicsCommandList>& command, std::span<D3D12_VIEWPORT> viewports) noexcept
     {
@@ -95,19 +134,6 @@ export namespace LS::Platform::Dx12
         uint64_t fenceValueForSignal = Signal(pQueue, pFence, fenceValue);
 
         WaitForFenceValue(pFence, fenceValueForSignal, fenceEvent);
-    }
-
-    /**
-     * @brief Transitions a resource from current state (before) to next state (after)
-     * @param before The current state this resource is in
-     * @param after The state to transition into
-     * @param pResource The resource
-     * @return D3D12_RESOURCE_BARRIER
-    */
-    [[nodiscard]] inline auto CreateResourceTransition(D3D12_RESOURCE_STATES before, D3D12_RESOURCE_STATES after, ID3D12Resource* pResource) noexcept -> D3D12_RESOURCE_BARRIER
-    {
-        auto transition = CD3DX12_RESOURCE_BARRIER::Transition(pResource, before, after);
-        return transition;
     }
 
     /**

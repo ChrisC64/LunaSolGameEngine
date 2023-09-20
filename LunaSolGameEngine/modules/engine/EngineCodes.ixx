@@ -4,8 +4,11 @@ module;
 #include <array>
 #include <string>
 #include <string_view>
+#include <variant>
 
 export module Engine.EngineCodes;
+
+import Data.LSConcepts;
 
 export namespace LS
 {
@@ -126,6 +129,7 @@ export namespace LS
         {
             return ErrorCode(ErrorStatus::SUCCESS, ErrorCategory::GENERAL, "");
         }
+
 
     }// end namespace System
 }// end namespace LS

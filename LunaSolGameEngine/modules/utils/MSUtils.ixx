@@ -1,10 +1,15 @@
 module;
 #include <string>
+#include <string_view>
+#include <format>
+#include <fmt/format.h>
 #include <d3d11_4.h>
 #include <stdexcept>
 #include <wrl/client.h>
 
 #include <dxguids/dxguids.h>
+
+#include "platform\Windows\Win32\WinApiUtils.h"
 export module Util.MSUtils;
 
 //Utility functions for Microsoft specific stuff //
@@ -68,14 +73,26 @@ export namespace LS::Utils
 #endif _DEBUG
     }
 
-    constexpr void ThrowIfFailed(HRESULT hr, const char* s)
+    inline void ThrowIfFailed(HRESULT hr, std::string_view s)
     {
         if (FAILED(hr))
         {
-            throw std::runtime_error(s);
+            const std::string msg = LS::Win32::HrToString(hr);
+            const std::string str = std::string(std::move(s));
+            const std::string err = fmt::format("{} {}", str, msg);
+            throw std::runtime_error(err);
         }
     }
-
+    
+    inline void ThrowIfFailed(HRESULT hr)
+    {
+        if (FAILED(hr))
+        {
+            const auto msg = LS::Win32::HrToString(hr);
+            throw std::runtime_error(msg);
+        }
+    }
+    
     template<class T, class U>
     constexpr HRESULT QueryInterfaceFor(Microsoft::WRL::ComPtr<T>& obj, Microsoft::WRL::ComPtr<U>& query)
     {
