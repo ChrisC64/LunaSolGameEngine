@@ -42,6 +42,8 @@
     <FxCompile Include="shaders\ScreenQuad.hlsl" />
     <FxCompile Include="shaders\VertexShader2.hlsl" />
     <FxCompile Include="shaders\FullScreenQuad.hlsl" />
+    <FxCompile Include="shaders\VertexShaderD3D12.hlsl" />
+    <FxCompile Include="shaders\PixelShaderD3D12.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

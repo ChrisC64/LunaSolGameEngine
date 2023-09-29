@@ -63,8 +63,8 @@ namespace LS
         LSApp(LSApp&&) = default;
         LSApp& operator=(LSApp&&) = default;
 
-        System::ErrorCode Initialize(int argCount, char* argsV[]);
-        System::ErrorCode Initialize();
+        auto Initialize(int argCount, char* argsV[]) -> System::ErrorCode;
+        auto Initialize() -> System::ErrorCode;
         void Run();
 
         Ref<LSWindowBase> Window;
@@ -93,7 +93,7 @@ namespace LS
         Window = BuildWindow(width, height, title);
     }
 
-    System::ErrorCode LSApp::Initialize(int argCount, char* argsV[])
+    auto LSApp::Initialize(int argCount, char* argsV[]) -> System::ErrorCode
     {
         CommandArgs = std::vector<std::string_view>(argsV + 1, argsV + argCount);
 
@@ -104,7 +104,7 @@ namespace LS
         return System::ErrorCode(System::ErrorStatus::SUCCESS, System::ErrorCategory::GENERAL, "App initialized");
     }
 
-    System::ErrorCode LSApp::Initialize()
+    auto LSApp::Initialize() -> System::ErrorCode
     {
         if (InitFunc)
         {

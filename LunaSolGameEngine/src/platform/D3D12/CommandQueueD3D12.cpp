@@ -4,6 +4,8 @@
 #include <queue>
 #include <cassert>
 #include <exception>
+#include <chrono>
+
 import D3D12Lib;
 import Util.MSUtils;
 
@@ -99,7 +101,7 @@ auto CommandQueue::ExecuteCommandList(WRL::ComPtr<ID3D12GraphicsCommandList9>& c
     // Find the command allocator set as a private data interface member 
     WRL::ComPtr<ID3D12CommandAllocator> commandAllocator;
     UINT dataSize = sizeof(commandAllocator);
-    const auto hr = commandList->GetPrivateData(__uuidof(ID3D12CommandAllocator), &dataSize, &commandAllocator);
+    const auto hr = commandList->GetPrivateData(__uuidof(ID3D12CommandAllocator), &dataSize, commandAllocator.Get());
     LS::Utils::ThrowIfFailed(hr, "Failed to find the command allocator, may not be set as private interface member.");
 
     // Execute the command lists
@@ -108,8 +110,22 @@ auto CommandQueue::ExecuteCommandList(WRL::ComPtr<ID3D12GraphicsCommandList9>& c
 
     // Obtain the signal and set it to return to the user
     const uint64_t fenceValue = LS::Platform::Dx12::Signal(m_pCommandQueue, m_pFence, m_fenceValue);
-    m_commandAllocQueue.emplace(CommandAllocatorEntry{ .FenceValue = fenceValue, .CommandALlocator = commandAllocator });
+    m_commandAllocQueue.emplace(CommandAllocatorEntry{ .FenceValue = fenceValue, .CommandAllocator = commandAllocator });
     m_commandListQueue.push(commandList);
 
     return fenceValue;
+}
+
+void CommandQueue::WaitForFenceValue(uint64_t fenceValue, std::chrono::milliseconds duration)
+{
+    if (m_pFence->GetCompletedValue() < fenceValue)
+    {
+        LS::Utils::ThrowIfFailed(m_pFence->SetEventOnCompletion(fenceValue, m_fenceEvent));
+        ::WaitForSingleObject(m_fenceEvent, static_cast<DWORD>(duration.count()));
+    }
+}
+
+void LS::Platform::Dx12::CommandQueue::Flush() noexcept
+{
+    LS::Platform::Dx12::Flush(m_pCommandQueue, m_pFence, m_fenceValue, m_fenceEvent);
 }
