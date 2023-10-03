@@ -32,10 +32,10 @@ m_fenceValue(0)
     assert(m_fenceEvent && "Failed to create fence event handle.");
 }
 
-auto LS::Platform::Dx12::CommandQueue::GetCommandList() -> WRL::ComPtr<ID3D12GraphicsCommandList9>
+auto LS::Platform::Dx12::CommandQueue::GetCommandList() -> WRL::ComPtr<ID3D12GraphicsCommandList>
 {
     WRL::ComPtr<ID3D12CommandAllocator> commandAllocator;
-    WRL::ComPtr<ID3D12GraphicsCommandList9> commandList;
+    WRL::ComPtr<ID3D12GraphicsCommandList> commandList;
     
     if (m_commandAllocQueue.empty())
     {
@@ -77,24 +77,24 @@ auto CommandQueue::CreateCommandAllocator() -> WRL::ComPtr<ID3D12CommandAllocato
     return commandAllocator;
 }
 
-auto CommandQueue::CreateCommandList(WRL::ComPtr<ID3D12CommandAllocator>& allocator) -> WRL::ComPtr<ID3D12GraphicsCommandList9>
+auto CommandQueue::CreateCommandList(WRL::ComPtr<ID3D12CommandAllocator>& allocator) -> WRL::ComPtr<ID3D12GraphicsCommandList>
 {
-    WRL::ComPtr<ID3D12GraphicsCommandList9> commandList;
+    WRL::ComPtr<ID3D12GraphicsCommandList> commandList;
     const auto hr = m_pDevice->CreateCommandList(0, m_commListType, allocator.Get(), nullptr, IID_PPV_ARGS(&commandList));
     LS::Utils::ThrowIfFailed(hr, "Failed to create command list");
     return commandList;
 }
 
-auto LS::Platform::Dx12::CommandQueue::CreateCommandList() -> WRL::ComPtr<ID3D12GraphicsCommandList9>
+auto LS::Platform::Dx12::CommandQueue::CreateCommandList() -> WRL::ComPtr<ID3D12GraphicsCommandList>
 {
-    WRL::ComPtr<ID3D12GraphicsCommandList9> commandList;
+    WRL::ComPtr<ID3D12GraphicsCommandList> commandList;
     const auto hr = m_pDevice->CreateCommandList1(0, m_commListType, D3D12_COMMAND_LIST_FLAG_NONE, IID_PPV_ARGS(&commandList));
     LS::Utils::ThrowIfFailed(hr, "Failed to create command closed command list");
 
     return commandList;
 }
 
-auto CommandQueue::ExecuteCommandList(WRL::ComPtr<ID3D12GraphicsCommandList9>& commandList) -> uint64_t
+auto CommandQueue::ExecuteCommandList(WRL::ComPtr<ID3D12GraphicsCommandList>& commandList) -> uint64_t
 {
     const auto closeHr = commandList->Close();
     LS::Utils::ThrowIfFailed(closeHr, "Failed to close the command list before executing the next one.");

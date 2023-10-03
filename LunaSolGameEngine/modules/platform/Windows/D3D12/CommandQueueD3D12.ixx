@@ -27,12 +27,12 @@ export namespace LS::Platform::Dx12
         CommandQueue(CommandQueue&& other) = default;
         CommandQueue& operator=(CommandQueue&& other) = default;
 
-        auto GetCommandList() -> WRL::ComPtr<ID3D12GraphicsCommandList9>;
+        auto GetCommandList() -> WRL::ComPtr<ID3D12GraphicsCommandList>;
 
         auto CreateCommandAllocator() -> WRL::ComPtr<ID3D12CommandAllocator>;
-        auto CreateCommandList(WRL::ComPtr<ID3D12CommandAllocator>& allocator) -> WRL::ComPtr<ID3D12GraphicsCommandList9>;
-        auto CreateCommandList() -> WRL::ComPtr<ID3D12GraphicsCommandList9>;
-        auto ExecuteCommandList(WRL::ComPtr<ID3D12GraphicsCommandList9>& commandList) -> uint64_t;
+        auto CreateCommandList(WRL::ComPtr<ID3D12CommandAllocator>& allocator) -> WRL::ComPtr<ID3D12GraphicsCommandList>;
+        auto CreateCommandList() -> WRL::ComPtr<ID3D12GraphicsCommandList>;
+        auto ExecuteCommandList(WRL::ComPtr<ID3D12GraphicsCommandList>& commandList) -> uint64_t;
         void WaitForFenceValue(uint64_t fenceValue,
             std::chrono::milliseconds duration = std::chrono::milliseconds::max());
         void Flush() noexcept;
@@ -54,7 +54,7 @@ export namespace LS::Platform::Dx12
         };
 
         using CommandAllocQueue = std::queue<CommandAllocatorEntry>;
-        using CommandListQueue = std::queue<WRL::ComPtr<ID3D12GraphicsCommandList9>>;
+        using CommandListQueue = std::queue<WRL::ComPtr<ID3D12GraphicsCommandList>>;
 
         WRL::ComPtr<ID3D12Device4>              m_pDevice;
         WRL::ComPtr<ID3D12CommandQueue>         m_pCommandQueue;

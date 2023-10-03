@@ -1,5 +1,5 @@
 module;
-
+#include <filesystem>
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include <d3d12.h>
@@ -114,7 +114,7 @@ namespace gt::dx12
         CD3DX12_PIPELINE_STATE_STREAM_PS PS;
         CD3DX12_PIPELINE_STATE_STREAM_DEPTH_STENCIL_FORMAT DSVFormat;
         CD3DX12_PIPELINE_STATE_STREAM_RENDER_TARGET_FORMATS RTVFormats;
-    } pipelineStateStream;
+    } g_pipelineStateStream;
 
     template <class T, size_t Size>
     using ComPtrArray = std::array<WRL::ComPtr<T>, Size>;
@@ -135,14 +135,18 @@ namespace gt::dx12
         UINT64                         FenceValue;
     };
 
-    class DX12CubeApp : LS::LSApp
+    export class DX12CubeApp : public LS::LSApp
     {
     public:
         DX12CubeApp() = default;
+        DX12CubeApp(uint32_t width, uint32_t height, std::wstring_view title) 
+        {
+            Window = LS::BuildWindow(width, height, title);
+        }
         ~DX12CubeApp() = default;
 
-        LS::System::ErrorCode Init();
-        void Run();
+        auto Initialize(int argCount = 0, char* argsV[] = nullptr) -> LS::System::ErrorCode override;
+        void Run() override;
 
     private:
         // Tutorial Stuff //
@@ -160,8 +164,6 @@ namespace gt::dx12
         WRL::ComPtr<ID3D12RootSignature> m_cubeRootSignature;
         WRL::ComPtr<ID3D12PipelineState> m_cubePipelineState;
         WRL::ComPtr<IDXGIFactory7> m_factory;
-        //D3D12_VIEWPORT m_cubeViewport;
-        //D3D12_RECT m_cubeScissorRect;
         float m_fov;
         XMMATRIX m_cubeModelMat;
         XMMATRIX m_cubeViewMat;
@@ -174,24 +176,21 @@ namespace gt::dx12
         void CreateSwapchain();
         void CreateCommandAllocators();
         void CreateDescriptors();
-
-        void UpdateBufferResource(WRL::ComPtr<ID3D12GraphicsCommandList9>& commandLIst,
+        bool LoadAssets();
+        void LoadVertexDataToGpu();
+        void UpdateBufferResource(WRL::ComPtr<ID3D12GraphicsCommandList>& commandLIst,
             ID3D12Resource** pDestinationResource, ID3D12Resource** pIntermediateResource,
             size_t numElements, size_t elementSize, const void* bufferData,
             D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE);
         bool LoadContent();
         void ResizeDepthBuffer(int width, int height);
-        void TransitionResource(WRL::ComPtr<ID3D12GraphicsCommandList9>& commandList, WRL::ComPtr<ID3D12Resource>& resource,
+        void TransitionResource(WRL::ComPtr<ID3D12GraphicsCommandList>& commandList, WRL::ComPtr<ID3D12Resource>& resource,
             D3D12_RESOURCE_STATES before, D3D12_RESOURCE_STATES after);
-        void ClearRTV(WRL::ComPtr<ID3D12GraphicsCommandList9>& commandList, D3D12_CPU_DESCRIPTOR_HANDLE rtv, float* clearColor);
-        void ClearDepth(WRL::ComPtr<ID3D12GraphicsCommandList9>& commandList, D3D12_CPU_DESCRIPTOR_HANDLE dsv, float depth);
+        void ClearRTV(WRL::ComPtr<ID3D12GraphicsCommandList>& commandList, D3D12_CPU_DESCRIPTOR_HANDLE rtv, float* clearColor);
+        void ClearDepth(WRL::ComPtr<ID3D12GraphicsCommandList>& commandList, D3D12_CPU_DESCRIPTOR_HANDLE dsv, float depth);
         // END Tutorial Stuff //
     };
 
-    DX12CubeApp g_cubeApp;
-    constexpr auto bindInit = std::bind(&gt::dx12::DX12CubeApp::Init, &g_cubeApp);
-    constexpr auto bindRun = std::bind(&gt::dx12::DX12CubeApp::Run, &g_cubeApp);
-    
     struct ThreadParameter
     {
         uint32_t threadIndex;
@@ -249,8 +248,6 @@ namespace gt::dx12
     // Blah stuff
     bool firstRun = true;
 
-    bool LoadAssets();
-    void LoadVertexDataToGpu();
     void GetHardwareAdapter(IDXGIFactory1* pFactory, IDXGIAdapter1** ppAdapter, bool requestHighPerformanceAdapter);
     void CheckFeatures([[maybe_unused]] std::string& s);
     void LogAdapters(IDXGIFactory4* factory);
@@ -273,8 +270,6 @@ namespace gt::dx12
     void CreateThreads();
     void Render(float r, float g, float b, float a);
     void OnDestroy();
-
-    export auto App = LS::CreateAppRef(800, 600, L"Cube App", std::move(bindInit), std::move(bindRun));
 
     inline auto CreateDefaultBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, const void* initData, uint64_t byteSize, WRL::ComPtr<ID3D12Resource>& uploadBuffer, D3D12_RESOURCE_STATES finalState, std::optional<std::wstring_view> defaultName = std::nullopt, std::optional<std::wstring_view> uploadName = std::nullopt) -> WRL::ComPtr<ID3D12Resource>;
     inline auto CreateDefaultBuffer2(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, const void* initData, uint64_t byteSize, WRL::ComPtr<ID3D12Resource>& uploadBuffer, D3D12_RESOURCE_STATES finalState) -> WRL::ComPtr<ID3D12Resource>;
@@ -515,7 +510,7 @@ bool gt::dx12::DX12CubeApp::CreateDevice(HWND hwnd, uint32_t x, uint32_t y)
     return true;
 }
 
-bool gt::dx12::LoadAssets()
+bool gt::dx12::DX12CubeApp::LoadAssets()
 {
     // Create an empty root signature for shader.hlsl
     {
@@ -665,7 +660,7 @@ bool gt::dx12::LoadAssets()
     return true;
 }
 
-void gt::dx12::LoadVertexDataToGpu()
+void gt::dx12::DX12CubeApp::LoadVertexDataToGpu()
 {
     // For simplicity, I've opted to make two command lists with two separate local command allocators. This is so I can then put these two command lists to work
     // right away, without waiting on one or the other. These jobs only happen once, so it's only done this way for quick and easy, over "correctness" of loading data onto the GPU.
@@ -839,7 +834,7 @@ void gt::dx12::DX12CubeApp::CreateRenderTarget()
 
 void gt::dx12::DX12CubeApp::CreateSwapchain()
 {
-    const auto& window = App->Window;
+    const auto& window = Window;
     HWND hwnd = reinterpret_cast<HWND>(window->GetHandleToWindow());
 
     // Setup swap chain
@@ -860,7 +855,8 @@ void gt::dx12::DX12CubeApp::CreateSwapchain()
     // Since we are using an HWND (Win32) system, we can create the swapchain for HWND 
     {
         WRL::ComPtr<IDXGISwapChain1> swapChain1 = nullptr;
-        ThrowIfFailed(m_factory->CreateSwapChainForHwnd(m_pCommandQueue.Get(), hwnd, &swapchainDesc1, nullptr, nullptr, &swapChain1));
+        //ThrowIfFailed(m_factory->CreateSwapChainForHwnd(m_pCommandQueue.Get(), hwnd, &swapchainDesc1, nullptr, nullptr, &swapChain1));
+        ThrowIfFailed(m_factory->CreateSwapChainForHwnd(m_directCommandQueue->GetCommandQueue().Get(), hwnd, &swapchainDesc1, nullptr, nullptr, &swapChain1));
         ThrowIfFailed(swapChain1.As(&g_pSwapChain));
 
         // Helper function that displays our display's resolution and refresh rates and other information 
@@ -899,7 +895,7 @@ void gt::dx12::DX12CubeApp::CreateDescriptors()
         desc.NumDescriptors = FRAME_COUNT;
         //desc.NodeMask = 1;
 
-        ThrowIfFailed((m_pDevice->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&g_pRtvDescHeap)));
+        ThrowIfFailed((m_pDevice->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&g_pRtvDescHeap))));
         // Handles have a size that varies by GPU, so we have to ask for the Handle size on the GPU before processing
         g_rtvDescriptorSize = m_pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
     }
@@ -1164,16 +1160,16 @@ void gt::dx12::CreateThreads()
 
 }
 
-LS::System::ErrorCode gt::dx12::DX12CubeApp::Init()
+auto gt::dx12::DX12CubeApp::Initialize(int argC, char* argsV[]) -> LS::System::ErrorCode
 {
-    const auto& window = App->Window;
+    const auto& window = Window;
     if (!CreateDevice((HWND)window->GetHandleToWindow(), window->GetWidth(), window->GetHeight()))
         return LS::System::CreateFailCode("Failed to create device.");
 
+    CreateCommandAllocators();
     CreateDescriptors();
     CreateSwapchain();
     CreateRenderTarget();
-    CreateCommandAllocators();
     //TODO: LoadContent is the Cube and LoadAssets is just the triangle 
     // but after loading we have to call the correct load to GPU function (loadContent doesn't have one yet)
     // still working on implementing some of the behaviors needed to set up everything
@@ -1201,7 +1197,8 @@ LS::System::ErrorCode gt::dx12::DX12CubeApp::Init()
 
 void gt::dx12::DX12CubeApp::Run()
 {
-    auto& window = App->Window;
+    IsRunning = true;
+    auto& window = Window;
     window->Show();
     /*while (window->IsOpen())
     {
@@ -1229,11 +1226,11 @@ void gt::dx12::DX12CubeApp::Run()
         float aspectRatio = window->GetWidth() / static_cast<float>(window->GetHeight());
         m_cubeProjMat = XMMatrixPerspectiveFovLH(XMConvertToRadians(m_fov), aspectRatio, 0.1f, 100.0f);
 
-        auto commandAllocator = 
+        //auto commandAllocator = 
     }
 }
 
-void gt::dx12::DX12CubeApp::UpdateBufferResource(WRL::ComPtr<ID3D12GraphicsCommandList9>& commandList, ID3D12Resource** pDestinationResource, ID3D12Resource** pIntermediateResource, size_t numElements, size_t elementSize, const void* bufferData, D3D12_RESOURCE_FLAGS flags)
+void gt::dx12::DX12CubeApp::UpdateBufferResource(WRL::ComPtr<ID3D12GraphicsCommandList>& commandList, ID3D12Resource** pDestinationResource, ID3D12Resource** pIntermediateResource, size_t numElements, size_t elementSize, const void* bufferData, D3D12_RESOURCE_FLAGS flags)
 {
     size_t bufferSize = numElements * elementSize;
     // Create a committed resource for the GPU int he default heap
@@ -1291,17 +1288,29 @@ bool gt::dx12::DX12CubeApp::LoadContent()
     D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = LS::Platform::Dx12::CreateDepthStencilViewDescriptor(1);
 
     ThrowIfFailed(m_pDevice->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&m_dsvHeap)));
+    // Find current directory to get our path and add the shaders (they'll be local to the exe for now)
+    std::array<wchar_t, _MAX_PATH> modulePath{};
+    if (!GetModuleFileName(nullptr, modulePath.data(), static_cast<DWORD>(modulePath.size())))
+    {
+        ThrowIfFailed(ERROR_FILE_NOT_FOUND);
+    }
 
+    std::wstring path = std::wstring(modulePath.data());
+    const auto fsPath = std::filesystem::path(path);
+    const auto parent = fsPath.parent_path();
+    std::wstring vsPath = std::format(L"{}\\VertexShaderD3D12.cso", parent.wstring());
+    std::wstring psPath = std::format(L"{}\\PixelShaderD3D12.cso", parent.wstring());
+    // Load the shaders for this project
     WRL::ComPtr<ID3DBlob> vertexShaderBlob;
-    ThrowIfFailed(D3DReadFileToBlob(L"VertexShaderD3D12.cso", &vertexShaderBlob));
+    ThrowIfFailed(D3DReadFileToBlob(vsPath.c_str(), &vertexShaderBlob));
 
     WRL::ComPtr<ID3DBlob> pixelShaderBlob;
-    ThrowIfFailed(D3DReadFileToBlob(L"PixelShaderD3D12.cso", &pixelShaderBlob));
+    ThrowIfFailed(D3DReadFileToBlob(psPath.c_str(), &pixelShaderBlob));
 
     // Create the vertex input layout
     D3D12_INPUT_ELEMENT_DESC inputLayout[] = {
-        { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-        { "COLOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+        { .SemanticName = "POSITION", .SemanticIndex = 0, .Format = DXGI_FORMAT_R32G32B32_FLOAT, .InputSlot = 0, .AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT, .InputSlotClass = D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, .InstanceDataStepRate = 0 },
+        { .SemanticName = "COLOR", .SemanticIndex = 0, .Format = DXGI_FORMAT_R32G32B32_FLOAT, .InputSlot = 0, .AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT, .InputSlotClass = D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, .InstanceDataStepRate = 0 },
     };
 
     // Create a root signature.
@@ -1336,27 +1345,47 @@ bool gt::dx12::DX12CubeApp::LoadContent()
     ThrowIfFailed(m_pDevice->CreateRootSignature(0, rootSignatureBlob->GetBufferPointer(),
         rootSignatureBlob->GetBufferSize(), IID_PPV_ARGS(&m_cubeRootSignature)));
 
+    // Number of RTVs //
     D3D12_RT_FORMAT_ARRAY rtvFormats = {};
     rtvFormats.NumRenderTargets = 1;
     rtvFormats.RTFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+    
+    // Create the graphics pipeline state object (PSO)
+    g_pipelineStateStream.pRootSignature = m_cubeRootSignature.Get();
+    g_pipelineStateStream.InputLayout = { inputLayout, _countof(inputLayout) };
+    g_pipelineStateStream.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+    g_pipelineStateStream.VS = CD3DX12_SHADER_BYTECODE(vertexShaderBlob.Get());
+    g_pipelineStateStream.PS = CD3DX12_SHADER_BYTECODE(pixelShaderBlob.Get());
+    g_pipelineStateStream.DSVFormat = DXGI_FORMAT_D32_FLOAT;
+    g_pipelineStateStream.RTVFormats = rtvFormats;
 
-    pipelineStateStream.pRootSignature = m_cubeRootSignature.Get();
-    pipelineStateStream.InputLayout = { inputLayout, _countof(inputLayout) };
-    pipelineStateStream.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-    pipelineStateStream.VS = CD3DX12_SHADER_BYTECODE(vertexShaderBlob.Get());
-    pipelineStateStream.PS = CD3DX12_SHADER_BYTECODE(pixelShaderBlob.Get());
-    pipelineStateStream.DSVFormat = DXGI_FORMAT_D32_FLOAT;
-    pipelineStateStream.RTVFormats = rtvFormats;
-
-    D3D12_PIPELINE_STATE_STREAM_DESC pipelineStateStreamDesc = { sizeof(PipelineStateStream), &pipelineStateStream };
+    D3D12_PIPELINE_STATE_STREAM_DESC pipelineStateStreamDesc = { sizeof(PipelineStateStream), &g_pipelineStateStream };
     ThrowIfFailed(m_pDevice->CreatePipelineState(&pipelineStateStreamDesc, IID_PPV_ARGS(&m_cubePipelineState)));
 
+    //D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
+    //psoDesc.InputLayout = { inputLayout, _countof(inputLayout) };
+    //psoDesc.pRootSignature = m_cubeRootSignature.Get();
+    //psoDesc.VS = CD3DX12_SHADER_BYTECODE(vertexShaderBlob.Get());
+    //psoDesc.PS = CD3DX12_SHADER_BYTECODE(pixelShaderBlob.Get());
+    //psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+    //psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+    //psoDesc.DepthStencilState.DepthEnable = TRUE;
+    //psoDesc.DepthStencilState.StencilEnable = TRUE;
+    //psoDesc.SampleMask = UINT_MAX;
+    //psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+    //psoDesc.NumRenderTargets = 1;
+    //psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+    //psoDesc.SampleDesc.Count = 1;
+    //ThrowIfFailed(m_pDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_pPipelineState)));
+
+    // Execute to insure the index and vertex buffers are uploaded to the GPU resources before rendering
     auto fenceValue = m_copyCommandQueue->ExecuteCommandList(commandList);
-    m_copyCommandQueue->WaitForFenceValue(fenceValue);//TODO: Not created
+    m_copyCommandQueue->WaitForFenceValue(fenceValue);
 
     m_contentLoaded = true;
     // Resize/Create the depth buffer.
-    ResizeDepthBuffer(Window->GetWidth(), Window->GetHeight());
+    const auto& window = Window;
+    ResizeDepthBuffer(window->GetWidth(), window->GetHeight());
 
     return true;
 }
@@ -1366,18 +1395,19 @@ void gt::dx12::DX12CubeApp::ResizeDepthBuffer(int width, int height)
     if (m_contentLoaded)
     {
         m_copyCommandQueue->Flush();
-        m_directCommandQUeue->Flush();
+        m_directCommandQueue->Flush();
         // Resize screen dependent resources.
         // Create a depth buffer.
         D3D12_CLEAR_VALUE optimizedClearValue = {};
         optimizedClearValue.Format = DXGI_FORMAT_D32_FLOAT;
         optimizedClearValue.DepthStencil = { 1.0f, 0 };
-
+        const CD3DX12_HEAP_PROPERTIES heap(D3D12_HEAP_TYPE_DEFAULT);
+        const auto resDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT, width, height,
+            1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
         ThrowIfFailed(m_pDevice->CreateCommittedResource(
-            &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+            &heap,
             D3D12_HEAP_FLAG_NONE,
-            &CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT, width, height,
-                1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL),
+            &resDesc,
             D3D12_RESOURCE_STATE_DEPTH_WRITE,
             &optimizedClearValue,
             IID_PPV_ARGS(&m_depthBuffer)
@@ -1395,18 +1425,18 @@ void gt::dx12::DX12CubeApp::ResizeDepthBuffer(int width, int height)
     }
 }
 
-void gt::dx12::DX12CubeApp::TransitionResource(WRL::ComPtr<ID3D12GraphicsCommandList9>& commandList, WRL::ComPtr<ID3D12Resource>& resource, D3D12_RESOURCE_STATES before, D3D12_RESOURCE_STATES after)
+void gt::dx12::DX12CubeApp::TransitionResource(WRL::ComPtr<ID3D12GraphicsCommandList>& commandList, WRL::ComPtr<ID3D12Resource>& resource, D3D12_RESOURCE_STATES before, D3D12_RESOURCE_STATES after)
 {
     CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(resource.Get(), before, after);
     commandList->ResourceBarrier(1, &barrier);
 }
 
-void gt::dx12::DX12CubeApp::ClearRTV(WRL::ComPtr<ID3D12GraphicsCommandList9>& commandList, D3D12_CPU_DESCRIPTOR_HANDLE rtv, float* clearColor)
+void gt::dx12::DX12CubeApp::ClearRTV(WRL::ComPtr<ID3D12GraphicsCommandList>& commandList, D3D12_CPU_DESCRIPTOR_HANDLE rtv, float* clearColor)
 {
     commandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
 }
 
-void gt::dx12::DX12CubeApp::ClearDepth(WRL::ComPtr<ID3D12GraphicsCommandList9>& commandList, D3D12_CPU_DESCRIPTOR_HANDLE dsv, float depth)
+void gt::dx12::DX12CubeApp::ClearDepth(WRL::ComPtr<ID3D12GraphicsCommandList>& commandList, D3D12_CPU_DESCRIPTOR_HANDLE dsv, float depth)
 {
     commandList->ClearDepthStencilView(dsv, D3D12_CLEAR_FLAG_DEPTH, depth, 0, 0, nullptr);
 }

@@ -76,14 +76,15 @@ struct Cube
 
 namespace gt::dx11
 {
-    class DX11CubeApp : LSApp
+    export class DX11CubeApp : public LS::LSApp
     {
     public:
         DX11CubeApp() = default;
+        DX11CubeApp(uint32_t width, uint32_t height, std::wstring_view title);
         ~DX11CubeApp() = default;
 
-        LS::System::ErrorCode Init();
-        void Run();
+        auto Initialize(int argCount = 0, char* argsV[] = nullptr) -> System::ErrorCode override;
+        void Run() override;
 
     private:
         LS::Platform::Dx11::BufferCache m_bufferCache;
@@ -106,22 +107,17 @@ namespace gt::dx11
 
     using namespace std::placeholders;
 
-    DX11CubeApp g_cubeApp;
-    constexpr auto bindInit = std::bind(&gt::dx11::DX11CubeApp::Init, &g_cubeApp);
-    constexpr auto bindRun = std::bind(&gt::dx11::DX11CubeApp::Run, &g_cubeApp);
-    constexpr auto bindResize = std::bind(&gt::dx11::DX11CubeApp::HandleResize, &g_cubeApp, _1, _2);
+    /*constexpr auto bindResize = std::bind(&gt::dx11::DX11CubeApp::HandleResize, &g_cubeApp, _1, _2);
     constexpr auto bindOnWindowEvent = std::bind(&gt::dx11::DX11CubeApp::OnWindowEvent, &g_cubeApp, _1);
     constexpr auto bindOnKeyboardUp = std::bind(&gt::dx11::DX11CubeApp::OnKeyboardUp, &g_cubeApp, _1);
     constexpr auto bindOnKeyboardDown = std::bind(&gt::dx11::DX11CubeApp::OnKeyboardDown, &g_cubeApp, _1);
     constexpr auto bindOnMouseDown = std::bind(&gt::dx11::DX11CubeApp::OnMouseDown, &g_cubeApp, _1);
     constexpr auto bindOnMouseUp = std::bind(&gt::dx11::DX11CubeApp::OnMouseUp, &g_cubeApp, _1);
     constexpr auto bindOnMouseMove = std::bind(&gt::dx11::DX11CubeApp::OnMouseMove, &g_cubeApp, _1, _2);
-    constexpr auto bindOnMouseWheel = std::bind(&gt::dx11::DX11CubeApp::OnMouseWheel, &g_cubeApp, _1);
+    constexpr auto bindOnMouseWheel = std::bind(&gt::dx11::DX11CubeApp::OnMouseWheel, &g_cubeApp, _1);*/
 
     constexpr auto SCREEN_WIDTH = 1920u;
     constexpr auto SCREEN_HEIGHT = 1080u;
-
-    export auto App = CreateAppRef(SCREEN_WIDTH, SCREEN_HEIGHT, L"DX11 Cube App", std::move(bindInit), std::move(bindRun));
 
 #ifdef DEBUG
     const std::string shader_path = R"(build\x64\Debug\)";
@@ -277,16 +273,26 @@ module : private;
 using namespace gt;
 using namespace LS;
 
-LS::System::ErrorCode gt::dx11::DX11CubeApp::Init()
+gt::dx11::DX11CubeApp::DX11CubeApp(uint32_t width, uint32_t height, std::wstring_view title)
+{
+    Window = LS::BuildWindow(width, height, title);
+}
+
+auto gt::dx11::DX11CubeApp::Initialize(int argCount, char* argsV[]) -> LS::System::ErrorCode
 {
     using enum LS::System::ErrorStatus;
-    auto& window = App->Window;
+    auto& window = Window;
     LS::ColorRGB bgColor(1.0f, 0.0f, 0.0f);
     window->SetBackgroundColor(bgColor);
 
-    RegisterKeyboardInput(App, bindOnKeyboardDown, bindOnKeyboardUp);
-    RegisterMouseInput(App, bindOnMouseDown, bindOnMouseUp, bindOnMouseWheel, bindOnMouseMove);
-    window->RegisterWindowEventCallback(bindOnWindowEvent);
+    Window->RegisterKeyboardDown(std::bind(&gt::dx11::DX11CubeApp::OnKeyboardDown, this, _1));
+    Window->RegisterKeyboardUp(std::bind(&gt::dx11::DX11CubeApp::OnKeyboardUp, this, _1));
+    RegisterMouseInput(std::bind(&gt::dx11::DX11CubeApp::OnMouseDown, this, _1),
+        std::bind(&gt::dx11::DX11CubeApp::OnMouseUp, this, _1), 
+        std::bind(&gt::dx11::DX11CubeApp::OnMouseWheel, this, _1), 
+        std::bind(&gt::dx11::DX11CubeApp::OnMouseMove, this, _1, _2));
+
+    window->RegisterWindowEventCallback(std::bind(&gt::dx11::DX11CubeApp::OnWindowEvent, this, _1));
     g_device.CreateDevice();
 
     g_immContext = g_device.GetImmediateContext();
@@ -502,7 +508,8 @@ LS::System::ErrorCode gt::dx11::DX11CubeApp::Init()
 
 void gt::dx11::DX11CubeApp::Run()
 {
-    App->Window->Show();
+    IsRunning = true;
+    Window->Show();
     g_timer.Start();
     auto viewOpt = m_bufferCache.Get("cam_view");
     auto projOpt = m_bufferCache.Get("cam_proj");
@@ -518,9 +525,9 @@ void gt::dx11::DX11CubeApp::Run()
     const auto proj = projOpt.value();
     const auto mvp = mvpOpt.value();
 
-    while (App->Window->IsOpen())
+    while (Window->IsOpen())
     {
-        if (App->IsPaused)
+        if (IsPaused)
         {
             std::cout << "Paused app!\n";
             std::this_thread::sleep_for(100ms);
@@ -528,7 +535,7 @@ void gt::dx11::DX11CubeApp::Run()
         }
         auto elapsed = g_timer.GetTotalTimeTicked();
         auto deltaTime = g_timer.GetDeltaTime();
-        App->Window->PollEvent();
+        Window->PollEvent();
         g_timer.Tick();
 
         UpdateMovement();
@@ -552,7 +559,7 @@ void gt::dx11::DX11CubeApp::OnKeyboardDown(const LS::InputKeyDown& input)
     using enum LS::LS_INPUT_KEY;
     if (input.Key == ESCAPE)
     {
-        App->Window->Close();
+        Window->Close();
     }
 
     g_keysPressedMap.insert_or_assign(input.Key, true);
@@ -640,26 +647,26 @@ void gt::dx11::DX11CubeApp::OnWindowEvent(LS::LS_WINDOW_EVENT ev)
     {
     case CLOSE_WINDOW:
     {
-        App->IsRunning = false;
-        App->IsPaused = true;
+        IsRunning = false;
+        IsPaused = true;
     }
     break;
     case WINDOW_RESIZE_START:
     {
-        App->IsPaused = true;
+        IsPaused = true;
         break;
     }
     case WINDOW_RESIZE_END:
     {
-        const auto width = App->Window->GetWidth();
-        const auto height = App->Window->GetHeight();
+        const auto width = Window->GetWidth();
+        const auto height = Window->GetHeight();
         HandleResize(width, height);
     }
     break;
     case MAXIMIZED_WINDOW:
     {
-        const auto width = App->Window->GetWidth();
-        const auto height = App->Window->GetHeight();
+        const auto width = Window->GetWidth();
+        const auto height = Window->GetHeight();
         HandleResize(width, height);
     }
     break;
@@ -682,8 +689,8 @@ void gt::dx11::DX11CubeApp::PreDraw(ComPtr<ID3D11DeviceContext4>& context)
     SetRasterizerState(context.Get(), rsSolid.Get());
     SetTopology(context.Get(), D3D11_PRIMITIVE_TOPOLOGY::D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     SetInputlayout(context.Get(), inputLayout.Get());
-    SetViewport(context.Get(), static_cast<float>(App->Window->GetWidth()), static_cast<float>(App->Window->GetHeight()));
-    //SetViewport(context.Get(), static_cast<float>(App->Window->GetWidth()), static_cast<float>(App->Window->GetHeight() - 100.0f), 0.0f, 100.0f);
+    SetViewport(context.Get(), static_cast<float>(Window->GetWidth()), static_cast<float>(Window->GetHeight()));
+    //SetViewport(context.Get(), static_cast<float>(Window->GetWidth()), static_cast<float>(Window->GetHeight() - 100.0f), 0.0f, 100.0f);
     // Bind to State //
     BindVS(context.Get(), vertShader.Get());
     BindPS(context.Get(), pixShader.Get());
@@ -710,7 +717,7 @@ void gt::dx11::DX11CubeApp::DrawScene(ComPtr<ID3D11DeviceContext4>& context)
 
 void gt::dx11::DX11CubeApp::HandleResize(uint32_t width, uint32_t height)
 {
-    App->IsPaused = true;
+    IsPaused = true;
     ClearDeviceDependentResources(g_immContext.Get());
     if (rtv)
     {
@@ -730,7 +737,7 @@ void gt::dx11::DX11CubeApp::HandleResize(uint32_t width, uint32_t height)
         g_device.DebugPrintLiveObjects();
         goto exit_resize;
     }
-    g_device.CreateSwapchain(App->Window.get());
+    g_device.CreateSwapchain(Window.get());
     hr = g_device.CreateRTVFromBackBuffer(rtv.GetAddressOf());
     if (FAILED(hr))
     {
@@ -746,7 +753,7 @@ void gt::dx11::DX11CubeApp::HandleResize(uint32_t width, uint32_t height)
         goto exit_resize;
     }
 exit_resize:
-    App->IsPaused = false;
+    IsPaused = false;
 }
 
 
