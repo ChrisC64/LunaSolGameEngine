@@ -46,6 +46,8 @@ export namespace LS::Platform::Dx12
             return m_pFence;
         }
 
+        auto IsFenceComplete(uint64_t fenceValue) const noexcept -> bool;
+
     private:
         struct CommandAllocatorEntry
         {

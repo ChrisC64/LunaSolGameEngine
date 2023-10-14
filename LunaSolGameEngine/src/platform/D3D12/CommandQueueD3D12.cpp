@@ -32,7 +32,7 @@ m_fenceValue(0)
     assert(m_fenceEvent && "Failed to create fence event handle.");
 }
 
-auto LS::Platform::Dx12::CommandQueue::GetCommandList() -> WRL::ComPtr<ID3D12GraphicsCommandList>
+auto CommandQueue::GetCommandList() -> WRL::ComPtr<ID3D12GraphicsCommandList>
 {
     WRL::ComPtr<ID3D12CommandAllocator> commandAllocator;
     WRL::ComPtr<ID3D12GraphicsCommandList> commandList;
@@ -43,7 +43,7 @@ auto LS::Platform::Dx12::CommandQueue::GetCommandList() -> WRL::ComPtr<ID3D12Gra
     }
     else
     {   // Check if the queued up  command allocator is able to be used and reset
-        if (m_pFence->GetCompletedValue() >= m_commandAllocQueue.front().FenceValue)
+        if (!IsFenceComplete(m_commandAllocQueue.front().FenceValue))
         {
             commandAllocator = m_commandAllocQueue.front().CommandAllocator;
             m_commandAllocQueue.pop();
@@ -85,7 +85,7 @@ auto CommandQueue::CreateCommandList(WRL::ComPtr<ID3D12CommandAllocator>& alloca
     return commandList;
 }
 
-auto LS::Platform::Dx12::CommandQueue::CreateCommandList() -> WRL::ComPtr<ID3D12GraphicsCommandList>
+auto CommandQueue::CreateCommandList() -> WRL::ComPtr<ID3D12GraphicsCommandList>
 {
     WRL::ComPtr<ID3D12GraphicsCommandList> commandList;
     const auto hr = m_pDevice->CreateCommandList1(0, m_commListType, D3D12_COMMAND_LIST_FLAG_NONE, IID_PPV_ARGS(&commandList));
@@ -118,14 +118,19 @@ auto CommandQueue::ExecuteCommandList(WRL::ComPtr<ID3D12GraphicsCommandList>& co
 
 void CommandQueue::WaitForFenceValue(uint64_t fenceValue, std::chrono::milliseconds duration)
 {
-    if (m_pFence->GetCompletedValue() < fenceValue)
+    if (IsFenceComplete(fenceValue))
     {
         LS::Utils::ThrowIfFailed(m_pFence->SetEventOnCompletion(fenceValue, m_fenceEvent));
         ::WaitForSingleObject(m_fenceEvent, static_cast<DWORD>(duration.count()));
     }
 }
 
-void LS::Platform::Dx12::CommandQueue::Flush() noexcept
+void CommandQueue::Flush() noexcept
 {
     LS::Platform::Dx12::Flush(m_pCommandQueue, m_pFence, m_fenceValue, m_fenceEvent);
+}
+
+auto CommandQueue::IsFenceComplete(uint64_t fenceValue) const noexcept -> bool
+{
+    return m_pFence->GetCompletedValue() >= fenceValue;
 }
