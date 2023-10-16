@@ -140,7 +140,7 @@ namespace gt::dx12
     {
     public:
         DX12CubeApp() = default;
-        DX12CubeApp(uint32_t width, uint32_t height, std::wstring_view title) 
+        DX12CubeApp(uint32_t width, uint32_t height, std::wstring_view title)
         {
             Window = LS::BuildWindow(width, height, title);
         }
@@ -190,7 +190,10 @@ namespace gt::dx12
         void TransitionResource(WRL::ComPtr<ID3D12GraphicsCommandList>& commandList, WRL::ComPtr<ID3D12Resource>& resource,
             D3D12_RESOURCE_STATES before, D3D12_RESOURCE_STATES after);
         void ClearRTV(WRL::ComPtr<ID3D12GraphicsCommandList>& commandList, D3D12_CPU_DESCRIPTOR_HANDLE rtv, float* clearColor);
+        void ClearRTV(float r, float g, float b, float a);
         void ClearDepth(WRL::ComPtr<ID3D12GraphicsCommandList>& commandList, D3D12_CPU_DESCRIPTOR_HANDLE dsv, float depth);
+        void CreateThreads();
+        void Render(float r, float g, float b, float a);
         // END Tutorial Stuff //
     };
 
@@ -202,13 +205,13 @@ namespace gt::dx12
     ThreadParameter m_threadParameters[NUM_CONTEXT];
 
     std::array<FrameContext, FRAME_COUNT>					g_frameContext = {};
-    FrameContext*                                           g_pCurrFrameContext;
+    FrameContext* g_pCurrFrameContext;
     uint32_t												g_frameResourceIndex;
     uint32_t												g_currFrameIndex;
     float													g_aspectRatio;
 
     // pipeline objects
-    
+
     WRL::ComPtr<ID3D12DescriptorHeap>						g_pRtvDescHeap;
     WRL::ComPtr<ID3D12DescriptorHeap>						g_pSrvDescHeap;
     WRL::ComPtr<ID3D12CommandAllocator>						g_pCommandAllocator; // local command allocator for non-frame resource related jobs.
@@ -263,14 +266,13 @@ namespace gt::dx12
     void SetRootSignature(WRL::ComPtr<ID3D12RootSignature>& rootSignature);
     void SetSrvDescHeap();
     void SetViewport();
-    void ClearRTV(float r, float g, float b, float a);
+
     void SetRTV(FrameContext* frameCon);
     void Draw(D3D12_VERTEX_BUFFER_VIEW& bufferView, uint64_t vertices, uint64_t instances = 1u);
     void TansitionRtvToPresent();
     void CloseCommandList();
     void MoveToNextFrame();
-    void CreateThreads();
-    void Render(float r, float g, float b, float a);
+
     void OnDestroy();
 
     inline auto CreateDefaultBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, const void* initData, uint64_t byteSize, WRL::ComPtr<ID3D12Resource>& uploadBuffer, D3D12_RESOURCE_STATES finalState, std::optional<std::wstring_view> defaultName = std::nullopt, std::optional<std::wstring_view> uploadName = std::nullopt) -> WRL::ComPtr<ID3D12Resource>;
@@ -531,8 +533,8 @@ bool gt::dx12::DX12CubeApp::LoadAssets()
         {
             ThrowIfFailed(m_pDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&fc.CommandAllocator[i])));
             ThrowIfFailed(m_pDevice->CreateCommandList1(0, D3D12_COMMAND_LIST_TYPE_DIRECT, D3D12_COMMAND_LIST_FLAG_NONE, IID_PPV_ARGS(&fc.CommandList[i])));
-            fc.CommandAllocator[i]->SetName(L"FC Command Allocator " + i);
-            fc.CommandList[i]->SetName(L"FC Command List " + i);
+            fc.CommandAllocator[i]->SetName(std::format(L"FC Command Allocator {}", i).c_str());
+            fc.CommandList[i]->SetName(std::format(L"FC Command List {}", i).c_str());
         }
     }
 
@@ -759,9 +761,13 @@ void gt::dx12::DX12CubeApp::CreateRenderTarget()
     {
         ThrowIfFailed(g_pSwapChain->GetBuffer(i, IID_PPV_ARGS(&g_backBuffers[i])));
         m_pDevice->CreateRenderTargetView(g_backBuffers[i].Get(), nullptr, rtvHandle);
-        rtvHandle.Offset(i, g_rtvDescriptorSize);
-        //rtvHandle.Offset(g_rtvDescriptorSize);
+        g_backBuffers[i]->SetName(std::format(L"Back buffer {}", i).c_str());
+        // Previous code set the offset BEFORE adding the offset here, this caused a disreprency 
+        // because it advanced the ptr before it actually was storing the correct value, causing
+        // an issue later when drawing to be de-synced where we tried to draw on backbuffer 1
+        // but back buffer 0 was the current back buffer to present. 
         g_rtvDescHandle[i] = rtvHandle;
+        rtvHandle.Offset(g_rtvDescriptorSize);
     }
 }
 
@@ -813,7 +819,7 @@ void gt::dx12::DX12CubeApp::CreateCommandAllocators()
         ThrowIfFailed(m_pDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&a)));
         a->SetName(std::format(L"Direct Allocator {}", count++).c_str());
     }
-    
+
     for (auto& a : m_copyCommandAllocators)
     {
         ThrowIfFailed(m_pDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_COPY, IID_PPV_ARGS(&a)));
@@ -1004,37 +1010,42 @@ void gt::dx12::SetViewport()
     g_pCurrFrameContext->CommandList[g_frameResourceIndex]->RSSetScissorRects(1, &g_scissorRect);
 }
 
-void gt::dx12::ClearRTV(float r, float g, float b, float a)
+void gt::dx12::DX12CubeApp::ClearRTV(float r, float g, float b, float a)
 {
+    auto& commandlist = g_pCurrFrameContext->CommandList[g_frameResourceIndex];
     // This will prep the back buffer as our render target and prepare it for transition
     auto backbufferIndex = g_pSwapChain->GetCurrentBackBufferIndex();
-    auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(g_backBuffers[backbufferIndex].Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
-    g_pCurrFrameContext->CommandList[g_frameResourceIndex]->ResourceBarrier(1, &barrier);
+    auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(g_backBuffers[backbufferIndex].Get(),
+        D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+    commandlist->ResourceBarrier(1, &barrier);
 
     CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(g_pRtvDescHeap->GetCPUDescriptorHandleForHeapStart(), g_frameResourceIndex, g_rtvDescriptorSize);
-    g_pCurrFrameContext->CommandList[g_frameResourceIndex]->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
+    commandlist->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
     // Similar to D3D11 - this is our command for drawing. For now, testing triangle drawing through MSDN example code
     const float color[] = { r, g, b, a };
-    g_pCurrFrameContext->CommandList[g_frameResourceIndex]->ClearRenderTargetView(rtvHandle, color, 0, nullptr);
+    commandlist->ClearRenderTargetView(rtvHandle, color, 0, nullptr);
 
 }
 
 void gt::dx12::SetRTV(FrameContext* frameCon)
 {
+    auto& commandlist = frameCon->CommandList[g_frameResourceIndex];
     // This will prep the back buffer as our render target and prepare it for transition
     auto backbufferIndex = g_pSwapChain->GetCurrentBackBufferIndex();
-    auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(g_backBuffers[backbufferIndex].Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
-    frameCon->CommandList[g_frameResourceIndex]->ResourceBarrier(1, &barrier);
+    auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(g_backBuffers[backbufferIndex].Get(),
+        D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+    commandlist->ResourceBarrier(1, &barrier);
 
     CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(g_pRtvDescHeap->GetCPUDescriptorHandleForHeapStart(), g_frameResourceIndex, g_rtvDescriptorSize);
-    frameCon->CommandList[g_frameResourceIndex]->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
+    commandlist->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
 }
 
 void gt::dx12::Draw(D3D12_VERTEX_BUFFER_VIEW& bufferView, uint64_t vertices, uint64_t instances)
 {
-    g_pCurrFrameContext->CommandList[g_frameResourceIndex]->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-    g_pCurrFrameContext->CommandList[g_frameResourceIndex]->IASetVertexBuffers(0, 1, &bufferView);
-    g_pCurrFrameContext->CommandList[g_frameResourceIndex]->DrawInstanced((UINT)vertices, (UINT)instances, 0, 0);
+    auto& commandlist = g_pCurrFrameContext->CommandList[g_frameResourceIndex];
+    commandlist->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    commandlist->IASetVertexBuffers(0, 1, &bufferView);
+    commandlist->DrawInstanced((UINT)vertices, (UINT)instances, 0, 0);
 }
 
 void gt::dx12::TansitionRtvToPresent()
@@ -1042,7 +1053,8 @@ void gt::dx12::TansitionRtvToPresent()
     auto backbufferIndex = g_pSwapChain->GetCurrentBackBufferIndex();
 
     // Indicate that the back buffer will now be used to present.
-    auto barrier2 = CD3DX12_RESOURCE_BARRIER::Transition(g_backBuffers[backbufferIndex].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+    auto barrier2 = CD3DX12_RESOURCE_BARRIER::Transition(g_backBuffers[backbufferIndex].Get(),
+        D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
     g_pCurrFrameContext->CommandList[g_frameResourceIndex]->ResourceBarrier(1, &barrier2);
 }
 
@@ -1067,10 +1079,10 @@ void gt::dx12::MoveToNextFrame()
         WaitForSingleObjectEx(m_fenceEvent, INFINITE, FALSE);
     }
 
-    g_frameContext[g_frameResourceIndex].FenceValue = frameCon->FenceValue + 1;
+    frameCon->FenceValue = frameCon->FenceValue + 1;
 }
 
-void gt::dx12::CreateThreads()
+void gt::dx12::DX12CubeApp::CreateThreads()
 {
     g_drawFinished = CreateEvent(NULL, FALSE, FALSE, L"Draw Finished");
     g_prepWorkDone = CreateEvent(NULL, FALSE, FALSE, L"Prep Work Done");
@@ -1079,22 +1091,24 @@ void gt::dx12::CreateThreads()
         {
             while (threadIndex < NUM_CONTEXT)
             {
+                auto& commandlist = g_pCurrFrameContext->CommandList[g_frameResourceIndex];
+                auto& commandAllocator = g_pCurrFrameContext->CommandAllocator[g_frameResourceIndex];
                 // Prepare allocators
                 WaitForSingleObject(g_prepWorkDone, INFINITE);
-                ThrowIfFailed(g_pCurrFrameContext->CommandAllocator[g_frameResourceIndex]->Reset());
-                ThrowIfFailed(g_pCurrFrameContext->CommandList[g_frameResourceIndex]->Reset(g_pCurrFrameContext->CommandAllocator[g_frameResourceIndex].Get(), m_pPipelineState.Get()));
-                /*for (auto i = 0u; i < Engine::FRAME_COUNT; ++i)
-                {
-                    ThrowIfFailed(g_pCurrFrameContext->CommandAllocator[i]->Reset());
-                    ThrowIfFailed(g_pCurrFrameContext->CommandList[i]->Reset(g_pCurrFrameContext->CommandAllocator[i].Get(), m_pPipelineState.Get()));
-                }*/
+                ThrowIfFailed(commandAllocator->Reset());
+                ThrowIfFailed(commandlist->Reset(commandAllocator.Get(), m_pPipelineState.Get()));
+                //ThrowIfFailed(commandlist->Reset(commandAllocator.Get(), m_cubePipelineState.Get()));
                 SetViewport();
                 ClearRTV(0.0f, 0.0f, 0.0f, 1.0f);
 
-                g_pCurrFrameContext->CommandList[g_frameResourceIndex]->SetGraphicsRootSignature(m_pRootSignature.Get());
-                g_pCurrFrameContext->CommandList[g_frameResourceIndex]->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-                g_pCurrFrameContext->CommandList[g_frameResourceIndex]->IASetVertexBuffers(0, 1, &m_vertexBufferView);
-                g_pCurrFrameContext->CommandList[g_frameResourceIndex]->DrawInstanced(3, 1, 0, 0);
+                commandlist->SetGraphicsRootSignature(m_pRootSignature.Get());
+                //commandlist->SetGraphicsRootSignature(m_cubeRootSignature.Get());
+                commandlist->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+                commandlist->IASetVertexBuffers(0, 1, &m_vertexBufferView);
+                /*commandlist->IASetVertexBuffers(0, 1, &m_cubeVbView);
+                commandlist->IASetIndexBuffer(&m_cubeIbView);*/
+                commandlist->DrawInstanced(3, 1, 0, 0);
+                //commandlist->DrawIndexedInstanced(_countof(g_indices), 1, 0, 0, 0);
                 SetEvent(g_drawFinished);
             }
         };
@@ -1103,11 +1117,6 @@ void gt::dx12::CreateThreads()
     // Though we will never fully close it correctly, which will be a problem later. Need to investigate stop tokens and 
     // see if I can kill it. Maybe jthread would be better to use? Async? More STL stuff?! 
     m_defaultDrawThread.detach();
-    // textured triangle
-    /*auto textureWork = [&](uint32_t threadIndex)
-    {
-
-    };*/
 
 }
 
@@ -1159,12 +1168,14 @@ void gt::dx12::DX12CubeApp::Run()
 {
     IsRunning = true;
     Window->Show();
-    /*while (window->IsOpen())
-    {
-        window->PollEvent();
-        Render(1.0f, 1.0f, 0.0f, 1.0f);
-    }*/
+    //while (Window->IsOpen())
+    //{
+    //    Window->PollEvent();
+    //    Render(1.0f, 1.0f, 0.0f, 1.0f);
+    //}
+
     const auto begin = std::chrono::high_resolution_clock::now();
+    UINT64 fenceValue = 0;
     while (Window->IsOpen())
     {
         const auto tick = std::chrono::high_resolution_clock::now();
@@ -1172,13 +1183,13 @@ void gt::dx12::DX12CubeApp::Run()
 
         const auto delta = end - tick;
         const auto total = end - begin;
-        float angle = static_cast<float>(std::chrono::duration_cast<std::chrono::seconds>(total).count() * 90.0f);
+        float angle = static_cast<float>(std::chrono::duration_cast<std::chrono::milliseconds>(total).count());
         const XMVECTOR rotationAxis = XMVectorSet(0, 1, 1, 0);
         m_cubeModelMat = XMMatrixRotationAxis(rotationAxis, XMConvertToRadians(angle));
 
         const XMVECTOR eyePos = XMVectorSet(0, 0, -10, 1);
         const XMVECTOR focus = XMVectorSet(0, 0, 0, 1);
-        const XMVECTOR up  = XMVectorSet(0, 1, 0, 1);
+        const XMVECTOR up = XMVectorSet(0, 1, 0, 1);
 
         m_cubeViewMat = XMMatrixLookAtLH(eyePos, focus, up);
 
@@ -1187,21 +1198,23 @@ void gt::dx12::DX12CubeApp::Run()
 
         // Render Work // 
         g_currFrameIndex = g_pSwapChain->GetCurrentBackBufferIndex();
-        
-        g_pCurrFrameContext = &g_frameContext[g_frameResourceIndex];
-        auto commandList = g_pCurrFrameContext->CommandList[g_frameResourceIndex];
-        auto commandAllocator = g_pCurrFrameContext->CommandAllocator[g_frameResourceIndex];
+        g_pCurrFrameContext = &g_frameContext[g_currFrameIndex];
+        auto commandList = g_pCurrFrameContext->CommandList[g_currFrameIndex];
+        auto commandAllocator = g_pCurrFrameContext->CommandAllocator[g_currFrameIndex];
+
+        //LS::Utils::ThrowIfFailed(commandAllocator->Reset());
         LS::Utils::ThrowIfFailed(commandList->Reset(commandAllocator.Get(), nullptr), "Failed to reset Command List");
-        /*auto commandList = m_directCommandQueue->GetCommandList();*/
+        //auto commandList = m_directCommandQueue->GetCommandList();
 
         auto backBuffer = g_backBuffers[g_currFrameIndex];
         auto dsv = m_dsvHeap->GetCPUDescriptorHandleForHeapStart();
         auto rtvHeapStart = g_pRtvDescHeap->GetCPUDescriptorHandleForHeapStart();
-        const CD3DX12_CPU_DESCRIPTOR_HANDLE rtv(rtvHeapStart, g_frameResourceIndex, g_rtvDescriptorSize);
-        //const auto rtv = g_rtvDescHandle[g_currFrameIndex];
+        //const CD3DX12_CPU_DESCRIPTOR_HANDLE rtv(rtvHeapStart, g_frameResourceIndex, g_rtvDescriptorSize);
+        const auto rtv = g_rtvDescHandle[g_currFrameIndex];
 
         {
-            TransitionResource(commandList, backBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+            TransitionResource(commandList, backBuffer, D3D12_RESOURCE_STATE_PRESENT,
+                D3D12_RESOURCE_STATE_RENDER_TARGET);
             float clearColor[] = { 0.4f, 0.5f, 0.9f, 1.0f };
             ClearRTV(commandList, rtv, clearColor);
             ClearDepth(commandList, dsv, 1.0f);
@@ -1215,7 +1228,7 @@ void gt::dx12::DX12CubeApp::Run()
         commandList->RSSetViewports(1, &g_viewport);
         commandList->RSSetScissorRects(1, &g_scissorRect);
         commandList->OMSetRenderTargets(1, &rtv, FALSE, &dsv);
-        
+
         XMMATRIX mvpMatrix = XMMatrixMultiply(m_cubeModelMat, m_cubeViewMat);
         mvpMatrix = XMMatrixMultiply(mvpMatrix, m_cubeProjMat);
         commandList->SetGraphicsRoot32BitConstants(0, sizeof(XMMATRIX) / 4, &mvpMatrix, 0);
@@ -1225,21 +1238,25 @@ void gt::dx12::DX12CubeApp::Run()
             TransitionResource(commandList, backBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET,
                 D3D12_RESOURCE_STATE_PRESENT);
 
-            //m_fenceValues[g_currFrameIndex] = m_directCommandQueue->ExecuteCommandList(commandList);
+            /*fenceValue = m_directCommandQueue->ExecuteCommandList(commandList);
+            LS::Utils::ThrowIfFailed(g_pSwapChain->Present(1, 0), "Failed to present frame");*/
+
+            // My local usage of things // 
             LS::Utils::ThrowIfFailed(commandList->Close(), "Failed to close the command list");
             ID3D12CommandList* const ppCommands[] = { commandList.Get() };
             g_pCommandQueue->ExecuteCommandLists(1, ppCommands);
-            
-            g_currFrameIndex = g_pSwapChain->Present(1, 0);
+
+            LS::Utils::ThrowIfFailed(g_pSwapChain->Present(1, 0), "Failed to present frame");
             auto fenceValue = m_fenceValues[g_currFrameIndex];
+            fenceValue = LS::Platform::Dx12::Signal(g_pCommandQueue, m_fence, fenceValue);
             if (m_fence->GetCompletedValue() >= fenceValue)
             {
                 ThrowIfFailed(m_fence->SetEventOnCompletion(fenceValue, m_fenceEvent));
                 ::WaitForSingleObject(m_fenceEvent, INFINITE);
                 m_fenceValues[g_currFrameIndex]++;
             }
-            g_frameResourceIndex = (g_frameResourceIndex + 1) % FRAME_COUNT;
-            //m_directCommandQueue->WaitForFenceValue(m_fenceValues[g_currFrameIndex]);
+
+            //m_directCommandQueue->WaitForFenceValue(fenceValue);
         }
     }
 }
@@ -1323,8 +1340,8 @@ bool gt::dx12::DX12CubeApp::LoadContent()
 
     // Create the vertex input layout
     D3D12_INPUT_ELEMENT_DESC inputLayout[] = {
-        { .SemanticName = "POSITION", .SemanticIndex = 0, .Format = DXGI_FORMAT_R32G32B32_FLOAT, .InputSlot = 0, .AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT, .InputSlotClass = D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, .InstanceDataStepRate = 0 },
-        { .SemanticName = "COLOR", .SemanticIndex = 0, .Format = DXGI_FORMAT_R32G32B32_FLOAT, .InputSlot = 0, .AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT, .InputSlotClass = D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, .InstanceDataStepRate = 0 },
+        {.SemanticName = "POSITION", .SemanticIndex = 0, .Format = DXGI_FORMAT_R32G32B32_FLOAT, .InputSlot = 0, .AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT, .InputSlotClass = D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, .InstanceDataStepRate = 0 },
+        {.SemanticName = "COLOR", .SemanticIndex = 0, .Format = DXGI_FORMAT_R32G32B32_FLOAT, .InputSlot = 0, .AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT, .InputSlotClass = D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, .InstanceDataStepRate = 0 },
     };
 
     // Create a root signature.
@@ -1363,7 +1380,7 @@ bool gt::dx12::DX12CubeApp::LoadContent()
     D3D12_RT_FORMAT_ARRAY rtvFormats = {};
     rtvFormats.NumRenderTargets = 1;
     rtvFormats.RTFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
-    
+
     // Create the graphics pipeline state object (PSO)
     g_pipelineStateStream.pRootSignature = m_cubeRootSignature.Get();
     g_pipelineStateStream.InputLayout = { inputLayout, _countof(inputLayout) };
@@ -1409,11 +1426,16 @@ void gt::dx12::DX12CubeApp::ResizeDepthBuffer(int width, int height)
     {
         m_copyCommandQueue->Flush();
         m_directCommandQueue->Flush();
+        for (auto& fc : g_frameContext)
+        {
+            LS::Platform::Dx12::Flush(g_pCommandQueue, m_fence, fc.FenceValue, m_fenceEvent);
+        }
         // Resize screen dependent resources.
         // Create a depth buffer.
         D3D12_CLEAR_VALUE optimizedClearValue = {};
         optimizedClearValue.Format = DXGI_FORMAT_D32_FLOAT;
         optimizedClearValue.DepthStencil = { 1.0f, 0 };
+
         const CD3DX12_HEAP_PROPERTIES heap(D3D12_HEAP_TYPE_DEFAULT);
         const auto resDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT, width, height,
             1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
@@ -1454,7 +1476,7 @@ void gt::dx12::DX12CubeApp::ClearDepth(WRL::ComPtr<ID3D12GraphicsCommandList>& c
     commandList->ClearDepthStencilView(dsv, D3D12_CLEAR_FLAG_DEPTH, depth, 0, 0, nullptr);
 }
 
-void gt::dx12::Render(float r, float g, float b, float a)
+void gt::dx12::DX12CubeApp::Render(float r, float g, float b, float a)
 {
     if (firstRun)
     {
