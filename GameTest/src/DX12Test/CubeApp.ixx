@@ -1178,6 +1178,7 @@ void gt::dx12::DX12CubeApp::Run()
     UINT64 fenceValue = 0;
     while (Window->IsOpen())
     {
+        Window->PollEvent();
         const auto tick = std::chrono::high_resolution_clock::now();
         const auto end = std::chrono::high_resolution_clock::now();
 
