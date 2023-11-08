@@ -36,6 +36,7 @@ export namespace LS::Platform::Dx12
         void WaitForFenceValue(uint64_t fenceValue,
             std::chrono::milliseconds duration = std::chrono::milliseconds::max());
         void Flush() noexcept;
+
         auto GetCommandQueue() const noexcept -> WRL::ComPtr<ID3D12CommandQueue>
         {
             return m_pCommandQueue;

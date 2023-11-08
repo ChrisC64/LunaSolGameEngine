@@ -31,6 +31,7 @@ import Platform.Win32Window;
 import Helper.LSCommonTypes;
 import Helper.PipelineFactory;
 import Util.MSUtils;
+import DXGIHelper;
 
 inline std::string HrToString(HRESULT hr)
 {
@@ -125,15 +126,11 @@ namespace gt::dx12
     struct FrameContext
     {
         // Manages a heap for the command lists. This cannot be reset while the CommandList is still in flight on the GPU0
-        ComPtrArray<ID3D12CommandAllocator, NUM_CONTEXT> CommandAllocator;
-        // Use with the bundle list, this allocator performs the same operations as a command list, but is associated with the bundle
-        WRL::ComPtr<ID3D12CommandAllocator> BundleAllocator;
+        WRL::ComPtr<ID3D12CommandAllocator>     CommandAllocator;
         // Sends commands to the GPU - represents this frames commands
-        ComPtrArray<ID3D12GraphicsCommandList, NUM_CONTEXT> CommandList;
-        // Bundle up calls you would want repeated constantly, like setting up a draw for a vertex buffer. 
-        WRL::ComPtr<ID3D12GraphicsCommandList> BundleList;
+        WRL::ComPtr<ID3D12GraphicsCommandList>  CommandList;
         // Singal value between the GPU and CPU to perform synchronization. 
-        UINT64                         FenceValue;
+        UINT64                                  FenceValue;
     };
 
     export class DX12CubeApp : public LS::LSApp
@@ -194,6 +191,7 @@ namespace gt::dx12
         void ClearDepth(WRL::ComPtr<ID3D12GraphicsCommandList>& commandList, D3D12_CPU_DESCRIPTOR_HANDLE dsv, float depth);
         void CreateThreads();
         void Render(float r, float g, float b, float a);
+        void DemoRun();
         // END Tutorial Stuff //
     };
 
@@ -205,7 +203,6 @@ namespace gt::dx12
     ThreadParameter m_threadParameters[NUM_CONTEXT];
 
     std::array<FrameContext, FRAME_COUNT>					g_frameContext = {};
-    FrameContext* g_pCurrFrameContext;
     uint32_t												g_frameResourceIndex;
     uint32_t												g_currFrameIndex;
     float													g_aspectRatio;
@@ -275,16 +272,16 @@ namespace gt::dx12
 
     void OnDestroy();
 
-    inline auto CreateDefaultBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList, const void* initData, uint64_t byteSize, WRL::ComPtr<ID3D12Resource>& uploadBuffer, D3D12_RESOURCE_STATES finalState, std::optional<std::wstring_view> defaultName = std::nullopt, std::optional<std::wstring_view> uploadName = std::nullopt) -> WRL::ComPtr<ID3D12Resource>;
+    inline auto CreateDefaultBuffer(WRL::ComPtr<ID3D12Device> device, WRL::ComPtr<ID3D12GraphicsCommandList>& cmdList, const void* initData, uint64_t byteSize, WRL::ComPtr<ID3D12Resource>& uploadBuffer, D3D12_RESOURCE_STATES finalState, std::optional<std::wstring_view> defaultName = std::nullopt, std::optional<std::wstring_view> uploadName = std::nullopt) -> WRL::ComPtr<ID3D12Resource>;
     inline auto GenerateTextureData(uint32_t textureWidth, uint32_t textureHeight, uint32_t pixelSize) -> std::vector<UINT8>;
-    void CreateTileSampleTexture(ID3D12Device* device, WRL::ComPtr<ID3D12Resource>& texture, uint32_t textureWidth, uint32_t textureHeight, uint32_t pixelSize, WRL::ComPtr<ID3D12Resource>& textureUploadHeap, WRL::ComPtr<ID3D12GraphicsCommandList>& commandList, WRL::ComPtr<ID3D12DescriptorHeap>& srvHeap);
+    void CreateTileSampleTexture(WRL::ComPtr<ID3D12Device>& device, WRL::ComPtr<ID3D12Resource>& texture, uint32_t textureWidth, uint32_t textureHeight, uint32_t pixelSize, WRL::ComPtr<ID3D12Resource>& textureUploadHeap, WRL::ComPtr<ID3D12GraphicsCommandList>& commandList, WRL::ComPtr<ID3D12DescriptorHeap>& srvHeap);
 }
 
 module : private;
 
 using namespace gt;
 
-inline auto gt::dx12::CreateDefaultBuffer(ID3D12Device* device, ID3D12GraphicsCommandList* cmdList,
+inline auto gt::dx12::CreateDefaultBuffer(WRL::ComPtr<ID3D12Device> device, WRL::ComPtr<ID3D12GraphicsCommandList>& cmdList,
     const void* initData, uint64_t byteSize, WRL::ComPtr<ID3D12Resource>& uploadBuffer, D3D12_RESOURCE_STATES finalState,
     std::optional<std::wstring_view> defaultName, std::optional<std::wstring_view> uploadName) -> WRL::ComPtr<ID3D12Resource>
 {
@@ -324,7 +321,7 @@ inline auto gt::dx12::CreateDefaultBuffer(ID3D12Device* device, ID3D12GraphicsCo
     cmdList->ResourceBarrier(1,
         &defaultBarrier);
 
-    UpdateSubresources<1>(cmdList, defaultBuffer.Get(), uploadBuffer.Get(), 0, 0, 1, &subresourceData);
+    UpdateSubresources<1>(cmdList.Get(), defaultBuffer.Get(), uploadBuffer.Get(), 0, 0, 1, &subresourceData);
 
     auto defaultBarrier2 = CD3DX12_RESOURCE_BARRIER::Transition(defaultBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, finalState);
     cmdList->ResourceBarrier(1,
@@ -379,7 +376,7 @@ inline auto gt::dx12::GenerateTextureData(uint32_t textureWidth, uint32_t textur
     return data;
 }
 
-void gt::dx12::CreateTileSampleTexture(ID3D12Device* device, WRL::ComPtr<ID3D12Resource>& texture, uint32_t textureWidth, uint32_t textureHeight, uint32_t pixelSize, WRL::ComPtr<ID3D12Resource>& textureUploadHeap, WRL::ComPtr<ID3D12GraphicsCommandList>& commandList, WRL::ComPtr<ID3D12DescriptorHeap>& srvHeap)
+void gt::dx12::CreateTileSampleTexture(WRL::ComPtr<ID3D12Device>& device, WRL::ComPtr<ID3D12Resource>& texture, uint32_t textureWidth, uint32_t textureHeight, uint32_t pixelSize, WRL::ComPtr<ID3D12Resource>& textureUploadHeap, WRL::ComPtr<ID3D12GraphicsCommandList>& commandList, WRL::ComPtr<ID3D12DescriptorHeap>& srvHeap)
 {
     // Describe and create a Texture2D.
     D3D12_RESOURCE_DESC textureDesc = {};
@@ -441,20 +438,24 @@ void gt::dx12::CreateTileSampleTexture(ID3D12Device* device, WRL::ComPtr<ID3D12R
 bool gt::dx12::DX12CubeApp::CreateDevice(HWND hwnd, uint32_t x, uint32_t y)
 {
     // [DEBUG] Enable debug interface
+    UINT dxgiFactoryFlags = 0;
 #ifdef _DEBUG
     WRL::ComPtr<ID3D12Debug> pdx12Debug = nullptr;
     if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&pdx12Debug))))
         pdx12Debug->EnableDebugLayer();
+
+    dxgiFactoryFlags |= DXGI_CREATE_FACTORY_DEBUG;
 #endif
     // Create our DXGI Factory
-    CreateDXGIFactory2(0u, IID_PPV_ARGS(&m_factory));
+    CreateDXGIFactory2(dxgiFactoryFlags, IID_PPV_ARGS(&m_factory));
 
     // Find the best graphics card (best performing one, with single GPU systems, this should be the default)
     WRL::ComPtr<IDXGIAdapter1> hardwareAdapter;
-    GetHardwareAdapter(m_factory.Get(), &hardwareAdapter, false);
+
+    GetHardwareAdapter(m_factory.Get(), &hardwareAdapter, true);
 
     // Create device
-    D3D_FEATURE_LEVEL featureLevel = D3D_FEATURE_LEVEL_11_0;
+    D3D_FEATURE_LEVEL featureLevel = D3D_FEATURE_LEVEL_12_0;
     ThrowIfFailed(D3D12CreateDevice(hardwareAdapter.Get(), featureLevel, IID_PPV_ARGS(&m_pDevice)));
 
     // [DEBUG] Setup debug interface to break on any warnings/errors
@@ -527,18 +528,17 @@ bool gt::dx12::DX12CubeApp::LoadAssets()
         ThrowIfFailed(m_pDevice->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_pRootSignature2)));
     }
     // Create pipeline states and associate to command allocators since we have an array of them
+    auto count = 0;
     for (auto& fc : g_frameContext)
     {
-        for (auto i = 0u; i < NUM_CONTEXT; ++i)
-        {
-            ThrowIfFailed(m_pDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&fc.CommandAllocator[i])));
-            ThrowIfFailed(m_pDevice->CreateCommandList1(0, D3D12_COMMAND_LIST_TYPE_DIRECT, D3D12_COMMAND_LIST_FLAG_NONE, IID_PPV_ARGS(&fc.CommandList[i])));
-            fc.CommandAllocator[i]->SetName(std::format(L"FC Command Allocator {}", i).c_str());
-            fc.CommandList[i]->SetName(std::format(L"FC Command List {}", i).c_str());
-        }
+        ThrowIfFailed(m_pDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&fc.CommandAllocator)));
+        ThrowIfFailed(m_pDevice->CreateCommandList1(0, D3D12_COMMAND_LIST_TYPE_DIRECT, D3D12_COMMAND_LIST_FLAG_NONE, IID_PPV_ARGS(&fc.CommandList)));
+        fc.CommandAllocator->SetName(std::format(L"FC Command Allocator {}", count).c_str());
+        fc.CommandList->SetName(std::format(L"FC Command List {}", count).c_str());
+        ++count;
     }
 
-    g_pCurrFrameContext = &g_frameContext[g_currFrameIndex];
+    //g_pCurrFrameContext = &g_frameContext[g_currFrameIndex];
     // Create the pipeline state, which includes compiling and loading shaders.
     {
         WRL::ComPtr<ID3DBlob> vertexShader;
@@ -609,7 +609,7 @@ bool gt::dx12::DX12CubeApp::LoadAssets()
 
         // Update the fence value, from startup, this should be 0, and thus the next frame we'll be creating will be the first frame (back buffer, as 0 is currently in front)
         //g_frameContext[g_frameResourceIndex].FenceValue++;
-        g_pCurrFrameContext->FenceValue++;
+        //g_pCurrFrameContext->FenceValue++;
 
         m_fenceEvent = CreateEvent(nullptr, FALSE, FALSE, L"Fence Event");
         if (m_fenceEvent == nullptr)
@@ -643,7 +643,7 @@ void gt::dx12::DX12CubeApp::LoadVertexDataToGpu()
         // We copy the data from our upload buffer to the default buffer, and the only differenc between the two is the staging - Upload vs Default.
         // Default types are best for static data that isn't changing.
         WRL::ComPtr<ID3D12Resource> uploadBuffer;
-        m_vertexBuffer = CreateDefaultBuffer(m_pDevice.Get(), commandList.Get(), triangleVertices,
+        m_vertexBuffer = CreateDefaultBuffer(m_pDevice, commandList, triangleVertices,
             sizeof(Vertex) * 3, uploadBuffer, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER, L"default vb");
 
         // We must wait and insure the data has been copied before moving on 
@@ -700,9 +700,7 @@ void gt::dx12::GetHardwareAdapter(IDXGIFactory1* pFactory, IDXGIAdapter1** ppAda
     WRL::ComPtr<IDXGIFactory6> factory6;
     if (SUCCEEDED(pFactory->QueryInterface(IID_PPV_ARGS(&factory6))))
     {
-        for (
-            UINT adapterIndex = 0;
-            SUCCEEDED(factory6->EnumAdapterByGpuPreference(
+        for (UINT adapterIndex = 0; SUCCEEDED(factory6->EnumAdapterByGpuPreference(
                 adapterIndex,
                 requestHighPerformanceAdapter == true ? DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE : DXGI_GPU_PREFERENCE_UNSPECIFIED,
                 IID_PPV_ARGS(&adapter)));
@@ -711,19 +709,27 @@ void gt::dx12::GetHardwareAdapter(IDXGIFactory1* pFactory, IDXGIAdapter1** ppAda
             DXGI_ADAPTER_DESC1 desc;
             adapter->GetDesc1(&desc);
 
-            if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
+            if (!requestHighPerformanceAdapter)
             {
+                if ((desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE) == 0)
+                    continue;
                 // Don't select the Basic Render Driver adapter.
                 // If you want a software adapter, pass in "/warp" on the command line.
-                continue;
+                if (SUCCEEDED(D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_12_0, __uuidof(ID3D12Device), nullptr)))
+                {
+                    break;
+                }
+            }
+            else
+            {
+                // Check to see whether the adapter supports Direct3D 12, but don't create the
+                // actual device yet.
+                if (SUCCEEDED(D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_12_0, __uuidof(ID3D12Device), nullptr)))
+                {
+                    break;
+                }
             }
 
-            // Check to see whether the adapter supports Direct3D 12, but don't create the
-            // actual device yet.
-            if (SUCCEEDED(D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_11_0, __uuidof(ID3D12Device), nullptr)))
-            {
-                break;
-            }
         }
     }
 
@@ -734,19 +740,27 @@ void gt::dx12::GetHardwareAdapter(IDXGIFactory1* pFactory, IDXGIAdapter1** ppAda
             DXGI_ADAPTER_DESC1 desc;
             adapter->GetDesc1(&desc);
 
-            if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
+            if (!requestHighPerformanceAdapter)
             {
+                if ((desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE) == 0)
+                    continue;
                 // Don't select the Basic Render Driver adapter.
                 // If you want a software adapter, pass in "/warp" on the command line.
-                continue;
+                if (SUCCEEDED(D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_12_0, _uuidof(ID3D12Device), nullptr)))
+                {
+                    break;
+                }
+            }
+            else
+            {
+                // Check to see whether the adapter supports Direct3D 12, but don't create the
+                // actual device yet.
+                if (SUCCEEDED(D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_12_0, _uuidof(ID3D12Device), nullptr)))
+                {
+                    break;
+                }
             }
 
-            // Check to see whether the adapter supports Direct3D 12, but don't create the
-            // actual device yet.
-            if (SUCCEEDED(D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_11_0, _uuidof(ID3D12Device), nullptr)))
-            {
-                break;
-            }
         }
     }
 
@@ -813,28 +827,27 @@ void gt::dx12::DX12CubeApp::CreateCommandAllocators()
 {
     ThrowIfFailed(m_pDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&g_pCommandAllocator)));
     g_pCommandAllocator->SetName(L"Data Command Allocator");
-    static auto count = 0;
+    auto count = 0;
     for (auto& a : m_directCommandAllocators)
     {
         ThrowIfFailed(m_pDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&a)));
         a->SetName(std::format(L"Direct Allocator {}", count++).c_str());
     }
 
+    count = 0u;
     for (auto& a : m_copyCommandAllocators)
     {
         ThrowIfFailed(m_pDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_COPY, IID_PPV_ARGS(&a)));
         a->SetName(std::format(L"Copy Allocator {}", count++).c_str());
     }
 
+    count = 0u;
     for (auto& fc : g_frameContext)
     {
-        for (auto i = 0u; i < NUM_CONTEXT; ++i)
-        {
-            ThrowIfFailed(m_pDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&fc.CommandAllocator[i])));
-            ThrowIfFailed(m_pDevice->CreateCommandList1(0, D3D12_COMMAND_LIST_TYPE_DIRECT, D3D12_COMMAND_LIST_FLAG_NONE, IID_PPV_ARGS(&fc.CommandList[i])));
-            fc.CommandAllocator[i]->SetName(L"FC Command Allocator " + i);
-            fc.CommandList[i]->SetName(L"FC Command List " + i);
-        }
+        ThrowIfFailed(m_pDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&fc.CommandAllocator)));
+        ThrowIfFailed(m_pDevice->CreateCommandList1(0, D3D12_COMMAND_LIST_TYPE_DIRECT, D3D12_COMMAND_LIST_FLAG_NONE, IID_PPV_ARGS(&fc.CommandList)));
+        fc.CommandAllocator->SetName(std::format(L"FC Command Allocator {}", count).c_str());
+        fc.CommandList->SetName(std::format(L"FC Command List {}", count).c_str());
     }
 
     // Create Command Queues //
@@ -951,10 +964,8 @@ void gt::dx12::LogOutputDisplayModes(IDXGIOutput* output, DXGI_FORMAT format)
 
 void gt::dx12::ExecuteCommandList()
 {
-    // Execut the command list
-    /*ID3D12CommandList* ppCommandLists[] = { m_pCommandList.Get() };
-    g_pCommandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);*/
-    ID3D12CommandList* ppCommandLists[] = { g_pCurrFrameContext->CommandList[g_frameResourceIndex].Get() };
+    auto fc = &g_frameContext[g_frameResourceIndex];
+    ID3D12CommandList* ppCommandLists[] = { fc->CommandList.Get() };
     g_pCommandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
 }
 
@@ -975,44 +986,51 @@ void gt::dx12::WaitForGpu()
 
 void gt::dx12::BeginRender()
 {
-    g_pCurrFrameContext = &g_frameContext[g_frameResourceIndex];
+    auto fc = &g_frameContext[g_frameResourceIndex];
     // Reclaims the memory allocated by this allocator for our next usage
-    ThrowIfFailed(g_pCurrFrameContext->CommandAllocator[g_frameResourceIndex]->Reset());
+    ThrowIfFailed(fc->CommandAllocator->Reset());
 }
 
 void gt::dx12::ResetCommandList()
 {
+    auto fc = &g_frameContext[g_frameResourceIndex];
     // Resets a command list to its initial state 
-    ThrowIfFailed(g_pCurrFrameContext->CommandList[g_frameResourceIndex]->Reset(g_pCurrFrameContext->CommandAllocator[g_frameResourceIndex].Get(), nullptr));
+    ThrowIfFailed(fc->CommandList->Reset(fc->CommandAllocator.Get(), nullptr));
 }
 
 void gt::dx12::SetPipelineState(WRL::ComPtr<ID3D12PipelineState>& pipelineState)
 {
-    g_pCurrFrameContext->CommandList[g_frameResourceIndex]->SetPipelineState(pipelineState.Get());
+    auto fc = &g_frameContext[g_frameResourceIndex];
+    fc->CommandList->SetPipelineState(pipelineState.Get());
 }
 
 void gt::dx12::SetRootSignature(WRL::ComPtr<ID3D12RootSignature>& rootSignature)
 {
-    g_pCurrFrameContext->CommandList[g_frameResourceIndex]->SetGraphicsRootSignature(rootSignature.Get());
+    auto fc = &g_frameContext[g_frameResourceIndex];
+    fc->CommandList->SetGraphicsRootSignature(rootSignature.Get());
 }
 
 void gt::dx12::SetSrvDescHeap()
 {
     ID3D12DescriptorHeap* ppHeaps[] = { g_pSrvDescHeap.Get() };
-    g_pCurrFrameContext->CommandList[g_frameResourceIndex]->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
-    g_pCurrFrameContext->CommandList[g_frameResourceIndex]->SetGraphicsRootDescriptorTable(0, g_pSrvDescHeap->GetGPUDescriptorHandleForHeapStart());
+    auto fc = &g_frameContext[g_frameResourceIndex];
+    fc->CommandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
+    fc->CommandList->SetGraphicsRootDescriptorTable(0, g_pSrvDescHeap->GetGPUDescriptorHandleForHeapStart());
 }
 
 void gt::dx12::SetViewport()
 {
     // Set Viewport
-    g_pCurrFrameContext->CommandList[g_frameResourceIndex]->RSSetViewports(1, &g_viewport);
-    g_pCurrFrameContext->CommandList[g_frameResourceIndex]->RSSetScissorRects(1, &g_scissorRect);
+    auto fc = &g_frameContext[g_frameResourceIndex];
+    fc->CommandList->RSSetViewports(1, &g_viewport);
+    fc->CommandList->RSSetScissorRects(1, &g_scissorRect);
 }
 
 void gt::dx12::DX12CubeApp::ClearRTV(float r, float g, float b, float a)
 {
-    auto& commandlist = g_pCurrFrameContext->CommandList[g_frameResourceIndex];
+    auto fc = &g_frameContext[g_frameResourceIndex];
+
+    auto& commandlist = fc->CommandList;
     // This will prep the back buffer as our render target and prepare it for transition
     auto backbufferIndex = g_pSwapChain->GetCurrentBackBufferIndex();
     auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(g_backBuffers[backbufferIndex].Get(),
@@ -1029,7 +1047,7 @@ void gt::dx12::DX12CubeApp::ClearRTV(float r, float g, float b, float a)
 
 void gt::dx12::SetRTV(FrameContext* frameCon)
 {
-    auto& commandlist = frameCon->CommandList[g_frameResourceIndex];
+    auto& commandlist = frameCon->CommandList;
     // This will prep the back buffer as our render target and prepare it for transition
     auto backbufferIndex = g_pSwapChain->GetCurrentBackBufferIndex();
     auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(g_backBuffers[backbufferIndex].Get(),
@@ -1042,7 +1060,8 @@ void gt::dx12::SetRTV(FrameContext* frameCon)
 
 void gt::dx12::Draw(D3D12_VERTEX_BUFFER_VIEW& bufferView, uint64_t vertices, uint64_t instances)
 {
-    auto& commandlist = g_pCurrFrameContext->CommandList[g_frameResourceIndex];
+    auto fc = &g_frameContext[g_frameResourceIndex];
+    auto& commandlist = fc->CommandList;
     commandlist->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     commandlist->IASetVertexBuffers(0, 1, &bufferView);
     commandlist->DrawInstanced((UINT)vertices, (UINT)instances, 0, 0);
@@ -1051,35 +1070,37 @@ void gt::dx12::Draw(D3D12_VERTEX_BUFFER_VIEW& bufferView, uint64_t vertices, uin
 void gt::dx12::TansitionRtvToPresent()
 {
     auto backbufferIndex = g_pSwapChain->GetCurrentBackBufferIndex();
+    auto fc = &g_frameContext[g_frameResourceIndex];
 
     // Indicate that the back buffer will now be used to present.
     auto barrier2 = CD3DX12_RESOURCE_BARRIER::Transition(g_backBuffers[backbufferIndex].Get(),
         D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
-    g_pCurrFrameContext->CommandList[g_frameResourceIndex]->ResourceBarrier(1, &barrier2);
+    fc->CommandList->ResourceBarrier(1, &barrier2);
 }
 
 void gt::dx12::CloseCommandList()
 {
-    g_pCurrFrameContext->CommandList[g_frameResourceIndex]->Close();
+    auto fc = &g_frameContext[g_frameResourceIndex];
+
+    fc->CommandList->Close();
 }
 
 void gt::dx12::MoveToNextFrame()
 {
     // Get frame context and send to the command queu our fence value 
-    auto frameCon = &g_frameContext[g_frameResourceIndex];
-    ThrowIfFailed(g_pCommandQueue->Signal(m_fence.Get(), frameCon->FenceValue));
+    auto fc = &g_frameContext[g_frameResourceIndex];
+    ThrowIfFailed(g_pCommandQueue->Signal(m_fence.Get(), fc->FenceValue));
 
     // Update frame index
-    //g_frameResourceIndex = g_pSwapChain->GetCurrentBackBufferIndex();
-    g_frameResourceIndex = (g_frameResourceIndex + 1) % FRAME_COUNT;
+    g_frameResourceIndex = g_pSwapChain->GetCurrentBackBufferIndex();
 
-    if (m_fence->GetCompletedValue() < frameCon->FenceValue)
+    if (m_fence->GetCompletedValue() < fc->FenceValue)
     {
-        ThrowIfFailed(m_fence->SetEventOnCompletion(frameCon->FenceValue, m_fenceEvent));
+        ThrowIfFailed(m_fence->SetEventOnCompletion(fc->FenceValue, m_fenceEvent));
         WaitForSingleObjectEx(m_fenceEvent, INFINITE, FALSE);
     }
 
-    frameCon->FenceValue = frameCon->FenceValue + 1;
+    fc->FenceValue = fc->FenceValue + 1;
 }
 
 void gt::dx12::DX12CubeApp::CreateThreads()
@@ -1091,13 +1112,14 @@ void gt::dx12::DX12CubeApp::CreateThreads()
         {
             while (threadIndex < NUM_CONTEXT)
             {
-                auto& commandlist = g_pCurrFrameContext->CommandList[g_frameResourceIndex];
-                auto& commandAllocator = g_pCurrFrameContext->CommandAllocator[g_frameResourceIndex];
+                auto fc = &g_frameContext[g_frameResourceIndex];
+                auto& commandlist = fc->CommandList;
+                auto& commandAllocator = fc->CommandAllocator;
                 // Prepare allocators
                 WaitForSingleObject(g_prepWorkDone, INFINITE);
                 ThrowIfFailed(commandAllocator->Reset());
-                ThrowIfFailed(commandlist->Reset(commandAllocator.Get(), m_pPipelineState.Get()));
-                //ThrowIfFailed(commandlist->Reset(commandAllocator.Get(), m_cubePipelineState.Get()));
+                //ThrowIfFailed(commandlist->Reset(commandAllocator.Get(), m_pPipelineState.Get()));
+                ThrowIfFailed(commandlist->Reset(commandAllocator.Get(), m_cubePipelineState.Get()));
                 SetViewport();
                 ClearRTV(0.0f, 0.0f, 0.0f, 1.0f);
 
@@ -1168,98 +1190,12 @@ void gt::dx12::DX12CubeApp::Run()
 {
     IsRunning = true;
     Window->Show();
-    //while (Window->IsOpen())
-    //{
-    //    Window->PollEvent();
-    //    Render(1.0f, 1.0f, 0.0f, 1.0f);
-    //}
-
-    const auto begin = std::chrono::high_resolution_clock::now();
-    UINT64 fenceValue = 0;
     while (Window->IsOpen())
     {
         Window->PollEvent();
-        const auto tick = std::chrono::high_resolution_clock::now();
-        const auto end = std::chrono::high_resolution_clock::now();
-
-        const auto delta = end - tick;
-        const auto total = end - begin;
-        float angle = static_cast<float>(std::chrono::duration_cast<std::chrono::milliseconds>(total).count());
-        const XMVECTOR rotationAxis = XMVectorSet(0, 1, 1, 0);
-        m_cubeModelMat = XMMatrixRotationAxis(rotationAxis, XMConvertToRadians(angle));
-
-        const XMVECTOR eyePos = XMVectorSet(0, 0, -10, 1);
-        const XMVECTOR focus = XMVectorSet(0, 0, 0, 1);
-        const XMVECTOR up = XMVectorSet(0, 1, 0, 1);
-
-        m_cubeViewMat = XMMatrixLookAtLH(eyePos, focus, up);
-
-        float aspectRatio = Window->GetWidth() / static_cast<float>(Window->GetHeight());
-        m_cubeProjMat = XMMatrixPerspectiveFovLH(XMConvertToRadians(m_fov), aspectRatio, 0.1f, 100.0f);
-
-        // Render Work // 
-        g_currFrameIndex = g_pSwapChain->GetCurrentBackBufferIndex();
-        g_pCurrFrameContext = &g_frameContext[g_currFrameIndex];
-        auto commandList = g_pCurrFrameContext->CommandList[g_currFrameIndex];
-        auto commandAllocator = g_pCurrFrameContext->CommandAllocator[g_currFrameIndex];
-
-        //LS::Utils::ThrowIfFailed(commandAllocator->Reset());
-        LS::Utils::ThrowIfFailed(commandList->Reset(commandAllocator.Get(), nullptr), "Failed to reset Command List");
-        //auto commandList = m_directCommandQueue->GetCommandList();
-
-        auto backBuffer = g_backBuffers[g_currFrameIndex];
-        auto dsv = m_dsvHeap->GetCPUDescriptorHandleForHeapStart();
-        auto rtvHeapStart = g_pRtvDescHeap->GetCPUDescriptorHandleForHeapStart();
-        //const CD3DX12_CPU_DESCRIPTOR_HANDLE rtv(rtvHeapStart, g_frameResourceIndex, g_rtvDescriptorSize);
-        const auto rtv = g_rtvDescHandle[g_currFrameIndex];
-
-        {
-            TransitionResource(commandList, backBuffer, D3D12_RESOURCE_STATE_PRESENT,
-                D3D12_RESOURCE_STATE_RENDER_TARGET);
-            float clearColor[] = { 0.4f, 0.5f, 0.9f, 1.0f };
-            ClearRTV(commandList, rtv, clearColor);
-            ClearDepth(commandList, dsv, 1.0f);
-        }
-
-        commandList->SetPipelineState(m_cubePipelineState.Get());
-        commandList->SetGraphicsRootSignature(m_cubeRootSignature.Get());
-        commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-        commandList->IASetVertexBuffers(0, 1, &m_cubeVbView);
-        commandList->IASetIndexBuffer(&m_cubeIbView);
-        commandList->RSSetViewports(1, &g_viewport);
-        commandList->RSSetScissorRects(1, &g_scissorRect);
-        commandList->OMSetRenderTargets(1, &rtv, FALSE, &dsv);
-
-        XMMATRIX mvpMatrix = XMMatrixMultiply(m_cubeModelMat, m_cubeViewMat);
-        mvpMatrix = XMMatrixMultiply(mvpMatrix, m_cubeProjMat);
-        commandList->SetGraphicsRoot32BitConstants(0, sizeof(XMMATRIX) / 4, &mvpMatrix, 0);
-        commandList->DrawIndexedInstanced(_countof(g_indices), 1, 0, 0, 0);
-
-        {
-            TransitionResource(commandList, backBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET,
-                D3D12_RESOURCE_STATE_PRESENT);
-
-            /*fenceValue = m_directCommandQueue->ExecuteCommandList(commandList);
-            LS::Utils::ThrowIfFailed(g_pSwapChain->Present(1, 0), "Failed to present frame");*/
-
-            // My local usage of things // 
-            LS::Utils::ThrowIfFailed(commandList->Close(), "Failed to close the command list");
-            ID3D12CommandList* const ppCommands[] = { commandList.Get() };
-            g_pCommandQueue->ExecuteCommandLists(1, ppCommands);
-
-            LS::Utils::ThrowIfFailed(g_pSwapChain->Present(1, 0), "Failed to present frame");
-            auto fenceValue = m_fenceValues[g_currFrameIndex];
-            fenceValue = LS::Platform::Dx12::Signal(g_pCommandQueue, m_fence, fenceValue);
-            if (m_fence->GetCompletedValue() >= fenceValue)
-            {
-                ThrowIfFailed(m_fence->SetEventOnCompletion(fenceValue, m_fenceEvent));
-                ::WaitForSingleObject(m_fenceEvent, INFINITE);
-                m_fenceValues[g_currFrameIndex]++;
-            }
-
-            //m_directCommandQueue->WaitForFenceValue(fenceValue);
-        }
+        Render(1.0f, 1.0f, 0.0f, 1.0f);
     }
+    //DemoRun();
 }
 
 void gt::dx12::DX12CubeApp::UpdateBufferResource(WRL::ComPtr<ID3D12GraphicsCommandList>& commandList, ID3D12Resource** pDestinationResource, ID3D12Resource** pIntermediateResource, size_t numElements, size_t elementSize, const void* bufferData, D3D12_RESOURCE_FLAGS flags)
@@ -1419,6 +1355,102 @@ bool gt::dx12::DX12CubeApp::LoadContent()
     ResizeDepthBuffer(Window->GetWidth(), Window->GetHeight());
 
     return true;
+}
+
+void gt::dx12::DX12CubeApp::DemoRun()
+{
+    const auto begin = std::chrono::high_resolution_clock::now();
+    //UINT64 fenceValue = 0;
+    while (Window->IsOpen())
+    {
+        Window->PollEvent();
+        const auto tick = std::chrono::high_resolution_clock::now();
+        const auto end = std::chrono::high_resolution_clock::now();
+
+        const auto delta = end - tick;
+        const auto total = end - begin;
+        float angle = static_cast<float>(std::chrono::duration_cast<std::chrono::milliseconds>(total).count());
+        const XMVECTOR rotationAxis = XMVectorSet(0, 1, 1, 0);
+        m_cubeModelMat = XMMatrixRotationAxis(rotationAxis, XMConvertToRadians(angle));
+
+        const XMVECTOR eyePos = XMVectorSet(0, 0, -10, 1);
+        const XMVECTOR focus = XMVectorSet(0, 0, 0, 1);
+        const XMVECTOR up = XMVectorSet(0, 1, 0, 1);
+
+        m_cubeViewMat = XMMatrixLookAtLH(eyePos, focus, up);
+
+        float aspectRatio = Window->GetWidth() / static_cast<float>(Window->GetHeight());
+        m_cubeProjMat = XMMatrixPerspectiveFovLH(XMConvertToRadians(m_fov), aspectRatio, 0.1f, 100.0f);
+
+        // Render Work // 
+        g_currFrameIndex = g_pSwapChain->GetCurrentBackBufferIndex();
+        const auto fc = &g_frameContext[g_currFrameIndex];
+        WRL::ComPtr<ID3D12GraphicsCommandList>& commandList = fc->CommandList;
+        WRL::ComPtr<ID3D12CommandAllocator>& commandAllocator = fc->CommandAllocator;
+
+        LS::Utils::ThrowIfFailed(commandList->Reset(commandAllocator.Get(), nullptr), "Failed to reset Command List");
+        //auto commandList = m_directCommandQueue->GetCommandList();
+
+        WRL::ComPtr<ID3D12Resource>& backBuffer = g_backBuffers[g_currFrameIndex];
+        const D3D12_CPU_DESCRIPTOR_HANDLE dsv = m_dsvHeap->GetCPUDescriptorHandleForHeapStart();
+        //D3D12_CPU_DESCRIPTOR_HANDLE rtvHeapStart = g_pRtvDescHeap->GetCPUDescriptorHandleForHeapStart();
+        //const CD3DX12_CPU_DESCRIPTOR_HANDLE rtv(rtvHeapStart, g_frameResourceIndex, g_rtvDescriptorSize);
+        const D3D12_CPU_DESCRIPTOR_HANDLE rtv = g_rtvDescHandle[g_currFrameIndex];
+
+        {
+            TransitionResource(commandList, backBuffer, D3D12_RESOURCE_STATE_PRESENT,
+                D3D12_RESOURCE_STATE_RENDER_TARGET);
+            static float clearColor[] = { 0.4f, 0.5f, 0.9f, 1.0f };
+            ClearRTV(commandList, rtv, clearColor);
+            ClearDepth(commandList, dsv, 1.0f);
+        }
+
+        commandList->SetPipelineState(m_cubePipelineState.Get());
+        commandList->SetGraphicsRootSignature(m_cubeRootSignature.Get());
+        commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+        commandList->IASetVertexBuffers(0, 1, &m_cubeVbView);
+        commandList->IASetIndexBuffer(&m_cubeIbView);
+        commandList->RSSetViewports(1, &g_viewport);
+        commandList->RSSetScissorRects(1, &g_scissorRect);
+        commandList->OMSetRenderTargets(1, &rtv, FALSE, &dsv);
+
+        XMMATRIX mvpMatrix = XMMatrixMultiply(m_cubeModelMat, m_cubeViewMat);
+        mvpMatrix = XMMatrixMultiply(mvpMatrix, m_cubeProjMat);
+        commandList->SetGraphicsRoot32BitConstants(0, sizeof(XMMATRIX) / 4, &mvpMatrix, 0);
+        commandList->DrawIndexedInstanced(_countof(g_indices), 1, 0, 0, 0);
+
+        {
+            TransitionResource(commandList, backBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET,
+                D3D12_RESOURCE_STATE_PRESENT);
+
+            /*fenceValue = m_directCommandQueue->ExecuteCommandList(commandList);
+            LS::Utils::ThrowIfFailed(g_pSwapChain->Present(1, 0), "Failed to present frame");*/
+
+            // My local usage of things // 
+            LS::Utils::ThrowIfFailed(commandList->Close(), "Failed to close the command list");
+            ID3D12CommandList* const ppCommands[] = { commandList.Get() };
+            g_pCommandQueue->ExecuteCommandLists(1, ppCommands);
+
+            DXGI_PRESENT_PARAMETERS params{};
+            params.DirtyRectsCount = 0;
+            params.pDirtyRects = nullptr;
+            params.pScrollOffset = nullptr;
+            params.pScrollRect = nullptr;
+
+            LS::Utils::ThrowIfFailed(g_pSwapChain->Present1(1, 0, &params), "Failed to present frame");
+            auto fenceValue = m_fenceValues[g_currFrameIndex];
+            fenceValue = LS::Platform::Dx12::Signal(g_pCommandQueue, m_fence, fenceValue);
+            if (m_fence->GetCompletedValue() < fenceValue)
+            {
+                ThrowIfFailed(m_fence->SetEventOnCompletion(fenceValue, m_fenceEvent));
+                ::WaitForSingleObject(m_fenceEvent, INFINITE);
+                m_fenceValues[g_currFrameIndex] = fenceValue;
+                LS::Utils::ThrowIfFailed(commandAllocator->Reset(), "Failed to rset command allocator");
+            }
+
+            //m_directCommandQueue->WaitForFenceValue(fenceValue);
+        }
+    }
 }
 
 void gt::dx12::DX12CubeApp::ResizeDepthBuffer(int width, int height)

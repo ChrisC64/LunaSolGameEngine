@@ -26,7 +26,7 @@ export namespace LS::Win32
      * @param flags DXGI_CREATE_FLAGS
      * @return @link Nullable object of a IDXGIFactory7 instance (see module @link LSdataTypes.ixx)
     */
-    [[nodiscard]] auto CreateFactory(UINT flags = 0u) noexcept -> Nullable<WRL::ComPtr<IDXGIFactory7>>;
+    [[nodiscard]] auto CreateFactory(UINT flags = 0u) noexcept -> Nullable<WRL::ComPtr<IDXGIFactory2>>;
 
     [[nodiscard]] auto CreateSwapchainForHwnd(const Platform::Dx12::D3D12Settings& settings,
         const WRL::ComPtr<IDXGIFactory2>& factory, WRL::ComPtr<ID3D12CommandQueue>& commandQueue) noexcept -> Nullable<WRL::ComPtr<IDXGISwapChain1>>;
@@ -46,13 +46,15 @@ export namespace LS::Win32
     */
     [[nodiscard]] auto EnumerateDisplayAdapters(WRL::ComPtr<IDXGIFactory7>& pFactory) noexcept -> std::vector<WRL::ComPtr<IDXGIAdapter4>>;
 
+    [[nodiscard]] void GetHardwareAdapter(IDXGIFactory1* pFactory, IDXGIAdapter1** ppAdapter, bool useHighPerformance);
 
+    [[nodiscard]] void GetWarpAdapter(IDXGIFactory1* pFactory, IDXGIAdapter** ppAdapter);
 
     // Feature Check Supports //
 
     /**
      * @brief Checks if tearing support (i.e. FreeSync/G-Sync) is available
-     * @param pFactory Windows DXGI Factory 
+     * @param pFactory Windows DXGI Factory
      * @return An error code with any messages if support is available or not.
     */
     [[nodiscard]] auto CheckTearingSupport(const WRL::ComPtr<IDXGIFactory5>& pFactory) noexcept -> LS::System::ErrorCode;
@@ -66,22 +68,22 @@ module : private;
 
 using namespace LS::Win32;
 
-auto LS::Win32::CreateFactory(UINT flags) noexcept -> Nullable<Microsoft::WRL::ComPtr<IDXGIFactory7>>
+auto LS::Win32::CreateFactory(UINT flags) noexcept -> Nullable<Microsoft::WRL::ComPtr<IDXGIFactory2>>
 {
-    WRL::ComPtr<IDXGIFactory7> pOut;
+    WRL::ComPtr<IDXGIFactory2> pOut;
     auto result = CreateDXGIFactory2(flags, IID_PPV_ARGS(&pOut));
     if (FAILED(result))
         return std::nullopt;
     return pOut;
 }
 
-auto LS::Win32::CreateSwapchainForHwnd(const Platform::Dx12::D3D12Settings& settings, 
+auto LS::Win32::CreateSwapchainForHwnd(const Platform::Dx12::D3D12Settings& settings,
     const WRL::ComPtr<IDXGIFactory2>& factory, WRL::ComPtr<ID3D12CommandQueue>& commandQueue) noexcept -> Nullable<WRL::ComPtr<IDXGISwapChain1>>
 {
     DXGI_SWAP_CHAIN_DESC1 swapchainDesc1{};
     swapchainDesc1.BufferCount = settings.MinSettings.FrameBufferCount;
     swapchainDesc1.Width = static_cast<UINT>(settings.MinSettings.ScreenWidth);
-    swapchainDesc1.Height = static_cast<UINT>(settings.MinSettings.ScreenHeight) ;
+    swapchainDesc1.Height = static_cast<UINT>(settings.MinSettings.ScreenHeight);
     swapchainDesc1.Format = settings.MinSettings.PixelFormat;
     swapchainDesc1.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
     swapchainDesc1.SampleDesc = { .Count = 1, .Quality = 0 };
@@ -91,7 +93,7 @@ auto LS::Win32::CreateSwapchainForHwnd(const Platform::Dx12::D3D12Settings& sett
     swapchainDesc1.AlphaMode = settings.ExSettings.AlphaMode;
     swapchainDesc1.Scaling = settings.ExSettings.Scaling;
     swapchainDesc1.Stereo = settings.ExSettings.IsStereoScopic ? TRUE : FALSE;
-    
+
     // Feature Flags to support // 
     swapchainDesc1.Flags = DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
 
@@ -162,6 +164,108 @@ auto LS::Win32::EnumerateDisplayAdapters(Microsoft::WRL::ComPtr<IDXGIFactory7>& 
     return out;
 }
 
+void LS::Win32::GetHardwareAdapter(IDXGIFactory1* pFactory, IDXGIAdapter1** ppAdapter, bool useHighPerformance)
+{
+    *ppAdapter = nullptr;
+
+    WRL::ComPtr<IDXGIAdapter1> adapter;
+
+    WRL::ComPtr<IDXGIFactory6> factory6;
+    if (FAILED(pFactory->QueryInterface(IID_PPV_ARGS(&factory6))))
+    {
+        return;
+    }
+
+    DXGI_GPU_PREFERENCE preference = useHighPerformance ? DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE : DXGI_GPU_PREFERENCE_UNSPECIFIED;
+    for (UINT adapterIndex = 0; SUCCEEDED(factory6->EnumAdapterByGpuPreference(adapterIndex, preference, IID_PPV_ARGS(&adapter)));
+        ++adapterIndex)
+    {
+        DXGI_ADAPTER_DESC1 desc;
+        adapter->GetDesc1(&desc);
+
+        if ((desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE) == 0)
+            continue;
+        // Check to see whether the adapter supports Direct3D 12, but don't create the
+        // actual device yet.
+        if (SUCCEEDED(D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_12_0, __uuidof(ID3D12Device), nullptr)))
+        {
+            break;
+        }
+    }
+
+    if (adapter.Get() == nullptr)
+    {
+        for (UINT adapterIndex = 0; SUCCEEDED(pFactory->EnumAdapters1(adapterIndex, &adapter)); ++adapterIndex)
+        {
+            DXGI_ADAPTER_DESC1 desc;
+            adapter->GetDesc1(&desc);
+
+            if ((desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE) == 0)
+                continue;
+            // Check to see whether the adapter supports Direct3D 12, but don't create the
+            // actual device yet.
+            if (SUCCEEDED(D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_12_0, _uuidof(ID3D12Device), nullptr)))
+            {
+                break;
+            }
+        }
+    }
+
+    *ppAdapter = adapter.Detach();
+}
+
+void LS::Win32::GetWarpAdapter(IDXGIFactory1* pFactory, IDXGIAdapter** ppAdapter)
+{
+    *ppAdapter = nullptr;
+
+    WRL::ComPtr<IDXGIAdapter1> adapter;
+
+    WRL::ComPtr<IDXGIFactory6> factory6;
+    if (FAILED(pFactory->QueryInterface(IID_PPV_ARGS(&factory6))))
+    {
+        return;
+    }
+
+    DXGI_GPU_PREFERENCE preference = DXGI_GPU_PREFERENCE_UNSPECIFIED;
+    for (UINT adapterIndex = 0; SUCCEEDED(factory6->EnumAdapterByGpuPreference( adapterIndex, preference, IID_PPV_ARGS(&adapter)));
+        ++adapterIndex)
+    {
+        DXGI_ADAPTER_DESC1 desc;
+        adapter->GetDesc1(&desc);
+
+        if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
+        {
+            // Check to see whether the adapter supports Direct3D 12, but don't create the
+            // actual device yet.
+            if (SUCCEEDED(D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_12_0, __uuidof(ID3D12Device), nullptr)))
+            {
+                break;
+            }
+        }
+    }
+
+    if (adapter.Get() == nullptr)
+    {
+        for (UINT adapterIndex = 0; SUCCEEDED(pFactory->EnumAdapters1(adapterIndex, &adapter)); ++adapterIndex)
+        {
+            DXGI_ADAPTER_DESC1 desc;
+            adapter->GetDesc1(&desc);
+
+            if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
+            {
+                // Check to see whether the adapter supports Direct3D 12, but don't create the
+                // actual device yet.
+                if (SUCCEEDED(D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_12_0, _uuidof(ID3D12Device), nullptr)))
+                {
+                    break;
+                }
+            }
+        }
+    }
+
+    *ppAdapter = adapter.Detach();
+}
+
 auto LS::Win32::CheckTearingSupport(const WRL::ComPtr<IDXGIFactory5>& pFactory) noexcept -> LS::System::ErrorCode
 {
     BOOL allowTearing = FALSE;
@@ -227,7 +331,7 @@ void LS::Win32::LogOutputDisplayModes(IDXGIOutput* output, DXGI_FORMAT format) n
     {
         UINT n = x.RefreshRate.Numerator;
         UINT d = x.RefreshRate.Denominator;
-        std::wstring text = std::format(L"\tResolution (WxH): {}x{}\n\tRefresh Rate: {}", std::to_wstring(x.Width), 
+        std::wstring text = std::format(L"\tResolution (WxH): {}x{}\n\tRefresh Rate: {}", std::to_wstring(x.Width),
             std::to_wstring(x.Height), std::to_wstring(n / d));
         Log::TraceInfo(text);
     }

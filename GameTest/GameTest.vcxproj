@@ -184,6 +184,7 @@
     <ClCompile Include="src\DX11Test\Systems\DX11Systems.ixx" />
     <ClCompile Include="src\DX12Test\CubeApp.ixx" />
     <ClCompile Include="src\DX11Test\MultiPassTestApp.ixx" />
+    <ClCompile Include="src\DX12Test\SimpleWindow.ixx" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="shaders\FullScreenQuad.hlsl">

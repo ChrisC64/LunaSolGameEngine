@@ -62,7 +62,9 @@ auto DeviceD3D12::CreateDevice(WRL::ComPtr<IDXGIAdapter> displayAdpater /* = nul
         return LS::System::CreateFailCode("Failed to create DXGI Factory.");
     }
 
-    m_pFactoryDxgi = factoryOpt.value();
+    
+    auto factory = factoryOpt.value();
+    factory.As(&m_pFactoryDxgi);
     WRL::ComPtr<IDXGIAdapter1> hardwareAdapter;
     std::vector<WRL::ComPtr<IDXGIAdapter4>> adapters = EnumerateDiscreteGpuAdapters(m_pFactoryDxgi);
 

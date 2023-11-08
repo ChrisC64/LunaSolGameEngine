@@ -6,6 +6,7 @@
 #include <format>
 #include <cstdint>
 #include <bitset>
+#include <string>
 
 #ifndef _DEBUG
 #include <Windows.h>
@@ -15,6 +16,7 @@ import Engine.Logger;
 import Engine.EngineCodes;
 import DX11CubeApp;
 import CubeApp;
+import DX12.SimpleWindow;
 import Engine.App;
 import LSData;
 import Helper.LSCommonTypes;
@@ -47,6 +49,11 @@ Ref<LS::LSApp> CreateApp(uint32_t choice)
         Ref<LS::LSApp> app(new gt::dx12::DX12CubeApp(800, 600, L"DX12 Cube App"));
         return app;
     }
+    case 2:
+    {
+        Ref<LS::LSApp> app(new gt::dx12::SimpleWindow(800, 700));
+        return app;
+    }
     default:
     {
         Ref<LS::LSApp> app(new gt::dx11::DX11CubeApp(800, 600, L"DX11 Cube App"));
@@ -68,7 +75,13 @@ int main(int argc, char* argv[])
 
     std::cerr << "An output to file will occur for cerr\n";*/
     LS::Log::InitLog();
-    auto app = CreateApp(1);
+
+    std::cout << "Pick an app:\n0 - DX 11 Cube\n1 - DX12 Cube\n2 - Simple DX12 Window\nChoice: ";
+    std::string choice{};
+    std::getline(std::cin, choice);
+    auto value = std::stoi(choice);
+
+    auto app = CreateApp(value);
     auto appcode = app->Initialize(argc, argv);
     if (!appcode)
     {

@@ -37,19 +37,16 @@ auto CommandQueue::GetCommandList() -> WRL::ComPtr<ID3D12GraphicsCommandList>
     WRL::ComPtr<ID3D12CommandAllocator> commandAllocator;
     WRL::ComPtr<ID3D12GraphicsCommandList> commandList;
     
-    if (m_commandAllocQueue.empty())
+    if (!m_commandAllocQueue.empty() && IsFenceComplete(m_commandAllocQueue.front().FenceValue))
     {
-        commandAllocator = CreateCommandAllocator();
+        commandAllocator = m_commandAllocQueue.front().CommandAllocator;
+        m_commandAllocQueue.pop();
+        const auto hr = commandAllocator->Reset();
+        LS::Utils::ThrowIfFailed(hr, "Failed ot reset command allocator from queue");
     }
     else
     {   // Check if the queued up  command allocator is able to be used and reset
-        if (!IsFenceComplete(m_commandAllocQueue.front().FenceValue))
-        {
-            commandAllocator = m_commandAllocQueue.front().CommandAllocator;
-            m_commandAllocQueue.pop();
-            const auto hr = commandAllocator->Reset();
-            LS::Utils::ThrowIfFailed(hr, "Failed ot reset command allocator from queue");
-        }
+        commandAllocator = CreateCommandAllocator();
     }
 
     if (m_commandListQueue.empty())
@@ -100,18 +97,22 @@ auto CommandQueue::ExecuteCommandList(WRL::ComPtr<ID3D12GraphicsCommandList>& co
     LS::Utils::ThrowIfFailed(closeHr, "Failed to close the command list before executing the next one.");
     // Find the command allocator set as a private data interface member 
     WRL::ComPtr<ID3D12CommandAllocator> commandAllocator;
+    //ID3D12CommandAllocator* commandAllocator;
     UINT dataSize = sizeof(commandAllocator);
-    const auto hr = commandList->GetPrivateData(__uuidof(ID3D12CommandAllocator), &dataSize, commandAllocator.Get());
+    const auto hr = commandList->GetPrivateData(__uuidof(ID3D12CommandAllocator), &dataSize, commandAllocator.GetAddressOf());
+    //const auto hr = commandList->GetPrivateData(__uuidof(ID3D12CommandAllocator), &dataSize, &commandAllocator);
     LS::Utils::ThrowIfFailed(hr, "Failed to find the command allocator, may not be set as private interface member.");
 
     // Execute the command lists
     ID3D12CommandList* const ppCommandLists[] = { commandList.Get() };
     m_pCommandQueue->ExecuteCommandLists(1, ppCommandLists);
-
+    //commandAllocatorCP.Attach(commandAllocator);
     // Obtain the signal and set it to return to the user
     const uint64_t fenceValue = LS::Platform::Dx12::Signal(m_pCommandQueue, m_pFence, m_fenceValue);
     m_commandAllocQueue.emplace(CommandAllocatorEntry{ .FenceValue = fenceValue, .CommandAllocator = commandAllocator });
     m_commandListQueue.push(commandList);
+
+    //commandAllocator->Release();
 
     return fenceValue;
 }
