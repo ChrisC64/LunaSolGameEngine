@@ -134,7 +134,7 @@ void gt::dx12::SimpleWindow::LoadPipeline()
     if (pdx12Debug)
     {
         WRL::ComPtr<ID3D12InfoQueue> pInfoQueue = nullptr;
-        auto hr = m_pDevice->QueryInterface(IID_PPV_ARGS(&pInfoQueue));
+        m_pDevice->QueryInterface(IID_PPV_ARGS(&pInfoQueue));
         pInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, true);
         pInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, true);
         pInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, true);
@@ -297,13 +297,25 @@ void gt::dx12::SimpleWindow::OnUpdate()
 
 void gt::dx12::SimpleWindow::WaitForPreviousFrame()
 {
-    // Signal and increment the fence value.
+    // Signal will set the value from CPU to GPU side. This value sent over to the GPU
+    // is the value it will retain until the work is done. Once that work is done,
+    // it will be incremented on the GPU side to signal it's completion. 
     const UINT64 fence = m_fenceValue;
     LS::Utils::ThrowIfFailed(m_commandQueue->Signal(m_fence.Get(), fence), "Failed to signal command queue.");
     m_fenceValue++;
 
-    // Wait until the previous frame is finished.
-    if (m_fence->GetCompletedValue() < fence)
+    // The method of how you compare depends on what you're comparing with.
+    // From what I gather, it goes a bit like this:
+    // 1. You do the work of rendering, then when it's complete, you signal the GPU you're intent is completed.
+    // 2. Afterward you tell the GPU the value of the signal you want to register to that work 
+    // 3. When the GPU finishes that work, it will increment that value by +1
+    // 4. When you're ready to do work again on the same resources for the next frame, you need to
+    // verify that the work is complete by comparing the value you have CPU side and GPU side.
+    // Below we use the ID3D12Fence object. That object is the GPU's communication, so it will be 
+    // incremented when it's complete. Basically +1 the value of the signal we sent it.
+    // So we need to compare that value to our CPU side and see if it's done. 
+    //if (m_fenceValue >= m_fence->GetCompletedValue()) // Compares the CPU value (incremented) with the GPU which should be equal or greater than after GPU completed work
+    if (m_fence->GetCompletedValue() < fence) // Compares the GPU fence value with the previous CPU fence value (before increment above)
     {
         LS::Utils::ThrowIfFailed(m_fence->SetEventOnCompletion(fence, m_fenceEvent), "Failed to set event on completion.");
         ::WaitForSingleObject(m_fenceEvent, INFINITE);
