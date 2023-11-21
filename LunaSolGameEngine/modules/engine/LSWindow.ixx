@@ -8,6 +8,11 @@ import Data.LSDataTypes;
 
 export namespace LS
 {
+    struct MousePos
+    {
+        uint32_t x, y;
+    };
+
     class LSWindowBase
     {
     public:
@@ -18,14 +23,19 @@ export namespace LS
             return m_bIsOpen;
         }
 
-        uint32_t GetWidth() const
+        const uint32_t GetWidth() const
         {
             return m_width;
         }
 
-        uint32_t GetHeight() const
+        const uint32_t GetHeight() const
         {
             return m_height;
+        }
+
+        const MousePos GetMousePos() const
+        {
+            return m_mousePos;
         }
 
         const std::wstring_view GetTitle() const
@@ -118,7 +128,7 @@ export namespace LS
         OnWindowEvent m_onWindowEvent;
         //@brief The color to fill the window background
         ColorRGB m_bgColor{ 1.0f, 1.0f, 1.0f };
-
+        MousePos m_mousePos{ 0, 0 };
         LSWindowBase(uint32_t width, uint32_t height, std::wstring_view  title) : m_width(width),
             m_height(height),
             m_title(title),

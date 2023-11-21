@@ -46,9 +46,9 @@ export namespace LS::Win32
     */
     [[nodiscard]] auto EnumerateDisplayAdapters(WRL::ComPtr<IDXGIFactory7>& pFactory) noexcept -> std::vector<WRL::ComPtr<IDXGIAdapter4>>;
 
-    [[nodiscard]] void GetHardwareAdapter(IDXGIFactory1* pFactory, IDXGIAdapter1** ppAdapter, bool useHighPerformance);
+    [[nodiscard]] void GetHardwareAdapter(WRL::ComPtr<IDXGIFactory1> pFactory, WRL::ComPtr<IDXGIAdapter1> ppAdapter, bool useHighPerformance);
 
-    [[nodiscard]] void GetWarpAdapter(IDXGIFactory1* pFactory, IDXGIAdapter** ppAdapter);
+    [[nodiscard]] void GetWarpAdapter(WRL::ComPtr<IDXGIFactory1> pFactory, WRL::ComPtr<IDXGIAdapter> ppAdapter);
 
     // Feature Check Supports //
 
@@ -164,10 +164,8 @@ auto LS::Win32::EnumerateDisplayAdapters(Microsoft::WRL::ComPtr<IDXGIFactory7>& 
     return out;
 }
 
-void LS::Win32::GetHardwareAdapter(IDXGIFactory1* pFactory, IDXGIAdapter1** ppAdapter, bool useHighPerformance)
+void LS::Win32::GetHardwareAdapter(WRL::ComPtr<IDXGIFactory1> pFactory, WRL::ComPtr<IDXGIAdapter1> ppAdapter, bool useHighPerformance)
 {
-    *ppAdapter = nullptr;
-
     WRL::ComPtr<IDXGIAdapter1> adapter;
 
     WRL::ComPtr<IDXGIFactory6> factory6;
@@ -211,13 +209,11 @@ void LS::Win32::GetHardwareAdapter(IDXGIFactory1* pFactory, IDXGIAdapter1** ppAd
         }
     }
 
-    *ppAdapter = adapter.Detach();
+    ppAdapter = adapter;
 }
 
-void LS::Win32::GetWarpAdapter(IDXGIFactory1* pFactory, IDXGIAdapter** ppAdapter)
+void LS::Win32::GetWarpAdapter(WRL::ComPtr<IDXGIFactory1> pFactory, WRL::ComPtr<IDXGIAdapter> ppAdapter)
 {
-    *ppAdapter = nullptr;
-
     WRL::ComPtr<IDXGIAdapter1> adapter;
 
     WRL::ComPtr<IDXGIFactory6> factory6;
@@ -263,7 +259,7 @@ void LS::Win32::GetWarpAdapter(IDXGIFactory1* pFactory, IDXGIAdapter** ppAdapter
         }
     }
 
-    *ppAdapter = adapter.Detach();
+    ppAdapter = adapter;
 }
 
 auto LS::Win32::CheckTearingSupport(const WRL::ComPtr<IDXGIFactory5>& pFactory) noexcept -> LS::System::ErrorCode
@@ -299,6 +295,9 @@ void LS::Win32::LogAdapters(IDXGIFactory4* factory) noexcept
         LogAdapterOutput(a);
         a->Release();
     }
+
+    if (factory)
+        factory->Release();
 }
 
 void LS::Win32::LogAdapterOutput(IDXGIAdapter* adapter) noexcept

@@ -122,7 +122,7 @@ void gt::dx12::SimpleWindow::LoadPipeline()
 
     LS::Utils::ThrowIfFailed(factory.As(&m_pFactory), "Failed to create DXGI Factory");
 
-    LS::Win32::GetHardwareAdapter(m_pFactory.Get(), &m_pAdapter, true);
+    LS::Win32::GetHardwareAdapter(m_pFactory, m_pAdapter, true);
 
     // Create device
     D3D_FEATURE_LEVEL featureLevel = D3D_FEATURE_LEVEL_12_0;
@@ -265,11 +265,6 @@ void gt::dx12::SimpleWindow::PopulateCommandList()
     m_commandList->ResourceBarrier(1, &barrier2);
 
     LS::Utils::ThrowIfFailed(m_commandList->Close(), "Failed to close command list.");
-    //auto fenceValue = m_directCommandQueue->ExecuteCommandList(commandList);
-    //m_directCommandQueue->WaitForFenceValue(fenceValue);
-
-    /*m_pSwapChain->Present(1, 0);
-    m_currFrameIndex = m_pSwapChain->GetCurrentBackBufferIndex();*/
 }
 
 void gt::dx12::SimpleWindow::OnRender()

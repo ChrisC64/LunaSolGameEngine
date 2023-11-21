@@ -4,13 +4,15 @@ module;
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
 #include <Windows.h>
-
+#include <functional>
 export module Platform.Win32Window;
 import LSData;
 import Engine.LSWindow;
 
 export namespace LS::Win32
 {
+    using WndProcHandler = std::function<LRESULT(HWND, UINT, WPARAM, LPARAM)>;
+
     //TODO: Would I want to make this so I can have the user only see the above LSCreateWindow()
     // and yet still construct this for the object I need in the Win32Window.cpp file where we
     // grab the pointer to the class so we can use the class' internal WndProc handler. 
@@ -42,6 +44,17 @@ export namespace LS::Win32
         {
             return m_hwnd;
         }
+
+        void SetWndProcHandler(WndProcHandler&& handler)
+        {
+            m_wndProcHandler = std::move(handler);
+        }
+
+        WndProcHandler GetWndProc()
+        {
+            return m_wndProcHandler;
+        }
+
     private:
         HINSTANCE m_hInstance;
         HWND m_hwnd;
@@ -51,6 +64,7 @@ export namespace LS::Win32
         bool m_bIsMinimized = false;
         MSG m_msg;
         HBRUSH m_bgBrush;
+        WndProcHandler m_wndProcHandler;
         void Initialize(uint32_t width, uint32_t height, std::wstring_view title);
         void OnKeyPress(WPARAM wp);
         void OnKeyRelease(WPARAM wp);

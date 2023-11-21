@@ -66,6 +66,14 @@ namespace LS::Win32
     {
         if (!m_bIsOpen)
             return DefWindowProc(hwnd, message, wparam, lparam);
+        LRESULT handled = 0;
+        if (m_wndProcHandler)
+        {
+            handled = m_wndProcHandler(hwnd, message, wparam, lparam);
+        }
+        if (handled > 0)
+            return handled;
+
         switch (message)
         {
         case (WM_NCCREATE):
@@ -73,29 +81,22 @@ namespace LS::Win32
         }
         case (WM_PAINT):
         {
-            // Paint the background //
-            PAINTSTRUCT ps;
-            HDC hdc = BeginPaint(hwnd, &ps);
-
-            FillRect(hdc, &ps.rcPaint, m_bgBrush);
-
-            EndPaint(hwnd, &ps);
             break;
         }
         case (WM_CLOSE):
         {
-            PostQuitMessage(0);
-            m_bIsOpen = false;
             if (m_onWindowEvent)
                 m_onWindowEvent(LS::LS_WINDOW_EVENT::CLOSE_WINDOW);
+            PostQuitMessage(0);
+            m_bIsOpen = false;
             break;
         }
         case(WM_DESTROY):
         {
-            PostQuitMessage(0);
-            m_bIsOpen = false;
             if (m_onWindowEvent)
                 m_onWindowEvent(LS::LS_WINDOW_EVENT::CLOSE_WINDOW);
+            PostQuitMessage(0);
+            m_bIsOpen = false;
             break;
         }
         case(WM_CHAR):
@@ -120,6 +121,8 @@ namespace LS::Win32
             int y;
             GetScreenCoordinates(lparam, x, y);
             OnMouseClick(message, x, y);
+            m_mousePos.x = x;
+            m_mousePos.y = y;
             break;
         }
         case(WM_LBUTTONUP):
@@ -130,6 +133,8 @@ namespace LS::Win32
             int y;
             GetScreenCoordinates(lparam, x, y);
             OnMouseRelease(message, x, y);
+            m_mousePos.x = x;
+            m_mousePos.y = y;
             break;
         }
         case(WM_MOUSEMOVE):
@@ -138,6 +143,8 @@ namespace LS::Win32
             int y;
             GetScreenCoordinates(lparam, x, y);
             OnMouseMove((uint32_t)x, (uint32_t)y);
+            m_mousePos.x = x;
+            m_mousePos.y = y;
             break;
         }
         case(WM_MOUSELEAVE):
@@ -492,6 +499,7 @@ namespace LS::Win32
         case R_ALT:      return VK_RMENU;
         case L_CTRL:     return VK_LCONTROL;
         case R_CTRL:     return VK_RCONTROL;
+        case ESCAPE:     return VK_ESCAPE;
             // Function Keys //
         case F1:         return VK_F1;
         case F2:         return VK_F2;

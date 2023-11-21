@@ -20,6 +20,7 @@ import DX12.SimpleWindow;
 import Engine.App;
 import LSData;
 import Helper.LSCommonTypes;
+import ImGuiWindowTest;
 
 //import MultiPassTestApp;
 //import CubeApp;
@@ -54,6 +55,11 @@ Ref<LS::LSApp> CreateApp(uint32_t choice)
         Ref<LS::LSApp> app(new gt::dx12::SimpleWindow(800, 700));
         return app;
     }
+    case 3:
+    {
+        Ref<LS::LSApp> app(new gt::dx12::ImGuiSample::ImGuiSample(800, 600));
+        return app;
+    }
     default:
     {
         Ref<LS::LSApp> app(new gt::dx11::DX11CubeApp(800, 600, L"DX11 Cube App"));
@@ -76,7 +82,7 @@ int main(int argc, char* argv[])
     std::cerr << "An output to file will occur for cerr\n";*/
     LS::Log::InitLog();
 
-    std::cout << "Pick an app:\n0 - DX 11 Cube\n1 - DX12 Cube\n2 - Simple DX12 Window\nChoice: ";
+    std::cout << "Pick an app:\n0 - DX 11 Cube\n1 - DX12 Cube\n2 - Simple DX12 Window\n3 - ImGui Sample\nChoice: ";
     std::string choice{};
     std::getline(std::cin, choice);
     auto value = std::stoi(choice);

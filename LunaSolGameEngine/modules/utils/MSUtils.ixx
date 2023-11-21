@@ -77,10 +77,10 @@ export namespace LS::Utils
     {
         if (FAILED(hr))
         {
-            const std::string msg = LS::Win32::HrToString(hr);
+            /*const std::string msg = LS::Win32::HrToString(hr);
             const std::string str = std::string(std::move(s));
             const std::string err = fmt::format("{} {}", str, msg);
-            throw std::runtime_error(err);
+            throw std::runtime_error(err);*/
         }
     }
     
