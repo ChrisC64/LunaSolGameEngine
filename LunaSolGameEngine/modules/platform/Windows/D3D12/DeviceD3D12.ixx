@@ -1,5 +1,6 @@
 module;
 #include <d3d12.h>
+#define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include <wrl/client.h>
 #include <dxgi1_6.h>
@@ -9,6 +10,7 @@ module;
 #include <string>
 #include <string_view>
 #include <array>
+#include <cstdint>
 #pragma comment(lib, "dxguid.lib")
 
 export module D3D12Lib:Device;
@@ -18,64 +20,85 @@ import :ResourceManagerD3D12;
 
 import Platform.Win32Window;
 import Engine.App;
+import Engine.EngineCodes;
 
 namespace WRL = Microsoft::WRL;
 
-export namespace LS::Win32
+export namespace LS::Platform::Dx12
 {
     class DeviceD3D12
     {
     public:
-        DeviceD3D12(SharedRef<D3D12Settings>& settings);
+        DeviceD3D12(D3D12Settings&& settings);
         ~DeviceD3D12() = default;
 
-        /**
-         * @brief Perform basic rendering setup and display a window
-         * @param width Pixel width of display area
-         * @param height Pixel height of display area
-         * @param title Title of window
-         * @param displayAdapter (optional) the DXGI display adapter to use, if null will find first available display
-         * @return True if operation was a success, false if it failed
-        */
-        bool Initialize(uint32_t width, uint32_t height, std::wstring_view title, WRL::ComPtr<IDXGIAdapter> displayAdapter = nullptr) noexcept;
-
-    private:
         /**
          * @brief Initialize the D3D12 Device object
          * @param displayAdapter The display to use, if none if provided, it will find the first available display to use
          * @return true if operation was a success, false if an error occurred.
         */
-        bool CreateDevice(Microsoft::WRL::ComPtr<IDXGIAdapter> displayAdapter = nullptr) noexcept;
+        [[nodiscard]] auto CreateDevice(WRL::ComPtr<IDXGIAdapter> displayAdapter = nullptr) noexcept -> LS::System::ErrorCode;
+        
         /**
-         * @brief Creates and displays the window for this renderer
-         * @param width Pixel width
-         * @param height Pixel Height
-         * @param title Title for window
+         * @brief Create a command queue and return to the user
+         * @param type D3D12_COMMAND_LIST_TYPE 
+         * @param priority D3D12_COMMAND_QUEUE_PRIORITY defaults to D3D12_COMMAND_QUEUE_PRIORITY_NORMAL
+         * @return An initialized ComPtr if successful, otherwise a nullptr if not. 
         */
-        void InitWindow(uint32_t width, uint32_t height, std::wstring_view title) noexcept;
+        [[nodiscard]] auto CreateCommandQueue(D3D12_COMMAND_LIST_TYPE type, D3D12_COMMAND_QUEUE_PRIORITY priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL) noexcept -> WRL::ComPtr<ID3D12CommandQueue>;
 
         /**
-         * @brief Attaches and takes ownership of a Window for the renderer to use and manage
-         * @param window The window to own and use for rendering
+         * @brief Create a Descriptor Heap and return to the user
+         * @param type D3D12_DESCRIPTOR_HEAP_TYPE to set
+         * @param numDescriptors The number of descriptors in the heap
+         * @param isShaderVisible Whether this should be shader visible or not
+         * @return An iniitlaized pointer of ID3D12DescriptorHeap if successful, otherwise a nullptr
         */
-        void MoveToWindow(Ref<Win32Window>& window) noexcept;
+        [[nodiscard]] auto CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE type, uint32_t numDescriptors, bool isShaderVisible = false) noexcept -> WRL::ComPtr<ID3D12DescriptorHeap>;
 
+        /**
+         * @brief Creates a command allocator 
+         * @param type D3D12_COMMAND_LIST_TYPE to set it as
+         * @return An initialized pointer to ID3D12CommandAllocator if successful, nullptr if failed
+        */
+        [[nodiscard]] auto CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE type) noexcept -> WRL::ComPtr<ID3D12CommandAllocator>;
+
+        /**
+         * @brief Creates a closed command list 
+         * @param type D3D12_COMMAND_LIST_TYPE to create
+         * @return An initialized ID3D12CommandList object if successful, nullptr if not
+        */
+        [[nodiscard]] auto CreateCommandList(D3D12_COMMAND_LIST_TYPE type) noexcept -> WRL::ComPtr<ID3D12CommandList>;
+
+        /**
+         * @brief Creates a fence object initialized at 0 and has no flag options
+         * @return A fence object, if any error occurs, will be nullptr
+        */
+        [[nodiscard]] auto CreateFence(D3D12_FENCE_FLAGS flag = D3D12_FENCE_FLAG_NONE) noexcept -> WRL::ComPtr<ID3D12Fence>;
+
+        /**
+         * @brief Returns the number of physical adapters (nodes) with this device
+         * @return number of adapters
+        */
+        [[nodiscard]] UINT GetPhysicalAdapterCount() noexcept
+        {
+            return m_pDevice->GetNodeCount();
+        }
+
+    private:
         /**
          * @brief Find a compatible display from the objects provided that meets the minimum feature level in @link D3D12Settings
          * @param adapters list of display adapters to iterate through
          * @return optional value that may contain objects or none if there is no display that meets the requirement
         */
-        auto FindCompatDisplay(std::span<WRL::ComPtr<IDXGIAdapter4>> adapters) noexcept -> Nullable<WRL::ComPtr<IDXGIAdapter4>>;
-        void CreateSwapchain();
+        [[nodiscard]] auto FindCompatDisplay(std::span<WRL::ComPtr<IDXGIAdapter4>> adapters) noexcept -> Nullable<WRL::ComPtr<IDXGIAdapter4>>;
 
         void PrintDisplayAdapters();
         
         // Objects of Class // 
-        SharedRef<D3D12Settings>        m_pSettings = nullptr;
-        Ref<Win32Window>                m_pWindow = nullptr;
+        D3D12Settings                   m_settings;
+        HWND                            m_hwnd;
         uint64_t                        m_frameIndex = 0u;
-        ResourceManagerD3D12            m_resManager;
-        //TODO: Build a resource manager for the objects we'll need to create for the Direct3D 12 API
         // ComPtr Objects // 
         WRL::ComPtr<ID3D12Device9>      m_pDevice = nullptr;
         WRL::ComPtr<ID3D12Debug5>       m_pDebug = nullptr;
@@ -83,33 +106,9 @@ export namespace LS::Win32
         WRL::ComPtr<IDXGIFactory7>      m_pFactoryDxgi = nullptr;
 
     public: // Public inline functions (mainly getters/setters)
-        SharedRef<D3D12Settings> Settings()
+        D3D12Settings GetSettings() noexcept
         {
-            return m_pSettings;
-        }
-
-        const D3D12Settings* Settings() const
-        {
-            return m_pSettings.get();
-        }
-
-        auto Window() noexcept -> Win32Window*
-        {
-            return m_pWindow.get();
-        }
-        auto Window() const noexcept -> const Win32Window*
-        {
-            return m_pWindow.get();
-        }
-
-        auto WindowBase() const noexcept -> LSWindowBase*
-        {
-            return m_pWindow.get();
-        }
-
-        auto WindowBase() noexcept -> LSWindowBase*
-        {
-            return m_pWindow.get();
+            return m_settings;
         }
 
         auto SwapchainWaitableHandle() noexcept -> HANDLE

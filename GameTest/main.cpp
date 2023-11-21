@@ -6,6 +6,7 @@
 #include <format>
 #include <cstdint>
 #include <bitset>
+#include <string>
 
 #ifndef _DEBUG
 #include <Windows.h>
@@ -15,9 +16,11 @@ import Engine.Logger;
 import Engine.EngineCodes;
 import DX11CubeApp;
 import CubeApp;
+import DX12.SimpleWindow;
 import Engine.App;
 import LSData;
 import Helper.LSCommonTypes;
+import ImGuiWindowTest;
 
 //import MultiPassTestApp;
 //import CubeApp;
@@ -32,16 +35,36 @@ import Helper.LSCommonTypes;
 // TODO: Start Vulkan renderer
 // TODO: Examin needed Interfaces and build them
 
-Ref<LS::LSApp>& CreateApp(uint32_t app)
+Ref<LS::LSApp> CreateApp(uint32_t choice)
 {
-    switch(app)
+    switch(choice)
     {
     case 0:
-        return gt::dx11::App;
+    {
+        Ref<LS::LSApp> app(new gt::dx11::DX11CubeApp(800, 600, L"DX11 Cube App"));
+        return app;
+    }
     case 1:
-        return gt::dx12::App;
+    {
+        //Ref<LS::LSApp> app = std::make_unique<gt::dx12::DX12CubeApp>(800, 600, L"DX12 Cube App");
+        Ref<LS::LSApp> app(new gt::dx12::DX12CubeApp(800, 600, L"DX12 Cube App"));
+        return app;
+    }
+    case 2:
+    {
+        Ref<LS::LSApp> app(new gt::dx12::SimpleWindow(800, 700));
+        return app;
+    }
+    case 3:
+    {
+        Ref<LS::LSApp> app(new gt::dx12::ImGuiSample::ImGuiSample(800, 600));
+        return app;
+    }
     default:
-        return gt::dx11::App;
+    {
+        Ref<LS::LSApp> app(new gt::dx11::DX11CubeApp(800, 600, L"DX11 Cube App"));
+        return app;
+    }
     }
 }
 
@@ -58,7 +81,13 @@ int main(int argc, char* argv[])
 
     std::cerr << "An output to file will occur for cerr\n";*/
     LS::Log::InitLog();
-    auto& app = CreateApp(0);
+
+    std::cout << "Pick an app:\n0 - DX 11 Cube\n1 - DX12 Cube\n2 - Simple DX12 Window\n3 - ImGui Sample\nChoice: ";
+    std::string choice{};
+    std::getline(std::cin, choice);
+    auto value = std::stoi(choice);
+
+    auto app = CreateApp(value);
     auto appcode = app->Initialize(argc, argv);
     if (!appcode)
     {

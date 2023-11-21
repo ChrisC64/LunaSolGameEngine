@@ -8,6 +8,7 @@
       "directxtex",
       "directxtk",
       "directxtk12",
-      "assimp"
+      "assimp",
+      "fmt"
     ]
   }

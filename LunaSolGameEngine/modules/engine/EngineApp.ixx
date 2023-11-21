@@ -42,20 +42,18 @@ namespace LS
     */
     export auto BuildWindow(uint32_t width, uint32_t height, std::wstring_view title) noexcept -> Ref<LSWindowBase>;
 
-    export
-    {
-        using AppInitFunc = std::function<LS::System::ErrorCode()>;
-        using AppRunFunc = std::function<void()>;
-    }
+    export class LSApp;
 
-    export struct LSApp;
-
-    struct LSApp
+    class LSApp
     {
-        LSApp() = default;
-        LSApp(uint32_t width, uint32_t height,
-            std::wstring_view title, AppInitFunc&& initFunc, AppRunFunc&& runFunc);
-        ~LSApp() = default;
+    public:
+        LSApp()
+        {
+            Window = BuildWindow(600, 600, L"LS Application");
+        }
+
+        LSApp(uint32_t width, uint32_t height, std::wstring_view title);
+        virtual ~LSApp() = default;
 
         LSApp(const LSApp&) = delete;
         LSApp& operator=(const LSApp&) = delete;
@@ -63,85 +61,49 @@ namespace LS
         LSApp(LSApp&&) = default;
         LSApp& operator=(LSApp&&) = default;
 
-        System::ErrorCode Initialize(int argCount, char* argsV[]);
-        System::ErrorCode Initialize();
-        void Run();
+        [[nodiscard]] virtual auto Initialize([[maybe_unused]] int argCount = 0, [[maybe_unused]] char* argsV[] = nullptr) -> System::ErrorCode = 0;
+        virtual void Run() = 0;
 
+    protected:
         Ref<LSWindowBase> Window;
-        std::vector<std::string_view> CommandArgs;
+        std::vector<std::string> CommandArgs;
+        //TODO: Get rid of this ugly mess.
         bool IsRunning = false;
         bool IsPaused = false;
-    private:
-        AppInitFunc InitFunc;
-        AppRunFunc RunFunc;
+
+        void InitCommandArgs(int argCount, char* argsV[], bool skipFirst = true)
+        {
+            int i = skipFirst ? 1 : 0;
+            for (; i < argCount; ++i)
+            {
+                CommandArgs.emplace_back(argsV[i]);
+            }
+        }
+
+        void RegisterKeyboardInput(LSOnKeyboardDown onKeyDown, LSOnKeyboardUp onKeyUp);
+        void RegisterMouseInput(LSOnMouseDown onMouseDown, LSOnMouseUp onMouseUp, LSOnMouseWheelScroll mouseWheel, LSOnMouseMove cursorMove);
     };
-
-    export auto CreateAppRef(uint32_t width, uint32_t height,
-        std::wstring_view title, AppInitFunc&& initFunc, AppRunFunc&& runFunc) -> Ref<LSApp>;
-
-    export void RegisterKeyboardInput(Ref<LSApp>& app, LSOnKeyboardDown onKeyDown, LSOnKeyboardUp onKeyUp);
-    export void RegisterMouseInput(Ref<LSApp>& app, LSOnMouseDown onMouseDown, LSOnMouseUp onMouseUp, LSOnMouseWheelScroll mouseWheel, LSOnMouseMove cursorMove);
 }
 
 module : private;
 
 namespace LS
 {
-    LSApp::LSApp(uint32_t width, uint32_t height, std::wstring_view title, AppInitFunc&& initFunc, AppRunFunc&& runFunc) : InitFunc(std::move(initFunc)),
-        RunFunc(runFunc)
+    LSApp::LSApp(uint32_t width, uint32_t height, std::wstring_view title) 
     {
-        Window = BuildWindow(width, height, title);
+        Window =    BuildWindow(width, height, title);
     }
 
-    System::ErrorCode LSApp::Initialize(int argCount, char* argsV[])
+    void LS::LSApp::RegisterKeyboardInput(LSOnKeyboardDown onKeyDown, LSOnKeyboardUp onKeyUp)
     {
-        CommandArgs = std::vector<std::string_view>(argsV + 1, argsV + argCount);
-
-        if (InitFunc)
-        {
-            return InitFunc();
-        }
-        return System::ErrorCode(System::ErrorStatus::SUCCESS, System::ErrorCategory::GENERAL, "App initialized");
+        Window->RegisterKeyboardDown(onKeyDown);
+        Window->RegisterKeyboardUp(onKeyUp);
     }
-
-    System::ErrorCode LSApp::Initialize()
+    void LS::LSApp::RegisterMouseInput(LSOnMouseDown onMouseDown, LSOnMouseUp onMouseUp, LSOnMouseWheelScroll mouseWheel, LSOnMouseMove cursorMove)
     {
-        if (InitFunc)
-        {
-            return InitFunc();
-        }
-        return System::ErrorCode(System::ErrorStatus::SUCCESS, System::ErrorCategory::GENERAL, "App initialized");
-    }
-
-    void LSApp::Run()
-    {
-        IsRunning = true;
-        if (RunFunc)
-        {
-            RunFunc();
-        }
-    }
-
-    auto CreateAppRef(uint32_t width, uint32_t height, std::wstring_view title, AppInitFunc&& initFunc, AppRunFunc&& runFunc) -> Ref<LSApp>
-    {
-        auto out = std::make_unique<LSApp>(width, height, title, std::move(initFunc), std::move(runFunc));
-        return out;
-    }
-
-    void RegisterKeyboardInput(Ref<LSApp>& app, LSOnKeyboardDown onKeyDown, LSOnKeyboardUp onKeyUp)
-    {
-        if (!app)
-            return;
-        app->Window->RegisterKeyboardDown(onKeyDown);
-        app->Window->RegisterKeyboardUp(onKeyUp);
-    }
-    void RegisterMouseInput(Ref<LSApp>& app, LSOnMouseDown onMouseDown, LSOnMouseUp onMouseUp, LSOnMouseWheelScroll mouseWheel, LSOnMouseMove cursorMove)
-    {
-        if (!app)
-            return;
-        app->Window->RegisterMouseDown(onMouseDown);
-        app->Window->RegisterMouseUp(onMouseUp);
-        app->Window->RegisterMouseWheel(mouseWheel);
-        app->Window->RegisterMouseMoveCallback(cursorMove);
+        Window->RegisterMouseDown(onMouseDown);
+        Window->RegisterMouseUp(onMouseUp);
+        Window->RegisterMouseWheel(mouseWheel);
+        Window->RegisterMouseMoveCallback(cursorMove);
     }
 }

@@ -1,9 +1,13 @@
 module;
 #include <cstdint>
 #include <string>
+#include <unordered_map>
+#include <format>
+#include <optional>
 
 export module Data.LSBufferTypes;
 import Data.LSDataTypes;
+import Engine.EngineCodes;
 
 export namespace LS
 {
@@ -85,7 +89,7 @@ export namespace LS
 
         auto GetData() const -> const std::byte*
         {
-            return reinterpret_cast<const std::byte*>(&m_bufferObject);
+            return static_cast<const std::byte*>(&m_bufferObject);
         }
 
         auto GetTypePtr() const -> const TObject*
@@ -132,5 +136,73 @@ export namespace LS
         {
             return m_cpuAccess;
         }
+    };
+
+    using LSBufferReserve = LSBuffer<void*>;
+
+    template <class Buffer>
+    class LSBufferCache
+    {
+        using LSCacheSize = std::uint64_t;
+        using LSCache = std::unordered_map<std::string, Buffer>;
+    public:
+        LSBufferCache() = default;
+        ~LSBufferCache() = default;
+
+        LSBufferCache(const LSBufferCache&) = delete;
+        LSBufferCache& operator=(const LSBufferCache&) = delete;
+
+        LSBufferCache(LSBufferCache&&) = default;
+        LSBufferCache& operator=(LSBufferCache&&) = default;
+
+        /**
+         * @brief Insert a buffer into the cache
+         * @param key a unique ID
+         * @param buffer The buffer to insert
+         * @return A success error code means insertion took place, a fail error code means insertion did not
+        */
+        [[nodiscard]]
+        auto Insert(std::string_view key, const Buffer& buffer) noexcept -> LS::System::ErrorCode
+        {
+            auto [_, status] = m_cache.emplace(key.data(), buffer);
+
+            if (!status)
+                return LS::System::CreateFailCode(std::format("Could not add key: {}", key));
+            return LS::System::CreateSuccessCode();
+        }
+
+        [[nodiscard]]
+        auto Get(std::string_view key) noexcept -> Nullable<Buffer>
+        {
+            if (!m_cache.contains(key.data()))
+                return std::nullopt;
+
+            return m_cache.at(key.data());
+        }
+
+        [[nodiscard]]
+        auto Remove(std::string_view key) noexcept -> bool
+        {
+            if (!m_cache.contains(key.data()))
+                return false;
+
+            m_cache.erase(key.data());
+            return true;
+        }
+
+        void SetCacheSize(LSCacheSize size) noexcept
+        {
+            m_limit = size;
+        }
+
+        [[nodiscard]]
+        auto GetCacheSize() noexcept -> LSCacheSize
+        {
+            return m_limit;
+        }
+
+    private:
+        LSCacheSize m_limit = 1024u * 1024u * 1024u * 3;
+        LSCache m_cache;
     };
 }

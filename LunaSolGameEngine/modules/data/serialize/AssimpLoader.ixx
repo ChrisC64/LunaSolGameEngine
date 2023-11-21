@@ -32,7 +32,6 @@ export namespace LS::Serialize
 
     private:
         Assimp::Importer m_importer;
-        aiScene* m_scene;
         std::vector<LSMesh> m_meshes;
 
         void ProcessFace(const aiFace* face, LSMesh& lsMesh) noexcept;

@@ -14,6 +14,7 @@
 #include <exception>
 #include <iostream>
 #include <format>
+#include "engine\EngineLogDefines.h"
 #include "platform/Windows/Win32/WinApiUtils.h"
 
 import D3D12Lib;
@@ -21,8 +22,10 @@ import DXGIHelper;
 import Data.LSDataTypes;
 import Platform.Win32Window;
 import Engine.Logger;
+import Engine.EngineCodes;
 
 using namespace LS::Win32;
+using namespace LS::Platform::Dx12;
 namespace WRL = Microsoft::WRL;
 
 class HrException : public std::runtime_error
@@ -34,24 +37,11 @@ private:
     const HRESULT m_hr;
 };
 
-DeviceD3D12::DeviceD3D12(SharedRef<D3D12Settings>& settings) : m_pSettings(settings),
-    m_resManager(m_pDevice, m_pSettings)
+DeviceD3D12::DeviceD3D12(D3D12Settings&& settings) : m_settings(std::move(settings))
 {
 }
 
-bool LS::Win32::DeviceD3D12::Initialize(uint32_t width, uint32_t height, std::wstring_view title, WRL::ComPtr<IDXGIAdapter> displayAdapter) noexcept
-{
-    if (!CreateDevice(displayAdapter))
-    {
-        Log::TraceWarning(L"Failed to initialize the Direct3D 12 Device.");
-        return false;
-    }
-
-    InitWindow(width, height, title);
-    return true;
-}
-
-bool DeviceD3D12::CreateDevice(WRL::ComPtr<IDXGIAdapter> displayAdpater /* = nullptr*/) noexcept
+auto DeviceD3D12::CreateDevice(WRL::ComPtr<IDXGIAdapter> displayAdpater /* = nullptr*/) noexcept -> LS::System::ErrorCode
 {
 #ifdef _DEBUG
     if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&m_pDebug))))
@@ -69,10 +59,12 @@ bool DeviceD3D12::CreateDevice(WRL::ComPtr<IDXGIAdapter> displayAdpater /* = nul
     if (!factoryOpt)
     {
         Log::TraceError(L"Failed to create DXGI Factory, cannot proceed with device creation.");
-        return false;
+        return LS::System::CreateFailCode("Failed to create DXGI Factory.");
     }
 
-    m_pFactoryDxgi = factoryOpt.value();
+    
+    auto factory = factoryOpt.value();
+    factory.As(&m_pFactoryDxgi);
     WRL::ComPtr<IDXGIAdapter1> hardwareAdapter;
     std::vector<WRL::ComPtr<IDXGIAdapter4>> adapters = EnumerateDiscreteGpuAdapters(m_pFactoryDxgi);
 
@@ -85,17 +77,18 @@ bool DeviceD3D12::CreateDevice(WRL::ComPtr<IDXGIAdapter> displayAdpater /* = nul
         if (!adapter)
         {
             Log::TraceError(L"Failed to find a compatible display.");
-            return false;
+            return LS::System::CreateFailCode("Failed to find a compatible display.");
         }
         displayAdpater = adapter.value();
     }
 
-    hr = D3D12CreateDevice(displayAdpater.Get(), m_pSettings->MinSettings.MinFeatureLevel, IID_PPV_ARGS(&m_pDevice));
+    hr = D3D12CreateDevice(displayAdpater.Get(), m_settings.MinSettings.MinFeatureLevel, IID_PPV_ARGS(&m_pDevice));
     if (FAILED(hr))
     {
-        auto string = HrToWString(hr);
-        Log::TraceError(std::format(L"Failed to create device. Error Code: {}", string));
-        return false;
+        auto string = HrToString(hr);
+        auto wstring = HrToWString(hr);
+        Log::TraceError(std::format(L"Failed to create device. Error Code: {}", wstring));
+        return LS::System::CreateFailCode(std::format("Failed to create device. Error Code: {}", string));
     }
     // [DEBUG] Setup debug interface to break on any warnings/errors
 #ifdef _DEBUG
@@ -106,30 +99,95 @@ bool DeviceD3D12::CreateDevice(WRL::ComPtr<IDXGIAdapter> displayAdpater /* = nul
         pInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, true);
         pInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, true);
         pInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, true);
-        m_resManager.SetDebugDevice(m_pDebug);
     }
 #endif
     
-    return m_resManager.CreateCommandQueue();;
+    return LS::System::CreateFailCode("Not yet implemented.");
 }
 
-void DeviceD3D12::InitWindow(uint32_t width, uint32_t height, std::wstring_view title) noexcept
+auto LS::Platform::Dx12::DeviceD3D12::CreateCommandQueue(D3D12_COMMAND_LIST_TYPE type, D3D12_COMMAND_QUEUE_PRIORITY priority) noexcept -> WRL::ComPtr<ID3D12CommandQueue>
+{
+    D3D12_COMMAND_QUEUE_DESC desc = {};
+    desc.Type = type;
+    desc.Priority = priority;
+    desc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
+    desc.NodeMask = 0;
+
+    WRL::ComPtr<ID3D12CommandQueue> pQueue;
+    const auto hr = m_pDevice->CreateCommandQueue(&desc, IID_PPV_ARGS(&pQueue));
+
+    if (FAILED(hr))
+    {
+        // Handle error
+        return nullptr;
+    }
+
+    return pQueue;
+}
+
+auto LS::Platform::Dx12::DeviceD3D12::CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE type, uint32_t numDescriptors, bool isShaderVisible) noexcept -> WRL::ComPtr<ID3D12DescriptorHeap>
 {
     assert(m_pDevice);
-    assert(m_pFactoryDxgi);
 
-    m_pWindow = std::make_unique<Win32Window>(width, height, title);
+    D3D12_DESCRIPTOR_HEAP_DESC desc{};
+    desc.NumDescriptors = numDescriptors;
+    desc.Type = type;
+    desc.Flags = isShaderVisible ? D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE : D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+    desc.NodeMask = 0u;
 
-    m_pWindow->Show();
-    // Our window is visible, we can create the swap chain to the window now 
-    CreateSwapchain();
+    WRL::ComPtr<ID3D12DescriptorHeap> heap;
+    const auto hr = m_pDevice->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&heap));
+
+    if (FAILED(hr))
+    {
+        return nullptr;
+    }
+
+    return heap;
 }
 
-void LS::Win32::DeviceD3D12::MoveToWindow(Ref<Win32Window>& window) noexcept
+auto LS::Platform::Dx12::DeviceD3D12::CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE type) noexcept -> WRL::ComPtr<ID3D12CommandAllocator>
 {
-    assert(window);
-    m_pWindow = std::move(window);
-    CreateSwapchain();
+    assert(m_pDevice);
+
+    WRL::ComPtr<ID3D12CommandAllocator> allocator;
+    const auto hr = m_pDevice->CreateCommandAllocator(type, IID_PPV_ARGS(&allocator));
+    if (FAILED(hr))
+    {
+        const auto msg = HrToWString(hr);
+        LS_LOG_ERROR(std::format(L"Failed to create command allocator: {}", msg))
+        return nullptr;
+    }
+
+    return allocator;
+}
+
+auto LS::Platform::Dx12::DeviceD3D12::CreateCommandList(D3D12_COMMAND_LIST_TYPE type) noexcept -> WRL::ComPtr<ID3D12CommandList>
+{
+    assert(m_pDevice);
+    WRL::ComPtr<ID3D12CommandList> commandList;
+    const auto hr = m_pDevice->CreateCommandList1(0, type, D3D12_COMMAND_LIST_FLAG_NONE, IID_PPV_ARGS(&commandList));
+    if (FAILED(hr))
+    {
+        const auto msg = HrToString(hr);
+        LS_LOG_ERROR(std::format("Failed to create command list: {}", msg));
+        return nullptr;
+    }
+    return commandList;
+}
+
+auto LS::Platform::Dx12::DeviceD3D12::CreateFence(D3D12_FENCE_FLAGS flag /*= D3D12_FENCE_FLAG_NONE*/) noexcept -> WRL::ComPtr<ID3D12Fence>
+{
+    assert(m_pDevice);
+    WRL::ComPtr<ID3D12Fence> fence;
+    const auto hr = m_pDevice->CreateFence(0, flag, IID_PPV_ARGS(&fence));
+    if (FAILED(hr))
+    {
+        const auto msg = HrToString(hr);
+        LS_LOG_ERROR(std::format("Failed to create fence: {}", msg));
+        return nullptr;
+    }
+    return fence;
 }
 
 // Private Methods for DeviceD3D12 //
@@ -137,7 +195,7 @@ auto DeviceD3D12::FindCompatDisplay(std::span<WRL::ComPtr<IDXGIAdapter4>> adapte
 {
     for (auto adapter : adapters)
     {
-        if (SUCCEEDED(D3D12CreateDevice(adapter.Get(), m_pSettings->MinSettings.MinFeatureLevel, __uuidof(ID3D12Device), nullptr)))
+        if (SUCCEEDED(D3D12CreateDevice(adapter.Get(), m_settings.MinSettings.MinFeatureLevel, __uuidof(ID3D12Device), nullptr)))
         {
             return adapter;
         }
@@ -145,18 +203,7 @@ auto DeviceD3D12::FindCompatDisplay(std::span<WRL::ComPtr<IDXGIAdapter4>> adapte
     return std::nullopt;
 }
 
-void LS::Win32::DeviceD3D12::CreateSwapchain()
-{
-    assert(m_pWindow);
-    if (!m_pWindow)
-    {
-        Log::TraceWarning(L"The window is null, cannot create swap chain");
-        return;
-    }
-    m_resManager.CreateSwapChain(m_pWindow.get());
-}
-
-void LS::Win32::DeviceD3D12::PrintDisplayAdapters()
+void DeviceD3D12::PrintDisplayAdapters()
 {
     LS::Win32::LogAdapters(m_pFactoryDxgi.Get());
 }

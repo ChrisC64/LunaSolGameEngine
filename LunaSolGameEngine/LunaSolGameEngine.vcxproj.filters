@@ -141,7 +141,7 @@
     <ClCompile Include="modules\platform\Windows\D3D12\ResourceManagerD3D12.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="modules\platform\Windows\D3D12\D3D12Helper.ixx">
+    <ClCompile Include="modules\platform\Windows\D3D12\Helpers\D3D12UtilsDescriptors.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="modules\platform\Windows\D3D12\D3D12Common.ixx">
@@ -172,6 +172,18 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="modules\data\serialize\AssimpLoader.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\platform\Windows\D3D12\Helpers\D3D12MemoryHelper.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\platform\Windows\D3D12\Helpers\D3D12UtilsCommandList.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\platform\Windows\D3D12\CommandQueueD3D12.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\platform\D3D12\CommandQueueD3D12.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
