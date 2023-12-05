@@ -11,6 +11,7 @@ module;
 #include <string_view>
 #include <array>
 #include <cstdint>
+#include <d3dx12.h>
 #pragma comment(lib, "dxguid.lib")
 
 export module D3D12Lib:Device;
@@ -26,6 +27,12 @@ namespace WRL = Microsoft::WRL;
 
 export namespace LS::Platform::Dx12
 {
+    /**
+     * @brief Manages the settings and features of the DirectX12 runtime. We initialize and grab the compatible DX12 device
+     * and verify features available within the runtime are supported on the current graphics card. This is not meant
+     * to be a "renderer" that performs drawing and other operations. At most, this is the communication link between
+     * the user and the GPU device. 
+    */
     class DeviceD3D12
     {
     public:
@@ -45,7 +52,7 @@ export namespace LS::Platform::Dx12
          * @param priority D3D12_COMMAND_QUEUE_PRIORITY defaults to D3D12_COMMAND_QUEUE_PRIORITY_NORMAL
          * @return An initialized ComPtr if successful, otherwise a nullptr if not. 
         */
-        [[nodiscard]] auto CreateCommandQueue(D3D12_COMMAND_LIST_TYPE type, D3D12_COMMAND_QUEUE_PRIORITY priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL) noexcept -> WRL::ComPtr<ID3D12CommandQueue>;
+        //[[nodiscard]] auto CreateCommandQueue(D3D12_COMMAND_LIST_TYPE type, D3D12_COMMAND_QUEUE_PRIORITY priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL) noexcept -> WRL::ComPtr<ID3D12CommandQueue>;
 
         /**
          * @brief Create a Descriptor Heap and return to the user
@@ -54,27 +61,27 @@ export namespace LS::Platform::Dx12
          * @param isShaderVisible Whether this should be shader visible or not
          * @return An iniitlaized pointer of ID3D12DescriptorHeap if successful, otherwise a nullptr
         */
-        [[nodiscard]] auto CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE type, uint32_t numDescriptors, bool isShaderVisible = false) noexcept -> WRL::ComPtr<ID3D12DescriptorHeap>;
+        //[[nodiscard]] auto CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE type, uint32_t numDescriptors, bool isShaderVisible = false) noexcept -> WRL::ComPtr<ID3D12DescriptorHeap>;
 
         /**
          * @brief Creates a command allocator 
          * @param type D3D12_COMMAND_LIST_TYPE to set it as
          * @return An initialized pointer to ID3D12CommandAllocator if successful, nullptr if failed
         */
-        [[nodiscard]] auto CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE type) noexcept -> WRL::ComPtr<ID3D12CommandAllocator>;
+        //[[nodiscard]] auto CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE type) noexcept -> WRL::ComPtr<ID3D12CommandAllocator>;
 
         /**
          * @brief Creates a closed command list 
          * @param type D3D12_COMMAND_LIST_TYPE to create
          * @return An initialized ID3D12CommandList object if successful, nullptr if not
         */
-        [[nodiscard]] auto CreateCommandList(D3D12_COMMAND_LIST_TYPE type) noexcept -> WRL::ComPtr<ID3D12CommandList>;
+        //[[nodiscard]] auto CreateCommandList(D3D12_COMMAND_LIST_TYPE type) noexcept -> WRL::ComPtr<ID3D12CommandList>;
 
         /**
          * @brief Creates a fence object initialized at 0 and has no flag options
          * @return A fence object, if any error occurs, will be nullptr
         */
-        [[nodiscard]] auto CreateFence(D3D12_FENCE_FLAGS flag = D3D12_FENCE_FLAG_NONE) noexcept -> WRL::ComPtr<ID3D12Fence>;
+        //[[nodiscard]] auto CreateFence(D3D12_FENCE_FLAGS flag = D3D12_FENCE_FLAG_NONE) noexcept -> WRL::ComPtr<ID3D12Fence>;
 
         /**
          * @brief Returns the number of physical adapters (nodes) with this device
@@ -83,6 +90,26 @@ export namespace LS::Platform::Dx12
         [[nodiscard]] UINT GetPhysicalAdapterCount() noexcept
         {
             return m_pDevice->GetNodeCount();
+        }
+
+        [[nodiscard]] auto GetSettings() const noexcept -> D3D12Settings
+        {
+            return m_settings;
+        }
+
+        [[nodiscard]] auto SwapchainWaitableHandle() const noexcept -> HANDLE
+        {
+            return m_pSwapChain->GetFrameLatencyWaitableObject();
+        }
+
+        [[nodiscard]] auto GetDeviceD3D12() const noexcept -> WRL::ComPtr<ID3D12Device>
+        {
+            return m_pDevice;
+        }
+
+        [[nodiscard]] auto GetFeatureValidator() const noexcept -> CD3DX12FeatureSupport
+        {
+            return m_featureSupport;
         }
 
     private:
@@ -98,23 +125,14 @@ export namespace LS::Platform::Dx12
         // Objects of Class // 
         D3D12Settings                   m_settings;
         HWND                            m_hwnd;
-        uint64_t                        m_frameIndex = 0u;
+
         // ComPtr Objects // 
-        WRL::ComPtr<ID3D12Device9>      m_pDevice = nullptr;
-        WRL::ComPtr<ID3D12Debug5>       m_pDebug = nullptr;
-        WRL::ComPtr<IDXGISwapChain4>    m_pSwapChain = nullptr;
+        WRL::ComPtr<ID3D12Device1>      m_pDevice = nullptr;
+        WRL::ComPtr<ID3D12Debug>        m_pDebug = nullptr;
+        WRL::ComPtr<IDXGISwapChain2>    m_pSwapChain = nullptr;
         WRL::ComPtr<IDXGIFactory7>      m_pFactoryDxgi = nullptr;
+        CD3DX12FeatureSupport           m_featureSupport;
 
-    public: // Public inline functions (mainly getters/setters)
-        D3D12Settings GetSettings() noexcept
-        {
-            return m_settings;
-        }
-
-        auto SwapchainWaitableHandle() noexcept -> HANDLE
-        {
-            return m_pSwapChain->GetFrameLatencyWaitableObject();
-        }
     };
 }
 

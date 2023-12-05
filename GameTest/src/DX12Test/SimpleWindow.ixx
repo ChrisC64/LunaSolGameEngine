@@ -70,7 +70,7 @@ namespace gt::dx12
         HANDLE m_scWaitableHandle;
         HANDLE m_fenceEvent;
 
-        //Ref<LS::Platform::Dx12::CommandQueue> m_copyCommandQueue, m_directCommandQueue;
+        //Ref<LS::Platform::Dx12::CommandQueueDx12> m_copyCommandQueue, m_directCommandQueue;
 
         void LoadPipeline();
         void LoadAssets();
@@ -148,8 +148,8 @@ void gt::dx12::SimpleWindow::LoadPipeline()
     LS::Utils::ThrowIfFailed(m_pDevice->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&m_commandQueue)), "Failed to Create Command Queue");
 
     // Create Command Queues //
-    /*m_copyCommandQueue = std::make_unique<LS::Platform::Dx12::CommandQueue>(m_pDevice, D3D12_COMMAND_LIST_TYPE_COPY);
-    m_directCommandQueue = std::make_unique<LS::Platform::Dx12::CommandQueue>(m_pDevice, D3D12_COMMAND_LIST_TYPE_DIRECT);*/
+    /*m_copyCommandQueue = std::make_unique<LS::Platform::Dx12::CommandQueueDx12>(m_pDevice, D3D12_COMMAND_LIST_TYPE_COPY);
+    m_directCommandQueue = std::make_unique<LS::Platform::Dx12::CommandQueueDx12>(m_pDevice, D3D12_COMMAND_LIST_TYPE_DIRECT);*/
     auto resultComm = m_pDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_commandAlloc));
     LS::Utils::ThrowIfFailed(resultComm, "Failed to create command allocator");
 

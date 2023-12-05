@@ -289,14 +289,12 @@ inline auto gt::dx12::CreateDefaultBuffer(WRL::ComPtr<ID3D12Device> device, WRL:
     subresourceData.SlicePitch = subresourceData.RowPitch;
 
     auto defaultBarrier = CD3DX12_RESOURCE_BARRIER::Transition(defaultBuffer.Get(), D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
-    cmdList->ResourceBarrier(1,
-        &defaultBarrier);
+    cmdList->ResourceBarrier(1, &defaultBarrier);
 
     UpdateSubresources<1>(cmdList.Get(), defaultBuffer.Get(), uploadBuffer.Get(), 0, 0, 1, &subresourceData);
 
     auto defaultBarrier2 = CD3DX12_RESOURCE_BARRIER::Transition(defaultBuffer.Get(), D3D12_RESOURCE_STATE_COPY_DEST, finalState);
-    cmdList->ResourceBarrier(1,
-        &defaultBarrier2);
+    cmdList->ResourceBarrier(1, &defaultBarrier2);
 
     if (defaultName)
     {

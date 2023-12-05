@@ -11,6 +11,7 @@ module;
 #include <d3dx12\d3dx12_barriers.h>
 #include "engine\EngineLogDefines.h"
 #include "platform\Windows\Win32\WinApiUtils.h"
+#include <chrono>
 //NOMINMAX doesn't seem to work here. Though this might be because of std
 #ifdef min
 #undef min
@@ -107,9 +108,9 @@ export namespace LS::Platform::Dx12
      * @return A fence value that should be signaled by the CPU to assure all processes by the GPU are no longer "in-flight"
     */
     [[nodiscard]] inline auto Signal(WRL::ComPtr<ID3D12CommandQueue>& pQueue, WRL::ComPtr<ID3D12Fence>& pFence,
-        uint64_t& fenceValue) noexcept -> uint64_t
+        const uint64_t fenceValue) noexcept -> uint64_t
     {
-        uint64_t fenceValueForSignal = ++fenceValue;
+        uint64_t fenceValueForSignal = fenceValue + 1;
         const auto hr = pQueue->Signal(pFence.Get(), fenceValueForSignal);
 
         if (FAILED(hr))

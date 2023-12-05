@@ -7,12 +7,13 @@
 #include <chrono>
 
 import D3D12Lib;
+
 import Util.MSUtils;
 
 using namespace LS::Platform::Dx12;
 namespace WRL = Microsoft::WRL;
 
-CommandQueue::CommandQueue(const WRL::ComPtr<ID3D12Device4>& pDevice, D3D12_COMMAND_LIST_TYPE type) : m_pDevice(pDevice),
+CommandQueueDx12::CommandQueueDx12(const WRL::ComPtr<ID3D12Device4>& pDevice, D3D12_COMMAND_LIST_TYPE type) : m_pDevice(pDevice),
 m_commListType(type),
 m_fenceValue(0)
 {
@@ -23,16 +24,16 @@ m_fenceValue(0)
     desc.NodeMask = 0;
 
     auto hr = m_pDevice->CreateCommandQueue(&desc, IID_PPV_ARGS(&m_pCommandQueue));
-    LS::Utils::ThrowIfFailed(hr, "Failed to create command queue in CommandQueue ctor");
+    LS::Utils::ThrowIfFailed(hr, "Failed to create command queue in CommandQueueDx12 ctor");
 
     hr = m_pDevice->CreateFence(m_fenceValue, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_pFence));
-    LS::Utils::ThrowIfFailed(hr, "Failed to create fence in CommandQueue ctor");
+    LS::Utils::ThrowIfFailed(hr, "Failed to create fence in CommandQueueDx12 ctor");
 
     m_fenceEvent = ::CreateEvent(NULL, FALSE, FALSE, NULL);
     assert(m_fenceEvent && "Failed to create fence event handle.");
 }
 
-auto CommandQueue::GetCommandList() -> WRL::ComPtr<ID3D12GraphicsCommandList>
+auto CommandQueueDx12::GetCommandList() -> WRL::ComPtr<ID3D12GraphicsCommandList>
 {
     WRL::ComPtr<ID3D12CommandAllocator> commandAllocator;
     WRL::ComPtr<ID3D12GraphicsCommandList> commandList;
@@ -69,7 +70,7 @@ auto CommandQueue::GetCommandList() -> WRL::ComPtr<ID3D12GraphicsCommandList>
     return commandList;
 }
 
-auto CommandQueue::CreateCommandAllocator() -> WRL::ComPtr<ID3D12CommandAllocator>
+auto CommandQueueDx12::CreateCommandAllocator() -> WRL::ComPtr<ID3D12CommandAllocator>
 {
     WRL::ComPtr<ID3D12CommandAllocator> commandAllocator;
     const auto hr = m_pDevice->CreateCommandAllocator(m_commListType, IID_PPV_ARGS(&commandAllocator));
@@ -77,7 +78,7 @@ auto CommandQueue::CreateCommandAllocator() -> WRL::ComPtr<ID3D12CommandAllocato
     return commandAllocator;
 }
 
-auto CommandQueue::CreateCommandList(WRL::ComPtr<ID3D12CommandAllocator>& allocator) -> WRL::ComPtr<ID3D12GraphicsCommandList>
+auto CommandQueueDx12::CreateCommandList(WRL::ComPtr<ID3D12CommandAllocator>& allocator) -> WRL::ComPtr<ID3D12GraphicsCommandList>
 {
     WRL::ComPtr<ID3D12GraphicsCommandList> commandList;
     const auto hr = m_pDevice->CreateCommandList(0, m_commListType, allocator.Get(), nullptr, IID_PPV_ARGS(&commandList));
@@ -85,7 +86,7 @@ auto CommandQueue::CreateCommandList(WRL::ComPtr<ID3D12CommandAllocator>& alloca
     return commandList;
 }
 
-auto CommandQueue::CreateCommandList() -> WRL::ComPtr<ID3D12GraphicsCommandList>
+auto CommandQueueDx12::CreateCommandList() -> WRL::ComPtr<ID3D12GraphicsCommandList>
 {
     WRL::ComPtr<ID3D12GraphicsCommandList> commandList;
     const auto hr = m_pDevice->CreateCommandList1(0, m_commListType, D3D12_COMMAND_LIST_FLAG_NONE, IID_PPV_ARGS(&commandList));
@@ -94,7 +95,7 @@ auto CommandQueue::CreateCommandList() -> WRL::ComPtr<ID3D12GraphicsCommandList>
     return commandList;
 }
 
-auto CommandQueue::ExecuteCommandList(WRL::ComPtr<ID3D12GraphicsCommandList>& commandList) -> uint64_t
+auto CommandQueueDx12::ExecuteCommandList(WRL::ComPtr<ID3D12GraphicsCommandList>& commandList) -> uint64_t
 {
     const auto closeHr = commandList->Close();
     LS::Utils::ThrowIfFailed(closeHr, "Failed to close the command list before executing the next one.");
@@ -117,7 +118,7 @@ auto CommandQueue::ExecuteCommandList(WRL::ComPtr<ID3D12GraphicsCommandList>& co
     return fenceValue;
 }
 
-void CommandQueue::WaitForFenceValue(uint64_t fenceValue, std::chrono::milliseconds duration)
+void CommandQueueDx12::WaitForFenceValue(uint64_t fenceValue, std::chrono::milliseconds duration)
 {
     if (IsFenceComplete(fenceValue))
     {
@@ -126,12 +127,23 @@ void CommandQueue::WaitForFenceValue(uint64_t fenceValue, std::chrono::milliseco
     }
 }
 
-void CommandQueue::Flush() noexcept
+void CommandQueueDx12::Flush() noexcept
 {
     LS::Platform::Dx12::Flush(m_pCommandQueue, m_pFence, m_fenceValue, m_fenceEvent);
 }
 
-auto CommandQueue::IsFenceComplete(uint64_t fenceValue) const noexcept -> bool
+auto CommandQueueDx12::IsFenceComplete(uint64_t fenceValue) const noexcept -> bool
 {
     return m_pFence->GetCompletedValue() >= fenceValue;
+}
+
+void LS::Platform::Dx12::CommandQueueDx12::QueueCommands(std::vector<const LS::Platform::Dx12::CommandListDx12*> commands) noexcept
+{
+    //TODO: Not yet implemented
+}
+
+auto LS::Platform::Dx12::CommandQueueDx12::ExecuteCommands() noexcept -> uint64_t
+{
+    //TODO: Not yet implemented
+    return 0;
 }
