@@ -78,7 +78,7 @@ export namespace LS::Platform::Dx12
 
     /**
      * @brief Waits for the fence value and fires off the Fence Event when it is reached
-     * @param fence THe fence to associate with the event
+     * @param fence The fence to associate with the event
      * @param fenceValue The value to wait for (check Signal to retrieve this value)
      * @param fenceEvent The event to fire off after completion
      * @param duration How long to wait for the event before not abandoning
@@ -86,7 +86,7 @@ export namespace LS::Platform::Dx12
     inline void WaitForFenceValue(WRL::ComPtr<ID3D12Fence>& fence, uint64_t fenceValue, HANDLE fenceEvent,
         std::chrono::milliseconds duration = std::chrono::milliseconds::max()) noexcept
     {
-        if (fence->GetCompletedValue() < fenceValue)
+        if (fence->GetCompletedValue() >= fenceValue)
         {
             const auto hr = fence->SetEventOnCompletion(fenceValue, fenceEvent);
 
@@ -97,6 +97,41 @@ export namespace LS::Platform::Dx12
             }
 
             ::WaitForSingleObject(fenceEvent, static_cast<DWORD>(duration.count()));
+        }
+    }
+    
+    /**
+     * @brief Waits for the fence value and fires off the Fence Event when it is reached
+     * @param fence The fence to associate with the event
+     * @param fenceValue The value to wait for (check Signal to retrieve this value)
+     * @param fenceEvent The event to fire off after completion
+     * @param events The additional events to wait for among the fence event
+     * @param duration How long to wait for the event before not abandoning
+    */
+    inline void WaitForFenceValueMany(WRL::ComPtr<ID3D12Fence>& fence, uint64_t fenceValue, HANDLE fenceEvent, const std::vector<HANDLE>& events,
+        std::chrono::milliseconds duration = std::chrono::milliseconds::max()) noexcept
+    {
+        if (fence->GetCompletedValue() >= fenceValue)
+        {
+            const auto hr = fence->SetEventOnCompletion(fenceValue, fenceEvent);
+
+            if (FAILED(hr))
+            {
+                const auto msg = Win32::HrToString(hr);
+                LS_LOG_ERROR(std::format("An error occurred when trying to set an Event On Completion: {}", hr));
+            }
+
+            std::vector<HANDLE> objects(events.size() + 1);
+            objects[0] = fenceEvent;
+
+            auto p = 1u;
+            for (auto& e : events)
+            {
+                objects[p] = e;
+                p++;
+            }
+
+            ::WaitForMultipleObjects(objects.size(), objects.data(), TRUE, static_cast<DWORD>(duration.count()));
         }
     }
 

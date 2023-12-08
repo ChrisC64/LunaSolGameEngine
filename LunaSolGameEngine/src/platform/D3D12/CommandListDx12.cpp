@@ -22,6 +22,9 @@ m_name(std::move(name))
 {
     pDevice->CreateCommandList1(0, type, D3D12_COMMAND_LIST_FLAG_NONE, IID_PPV_ARGS(&m_pCommandList));
     assert(m_pCommandList && "Failed to create command list");
+
+    pDevice->CreateCommandAllocator(type, IID_PPV_ARGS(&m_pAllocator));
+    assert(m_pAllocator && "Failed to create command allocator");
 }
 
 void CommandListDx12::ResetCommandList() noexcept
@@ -35,7 +38,7 @@ void CommandListDx12::Close() noexcept
     LS::Utils::ThrowIfFailed(m_pCommandList->Close(), std::format("Failed to close command list: {}", m_name.c_str()));
 }
 
-void CommandListDx12::Clear(std::array<float, 4> clearColor, const D3D12_CPU_DESCRIPTOR_HANDLE rtv) noexcept
+void CommandListDx12::Clear(const std::array<float, 4>& clearColor, const D3D12_CPU_DESCRIPTOR_HANDLE rtv) noexcept
 {
     m_pCommandList->ClearRenderTargetView(rtv, clearColor.data(), 0, nullptr);
 }

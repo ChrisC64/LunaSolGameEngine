@@ -45,7 +45,7 @@ export namespace LS::Platform::Dx12
 
         void ResetCommandList() noexcept;
         void Close() noexcept;
-        void Clear(std::array<float, 4> clearColor, const D3D12_CPU_DESCRIPTOR_HANDLE rtv) noexcept;
+        void Clear(const std::array<float, 4>& clearColor, const D3D12_CPU_DESCRIPTOR_HANDLE rtv) noexcept;
         void ClearDepthStencil(const D3D12_CPU_DESCRIPTOR_HANDLE dsv, float clearValue = 1.0f, uint8_t stencilValue = 255);
         void TransitionResource(ID3D12Resource* resource, D3D12_RESOURCE_STATES before, D3D12_RESOURCE_STATES after);
 

@@ -205,7 +205,7 @@
     <ClCompile Include="modules\data\LSMathTypes.ixx" />
     <ClCompile Include="modules\helper\PipelineFactory.ixx" />
     <ClCompile Include="modules\platform\Windows\D3D12\CommandListDx12.ixx" />
-    <ClCompile Include="modules\platform\Windows\D3D12\CommandQueueD3D12.ixx" />
+    <ClCompile Include="modules\platform\Windows\D3D12\CommandQueueDx12.ixx" />
     <ClCompile Include="modules\platform\Windows\D3D12\D3D12Common.ixx" />
     <ClCompile Include="modules\platform\Windows\D3D12\Helpers\D3D12UtilsDescriptors.ixx" />
     <ClCompile Include="modules\platform\Windows\D3D12\D3D12Lib.ixx" />
@@ -240,7 +240,7 @@
     </ClCompile>
     <ClCompile Include="src\platform\D3D11\PipelineFactoryD3D11.cpp" />
     <ClCompile Include="src\platform\D3D12\CommandListDx12.cpp" />
-    <ClCompile Include="src\platform\D3D12\CommandQueueD3D12.cpp" />
+    <ClCompile Include="src\platform\D3D12\CommandQueueDx12.cpp" />
     <ClCompile Include="src\platform\D3D12\DeviceD3D12.cpp" />
     <ClCompile Include="src\platform\D3D12\ResourceManagerD3D12.cpp" />
     <ClCompile Include="src\platform\Windows\Win32Windows.cpp">

@@ -38,7 +38,7 @@ private:
     const HRESULT m_hr;
 };
 
-DeviceD3D12::DeviceD3D12(D3D12Settings&& settings) : m_settings(std::move(settings))
+DeviceD3D12::DeviceD3D12(const D3D12Settings& settings) : m_settings(settings)
 {
 }
 
@@ -85,7 +85,7 @@ auto DeviceD3D12::CreateDevice(WRL::ComPtr<IDXGIAdapter> displayAdpater /* = nul
         displayAdpater = adapter.value();
     }
 
-    hr = D3D12CreateDevice(displayAdpater.Get(), m_settings.MinSettings.MinFeatureLevel, IID_PPV_ARGS(&m_pDevice));
+    hr = D3D12CreateDevice(displayAdpater.Get(), m_settings.MinFeatureLevel, IID_PPV_ARGS(&m_pDevice));
     if (FAILED(hr))
     {
         auto string = HrToString(hr);
@@ -110,7 +110,7 @@ auto DeviceD3D12::CreateDevice(WRL::ComPtr<IDXGIAdapter> displayAdpater /* = nul
         return LS::System::CreateFailCode("Failed to create feature support validator.");
     }
 
-    return LS::System::CreateFailCode("Not yet implemented.");
+    return LS::System::CreateSuccessCode();
 }
 
 //auto LS::Platform::Dx12::DeviceD3D12::CreateCommandQueue(D3D12_COMMAND_LIST_TYPE type, D3D12_COMMAND_QUEUE_PRIORITY priority) noexcept -> WRL::ComPtr<ID3D12CommandQueue>
@@ -203,7 +203,7 @@ auto DeviceD3D12::FindCompatDisplay(std::span<WRL::ComPtr<IDXGIAdapter4>> adapte
 {
     for (auto adapter : adapters)
     {
-        if (SUCCEEDED(D3D12CreateDevice(adapter.Get(), m_settings.MinSettings.MinFeatureLevel, __uuidof(ID3D12Device), nullptr)))
+        if (SUCCEEDED(D3D12CreateDevice(adapter.Get(), m_settings.MinFeatureLevel, __uuidof(ID3D12Device), nullptr)))
         {
             return adapter;
         }

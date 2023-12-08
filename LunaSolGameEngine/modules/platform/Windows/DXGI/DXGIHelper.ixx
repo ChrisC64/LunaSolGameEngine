@@ -88,25 +88,25 @@ auto LS::Win32::CreateSwapchainForHwndDx12(const Platform::Dx12::D3D12Settings& 
     IDXGIFactory2* factory, ID3D12CommandQueue* commandQueue) noexcept -> Nullable<WRL::ComPtr<IDXGISwapChain1>>
 {
     DXGI_SWAP_CHAIN_DESC1 swapchainDesc1{};
-    swapchainDesc1.BufferCount = settings.MinSettings.FrameBufferCount;
-    swapchainDesc1.Width = static_cast<UINT>(settings.MinSettings.ScreenWidth);
-    swapchainDesc1.Height = static_cast<UINT>(settings.MinSettings.ScreenHeight);
-    swapchainDesc1.Format = settings.MinSettings.PixelFormat;
+    swapchainDesc1.BufferCount = settings.FrameBufferCount;
+    swapchainDesc1.Width = static_cast<UINT>(settings.Width);
+    swapchainDesc1.Height = static_cast<UINT>(settings.Height);
+    swapchainDesc1.Format = settings.PixelFormat;
     swapchainDesc1.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
     swapchainDesc1.SampleDesc = { .Count = 1, .Quality = 0 };
 
     // If VSync is off, should use FIP_DISCARD not FLIP_SEQUENTIAL
-    swapchainDesc1.SwapEffect = settings.ExSettings.SwapEffect;
-    swapchainDesc1.AlphaMode = settings.ExSettings.AlphaMode;
-    swapchainDesc1.Scaling = settings.ExSettings.Scaling;
-    swapchainDesc1.Stereo = settings.ExSettings.IsStereoScopic ? TRUE : FALSE;
+    swapchainDesc1.SwapEffect = settings.SwapEffect;
+    swapchainDesc1.AlphaMode = settings.AlphaMode;
+    swapchainDesc1.Scaling = settings.Scaling;
+    swapchainDesc1.Stereo = settings.IsStereoScopic ? TRUE : FALSE;
 
     // Feature Flags to support // 
     swapchainDesc1.Flags = DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
 
     WRL::ComPtr<IDXGISwapChain1> swapchain;
 
-    const auto hr = factory->CreateSwapChainForHwnd(commandQueue, settings.MinSettings.Hwnd,
+    const auto hr = factory->CreateSwapChainForHwnd(commandQueue, settings.Hwnd,
         &swapchainDesc1, nullptr, nullptr, &swapchain);
 
     if (FAILED(hr))

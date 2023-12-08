@@ -317,7 +317,7 @@ bool gt::dx12::ImGuiSample::ImGuiSample::CreateDeviceD3D()
 
     LS::Utils::ThrowIfFailed(factory.As(&m_pFactory), "Failed to create DXGI Factory");
 
-    LS::Win32::GetHardwareAdapter(m_pFactory, m_pAdapter, true);
+    m_pAdapter = LS::Win32::GetHardwareAdapter(m_pFactory.Get(), true).value();
 
     // Create device
     D3D_FEATURE_LEVEL featureLevel = D3D_FEATURE_LEVEL_12_0;

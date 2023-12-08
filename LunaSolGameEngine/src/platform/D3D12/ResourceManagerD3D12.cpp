@@ -52,18 +52,18 @@ void ResourceManagerD3D12::CreateSwapChain(const Win32Window* window) noexcept
     assert(m_pCommandQueue);
 
     DXGI_SWAP_CHAIN_DESC1 swapchainDesc1{};
-    swapchainDesc1.BufferCount = m_pSettings->MinSettings.FrameBufferCount;
+    swapchainDesc1.BufferCount = m_pSettings->FrameBufferCount;
     swapchainDesc1.Width = window->GetWidth();
     swapchainDesc1.Height = window->GetHeight();
-    swapchainDesc1.Format = m_pSettings->MinSettings.PixelFormat;
+    swapchainDesc1.Format = m_pSettings->PixelFormat;
     swapchainDesc1.Flags = DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
     swapchainDesc1.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
     swapchainDesc1.SampleDesc.Count = 1;
     swapchainDesc1.SampleDesc.Quality = 0;
-    swapchainDesc1.SwapEffect = m_pSettings->ExSettings.SwapEffect;
-    swapchainDesc1.AlphaMode = m_pSettings->ExSettings.AlphaMode;
-    swapchainDesc1.Scaling = m_pSettings->ExSettings.Scaling;
-    swapchainDesc1.Stereo = m_pSettings->ExSettings.IsStereoScopic;
+    swapchainDesc1.SwapEffect = m_pSettings->SwapEffect;
+    swapchainDesc1.AlphaMode = m_pSettings->AlphaMode;
+    swapchainDesc1.Scaling = m_pSettings->Scaling;
+    swapchainDesc1.Stereo = m_pSettings->IsStereoScopic;
 
     //TODO: Currently doesn't set the DXGI_SWAPCHAIN_FULLSCREEN_DESC to handle full screen displays,
     // will need to add that in later. 
@@ -82,7 +82,7 @@ void ResourceManagerD3D12::CreateSwapChain(const Win32Window* window) noexcept
         return;
     }
 
-    m_pSwapChain->SetMaximumFrameLatency(m_pSettings->MinSettings.FrameBufferCount);
+    m_pSwapChain->SetMaximumFrameLatency(m_pSettings->FrameBufferCount);
     LS::Global::FrameIndex = m_pSwapChain->GetCurrentBackBufferIndex();
 }
 
