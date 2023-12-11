@@ -86,7 +86,8 @@ export namespace LS::Platform::Dx12
     inline void WaitForFenceValue(WRL::ComPtr<ID3D12Fence>& fence, uint64_t fenceValue, HANDLE fenceEvent,
         std::chrono::milliseconds duration = std::chrono::milliseconds::max()) noexcept
     {
-        if (fence->GetCompletedValue() >= fenceValue)
+        //TODO: If UINT_MAX then we have a DEVICE_REMOVED issue, need to address that scenario
+        if (fence->GetCompletedValue() < fenceValue)
         {
             const auto hr = fence->SetEventOnCompletion(fenceValue, fenceEvent);
 
@@ -111,7 +112,7 @@ export namespace LS::Platform::Dx12
     inline void WaitForFenceValueMany(WRL::ComPtr<ID3D12Fence>& fence, uint64_t fenceValue, HANDLE fenceEvent, const std::vector<HANDLE>& events,
         std::chrono::milliseconds duration = std::chrono::milliseconds::max()) noexcept
     {
-        if (fence->GetCompletedValue() >= fenceValue)
+        if (fence->GetCompletedValue() < fenceValue)
         {
             const auto hr = fence->SetEventOnCompletion(fenceValue, fenceEvent);
 
@@ -163,13 +164,34 @@ export namespace LS::Platform::Dx12
      * @param pFence The fence to use with
      * @param fenceValue The value to signal
      * @param fenceEvent The event to wait for
+     * @return The new signaled value that was used to increment the queue
     */
-    inline void Flush(WRL::ComPtr<ID3D12CommandQueue>& pQueue, WRL::ComPtr<ID3D12Fence>& pFence,
-        uint64_t& fenceValue, HANDLE fenceEvent) noexcept
+    inline auto Flush(WRL::ComPtr<ID3D12CommandQueue>& pQueue, WRL::ComPtr<ID3D12Fence>& pFence,
+        uint64_t fenceValue, HANDLE fenceEvent) noexcept -> uint64_t
     {
         uint64_t fenceValueForSignal = Signal(pQueue, pFence, fenceValue);
 
         WaitForFenceValue(pFence, fenceValueForSignal, fenceEvent);
+
+        return fenceValueForSignal;
+    }
+    
+    /**
+     * @brief Tries to "flush" the command queue by immediately signaling the queue and then waiting for the event to finish
+     * @param pQueue The command queue to "flush"
+     * @param pFence The fence to use with
+     * @param fenceValue The value to signal
+     * @param fenceEvent The event to wait for
+     * @return The new signaled value that was used to increment the queue
+    */
+    inline auto FlushAndWaitForMany(WRL::ComPtr<ID3D12CommandQueue>& pQueue, WRL::ComPtr<ID3D12Fence>& pFence,
+        uint64_t fenceValue, HANDLE fenceEvent, const std::vector<HANDLE>& events) noexcept -> uint64_t
+    {
+        uint64_t fenceValueForSignal = Signal(pQueue, pFence, fenceValue);
+
+        WaitForFenceValueMany(pFence, fenceValueForSignal, fenceEvent, events);
+
+        return fenceValueForSignal;
     }
 
     /**

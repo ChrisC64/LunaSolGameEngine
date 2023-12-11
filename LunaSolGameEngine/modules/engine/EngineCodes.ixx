@@ -130,6 +130,5 @@ export namespace LS
             return ErrorCode(ErrorStatus::SUCCESS, ErrorCategory::GENERAL, "");
         }
 
-
     }// end namespace System
 }// end namespace LS

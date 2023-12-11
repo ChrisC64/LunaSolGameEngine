@@ -56,7 +56,7 @@ namespace gt::dx12::ImGuiSample
         uint64_t                                FenceValue;
     };
 
-    static LRESULT WndProcImpl(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam);
+    LRESULT WndProcImpl(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam);
     
     export class ImGuiSample : public LS::LSApp
     {
@@ -426,7 +426,7 @@ bool gt::dx12::ImGuiSample::ImGuiSample::CreateDeviceD3D()
     return true;
 }
 
-static LRESULT gt::dx12::ImGuiSample::WndProcImpl(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+LRESULT gt::dx12::ImGuiSample::WndProcImpl(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     // Let ImGui handle itself, but we want to still allow rest of default window behavior to go to our current
     // window handler for the rest of the messages we do handle. 

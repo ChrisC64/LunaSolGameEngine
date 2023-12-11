@@ -12,3 +12,5 @@ export import :Device;
 export import :ResourceManagerD3D12;
 export import :CommandListDx12;
 export import :CommandQueueD3D12;
+export import :FrameDx12;
+export import :FrameBufferDxgi;

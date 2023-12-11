@@ -61,7 +61,7 @@ auto DeviceD3D12::CreateDevice(WRL::ComPtr<IDXGIAdapter> displayAdpater /* = nul
         Log::TraceError(L"Failed to create DXGI Factory, cannot proceed with device creation.");
         return LS::System::CreateFailCode("Failed to create DXGI Factory.");
     }
-    
+
     WRL::ComPtr<IDXGIAdapter1> hardwareAdapter;
     WRL::ComPtr<IDXGIFactory7> pTemp;
     if (FAILED(m_pFactoryDxgi->QueryInterface(IID_PPV_ARGS(&pTemp))))
@@ -85,7 +85,7 @@ auto DeviceD3D12::CreateDevice(WRL::ComPtr<IDXGIAdapter> displayAdpater /* = nul
         displayAdpater = adapter.value();
     }
 
-    hr = D3D12CreateDevice(displayAdpater.Get(), m_settings.MinFeatureLevel, IID_PPV_ARGS(&m_pDevice));
+    hr = D3D12CreateDevice(displayAdpater.Get(), m_settings.FeatureLevel, IID_PPV_ARGS(&m_pDevice));
     if (FAILED(hr))
     {
         auto string = HrToString(hr);
@@ -93,6 +93,24 @@ auto DeviceD3D12::CreateDevice(WRL::ComPtr<IDXGIAdapter> displayAdpater /* = nul
         Log::TraceError(std::format(L"Failed to create device. Error Code: {}", wstring));
         return LS::System::CreateFailCode(std::format("Failed to create device. Error Code: {}", string));
     }
+
+    if (FAILED(m_featureSupport.Init(m_pDevice.Get())))
+    {
+        return LS::System::CreateFailCode("Failed to create feature support validator.");
+    }
+
+    // Find the Max Feature Leavel and create the device to support it
+    m_settings.FeatureLevel = m_featureSupport.MaxSupportedFeatureLevel();
+    hr = D3D12CreateDevice(displayAdpater.Get(), m_settings.FeatureLevel, IID_PPV_ARGS(&m_pDevice));
+    if (FAILED(hr))
+    {
+        auto hrString = HrToString(hr);
+        auto hrWstring = HrToWString(hr);
+        auto msg = std::format(L"Attempted to create device with largest feature level, but failed to create device. Error Code: {}", hrWstring);
+        Log::TraceError(msg);
+        return LS::System::CreateFailCode(std::format("Attempted to create device with largest feature level, but failed to create device. Error Code: {}", hrString));
+    }
+
     // [DEBUG] Setup debug interface to break on any warnings/errors
 #ifdef _DEBUG
     if (m_pDebug)
@@ -104,11 +122,6 @@ auto DeviceD3D12::CreateDevice(WRL::ComPtr<IDXGIAdapter> displayAdpater /* = nul
         pInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, true);
     }
 #endif
-
-    if (FAILED(m_featureSupport.Init(m_pDevice.Get())))
-    {
-        return LS::System::CreateFailCode("Failed to create feature support validator.");
-    }
 
     return LS::System::CreateSuccessCode();
 }
@@ -203,7 +216,7 @@ auto DeviceD3D12::FindCompatDisplay(std::span<WRL::ComPtr<IDXGIAdapter4>> adapte
 {
     for (auto adapter : adapters)
     {
-        if (SUCCEEDED(D3D12CreateDevice(adapter.Get(), m_settings.MinFeatureLevel, __uuidof(ID3D12Device), nullptr)))
+        if (SUCCEEDED(D3D12CreateDevice(adapter.Get(), m_settings.FeatureLevel, __uuidof(ID3D12Device), nullptr)))
         {
             return adapter;
         }

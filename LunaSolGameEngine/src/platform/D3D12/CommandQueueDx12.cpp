@@ -45,7 +45,7 @@ auto CommandQueueDx12::ExecuteCommandList() -> uint64_t
         m_queue[i]->IncrementFenceValue();
     }
 
-    m_pCommandQueue->ExecuteCommandLists(commands.size(), commands.data());
+    m_pCommandQueue->ExecuteCommandLists(static_cast<UINT>(commands.size()), commands.data());
 
     // Obtain the signal and set it to return to the user
     m_fenceValue = LS::Platform::Dx12::Signal(m_pCommandQueue, m_pFence, m_fenceValue);
@@ -55,16 +55,26 @@ auto CommandQueueDx12::ExecuteCommandList() -> uint64_t
 void CommandQueueDx12::WaitForCommands(uint64_t fenceValue, std::chrono::milliseconds duration)
 {
     WaitForFenceValue(m_pFence, fenceValue, m_fenceEvent, duration);
-    {
-        LS::Utils::ThrowIfFailed(m_pFence->SetEventOnCompletion(fenceValue, m_fenceEvent));
-        ::WaitForSingleObject(m_fenceEvent, static_cast<DWORD>(duration.count()));
-    }
+    m_queue.clear();
+}
+
+void CommandQueueDx12::WaitForCommandsEx(uint64_t fenceValue, HANDLE* handles, DWORD count, std::chrono::milliseconds duration)
+{
+    const std::vector<HANDLE> waitables(handles, handles + count);
+    WaitForFenceValueMany(m_pFence, fenceValue, m_fenceEvent, waitables, duration);
     m_queue.clear();
 }
 
 void CommandQueueDx12::Flush() noexcept
 {
-    LS::Platform::Dx12::Flush(m_pCommandQueue, m_pFence, m_fenceValue, m_fenceEvent);
+    m_fenceValue = LS::Platform::Dx12::Flush(m_pCommandQueue, m_pFence, m_fenceValue, m_fenceEvent);
+    m_queue.clear();
+}
+
+void CommandQueueDx12::FlushAndWaitMany(const std::vector<HANDLE>& handles) noexcept
+{
+    m_fenceValue = LS::Platform::Dx12::FlushAndWaitForMany(m_pCommandQueue, m_pFence, m_fenceValue, m_fenceEvent, handles);
+    m_queue.clear();
 }
 
 void CommandQueueDx12::QueueCommands(std::vector<LS::Platform::Dx12::CommandListDx12*> commands) noexcept

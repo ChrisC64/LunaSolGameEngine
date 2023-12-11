@@ -66,13 +66,19 @@ namespace LS::Win32
     {
         if (!m_bIsOpen)
             return DefWindowProc(hwnd, message, wparam, lparam);
-        LRESULT handled = 0;
+        //TODO: For some reason the latest runs with MSVC makes this piece of code run when my std::function
+        // object is null and it passes this check. I don't recall if this ran before or after my VS updated
+        // probably after, so I'm guessing it broke it somehow. I'll check the code later, but I do want to redo this
+        // window stuff because I'd rather try and implement ImGui and be window agnostic a bit. I'd rather create
+        // a new library for Window management or something, but that will come later after my work on getting a basic
+        // DX12 renderer setup
+        /*LRESULT handled = 0;
         if (m_wndProcHandler)
         {
             handled = m_wndProcHandler(hwnd, message, wparam, lparam);
         }
         if (handled > 0)
-            return handled;
+            return handled;*/
 
         switch (message)
         {
