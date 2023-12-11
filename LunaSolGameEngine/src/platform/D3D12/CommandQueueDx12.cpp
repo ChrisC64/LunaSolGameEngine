@@ -52,13 +52,13 @@ auto CommandQueueDx12::ExecuteCommandList() -> uint64_t
     return m_fenceValue;
 }
 
-void CommandQueueDx12::WaitForCommands(uint64_t fenceValue, std::chrono::milliseconds duration)
+void CommandQueueDx12::WaitForGpu(uint64_t fenceValue, std::chrono::milliseconds duration)
 {
     WaitForFenceValue(m_pFence, fenceValue, m_fenceEvent, duration);
     m_queue.clear();
 }
 
-void CommandQueueDx12::WaitForCommandsEx(uint64_t fenceValue, HANDLE* handles, DWORD count, std::chrono::milliseconds duration)
+void CommandQueueDx12::WaitForGpuEx(uint64_t fenceValue, HANDLE* handles, DWORD count, std::chrono::milliseconds duration)
 {
     const std::vector<HANDLE> waitables(handles, handles + count);
     WaitForFenceValueMany(m_pFence, fenceValue, m_fenceEvent, waitables, duration);

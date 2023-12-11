@@ -53,3 +53,8 @@ void CommandListDx12::TransitionResource(ID3D12Resource* resource, D3D12_RESOURC
     CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(resource, before, after);
     m_pCommandList->ResourceBarrier(1, &barrier);
 }
+
+void CommandListDx12::SetRenderTarget(D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle) noexcept
+{
+    m_pCommandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
+}

@@ -29,7 +29,7 @@ export namespace LS::Platform::Dx12
         {}
 
         FrameBufferDxgi(const FrameBufferDxgi&) noexcept = default;
-        FrameBufferDxgi(FrameBufferDxgi&&) noexcept  = default;
+        FrameBufferDxgi(FrameBufferDxgi&&) noexcept = default;
 
         FrameBufferDxgi& operator=(const FrameBufferDxgi&) noexcept = default;
         FrameBufferDxgi& operator=(FrameBufferDxgi&&) noexcept = default;
@@ -49,7 +49,10 @@ export namespace LS::Platform::Dx12
             temp.As(&m_pSwapChain);
             m_pSwapChain->SetMaximumFrameLatency(FRAME_LATENCY);
             m_format = swapDesc.Format;
-
+            // If we use DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT it needs it again
+            // in our resize buffer call, so I'm saving the flags provided to give them
+            // during that call
+            m_swapchainFlags = swapDesc.Flags;
             return LS::System::CreateSuccessCode();
         }
         //TODO: When we resize the frame buffer, these would be obsolete, right? I perhaps
@@ -62,20 +65,20 @@ export namespace LS::Platform::Dx12
         /**
          * @brief Get the frame at index, if out of range, will throw exception
          * @param pos index starts at 0 to n - 1 frames given to frame buffer
-         * @return @link LS::Platform::Dx12::FrameDx12 
+         * @return @link LS::Platform::Dx12::FrameDx12
         */
         [[nodiscard]] auto GetFrameRef() const noexcept -> const FrameDx12&
         {
             const auto pos = GetCurrentIndex();
             return m_frames.at(pos);
         }
-        
+
         [[nodiscard]] auto GetFramePtr() const noexcept -> const FrameDx12*
         {
             const auto pos = GetCurrentIndex();
             return &m_frames.at(pos);
         }
-        
+
         /**
          * @brief Obtain a back buffer frame at given position (index starts at 0)
          * @param pos Backbuffer frame to obtain
@@ -92,8 +95,8 @@ export namespace LS::Platform::Dx12
         }
 
         /**
-         * @brief The current frame buffer's back buffer index 
-         * @return 
+         * @brief The current frame buffer's back buffer index
+         * @return
         */
         [[nodiscard]] auto GetCurrentIndex() const -> uint64_t
         {
@@ -167,12 +170,12 @@ export namespace LS::Platform::Dx12
             m_frames.resize(FRAME_LATENCY);
         }
 
-        [[nodiscard]] auto ResizeFrames(uint32_t width, uint32_t height, 
+        [[nodiscard]] auto ResizeFrames(uint32_t width, uint32_t height,
             D3D12_CPU_DESCRIPTOR_HANDLE rtvHeapStart, ID3D12Device* device) noexcept -> LS::System::ErrorCode
         {
             CleanupFrames();
 
-            auto hr = m_pSwapChain->ResizeBuffers(0, width, height, DXGI_FORMAT_UNKNOWN, 0);
+            auto hr = m_pSwapChain->ResizeBuffers(0, width, height, DXGI_FORMAT_UNKNOWN, m_swapchainFlags);
             if (FAILED(hr))
             {
                 return LS::System::CreateFailCode(LS::Win32::HrToString(hr));
@@ -183,6 +186,36 @@ export namespace LS::Platform::Dx12
             return LS::System::CreateSuccessCode();
         }
 
+        void WaitOnFrameBuffer() noexcept
+        {
+            auto result = WaitForSingleObjectEx(m_pSwapChain->GetFrameLatencyWaitableObject(), 1000, true);
+            //TODO: implement error handling
+            switch (result)
+            {
+            case WAIT_ABANDONED:
+            {
+                break;
+            }
+            case WAIT_IO_COMPLETION:
+            {
+                break;
+            }
+            case WAIT_OBJECT_0:
+            {
+                break;
+            }
+            case WAIT_TIMEOUT:
+            {
+                break;
+            }
+            case WAIT_FAILED:
+            {
+                break;
+            }
+            default:
+                break;
+            }
+        }
 
     private:
         WRL::ComPtr<IDXGISwapChain3>             m_pSwapChain;
@@ -192,5 +225,6 @@ export namespace LS::Platform::Dx12
         uint32_t                                 m_syncInterval = 1;
         std::vector<FrameDx12>                   m_frames;
         DXGI_FORMAT                              m_format = DXGI_FORMAT_R8G8B8A8_UNORM;
+        UINT                                     m_swapchainFlags;
     };
 }

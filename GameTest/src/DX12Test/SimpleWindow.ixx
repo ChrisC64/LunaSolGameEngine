@@ -74,15 +74,11 @@ namespace gt::dx12
 
         WRL::ComPtr<IDXGIFactory4> m_pFactory;
         WRL::ComPtr<IDXGIAdapter1> m_pAdapter;
-        //WRL::ComPtr<IDXGISwapChain4> m_pSwapChain;
         WRL::ComPtr<ID3D12DescriptorHeap> m_rtvHeap;
         WRL::ComPtr<ID3D12DescriptorHeap> m_srvHeap;
-        //WRL::ComPtr<ID3D12Resource> m_renderTargets[3];
-        //WRL::ComPtr<ID3D12Fence> m_fence;
         uint64_t m_currFrameIndex;
         UINT m_rtvDescriptorSize;
         uint64_t m_fenceValue;
-        HANDLE m_scWaitableHandle;
         HANDLE m_fenceEvent;
 
         // My stuff to replace above // 
@@ -124,10 +120,11 @@ void gt::dx12::SimpleWindow::Run()
     while (IsRunning)
     {
         Window->PollEvent();
+        m_frameBuffer.WaitOnFrameBuffer();
         if (currWidth != Window->GetWidth() || currHeight != Window->GetHeight())
         {
-            const std::vector<HANDLE> waitables{ m_frameBuffer.GetFrameLatencyWaitable() };
-            m_queue->FlushAndWaitMany(waitables);
+            //const std::vector<HANDLE> waitables{ m_frameBuffer.GetFrameLatencyWaitable() };
+            m_queue->Flush();
             if (auto result = m_frameBuffer.ResizeFrames(Window->GetWidth(), Window->GetHeight(), m_rtvHeap->GetCPUDescriptorHandleForHeapStart(), m_device->GetDevice().Get()); !result)
             {
                 throw std::runtime_error(std::format("Failed to resize frame buffer. Error: {}", result.Message()));
@@ -192,10 +189,6 @@ bool gt::dx12::SimpleWindow::LoadPipeline()
 
     // Since we are using an HWND (Win32) system, we can create the swapchain for HWND 
     {
-        /*WRL::ComPtr<IDXGISwapChain1> swapChain1 = nullptr;
-        LS::Utils::ThrowIfFailed(m_pFactory->CreateSwapChainForHwnd(m_queue->GetCommandQueue().Get(), hwnd, &swapchainDesc1, nullptr, nullptr, &swapChain1));
-        LS::Utils::ThrowIfFailed(swapChain1.As(&m_pSwapChain));*/
-
         auto result = m_frameBuffer.InitializeFrameBuffer(m_pFactory, m_queue->GetCommandQueue().Get(), hwnd, swapchainDesc1);
         if (!result)
         {
@@ -207,9 +200,7 @@ bool gt::dx12::SimpleWindow::LoadPipeline()
 
         // Don't allot ALT+ENTER fullscreen
         m_pFactory->MakeWindowAssociation(hwnd, DXGI_MWA_NO_ALT_ENTER);
-
         m_currFrameIndex = m_frameBuffer.GetCurrentIndex();
-        m_scWaitableHandle = m_frameBuffer.GetFrameLatencyWaitable();
     }
 
     // Create Descriptor Heaps for RTV/SRV // 
@@ -243,13 +234,6 @@ bool gt::dx12::SimpleWindow::LoadPipeline()
     // Create our Render Targets for each frame context //
     {
         m_frameBuffer.BuildFrames(m_rtvHeap->GetCPUDescriptorHandleForHeapStart(), m_device->GetDevice().Get());
-        /*CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart());
-        for (auto i = 0u; i < NUM_OF_FRAMES; ++i)
-        {
-            LS::Utils::ThrowIfFailed(m_pSwapChain->GetBuffer(i, IID_PPV_ARGS(&m_renderTargets[i])));
-            device->CreateRenderTargetView(m_renderTargets[i].Get(), nullptr, rtvHandle);
-            rtvHandle.Offset(1, m_rtvDescriptorSize);
-        }*/
     }
 
     return true;
@@ -272,8 +256,9 @@ void gt::dx12::SimpleWindow::PopulateCommandList()
     auto frame = m_frameBuffer.GetFrameRef();
     m_commandList->ResetCommandList();
     m_commandList->TransitionResource(frame.GetFramePtr(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
-
     CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart(), m_frameBuffer.GetCurrentIndex(), m_rtvDescriptorSize);
+    m_commandList->SetRenderTarget(rtvHandle);
+
     const std::array<float, 4> clearColor{ 0.0f, 0.12f, 0.34f, 1.0f };
     m_commandList->Clear(clearColor, rtvHandle);
 
@@ -303,7 +288,6 @@ void gt::dx12::SimpleWindow::OnUpdate()
 
 void gt::dx12::SimpleWindow::WaitForPreviousFrame()
 {
-    std::array<HANDLE, 1> handles{ m_frameBuffer.GetFrameLatencyWaitable() };
-    m_queue->WaitForCommandsEx(m_fenceValue, handles.data(), handles.size());
+    m_queue->WaitForGpu(m_fenceValue);
     m_currFrameIndex = m_frameBuffer.GetCurrentIndex();
 }

@@ -1,4 +1,3 @@
-#include <iostream>
 #include <format>
 #include <cassert>
 #define WIN32_LEAN_AND_MEAN
@@ -187,7 +186,6 @@ namespace LS::Win32
             m_height = GET_Y_LPARAM(lparam);
             if (wparam == SIZE_MAXIMIZED)
             {
-                std::cout << "SIZE_MAXIMIZED\n";
                 if (m_bIsMinimized)
                 {
                     m_bIsMinimized = false;
@@ -197,7 +195,6 @@ namespace LS::Win32
             }
             else if (wparam == SIZE_MINIMIZED)
             {
-                std::cout << "SIZE_MINIMIZED\n";
                 if (!m_bIsMinimized)
                 {
                     m_bIsMinimized = true;
@@ -207,12 +204,10 @@ namespace LS::Win32
             }
             else if (wparam == SIZE_RESTORED)
             {
-                std::cout << "SIZE_RESTORED\n";
                 if (m_bIsResizing)
                 {
                     // Window was being resized by user, now they have stopped resizing the window
                     m_bIsResizing = false;
-                    std::cout << "WINDOW RESIZE END\n";
                     if (m_onWindowEvent)
                         m_onWindowEvent(LS::LS_WINDOW_EVENT::WINDOW_RESIZE_END);
                 }
@@ -220,14 +215,12 @@ namespace LS::Win32
                 {
                     // Window was minimized but is now being restored out from minimization
                     m_bIsMinimized = false;
-                    std::cout << "RESTORED WINDOW\n";
                     if (m_onWindowEvent)
                         m_onWindowEvent(LS::LS_WINDOW_EVENT::RESTORED_WINDOW);
                 }
             }
             else
             {
-                std::cout << "RESIZE_END\n";
                 if (m_onWindowEvent)
                     m_onWindowEvent(LS::LS_WINDOW_EVENT::WINDOW_RESIZE_END);
             }
@@ -326,7 +319,6 @@ namespace LS::Win32
         {
             auto result = HRESULT_FROM_WIN32(GetLastError());
             auto format = std::format("Failed to create Window: {}", result);
-            std::cout << format;
             throw std::runtime_error(format.c_str());
         }
 

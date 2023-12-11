@@ -30,8 +30,8 @@ export namespace LS::Platform::Dx12
         CommandQueueDx12& operator=(CommandQueueDx12&& other) = default;
 
         [[nodiscard]] auto ExecuteCommandList() -> uint64_t;
-        void WaitForCommands(uint64_t fenceValue, std::chrono::milliseconds duration = std::chrono::milliseconds::max());
-        void WaitForCommandsEx(uint64_t fenceValue, HANDLE* handles, DWORD count, std::chrono::milliseconds duration = std::chrono::milliseconds::max());
+        void WaitForGpu(uint64_t fenceValue, std::chrono::milliseconds duration = std::chrono::milliseconds::max());
+        void WaitForGpuEx(uint64_t fenceValue, HANDLE* handles, DWORD count, std::chrono::milliseconds duration = std::chrono::milliseconds::max());
         void Flush() noexcept;
         void FlushAndWaitMany(const std::vector<HANDLE>& handles) noexcept;
         void QueueCommands(std::vector<LS::Platform::Dx12::CommandListDx12*> commands) noexcept;
