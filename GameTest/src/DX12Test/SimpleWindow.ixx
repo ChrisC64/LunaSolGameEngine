@@ -74,12 +74,9 @@ namespace gt::dx12
 
         WRL::ComPtr<IDXGIFactory4> m_pFactory;
         WRL::ComPtr<IDXGIAdapter1> m_pAdapter;
-        WRL::ComPtr<ID3D12DescriptorHeap> m_rtvHeap;
-        WRL::ComPtr<ID3D12DescriptorHeap> m_srvHeap;
-        uint64_t m_currFrameIndex;
-        UINT m_rtvDescriptorSize;
+        LS::Platform::Dx12::DescriptorHeapDx12 m_heapRtv{ D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 3 };
+        LS::Platform::Dx12::DescriptorHeapDx12 m_heapSrv{D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE };
         uint64_t m_fenceValue;
-        HANDLE m_fenceEvent;
 
         // My stuff to replace above // 
         Ref<LS::Platform::Dx12::DeviceD3D12> m_device;
@@ -117,15 +114,14 @@ void gt::dx12::SimpleWindow::Run()
     IsRunning = true;
     auto currWidth = Window->GetWidth();
     auto currHeight = Window->GetHeight();
-    while (IsRunning)
+    while (Window->IsOpen())
     {
         Window->PollEvent();
         m_frameBuffer.WaitOnFrameBuffer();
         if (currWidth != Window->GetWidth() || currHeight != Window->GetHeight())
         {
-            //const std::vector<HANDLE> waitables{ m_frameBuffer.GetFrameLatencyWaitable() };
             m_queue->Flush();
-            if (auto result = m_frameBuffer.ResizeFrames(Window->GetWidth(), Window->GetHeight(), m_rtvHeap->GetCPUDescriptorHandleForHeapStart(), m_device->GetDevice().Get()); !result)
+            if (auto result = m_frameBuffer.ResizeFrames(Window->GetWidth(), Window->GetHeight(), m_heapRtv.GetHeapStartCpu(), m_device->GetDevice().Get()); !result)
             {
                 throw std::runtime_error(std::format("Failed to resize frame buffer. Error: {}", result.Message()));
             }
@@ -134,8 +130,10 @@ void gt::dx12::SimpleWindow::Run()
         }
         
         OnRender();
-
+        OnUpdate();
     }
+
+    OnDestroy();
 }
 
 bool gt::dx12::SimpleWindow::LoadPipeline()
@@ -164,6 +162,8 @@ bool gt::dx12::SimpleWindow::LoadPipeline()
         return false;
     }
     auto type = D3D12_COMMAND_LIST_TYPE_DIRECT;
+    // TODO: Create an "Initialize" state to pass the device and setup these objects
+    // instead of just in the default constructor
     m_queue = std::make_unique<LS::Platform::Dx12::CommandQueueDx12>(device4, type);
     m_commandList = std::make_unique<LS::Platform::Dx12::CommandListDx12>(device4.Get(), type, "main command list");
 
@@ -200,40 +200,23 @@ bool gt::dx12::SimpleWindow::LoadPipeline()
 
         // Don't allot ALT+ENTER fullscreen
         m_pFactory->MakeWindowAssociation(hwnd, DXGI_MWA_NO_ALT_ENTER);
-        m_currFrameIndex = m_frameBuffer.GetCurrentIndex();
     }
 
     // Create Descriptor Heaps for RTV/SRV // 
 
     // This is the RTV descriptor heap (render target view)
     {
-        D3D12_DESCRIPTOR_HEAP_DESC desc = {};
-        desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-        desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-        desc.NumDescriptors = NUM_OF_FRAMES;
-        desc.NodeMask = 0;
-
-        //auto hr = m_pDevice->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&m_rtvHeap));
-        auto hr = device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&m_rtvHeap));
-        LS::Utils::ThrowIfFailed(hr, "Failed to create descriptor heap for the RTV");
-
-        // Handles have a size that varies by GPU, so we have to ask for the Handle size on the GPU before processing
-        m_rtvDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+        m_heapRtv.Initialize(device.Get());
     }
 
     // Constant Buffer View/Shader Resource View/Unordered Access View types (this one is just the SRV)
     {
-        D3D12_DESCRIPTOR_HEAP_DESC desc = {};
-        desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-        desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-        desc.NumDescriptors = 1;
-
-        LS::Utils::ThrowIfFailed(device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&m_srvHeap)), "Failed to create CBV/SRV/UAV descriptor heap");
+        m_heapSrv.Initialize(device.Get());
     }
 
     // Create our Render Targets for each frame context //
     {
-        m_frameBuffer.BuildFrames(m_rtvHeap->GetCPUDescriptorHandleForHeapStart(), m_device->GetDevice().Get());
+        m_frameBuffer.BuildFrames(m_heapRtv.GetHeapStartCpu(), m_device->GetDevice().Get());
     }
 
     return true;
@@ -256,7 +239,7 @@ void gt::dx12::SimpleWindow::PopulateCommandList()
     auto frame = m_frameBuffer.GetFrameRef();
     m_commandList->ResetCommandList();
     m_commandList->TransitionResource(frame.GetFramePtr(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
-    CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart(), m_frameBuffer.GetCurrentIndex(), m_rtvDescriptorSize);
+    CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_heapRtv.GetHeapStartCpu(), m_frameBuffer.GetCurrentIndex(), m_heapRtv.GetSize());
     m_commandList->SetRenderTarget(rtvHandle);
 
     const std::array<float, 4> clearColor{ 0.0f, 0.12f, 0.34f, 1.0f };
@@ -271,14 +254,15 @@ void gt::dx12::SimpleWindow::OnRender()
 {
     PopulateCommandList();
     m_fenceValue = m_queue->ExecuteCommandList();
-    m_frameBuffer.Present();
+    if (auto result = m_frameBuffer.Present(); !result)
+    {
+        throw std::runtime_error(std::format("Error with Presenting Frame: {}", result.Message()));
+    }
     WaitForPreviousFrame();
 }
 
 void gt::dx12::SimpleWindow::OnDestroy()
 {
-    WaitForPreviousFrame();
-    ::CloseHandle(m_fenceEvent);
 }
 
 void gt::dx12::SimpleWindow::OnUpdate()
@@ -289,5 +273,4 @@ void gt::dx12::SimpleWindow::OnUpdate()
 void gt::dx12::SimpleWindow::WaitForPreviousFrame()
 {
     m_queue->WaitForGpu(m_fenceValue);
-    m_currFrameIndex = m_frameBuffer.GetCurrentIndex();
 }

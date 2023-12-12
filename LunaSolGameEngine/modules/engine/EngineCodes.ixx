@@ -73,6 +73,11 @@ export namespace LS
         {
         protected:
             std::string ErrorMsg;
+            //TODO: If default was Success we could just {} all returns and it would be less writing
+            // for successes, or I simplify the way we generate success/errors with macros in a header
+            // but we maybe could do it out the LS::System namespace and just have it be in global?
+            // or maybe just LS namespace only. I also ignore the category a lot so that makes it worthless
+            // perhaps I should demand it or make... more functions? Bleh... something will come to me
             ErrorStatus ErrStatus = ErrorStatus::ERROR;
             ErrorCategory ErrCategory = ErrorCategory::GENERAL;
 

@@ -198,6 +198,9 @@
     <ClCompile Include="modules\platform\Windows\FrameBufferDxgi.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="modules\platform\Windows\D3D12\DescriptorHeapDx12.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\LSTimer.h">

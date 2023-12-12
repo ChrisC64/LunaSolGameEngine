@@ -21,7 +21,7 @@ export namespace LS::Platform::Dx12
     {
     public:
         CommandQueueDx12(const WRL::ComPtr<ID3D12Device4>& pDevice, D3D12_COMMAND_LIST_TYPE type, uint32_t queueSize = 0);
-        ~CommandQueueDx12() = default;
+        ~CommandQueueDx12();
 
         CommandQueueDx12(const CommandQueueDx12&) = delete;
         CommandQueueDx12& operator=(const CommandQueueDx12&) = delete;
@@ -63,5 +63,7 @@ export namespace LS::Platform::Dx12
         HANDLE                                  m_fenceEvent;
         uint64_t                                m_fenceValue;
         D3D12_COMMAND_LIST_TYPE                 m_commListType;
+
+        void Shutdown() noexcept;
     };
 }

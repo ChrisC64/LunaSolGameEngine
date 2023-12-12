@@ -34,6 +34,11 @@ m_fenceValue(0)
     assert(m_fenceEvent && "Failed to create fence event handle.");
 }
 
+CommandQueueDx12::~CommandQueueDx12()
+{
+    Shutdown();
+}
+
 auto CommandQueueDx12::ExecuteCommandList() -> uint64_t
 {
     // Execute the command lists
@@ -88,4 +93,10 @@ void CommandQueueDx12::QueueCommands(std::vector<LS::Platform::Dx12::CommandList
 void CommandQueueDx12::QueueCommand(LS::Platform::Dx12::CommandListDx12* const command) noexcept
 {
     m_queue.push_back(command);
+}
+
+void CommandQueueDx12::Shutdown() noexcept
+{
+    Flush();
+    ::CloseHandle(m_fenceEvent);
 }
