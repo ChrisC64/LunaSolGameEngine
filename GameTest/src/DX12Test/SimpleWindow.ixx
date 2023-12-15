@@ -74,7 +74,7 @@ namespace gt::dx12
 
         WRL::ComPtr<IDXGIFactory4> m_pFactory;
         WRL::ComPtr<IDXGIAdapter1> m_pAdapter;
-        LS::Platform::Dx12::DescriptorHeapDx12 m_heapRtv{ D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 3 };
+        LS::Platform::Dx12::DescriptorHeapDx12 m_heapRtv{ D3D12_DESCRIPTOR_HEAP_TYPE_RTV, NUM_OF_FRAMES };
         LS::Platform::Dx12::DescriptorHeapDx12 m_heapSrv{D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE };
         uint64_t m_fenceValue;
 

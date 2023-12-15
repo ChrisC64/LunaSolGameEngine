@@ -1,5 +1,6 @@
 module;
 #include <d3d12.h>
+#include <d3dx12\d3dx12_root_signature.h>
 #include <wrl/client.h>
 #include <cstdint>
 #include "platform\Windows\Win32\WinApiUtils.h"
@@ -57,6 +58,18 @@ export namespace LS::Platform::Dx12
         {
             //TODO: If not shader-visible then this returns null, maybe should just assert that
             return m_heap->GetGPUDescriptorHandleForHeapStart();
+        }
+
+        auto GetCpuHeapAt(uint32_t offset) const noexcept -> D3D12_CPU_DESCRIPTOR_HANDLE
+        {
+            CD3DX12_CPU_DESCRIPTOR_HANDLE heapHandle(GetHeapStartCpu(), offset, m_descriptorSize);
+            return heapHandle;
+        }
+
+        auto GetGpuHeapAt(uint32_t offset) const noexcept -> D3D12_GPU_DESCRIPTOR_HANDLE
+        {
+            CD3DX12_GPU_DESCRIPTOR_HANDLE heapHandle(GetHeapStartGpu(), offset, m_descriptorSize);
+            return heapHandle;
         }
 
         void SetName(LPCWSTR name) noexcept

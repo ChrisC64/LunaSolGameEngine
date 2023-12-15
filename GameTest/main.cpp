@@ -46,7 +46,6 @@ Ref<LS::LSApp> CreateApp(uint32_t choice)
     }
     case 1:
     {
-        //Ref<LS::LSApp> app = std::make_unique<gt::dx12::DX12CubeApp>(800, 600, L"DX12 Cube App");
         Ref<LS::LSApp> app(new gt::dx12::DX12CubeApp(800, 600, L"DX12 Cube App"));
         return app;
     }

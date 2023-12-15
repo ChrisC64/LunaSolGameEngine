@@ -9,12 +9,19 @@
 import D3D12Lib;
 
 import Util.MSUtils;
+import Engine.EngineCodes;
 
 using namespace LS::Platform::Dx12;
 namespace WRL = Microsoft::WRL;
 
-CommandQueueDx12::CommandQueueDx12(const WRL::ComPtr<ID3D12Device4>& pDevice, D3D12_COMMAND_LIST_TYPE type, uint32_t queueSize /*= 100*/) : m_queue(queueSize),
-m_pDevice(pDevice),
+CommandQueueDx12::CommandQueueDx12(D3D12_COMMAND_LIST_TYPE type) : m_commListType(type),
+    m_pDevice(nullptr),
+    m_fenceValue(0)
+{
+
+}
+
+CommandQueueDx12::CommandQueueDx12(const WRL::ComPtr<ID3D12Device4>& pDevice, D3D12_COMMAND_LIST_TYPE type, uint32_t queueSize /*= 100*/) : m_pDevice(pDevice),
 m_commListType(type),
 m_fenceValue(0)
 {
@@ -37,6 +44,31 @@ m_fenceValue(0)
 CommandQueueDx12::~CommandQueueDx12()
 {
     Shutdown();
+}
+
+auto CommandQueueDx12::Initialize(ID3D12Device4* pDevice) noexcept -> LS::System::ErrorCode
+{
+    D3D12_COMMAND_QUEUE_DESC desc = {};
+    desc.Type = m_commListType;
+    desc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
+    desc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
+    desc.NodeMask = 0;
+
+    auto hr = pDevice->CreateCommandQueue(&desc, IID_PPV_ARGS(&m_pCommandQueue));
+    if (FAILED(hr))
+    {
+        return LS::System::CreateFailCode("Failed to create command queue in CommandQueueDx12 ctor");
+    }
+
+    hr = pDevice->CreateFence(m_fenceValue, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_pFence));
+    if (FAILED(hr))
+    {
+        return LS::System::CreateFailCode("Failed to create fence in CommandQueueDx12::Initialize");
+    }
+
+    m_fenceEvent = ::CreateEvent(NULL, FALSE, FALSE, NULL);
+    assert(m_fenceEvent && "Failed to create fence event handle.");
+    return LS::System::CreateSuccessCode();
 }
 
 auto CommandQueueDx12::ExecuteCommandList() -> uint64_t
