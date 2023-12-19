@@ -10,6 +10,8 @@
 
 #ifndef _DEBUG
 #include <Windows.h>
+#include <processenv.h>
+#include <shellapi.h>
 #endif // 
 
 import Engine.Logger;
@@ -46,7 +48,6 @@ Ref<LS::LSApp> CreateApp(uint32_t choice)
     }
     case 1:
     {
-        //Ref<LS::LSApp> app = std::make_unique<gt::dx12::DX12CubeApp>(800, 600, L"DX12 Cube App");
         Ref<LS::LSApp> app(new gt::dx12::DX12CubeApp(800, 600, L"DX12 Cube App"));
         return app;
     }
@@ -88,7 +89,9 @@ int main(int argc, char* argv[])
     auto value = std::stoi(choice);
 
     auto app = CreateApp(value);
-    auto appcode = app->Initialize(argc, argv);
+
+    auto args = LS::ParseCommands(argc, argv);
+    auto appcode = app->Initialize(args);
     if (!appcode)
     {
         std::cout << appcode.Message() << "\n";
@@ -98,15 +101,20 @@ int main(int argc, char* argv[])
 }
 
 #else // I know I don't need this, but wondering if maybe I just should consider supporting this?
-int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
-    LS::Log::TraceError(L"What is this message?!");
-    LS::Log::TraceError(std::format(L"A format string appears! {}", 42));
-    auto appcode = gt::App->Initialize();
-    if (!LS::IsSuccessCode(appcode))
-        return -1;
+    //TODO: Come back to later because WinMain is something I still am learning to deal with.
+    /*LPSTR cmdline = GetCommandLineA();
+    auto args = LS::ParseCommands(cmdline);
 
-    gt::App->Run();
+    auto app = CreateApp(1);
+    auto appcode = app->Initialize(args);
+    if (!appcode)
+    {
+        std::cout << appcode.Message() << "\n";
+        return -1;
+    }
+    app->Run();*/
 
     return WM_QUIT;
 }

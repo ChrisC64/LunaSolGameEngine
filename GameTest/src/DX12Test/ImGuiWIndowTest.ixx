@@ -56,7 +56,7 @@ namespace gt::dx12::ImGuiSample
         uint64_t                                FenceValue;
     };
 
-    static LRESULT WndProcImpl(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam);
+    LRESULT WndProcImpl(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam);
     
     export class ImGuiSample : public LS::LSApp
     {
@@ -68,7 +68,7 @@ namespace gt::dx12::ImGuiSample
 
         ~ImGuiSample() = default;
 
-        auto Initialize(int argCount = 0, char* argsV[] = nullptr) -> LS::System::ErrorCode override;
+        auto Initialize(const LS::LSCommandArgs& args) -> LS::System::ErrorCode override;
         void Run() override;
         void CreateRenderTargets();
         void CleanupRenderTargets();
@@ -107,7 +107,7 @@ module : private;
 
 using namespace gt::dx12;
 
-auto gt::dx12::ImGuiSample::ImGuiSample::Initialize(int argCount, char* argsV[]) -> LS::System::ErrorCode
+auto gt::dx12::ImGuiSample::ImGuiSample::Initialize(const LS::LSCommandArgs& args) -> LS::System::ErrorCode
 {
     if (!CreateDeviceD3D())
         return LS::System::CreateFailCode("Failed to create device D3D");
@@ -317,7 +317,7 @@ bool gt::dx12::ImGuiSample::ImGuiSample::CreateDeviceD3D()
 
     LS::Utils::ThrowIfFailed(factory.As(&m_pFactory), "Failed to create DXGI Factory");
 
-    LS::Win32::GetHardwareAdapter(m_pFactory, m_pAdapter, true);
+    m_pAdapter = LS::Win32::GetHardwareAdapter(m_pFactory.Get(), true).value();
 
     // Create device
     D3D_FEATURE_LEVEL featureLevel = D3D_FEATURE_LEVEL_12_0;
@@ -426,7 +426,7 @@ bool gt::dx12::ImGuiSample::ImGuiSample::CreateDeviceD3D()
     return true;
 }
 
-static LRESULT gt::dx12::ImGuiSample::WndProcImpl(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+LRESULT gt::dx12::ImGuiSample::WndProcImpl(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     // Let ImGui handle itself, but we want to still allow rest of default window behavior to go to our current
     // window handler for the rest of the messages we do handle. 

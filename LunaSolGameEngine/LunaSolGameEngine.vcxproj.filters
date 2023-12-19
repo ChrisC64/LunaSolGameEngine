@@ -180,10 +180,25 @@
     <ClCompile Include="modules\platform\Windows\D3D12\Helpers\D3D12UtilsCommandList.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="modules\platform\Windows\D3D12\CommandQueueD3D12.ixx">
+    <ClCompile Include="modules\platform\Windows\D3D12\CommandQueueDx12.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\platform\D3D12\CommandQueueD3D12.cpp">
+    <ClCompile Include="src\platform\D3D12\CommandQueueDx12.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\platform\Windows\D3D12\CommandListDx12.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\platform\D3D12\CommandListDx12.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\platform\Windows\D3D12\FrameDx12.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\platform\Windows\FrameBufferDxgi.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\platform\Windows\D3D12\DescriptorHeapDx12.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

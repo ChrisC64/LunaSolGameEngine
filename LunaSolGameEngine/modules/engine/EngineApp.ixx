@@ -5,7 +5,7 @@ module;
 #include <functional>
 #include <vector>
 #include <memory>
-
+#include <ranges>
 export module Engine.App;
 
 export import LSData;
@@ -27,6 +27,10 @@ export namespace LS::Global
 namespace LS
 {
 
+    export using LSCommandArgs = std::vector<std::string>;
+    export auto ParseCommands(int argc, char* argv[]) noexcept -> LSCommandArgs;
+    export auto ParseCommands(std::string_view args) noexcept -> LSCommandArgs;
+    export auto ParseCommands(std::wstring_view args) noexcept -> LSCommandArgs;
     /**
      * @brief Creates the device with the supported rendering type
      * @param api @link LS::DEVICE_API type to use
@@ -61,24 +65,15 @@ namespace LS
         LSApp(LSApp&&) = default;
         LSApp& operator=(LSApp&&) = default;
 
-        [[nodiscard]] virtual auto Initialize([[maybe_unused]] int argCount = 0, [[maybe_unused]] char* argsV[] = nullptr) -> System::ErrorCode = 0;
+        [[nodiscard]] virtual auto Initialize([[maybe_unused]] const LSCommandArgs& args) -> System::ErrorCode = 0;
         virtual void Run() = 0;
 
     protected:
         Ref<LSWindowBase> Window;
-        std::vector<std::string> CommandArgs;
+        LSCommandArgs CommandArgs;
         //TODO: Get rid of this ugly mess.
         bool IsRunning = false;
         bool IsPaused = false;
-
-        void InitCommandArgs(int argCount, char* argsV[], bool skipFirst = true)
-        {
-            int i = skipFirst ? 1 : 0;
-            for (; i < argCount; ++i)
-            {
-                CommandArgs.emplace_back(argsV[i]);
-            }
-        }
 
         void RegisterKeyboardInput(LSOnKeyboardDown onKeyDown, LSOnKeyboardUp onKeyUp);
         void RegisterMouseInput(LSOnMouseDown onMouseDown, LSOnMouseUp onMouseUp, LSOnMouseWheelScroll mouseWheel, LSOnMouseMove cursorMove);
@@ -106,4 +101,38 @@ namespace LS
         Window->RegisterMouseWheel(mouseWheel);
         Window->RegisterMouseMoveCallback(cursorMove);
     }
+
+    auto ParseCommands(int argc, char* argv[]) noexcept -> LSCommandArgs
+    {
+        LSCommandArgs commandArgs;
+        int i = 1;
+        for (; i < argc; ++i)
+        {
+            commandArgs.emplace_back(argv[i]);
+        }
+
+        return commandArgs;
+    }
+
+    auto ParseCommands([[maybe_unused]] std::string_view args) noexcept -> LSCommandArgs
+    {
+        LSCommandArgs commandArgs;
+        const auto delim = ' ';
+        std::string arg;
+        for (auto i = 0; i < args.size(); ++i)
+        {
+            if (args[i] == delim)
+            {
+                commandArgs.push_back(arg);
+            }
+            arg += args[i];
+        }
+
+        return commandArgs;
+    }
+    auto ParseCommands([[maybe_unused]] std::wstring_view args) noexcept -> LSCommandArgs
+    {
+        return LSCommandArgs();
+    }
+
 }

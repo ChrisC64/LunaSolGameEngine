@@ -28,8 +28,15 @@ export namespace LS::Win32
     */
     [[nodiscard]] auto CreateFactory(UINT flags = 0u) noexcept -> Nullable<WRL::ComPtr<IDXGIFactory2>>;
 
-    [[nodiscard]] auto CreateSwapchainForHwnd(const Platform::Dx12::D3D12Settings& settings,
-        const WRL::ComPtr<IDXGIFactory2>& factory, WRL::ComPtr<ID3D12CommandQueue>& commandQueue) noexcept -> Nullable<WRL::ComPtr<IDXGISwapChain1>>;
+    /**
+     * @brief Create a swapchain for the DX12 implementation (requires factory and command queue)
+     * @param settings Settings to apply to the SwapChain
+     * @param factory IDXGIFactory2 that's used to create the swap chain
+     * @param commandQueue Required to create the swap chainf or DX12
+     * @return A swap chain if successful, otherwise a null object.
+    */
+    [[nodiscard]] auto CreateSwapchainForHwndDx12(const Platform::Dx12::D3D12Settings& settings,
+        IDXGIFactory2* factory, ID3D12CommandQueue* commandQueue) noexcept -> Nullable<WRL::ComPtr<IDXGISwapChain1>>;
 
     /**
      * @brief Returns any high performance display adapters (discrete or external GPU supported)
@@ -37,18 +44,18 @@ export namespace LS::Win32
      * @pram requestHighPerformance To request the high performance GPU (true) or minimum GPU (false), the default is true
      * @return A vector of all Discrete GPU supported displays if any are found.
     */
-    [[nodiscard]] auto EnumerateDiscreteGpuAdapters(WRL::ComPtr<IDXGIFactory7>& pFactory, bool requestHighPerformance = true) noexcept -> std::vector<WRL::ComPtr<IDXGIAdapter4>>;
+    [[nodiscard]] auto EnumerateDiscreteGpuAdapters(IDXGIFactory6* pFactory, bool requestHighPerformance = true) noexcept -> std::vector<WRL::ComPtr<IDXGIAdapter4>>;
 
     /**
      * @brief Returns any display adapters
      * @param pFactory The IDXGIFactory interface object to use
      * @return A container containing all display adapters
     */
-    [[nodiscard]] auto EnumerateDisplayAdapters(WRL::ComPtr<IDXGIFactory7>& pFactory) noexcept -> std::vector<WRL::ComPtr<IDXGIAdapter4>>;
+    [[nodiscard]] auto EnumerateDisplayAdapters(IDXGIFactory1* const pFactory) noexcept -> std::vector<WRL::ComPtr<IDXGIAdapter4>>;
 
-    [[nodiscard]] void GetHardwareAdapter(WRL::ComPtr<IDXGIFactory1> pFactory, WRL::ComPtr<IDXGIAdapter1> ppAdapter, bool useHighPerformance);
+    [[nodiscard]] auto GetHardwareAdapter(IDXGIFactory1* const pFactory, bool useHighPerformance) noexcept -> Nullable<WRL::ComPtr<IDXGIAdapter1>>;
 
-    [[nodiscard]] void GetWarpAdapter(WRL::ComPtr<IDXGIFactory1> pFactory, WRL::ComPtr<IDXGIAdapter> ppAdapter);
+    [[nodiscard]] auto GetWarpAdapter(IDXGIFactory1* const pFactory) noexcept -> Nullable<WRL::ComPtr<IDXGIAdapter>>;
 
     // Feature Check Supports //
 
@@ -57,11 +64,11 @@ export namespace LS::Win32
      * @param pFactory Windows DXGI Factory
      * @return An error code with any messages if support is available or not.
     */
-    [[nodiscard]] auto CheckTearingSupport(const WRL::ComPtr<IDXGIFactory5>& pFactory) noexcept -> LS::System::ErrorCode;
+    [[nodiscard]] auto CheckTearingSupport(IDXGIFactory5* const pFactory) noexcept -> LS::System::ErrorCode;
 
-    void LogAdapters(IDXGIFactory4* factory) noexcept;
-    void LogAdapterOutput(IDXGIAdapter* adapter) noexcept;
-    void LogOutputDisplayModes(IDXGIOutput* output, DXGI_FORMAT format) noexcept;
+    void LogAdapters(IDXGIFactory4* const factory) noexcept;
+    void LogAdapterOutput(IDXGIAdapter* const adapter) noexcept;
+    void LogOutputDisplayModes(IDXGIOutput* const output, DXGI_FORMAT format) noexcept;
 }
 
 module : private;
@@ -77,29 +84,29 @@ auto LS::Win32::CreateFactory(UINT flags) noexcept -> Nullable<Microsoft::WRL::C
     return pOut;
 }
 
-auto LS::Win32::CreateSwapchainForHwnd(const Platform::Dx12::D3D12Settings& settings,
-    const WRL::ComPtr<IDXGIFactory2>& factory, WRL::ComPtr<ID3D12CommandQueue>& commandQueue) noexcept -> Nullable<WRL::ComPtr<IDXGISwapChain1>>
+auto LS::Win32::CreateSwapchainForHwndDx12(const Platform::Dx12::D3D12Settings& settings,
+    IDXGIFactory2* factory, ID3D12CommandQueue* commandQueue) noexcept -> Nullable<WRL::ComPtr<IDXGISwapChain1>>
 {
     DXGI_SWAP_CHAIN_DESC1 swapchainDesc1{};
-    swapchainDesc1.BufferCount = settings.MinSettings.FrameBufferCount;
-    swapchainDesc1.Width = static_cast<UINT>(settings.MinSettings.ScreenWidth);
-    swapchainDesc1.Height = static_cast<UINT>(settings.MinSettings.ScreenHeight);
-    swapchainDesc1.Format = settings.MinSettings.PixelFormat;
+    swapchainDesc1.BufferCount = settings.FrameBufferCount;
+    swapchainDesc1.Width = static_cast<UINT>(settings.Width);
+    swapchainDesc1.Height = static_cast<UINT>(settings.Height);
+    swapchainDesc1.Format = settings.PixelFormat;
     swapchainDesc1.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
     swapchainDesc1.SampleDesc = { .Count = 1, .Quality = 0 };
 
     // If VSync is off, should use FIP_DISCARD not FLIP_SEQUENTIAL
-    swapchainDesc1.SwapEffect = settings.ExSettings.SwapEffect;
-    swapchainDesc1.AlphaMode = settings.ExSettings.AlphaMode;
-    swapchainDesc1.Scaling = settings.ExSettings.Scaling;
-    swapchainDesc1.Stereo = settings.ExSettings.IsStereoScopic ? TRUE : FALSE;
+    swapchainDesc1.SwapEffect = settings.SwapEffect;
+    swapchainDesc1.AlphaMode = settings.AlphaMode;
+    swapchainDesc1.Scaling = settings.Scaling;
+    swapchainDesc1.Stereo = settings.IsStereoScopic ? TRUE : FALSE;
 
     // Feature Flags to support // 
     swapchainDesc1.Flags = DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
 
     WRL::ComPtr<IDXGISwapChain1> swapchain;
 
-    const auto hr = factory->CreateSwapChainForHwnd(commandQueue.Get(), settings.MinSettings.Hwnd,
+    const auto hr = factory->CreateSwapChainForHwnd(commandQueue, settings.Hwnd,
         &swapchainDesc1, nullptr, nullptr, &swapchain);
 
     if (FAILED(hr))
@@ -111,7 +118,7 @@ auto LS::Win32::CreateSwapchainForHwnd(const Platform::Dx12::D3D12Settings& sett
     return swapchain;
 }
 
-auto LS::Win32::EnumerateDiscreteGpuAdapters(Microsoft::WRL::ComPtr<IDXGIFactory7>& pFactory, bool requestHighPerformance /*= true*/) noexcept -> std::vector<WRL::ComPtr<IDXGIAdapter4>>
+auto LS::Win32::EnumerateDiscreteGpuAdapters(IDXGIFactory6* pFactory, bool requestHighPerformance /*= true*/) noexcept -> std::vector<WRL::ComPtr<IDXGIAdapter4>>
 {
     assert(pFactory);
     WRL::ComPtr<IDXGIAdapter4> adapter;
@@ -126,8 +133,7 @@ auto LS::Win32::EnumerateDiscreteGpuAdapters(Microsoft::WRL::ComPtr<IDXGIFactory
 
         if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
         {
-            // Don't select the Basic Render Driver adapter.
-            //TODO: Maybe add optional support for software adapter types 
+            // Don't worry about software renderer (WARP)
             continue;
         }
         out.push_back(std::move(adapter));
@@ -136,7 +142,7 @@ auto LS::Win32::EnumerateDiscreteGpuAdapters(Microsoft::WRL::ComPtr<IDXGIFactory
     return out;
 }
 
-auto LS::Win32::EnumerateDisplayAdapters(Microsoft::WRL::ComPtr<IDXGIFactory7>& pFactory) noexcept -> std::vector<WRL::ComPtr<IDXGIAdapter4>>
+auto LS::Win32::EnumerateDisplayAdapters(IDXGIFactory1* const pFactory) noexcept -> std::vector<WRL::ComPtr<IDXGIAdapter4>>
 {
     assert(pFactory);
     std::vector<WRL::ComPtr<IDXGIAdapter4>> out;
@@ -153,6 +159,7 @@ auto LS::Win32::EnumerateDisplayAdapters(Microsoft::WRL::ComPtr<IDXGIFactory7>& 
             //TODO: Maybe add optional support for software adapter types 
             continue;
         }
+
         WRL::ComPtr<IDXGIAdapter4> move;
         if (FAILED(adapter.As(&move)))
         {
@@ -164,14 +171,14 @@ auto LS::Win32::EnumerateDisplayAdapters(Microsoft::WRL::ComPtr<IDXGIFactory7>& 
     return out;
 }
 
-void LS::Win32::GetHardwareAdapter(WRL::ComPtr<IDXGIFactory1> pFactory, WRL::ComPtr<IDXGIAdapter1> ppAdapter, bool useHighPerformance)
+auto LS::Win32::GetHardwareAdapter(IDXGIFactory1 * const pFactory, bool useHighPerformance) noexcept -> Nullable<WRL::ComPtr<IDXGIAdapter1>>
 {
     WRL::ComPtr<IDXGIAdapter1> adapter;
 
     WRL::ComPtr<IDXGIFactory6> factory6;
     if (FAILED(pFactory->QueryInterface(IID_PPV_ARGS(&factory6))))
     {
-        return;
+        return std::nullopt;
     }
 
     DXGI_GPU_PREFERENCE preference = useHighPerformance ? DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE : DXGI_GPU_PREFERENCE_UNSPECIFIED;
@@ -191,7 +198,7 @@ void LS::Win32::GetHardwareAdapter(WRL::ComPtr<IDXGIFactory1> pFactory, WRL::Com
         }
     }
 
-    if (adapter.Get() == nullptr)
+    if (adapter == nullptr)
     {
         for (UINT adapterIndex = 0; SUCCEEDED(pFactory->EnumAdapters1(adapterIndex, &adapter)); ++adapterIndex)
         {
@@ -209,17 +216,18 @@ void LS::Win32::GetHardwareAdapter(WRL::ComPtr<IDXGIFactory1> pFactory, WRL::Com
         }
     }
 
-    ppAdapter = adapter;
+    return adapter;
 }
 
-void LS::Win32::GetWarpAdapter(WRL::ComPtr<IDXGIFactory1> pFactory, WRL::ComPtr<IDXGIAdapter> ppAdapter)
+auto LS::Win32::GetWarpAdapter(IDXGIFactory1 * const  pFactory) noexcept -> Nullable<WRL::ComPtr<IDXGIAdapter>>
 {
     WRL::ComPtr<IDXGIAdapter1> adapter;
 
     WRL::ComPtr<IDXGIFactory6> factory6;
+
     if (FAILED(pFactory->QueryInterface(IID_PPV_ARGS(&factory6))))
     {
-        return;
+        return std::nullopt;
     }
 
     DXGI_GPU_PREFERENCE preference = DXGI_GPU_PREFERENCE_UNSPECIFIED;
@@ -259,10 +267,10 @@ void LS::Win32::GetWarpAdapter(WRL::ComPtr<IDXGIFactory1> pFactory, WRL::ComPtr<
         }
     }
 
-    ppAdapter = adapter;
+    return adapter;
 }
 
-auto LS::Win32::CheckTearingSupport(const WRL::ComPtr<IDXGIFactory5>& pFactory) noexcept -> LS::System::ErrorCode
+auto LS::Win32::CheckTearingSupport(IDXGIFactory5* const pFactory) noexcept -> LS::System::ErrorCode
 {
     BOOL allowTearing = FALSE;
 
@@ -300,7 +308,7 @@ void LS::Win32::LogAdapters(IDXGIFactory4* factory) noexcept
         factory->Release();
 }
 
-void LS::Win32::LogAdapterOutput(IDXGIAdapter* adapter) noexcept
+void LS::Win32::LogAdapterOutput(IDXGIAdapter* const adapter) noexcept
 {
     uint32_t i = 0;
     IDXGIOutput* output = nullptr;
@@ -317,7 +325,7 @@ void LS::Win32::LogAdapterOutput(IDXGIAdapter* adapter) noexcept
     }
 }
 
-void LS::Win32::LogOutputDisplayModes(IDXGIOutput* output, DXGI_FORMAT format) noexcept
+void LS::Win32::LogOutputDisplayModes(IDXGIOutput* const output, DXGI_FORMAT format) noexcept
 {
     UINT count = 0;
     UINT flags = 0;

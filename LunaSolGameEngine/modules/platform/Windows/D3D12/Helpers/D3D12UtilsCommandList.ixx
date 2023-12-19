@@ -11,6 +11,7 @@ module;
 #include <d3dx12\d3dx12_barriers.h>
 #include "engine\EngineLogDefines.h"
 #include "platform\Windows\Win32\WinApiUtils.h"
+#include <chrono>
 //NOMINMAX doesn't seem to work here. Though this might be because of std
 #ifdef min
 #undef min
@@ -77,7 +78,7 @@ export namespace LS::Platform::Dx12
 
     /**
      * @brief Waits for the fence value and fires off the Fence Event when it is reached
-     * @param fence THe fence to associate with the event
+     * @param fence The fence to associate with the event
      * @param fenceValue The value to wait for (check Signal to retrieve this value)
      * @param fenceEvent The event to fire off after completion
      * @param duration How long to wait for the event before not abandoning
@@ -85,6 +86,7 @@ export namespace LS::Platform::Dx12
     inline void WaitForFenceValue(WRL::ComPtr<ID3D12Fence>& fence, uint64_t fenceValue, HANDLE fenceEvent,
         std::chrono::milliseconds duration = std::chrono::milliseconds::max()) noexcept
     {
+        //TODO: If UINT_MAX then we have a DEVICE_REMOVED issue, need to address that scenario
         if (fence->GetCompletedValue() < fenceValue)
         {
             const auto hr = fence->SetEventOnCompletion(fenceValue, fenceEvent);
@@ -98,6 +100,41 @@ export namespace LS::Platform::Dx12
             ::WaitForSingleObject(fenceEvent, static_cast<DWORD>(duration.count()));
         }
     }
+    
+    /**
+     * @brief Waits for the fence value and fires off the Fence Event when it is reached
+     * @param fence The fence to associate with the event
+     * @param fenceValue The value to wait for (check Signal to retrieve this value)
+     * @param fenceEvent The event to fire off after completion
+     * @param events The additional events to wait for among the fence event
+     * @param duration How long to wait for the event before not abandoning
+    */
+    inline void WaitForFenceValueMany(WRL::ComPtr<ID3D12Fence>& fence, uint64_t fenceValue, HANDLE fenceEvent, const std::vector<HANDLE>& events,
+        std::chrono::milliseconds duration = std::chrono::milliseconds::max()) noexcept
+    {
+        if (fence->GetCompletedValue() < fenceValue)
+        {
+            const auto hr = fence->SetEventOnCompletion(fenceValue, fenceEvent);
+
+            if (FAILED(hr))
+            {
+                const auto msg = Win32::HrToString(hr);
+                LS_LOG_ERROR(std::format("An error occurred when trying to set an Event On Completion: {}", hr));
+            }
+
+            std::vector<HANDLE> objects(events.size() + 1);
+            objects[0] = fenceEvent;
+
+            auto p = 1u;
+            for (auto& e : events)
+            {
+                objects[p] = e;
+                p++;
+            }
+
+            ::WaitForMultipleObjects(static_cast<DWORD>(objects.size()), objects.data(), TRUE, static_cast<DWORD>(duration.count()));
+        }
+    }
 
     /**
      * @brief Signals to the GPU to get the fence value and return it.
@@ -107,9 +144,9 @@ export namespace LS::Platform::Dx12
      * @return A fence value that should be signaled by the CPU to assure all processes by the GPU are no longer "in-flight"
     */
     [[nodiscard]] inline auto Signal(WRL::ComPtr<ID3D12CommandQueue>& pQueue, WRL::ComPtr<ID3D12Fence>& pFence,
-        uint64_t& fenceValue) noexcept -> uint64_t
+        const uint64_t fenceValue) noexcept -> uint64_t
     {
-        uint64_t fenceValueForSignal = ++fenceValue;
+        uint64_t fenceValueForSignal = fenceValue + 1;
         const auto hr = pQueue->Signal(pFence.Get(), fenceValueForSignal);
 
         if (FAILED(hr))
@@ -127,13 +164,34 @@ export namespace LS::Platform::Dx12
      * @param pFence The fence to use with
      * @param fenceValue The value to signal
      * @param fenceEvent The event to wait for
+     * @return The new signaled value that was used to increment the queue
     */
-    inline void Flush(WRL::ComPtr<ID3D12CommandQueue>& pQueue, WRL::ComPtr<ID3D12Fence>& pFence,
-        uint64_t& fenceValue, HANDLE fenceEvent) noexcept
+    inline auto Flush(WRL::ComPtr<ID3D12CommandQueue>& pQueue, WRL::ComPtr<ID3D12Fence>& pFence,
+        uint64_t fenceValue, HANDLE fenceEvent) noexcept -> uint64_t
     {
         uint64_t fenceValueForSignal = Signal(pQueue, pFence, fenceValue);
 
         WaitForFenceValue(pFence, fenceValueForSignal, fenceEvent);
+
+        return fenceValueForSignal;
+    }
+    
+    /**
+     * @brief Tries to "flush" the command queue by immediately signaling the queue and then waiting for the event to finish
+     * @param pQueue The command queue to "flush"
+     * @param pFence The fence to use with
+     * @param fenceValue The value to signal
+     * @param fenceEvent The event to wait for
+     * @return The new signaled value that was used to increment the queue
+    */
+    inline auto FlushAndWaitForMany(WRL::ComPtr<ID3D12CommandQueue>& pQueue, WRL::ComPtr<ID3D12Fence>& pFence,
+        uint64_t fenceValue, HANDLE fenceEvent, const std::vector<HANDLE>& events) noexcept -> uint64_t
+    {
+        uint64_t fenceValueForSignal = Signal(pQueue, pFence, fenceValue);
+
+        WaitForFenceValueMany(pFence, fenceValueForSignal, fenceEvent, events);
+
+        return fenceValueForSignal;
     }
 
     /**
@@ -145,6 +203,6 @@ export namespace LS::Platform::Dx12
     {
         assert(pCommList);
         assert(barriers.size() > 0);
-        pCommList->ResourceBarrier(barriers.size(), barriers.data());
+        pCommList->ResourceBarrier(static_cast<UINT>(barriers.size()), barriers.data());
     }
 }

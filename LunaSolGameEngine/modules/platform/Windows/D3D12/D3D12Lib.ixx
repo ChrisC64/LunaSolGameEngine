@@ -10,4 +10,8 @@ export import :D3D12Utils.Descriptors;
 export import :D3D12Utils.Commands;
 export import :Device;
 export import :ResourceManagerD3D12;
+export import :CommandListDx12;
 export import :CommandQueueD3D12;
+export import :DescriptorHeapDx12;
+export import :FrameDx12;
+export import :FrameBufferDxgi;
