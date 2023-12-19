@@ -147,7 +147,7 @@ namespace gt::dx12
         }
         ~DX12CubeApp() = default;
 
-        auto Initialize(int argCount = 0, char* argsV[] = nullptr) -> LS::System::ErrorCode override;
+        auto Initialize(const LS::LSCommandArgs& args) -> LS::System::ErrorCode override;
         void Run() override;
 
         //[[nodiscard]] bool LoadPipeline();
@@ -651,10 +651,10 @@ void gt::dx12::DX12CubeApp::CreateCommandQueue()
         LS::Utils::ThrowIfFailed(E_FAIL, errorCode.Message());
     }
 
-    errorCode = m_copyQueue.Initialize(device4.Get());
-    if (!errorCode)
+    auto cec = m_copyQueue.Initialize(device4.Get());
+    if (!cec)
     {
-        LS::Utils::ThrowIfFailed(E_FAIL, errorCode.Message());
+        LS::Utils::ThrowIfFailed(E_FAIL, cec.Message());
     }
 
     m_commandList = std::make_unique<LS::Platform::Dx12::CommandListDx12>(device4.Get(), D3D12_COMMAND_LIST_TYPE_DIRECT, "main command list");
@@ -754,7 +754,7 @@ void gt::dx12::DX12CubeApp::Update()
     m_commandList->DrawIndexedInstanced(_countof(g_indices), 1);
 }
 
-auto gt::dx12::DX12CubeApp::Initialize(int argC, char* argsV[]) -> LS::System::ErrorCode
+auto gt::dx12::DX12CubeApp::Initialize(const LS::LSCommandArgs& args) -> LS::System::ErrorCode
 {
     if (!CreateDevice())
         return LS::System::CreateFailCode("Failed to create device.");

@@ -49,7 +49,7 @@ export namespace LS::Platform::Dx12
             }
             assert(m_pFactory && "Failed to create swapchain");
             temp.As(&m_pSwapChain);
-            m_pSwapChain->SetMaximumFrameLatency(FRAME_LATENCY);
+            m_pSwapChain->SetMaximumFrameLatency(static_cast<UINT>(FRAME_LATENCY));
             m_format = swapDesc.Format;
             // If we use DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT it needs it again
             // in our resize buffer call, so I'm saving the flags provided to give them

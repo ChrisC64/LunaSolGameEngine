@@ -83,7 +83,7 @@ namespace gt::dx11
         DX11CubeApp(uint32_t width, uint32_t height, std::wstring_view title);
         ~DX11CubeApp() = default;
 
-        auto Initialize(int argCount = 0, char* argsV[] = nullptr) -> System::ErrorCode override;
+        auto Initialize(const LS::LSCommandArgs& args) -> System::ErrorCode override;
         void Run() override;
 
     private:
@@ -278,7 +278,7 @@ gt::dx11::DX11CubeApp::DX11CubeApp(uint32_t width, uint32_t height, std::wstring
     Window = LS::BuildWindow(width, height, title);
 }
 
-auto gt::dx11::DX11CubeApp::Initialize(int argCount, char* argsV[]) -> LS::System::ErrorCode
+auto gt::dx11::DX11CubeApp::Initialize(const LS::LSCommandArgs& args) -> LS::System::ErrorCode
 {
     using enum LS::System::ErrorStatus;
     auto& window = Window;

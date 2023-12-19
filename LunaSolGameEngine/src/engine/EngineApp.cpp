@@ -1,6 +1,7 @@
 #include <memory>
 #include <optional>
 #include <string_view>
+#include <vector>
 
 import Engine.App;
 import D3D11Lib;

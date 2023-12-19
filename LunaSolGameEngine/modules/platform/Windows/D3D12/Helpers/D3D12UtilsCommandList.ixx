@@ -132,7 +132,7 @@ export namespace LS::Platform::Dx12
                 p++;
             }
 
-            ::WaitForMultipleObjects(objects.size(), objects.data(), TRUE, static_cast<DWORD>(duration.count()));
+            ::WaitForMultipleObjects(static_cast<DWORD>(objects.size()), objects.data(), TRUE, static_cast<DWORD>(duration.count()));
         }
     }
 
@@ -203,6 +203,6 @@ export namespace LS::Platform::Dx12
     {
         assert(pCommList);
         assert(barriers.size() > 0);
-        pCommList->ResourceBarrier(barriers.size(), barriers.data());
+        pCommList->ResourceBarrier(static_cast<UINT>(barriers.size()), barriers.data());
     }
 }
