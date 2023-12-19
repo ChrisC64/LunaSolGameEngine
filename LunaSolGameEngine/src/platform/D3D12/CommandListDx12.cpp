@@ -76,7 +76,7 @@ void CommandListDx12::Clear(const std::array<float, 4>& clearColor, const D3D12_
 
 void CommandListDx12::ClearDepthStencil(const D3D12_CPU_DESCRIPTOR_HANDLE dsv, float clearValue, uint8_t stencilValue)
 {
-    m_pCommandList->ClearDepthStencilView(dsv, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, clearValue, 0xFF, 0, nullptr);
+    m_pCommandList->ClearDepthStencilView(dsv, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, clearValue, stencilValue, 0, nullptr);
 }
 
 void CommandListDx12::TransitionResource(ID3D12Resource* resource, D3D12_RESOURCE_STATES before, D3D12_RESOURCE_STATES after)

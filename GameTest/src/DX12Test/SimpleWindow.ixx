@@ -187,21 +187,6 @@ bool gt::dx12::SimpleWindow::LoadPipeline()
 
     // Create the swap chain //
 
-    // Since we are using an HWND (Win32) system, we can create the swapchain for HWND 
-    {
-        auto result = m_frameBuffer.InitializeFrameBuffer(m_pFactory, m_queue->GetCommandQueue().Get(), hwnd, swapchainDesc1);
-        if (!result)
-        {
-            std::cout << result.Message();
-            return false;
-        }
-        // Helper function that displays our display's resolution and refresh rates and other information 
-        LS::Win32::LogAdapters(m_pFactory.Get());
-
-        // Don't allot ALT+ENTER fullscreen
-        m_pFactory->MakeWindowAssociation(hwnd, DXGI_MWA_NO_ALT_ENTER);
-    }
-
     // Create Descriptor Heaps for RTV/SRV // 
 
     // This is the RTV descriptor heap (render target view)
@@ -214,9 +199,19 @@ bool gt::dx12::SimpleWindow::LoadPipeline()
         m_heapSrv.Initialize(device.Get());
     }
 
-    // Create our Render Targets for each frame context //
+    // Since we are using an HWND (Win32) system, we can create the swapchain for HWND 
     {
-        m_frameBuffer.BuildFrames(m_heapRtv.GetHeapStartCpu(), m_device->GetDevice().Get());
+        auto result = m_frameBuffer.InitializeFrameBuffer(m_pFactory, m_queue->GetCommandQueue().Get(), hwnd, swapchainDesc1, m_heapRtv.GetHeapStartCpu(), m_device->GetDevice().Get());
+        if (!result)
+        {
+            std::cout << result.Message();
+            return false;
+        }
+        // Helper function that displays our display's resolution and refresh rates and other information 
+        LS::Win32::LogAdapters(m_pFactory.Get());
+
+        // Don't allot ALT+ENTER fullscreen
+        m_pFactory->MakeWindowAssociation(hwnd, DXGI_MWA_NO_ALT_ENTER);
     }
 
     return true;
@@ -236,7 +231,7 @@ void gt::dx12::SimpleWindow::LoadAssets()
 
 void gt::dx12::SimpleWindow::PopulateCommandList()
 {
-    auto frame = m_frameBuffer.GetFrameRef();
+    auto frame = m_frameBuffer.GetCurrentFrameAsRef();
     m_commandList->ResetCommandList();
     m_commandList->TransitionResource(frame.GetFramePtr(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
     CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_heapRtv.GetHeapStartCpu(), m_frameBuffer.GetCurrentIndex(), m_heapRtv.GetSize());

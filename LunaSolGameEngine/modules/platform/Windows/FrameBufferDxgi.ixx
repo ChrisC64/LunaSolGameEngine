@@ -34,7 +34,9 @@ export namespace LS::Platform::Dx12
         FrameBufferDxgi& operator=(const FrameBufferDxgi&) noexcept = default;
         FrameBufferDxgi& operator=(FrameBufferDxgi&&) noexcept = default;
 
-        [[nodiscard]] auto InitializeFrameBuffer(Microsoft::WRL::ComPtr<IDXGIFactory2> pFactory, ID3D12CommandQueue* commandQueue, HWND hwnd, const DXGI_SWAP_CHAIN_DESC1& swapDesc,
+        [[nodiscard]] auto InitializeFrameBuffer(Microsoft::WRL::ComPtr<IDXGIFactory2> pFactory, ID3D12CommandQueue* commandQueue, 
+            HWND hwnd, const DXGI_SWAP_CHAIN_DESC1& swapDesc,
+            D3D12_CPU_DESCRIPTOR_HANDLE rtvHeapStart, ID3D12Device* device,
             DXGI_SWAP_CHAIN_FULLSCREEN_DESC* fullscreenDesc = nullptr, IDXGIOutput* dxgiOutput = nullptr) -> LS::System::ErrorCode
         {
             assert(pFactory && "Factory cannot be null");
@@ -53,6 +55,7 @@ export namespace LS::Platform::Dx12
             // in our resize buffer call, so I'm saving the flags provided to give them
             // during that call
             m_swapchainFlags = swapDesc.Flags;
+            BuildFrames(rtvHeapStart, device);
             return LS::System::CreateSuccessCode();
         }
         //TODO: When we resize the frame buffer, these would be obsolete, right? I perhaps
@@ -67,13 +70,13 @@ export namespace LS::Platform::Dx12
          * @param pos index starts at 0 to n - 1 frames given to frame buffer
          * @return @link LS::Platform::Dx12::FrameDx12
         */
-        [[nodiscard]] auto GetFrameRef() const noexcept -> const FrameDx12&
+        [[nodiscard]] auto GetCurrentFrameAsRef() const noexcept -> const FrameDx12&
         {
             const auto pos = GetCurrentIndex();
             return m_frames.at(pos);
         }
 
-        [[nodiscard]] auto GetFramePtr() const noexcept -> const FrameDx12*
+        [[nodiscard]] auto GetCurrentFrameAsPtr() const noexcept -> const FrameDx12*
         {
             const auto pos = GetCurrentIndex();
             return &m_frames.at(pos);
@@ -146,6 +149,8 @@ export namespace LS::Platform::Dx12
 
         void BuildFrames(D3D12_CPU_DESCRIPTOR_HANDLE rtvHeapStart, ID3D12Device* device)
         {
+            assert(m_pSwapChain && "Cannot build frames with NULL swap chain");
+            assert(device && "The device cannot be null when building the frame buffer");
             CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(rtvHeapStart);
             const auto size = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 

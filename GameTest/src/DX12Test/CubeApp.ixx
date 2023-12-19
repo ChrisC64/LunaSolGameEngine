@@ -166,7 +166,7 @@ namespace gt::dx12
         Ref<LS::Platform::Dx12::DeviceD3D12> m_device;
         LS::Platform::Dx12::CommandQueueDx12 m_directQueue{ D3D12_COMMAND_LIST_TYPE_DIRECT };
         LS::Platform::Dx12::CommandQueueDx12 m_copyQueue{ D3D12_COMMAND_LIST_TYPE_COPY };
-        Ref<LS::Platform::Dx12::CommandListDx12> m_commandList;
+        Ref<LS::Platform::Dx12::CommandListDx12> m_commandList, m_copyCommandList;
         LS::Platform::Dx12::D3D12Settings m_settings{};
         LS::Platform::Dx12::FrameBufferDxgi m_frameBuffer;
         LS::Platform::Dx12::DescriptorHeapDx12 m_heapRtv{ D3D12_DESCRIPTOR_HEAP_TYPE_RTV, NUM_CONTEXT };
@@ -174,7 +174,7 @@ namespace gt::dx12
         LS::Platform::Dx12::DescriptorHeapDx12 m_heapDsv{ D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 1 };
 
         // pipeline objects
-        WRL::ComPtr<ID3D12Resource>								m_texture = nullptr;
+        WRL::ComPtr<ID3D12Resource>                             m_texture = nullptr;
         WRL::ComPtr<ID3D12Resource> m_cubeVb;
         D3D12_VERTEX_BUFFER_VIEW m_cubeVbView;
 
@@ -185,15 +185,17 @@ namespace gt::dx12
         WRL::ComPtr<IDXGIFactory7> m_factory;
         WRL::ComPtr<ID3D12RootSignature> m_cubeRootSignature;
         WRL::ComPtr<ID3D12PipelineState> m_cubePipelineState;
-        UINT													m_rtvDescriptorSize = 0;
-        HANDLE													m_scWaitableHandle = nullptr;
-        CD3DX12_VIEWPORT										m_viewport;
-        CD3DX12_RECT											m_scissorRect;
+        UINT                                                    m_rtvDescriptorSize = 0;
+        HANDLE                                                  m_scWaitableHandle = nullptr;
+        CD3DX12_VIEWPORT                                        m_viewport;
+        CD3DX12_RECT                                            m_scissorRect;
+        const std::array<float, 4>                              m_clearColor{ 0.4f, 0.5f, 0.9f, 1.0f };
         float m_fov;
         XMMATRIX m_cubeModelMat;
         XMMATRIX m_cubeViewMat;
         XMMATRIX m_cubeProjMat;
         bool m_contentLoaded;
+        D3D12_DEPTH_STENCIL_VALUE                              m_depthStencilValue{ 1.0f, 0xFF };
 
         bool CreateDevice();
 
@@ -211,11 +213,10 @@ namespace gt::dx12
         void Update();
     };
 
-    float													g_aspectRatio;
-
-    HANDLE													g_drawFinished;
-    HANDLE													g_prepWorkDone;
-    HANDLE													g_beginRender;
+    float                                                   g_aspectRatio;
+    HANDLE                                                  g_drawFinished;
+    HANDLE                                                  g_prepWorkDone;
+    HANDLE                                                  g_beginRender;
 
     inline auto CreateDefaultBuffer(WRL::ComPtr<ID3D12Device> device, WRL::ComPtr<ID3D12GraphicsCommandList>& cmdList, const void* initData, uint64_t byteSize, WRL::ComPtr<ID3D12Resource>& uploadBuffer, D3D12_RESOURCE_STATES finalState, std::optional<std::wstring_view> defaultName = std::nullopt, std::optional<std::wstring_view> uploadName = std::nullopt) -> WRL::ComPtr<ID3D12Resource>;
     inline auto GenerateTextureData(uint32_t textureWidth, uint32_t textureHeight, uint32_t pixelSize) -> std::vector<UINT8>;
@@ -262,14 +263,14 @@ inline auto gt::dx12::CreateDefaultBuffer(WRL::ComPtr<ID3D12Device> device, WRL:
     subresourceData.RowPitch = byteSize;
     subresourceData.SlicePitch = subresourceData.RowPitch;
 
-    auto defaultBarrier = CD3DX12_RESOURCE_BARRIER::Transition(defaultBuffer.Get(), 
+    auto defaultBarrier = CD3DX12_RESOURCE_BARRIER::Transition(defaultBuffer.Get(),
         D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
     cmdList->ResourceBarrier(1, &defaultBarrier);
 
-    UpdateSubresources<1>(cmdList.Get(), defaultBuffer.Get(), uploadBuffer.Get(), 0, 
+    UpdateSubresources<1>(cmdList.Get(), defaultBuffer.Get(), uploadBuffer.Get(), 0,
         0, 1, &subresourceData);
 
-    auto defaultBarrier2 = CD3DX12_RESOURCE_BARRIER::Transition(defaultBuffer.Get(), 
+    auto defaultBarrier2 = CD3DX12_RESOURCE_BARRIER::Transition(defaultBuffer.Get(),
         D3D12_RESOURCE_STATE_COPY_DEST, finalState);
     cmdList->ResourceBarrier(1, &defaultBarrier2);
 
@@ -286,7 +287,7 @@ inline auto gt::dx12::CreateDefaultBuffer(WRL::ComPtr<ID3D12Device> device, WRL:
     return defaultBuffer;
 }
 
-inline auto gt::dx12::GenerateTextureData(uint32_t textureWidth, 
+inline auto gt::dx12::GenerateTextureData(uint32_t textureWidth,
     uint32_t textureHeight, uint32_t pixelSize) -> std::vector<UINT8>
 {
     const UINT rowPitch = textureWidth * pixelSize;
@@ -323,11 +324,11 @@ inline auto gt::dx12::GenerateTextureData(uint32_t textureWidth,
     return data;
 }
 
-void gt::dx12::CreateTileSampleTexture(WRL::ComPtr<ID3D12Device>& device, 
-    WRL::ComPtr<ID3D12Resource>& texture, uint32_t textureWidth, 
-    uint32_t textureHeight, uint32_t pixelSize, 
-    WRL::ComPtr<ID3D12Resource>& textureUploadHeap, 
-    WRL::ComPtr<ID3D12GraphicsCommandList>& commandList, 
+void gt::dx12::CreateTileSampleTexture(WRL::ComPtr<ID3D12Device>& device,
+    WRL::ComPtr<ID3D12Resource>& texture, uint32_t textureWidth,
+    uint32_t textureHeight, uint32_t pixelSize,
+    WRL::ComPtr<ID3D12Resource>& textureUploadHeap,
+    WRL::ComPtr<ID3D12GraphicsCommandList>& commandList,
     WRL::ComPtr<ID3D12DescriptorHeap>& srvHeap)
 {
     // Describe and create a Texture2D.
@@ -373,9 +374,9 @@ void gt::dx12::CreateTileSampleTexture(WRL::ComPtr<ID3D12Device>& device,
     textureSubresourceData.RowPitch = textureWidth * pixelSize;
     textureSubresourceData.SlicePitch = textureSubresourceData.RowPitch * textureHeight;
 
-    UpdateSubresources(commandList.Get(), texture.Get(), textureUploadHeap.Get(), 
+    UpdateSubresources(commandList.Get(), texture.Get(), textureUploadHeap.Get(),
         0, 0, 1, &textureSubresourceData);
-    auto transition = CD3DX12_RESOURCE_BARRIER::Transition(texture.Get(), 
+    auto transition = CD3DX12_RESOURCE_BARRIER::Transition(texture.Get(),
         D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
     commandList->ResourceBarrier(1, &transition);
 
@@ -639,7 +640,6 @@ bool gt::dx12::DX12CubeApp::CreateDevice()
 
 void gt::dx12::DX12CubeApp::CreateCommandQueue()
 {
-    auto type = D3D12_COMMAND_LIST_TYPE_DIRECT;
     // TODO: Create an "Initialize" state to pass the device and setup these objects
     // instead of just in the default constructor
     WRL::ComPtr<ID3D12Device4> device4;
@@ -657,7 +657,8 @@ void gt::dx12::DX12CubeApp::CreateCommandQueue()
         LS::Utils::ThrowIfFailed(E_FAIL, errorCode.Message());
     }
 
-    m_commandList = std::make_unique<LS::Platform::Dx12::CommandListDx12>(device4.Get(), type, "main command list");
+    m_commandList = std::make_unique<LS::Platform::Dx12::CommandListDx12>(device4.Get(), D3D12_COMMAND_LIST_TYPE_DIRECT, "main command list");
+    m_copyCommandList = std::make_unique<LS::Platform::Dx12::CommandListDx12>(device4.Get(), D3D12_COMMAND_LIST_TYPE_COPY, "copy command list");
 }
 
 void gt::dx12::DX12CubeApp::CreateSwapchain()
@@ -680,7 +681,7 @@ void gt::dx12::DX12CubeApp::CreateSwapchain()
     swapchainDesc1.Scaling = DXGI_SCALING_STRETCH;
     swapchainDesc1.Stereo = FALSE;
 
-    auto result = m_frameBuffer.InitializeFrameBuffer(m_pFactory, m_directQueue.GetCommandQueue().Get(), hwnd, swapchainDesc1);
+    auto result = m_frameBuffer.InitializeFrameBuffer(m_pFactory, m_directQueue.GetCommandQueue().Get(), hwnd, swapchainDesc1, m_heapRtv.GetHeapStartCpu(), m_device->GetDevice().Get());
     if (!result)
     {
         LS::Utils::ThrowIfFailed(E_FAIL, "Failed to initialize the frame buffer");
@@ -725,23 +726,23 @@ void gt::dx12::DX12CubeApp::CreateDescriptors()
 
 void gt::dx12::DX12CubeApp::SetupState()
 {
-    //auto commandList = m_commandList->GetCommandList();
-    auto frame = m_frameBuffer.GetFramePtr();
-    const std::array<float, 4> color{ 0.4f, 0.5f, 0.9f, 1.0f };
+    auto frame = m_frameBuffer.GetCurrentFrameAsPtr();
     const D3D12_CPU_DESCRIPTOR_HANDLE dsv = m_heapDsv.GetHeapStartCpu();
     const D3D12_CPU_DESCRIPTOR_HANDLE rtv = frame->GetDescriptorHandle();
+
+    m_commandList->TransitionResource(frame->GetFrame().Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+    m_commandList->SetRenderTarget(rtv, &dsv);
 
     m_commandList->SetVertexBuffers(0, 1, &m_cubeVbView);
     m_commandList->SetIndexBuffer(&m_cubeIbView);
     m_commandList->SetViewports(1, &m_viewport);
     m_commandList->SetScissorRects(1, &m_scissorRect);
 
-    m_commandList->Clear(color, rtv);
-    m_commandList->ClearDepthStencil(dsv);
+    m_commandList->Clear(m_clearColor, rtv);
+    m_commandList->ClearDepthStencil(dsv, m_depthStencilValue.Depth, m_depthStencilValue.Stencil);
     m_commandList->SetPipelineState(m_cubePipelineState.Get());
     m_commandList->SetGraphicsRootSignature(m_cubeRootSignature.Get());
     m_commandList->SetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-    m_commandList->SetRenderTarget(rtv, &dsv);
 }
 
 void gt::dx12::DX12CubeApp::Update()
@@ -794,7 +795,7 @@ void gt::dx12::DX12CubeApp::UpdateBufferResource(WRL::ComPtr<ID3D12GraphicsComma
     const auto defaultHeap = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
     const auto defaultBuffDesc = CD3DX12_RESOURCE_DESC::Buffer(bufferSize, flags);
     auto device = m_device->GetDevice();
-    const auto hr = device->CreateCommittedResource(&defaultHeap, 
+    const auto hr = device->CreateCommittedResource(&defaultHeap,
         D3D12_HEAP_FLAG_NONE, &defaultBuffDesc,
         D3D12_RESOURCE_STATE_COPY_DEST, nullptr, IID_PPV_ARGS(pDestinationResource));
 
@@ -805,9 +806,9 @@ void gt::dx12::DX12CubeApp::UpdateBufferResource(WRL::ComPtr<ID3D12GraphicsComma
     {
         const auto uploadHeap = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
         const auto uploadBufferDesc = CD3DX12_RESOURCE_DESC::Buffer(bufferSize);
-        const auto uploadHr = device->CreateCommittedResource(&uploadHeap, 
+        const auto uploadHr = device->CreateCommittedResource(&uploadHeap,
             D3D12_HEAP_FLAG_NONE,
-            &uploadBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, 
+            &uploadBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
             IID_PPV_ARGS(pIntermediateResource));
 
         LS::Utils::ThrowIfFailed(uploadHr, "Failed to create upload buffer");
@@ -827,7 +828,8 @@ void gt::dx12::DX12CubeApp::UpdateBufferResource(WRL::ComPtr<ID3D12GraphicsComma
 bool gt::dx12::DX12CubeApp::LoadContent()
 {
     // Upload vertex buffer data //
-    auto commandList = m_commandList->GetCommandList();
+    m_copyCommandList->ResetCommandList();
+    auto commandList = m_copyCommandList->GetCommandList();
     Microsoft::WRL::ComPtr<ID3D12Device4> device4;
     auto hr = m_device->GetDevice().As(&device4);
     if (FAILED(hr))
@@ -852,7 +854,7 @@ bool gt::dx12::DX12CubeApp::LoadContent()
 
     // Find current directory to get our path and add the shaders (they'll be local to the exe for now)
     std::array<wchar_t, _MAX_PATH> modulePath{};
-    if (!GetModuleFileName(nullptr, modulePath.data(), 
+    if (!GetModuleFileName(nullptr, modulePath.data(),
         static_cast<DWORD>(modulePath.size())))
     {
         ThrowIfFailed(ERROR_FILE_NOT_FOUND);
@@ -943,7 +945,7 @@ bool gt::dx12::DX12CubeApp::LoadContent()
 
     // Execute to insure the index and vertex buffers are uploaded to the GPU resources before rendering
     commandList->Close();
-    m_copyQueue.QueueCommand(m_commandList.get());
+    m_copyQueue.QueueCommand(m_copyCommandList.get());
     auto fenceValue = m_copyQueue.ExecuteCommandList();
     m_copyQueue.WaitForGpu(fenceValue);
 
@@ -961,11 +963,14 @@ void gt::dx12::DX12CubeApp::DemoRun()
     while (Window->IsOpen())
     {
         Window->PollEvent();
+        // Timing // 
         const auto tick = std::chrono::high_resolution_clock::now();
         const auto end = std::chrono::high_resolution_clock::now();
 
         const auto delta = end - tick;
         const auto total = end - begin;
+
+        // Update Cycle //
         float angle = static_cast<float>(std::chrono::duration_cast<std::chrono::milliseconds>(total).count());
         const XMVECTOR rotationAxis = XMVectorSet(0, 1, 1, 0);
         m_cubeModelMat = XMMatrixRotationAxis(rotationAxis, XMConvertToRadians(angle));
@@ -979,50 +984,21 @@ void gt::dx12::DX12CubeApp::DemoRun()
         float aspectRatio = Window->GetWidth() / static_cast<float>(Window->GetHeight());
         m_cubeProjMat = XMMatrixPerspectiveFovLH(XMConvertToRadians(m_fov), aspectRatio, 0.1f, 100.0f);
 
+        // Draw Cycle // 
         m_commandList->ResetCommandList();
 
         SetupState();
         Update();
-
+        auto frame = m_frameBuffer.GetCurrentFrameAsPtr();
+        m_commandList->TransitionResource(frame->GetFrame().Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
         m_commandList->Close();
-
-        // Render Work // 
-        //m_frameResourceIndex = m_pSwapChain->GetCurrentBackBufferIndex();
-        //const auto fc = &m_frameContexts[m_frameResourceIndex];
-        /*const auto commandList = m_frameContexts[m_frameResourceIndex].CommandList;
-        const auto commandAllocator = m_frameContexts[m_frameResourceIndex].CommandAllocator;*/
-        //ThrowIfFailed(commandList->Reset(commandAllocator.Get(), nullptr));
-
-        //ClearRTV(0.4f, 0.5f, 0.9f, 1.0f);
-        //ClearDepth(1.0f);
-        //SetupState();
-        //Update();
-
-        // My local usage of things // 
-        //ThrowIfFailed(commandList->Close());
-
-        //ID3D12CommandList* const ppCommands[] = { commandList.Get() };
-        //m_pDirectCommandQueue->ExecuteCommandLists(1, ppCommands);
-
-        /*DXGI_PRESENT_PARAMETERS params{};
-        params.DirtyRectsCount = 0;
-        params.pDirtyRects = nullptr;
-        params.pScrollOffset = nullptr;
-        params.pScrollRect = nullptr;
-
-        ThrowIfFailed(m_pSwapChain->Present1(0, 0, &params));*/
-        //ThrowIfFailed(m_pSwapChain->Present(1, 0));
-
-        // Wait for GPU // 
-        //auto fenceValue = m_fenceValues[m_frameResourceIndex];
-        //ThrowIfFailed(m_pDirectCommandQueue->Signal(m_fence.Get(), fenceValue));
-        //m_fenceValues[m_frameResourceIndex]++;
-
-        //if (m_fence->GetCompletedValue() < fenceValue)
-        //{
-        //    ThrowIfFailed(m_fence->SetEventOnCompletion(fenceValue, m_fenceEvent));
-        //    ::WaitForSingleObject(m_fenceEvent, INFINITE);
-        //}
+        m_directQueue.QueueCommand(m_commandList.get());
+        const auto fenceValue = m_directQueue.ExecuteCommandList();
+        if (auto result = m_frameBuffer.Present(); !result)
+        {
+            throw std::runtime_error("Failed to present frame!");
+        }
+        m_directQueue.WaitForGpu(fenceValue);
     }
 }
 
@@ -1033,15 +1009,13 @@ void gt::dx12::DX12CubeApp::ResizeDepthBuffer(int width, int height)
         m_directQueue.Flush();
         m_copyQueue.Flush();
         auto device = m_device->GetDevice();
-
+        auto format = DXGI_FORMAT_D32_FLOAT;
         // Resize screen dependent resources.
         // Create a depth buffer.
-        D3D12_CLEAR_VALUE optimizedClearValue = {};
-        optimizedClearValue.Format = DXGI_FORMAT_D32_FLOAT;
-        optimizedClearValue.DepthStencil = { 1.0f, 0 };
+        CD3DX12_CLEAR_VALUE optimizedClearValue(format, m_depthStencilValue.Depth, m_depthStencilValue.Stencil);
 
         const CD3DX12_HEAP_PROPERTIES heap(D3D12_HEAP_TYPE_DEFAULT);
-        const auto resDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT, width, height,
+        const auto resDesc = CD3DX12_RESOURCE_DESC::Tex2D(format, width, height,
             1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
         ThrowIfFailed(device->CreateCommittedResource(
             &heap,
@@ -1054,7 +1028,7 @@ void gt::dx12::DX12CubeApp::ResizeDepthBuffer(int width, int height)
 
         // Update the depth-stencil view.
         D3D12_DEPTH_STENCIL_VIEW_DESC dsv = {};
-        dsv.Format = DXGI_FORMAT_D32_FLOAT;
+        dsv.Format = format;
         dsv.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
         dsv.Texture2D.MipSlice = 0;
         dsv.Flags = D3D12_DSV_FLAG_NONE;
