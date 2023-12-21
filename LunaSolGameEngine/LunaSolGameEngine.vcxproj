@@ -187,10 +187,10 @@
     <ClCompile Include="modules\data\serialize\WavefrontObj.ixx" />
     <ClCompile Include="modules\engine\EngineLogger.ixx" />
     <ClCompile Include="modules\engine\EngineCodes.ixx" />
-    <ClCompile Include="modules\engine\GeometryMath.ixx" />
-    <ClCompile Include="modules\engine\MathLib.ixx" />
-    <ClCompile Include="modules\engine\MatrixMath.ixx" />
-    <ClCompile Include="modules\geometry\GeometryGenerator.ixx" />
+    <ClCompile Include="modules\math\GeometryMath.ixx" />
+    <ClCompile Include="modules\math\MathLib.ixx" />
+    <ClCompile Include="modules\math\MatrixMath.ixx" />
+    <ClCompile Include="modules\mesh\GeometryGenerator.ixx" />
     <ClCompile Include="modules\helper\IOHelper.ixx" />
     <ClCompile Include="modules\helper\LSCommonTypes.ixx" />
     <ClCompile Include="modules\data\Concepts.ixx" />
@@ -199,9 +199,9 @@
     <ClCompile Include="modules\data\TextureTypes.ixx" />
     <ClCompile Include="modules\data\Input.ixx" />
     <ClCompile Include="modules\engine\EngineApp.ixx" />
-    <ClCompile Include="modules\engine\LSCamera.ixx" />
-    <ClCompile Include="modules\engine\LSDevice.ixx" />
-    <ClCompile Include="modules\engine\LSWindow.ixx" />
+    <ClCompile Include="modules\engine\EngineCamera.ixx" />
+    <ClCompile Include="modules\engine\EngineDevice.ixx" />
+    <ClCompile Include="modules\engine\EngineWindow.ixx" />
     <ClCompile Include="modules\data\MathTypes.ixx" />
     <ClCompile Include="modules\helper\PipelineFactory.ixx" />
     <ClCompile Include="modules\platform\Windows\D3D12\CommandListDx12.ixx" />

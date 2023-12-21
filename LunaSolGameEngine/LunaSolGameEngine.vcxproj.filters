@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="modules\engine\LSWindow.ixx">
+    <ClCompile Include="modules\engine\EngineWindow.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="modules\data\Input.ixx">
@@ -24,7 +24,7 @@
     <ClCompile Include="modules\data\MathTypes.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="modules\engine\LSDevice.ixx">
+    <ClCompile Include="modules\engine\EngineDevice.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="modules\utils\StdUtils.ixx">
@@ -48,7 +48,7 @@
     <ClCompile Include="modules\platform\Windows\D3D12\DeviceD3D12.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="modules\engine\LSCamera.ixx">
+    <ClCompile Include="modules\engine\EngineCamera.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="modules\platform\Windows\D3D11\RenderFuncs.ixx">
@@ -153,7 +153,7 @@
     <ClCompile Include="src\platform\D3D12\ResourceManagerD3D12.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="modules\geometry\GeometryGenerator.ixx">
+    <ClCompile Include="modules\mesh\GeometryGenerator.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="modules\helper\IOHelper.ixx">
@@ -199,6 +199,15 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="modules\platform\Windows\D3D12\DescriptorHeapDx12.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\math\MatrixMath.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\math\MathLib.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\math\GeometryMath.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
