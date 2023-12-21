@@ -9,7 +9,7 @@ import D3D11.PipelineFactory;
 #include <d3d11_4.h>
 import Engine.App;
 import D3D11Lib;
-import LSData;
+import LSEDataLib;
 
 using namespace LS;
 using namespace LS::Win32;

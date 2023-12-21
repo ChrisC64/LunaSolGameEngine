@@ -12,15 +12,13 @@ module;
 #include <iostream>
 #include <algorithm>
 #include <functional>
-#include "assimp\Importer.hpp"
-#include "assimp\scene.h"
-#include "assimp\postprocess.h"
-
+#include "assimp/Importer.hpp"
+#include "assimp/scene.h"
+#include "assimp/postprocess.h"
+#include "engine/EngineDefines.h"
 //TODO: Consider making Lse prepend for "Engine" stuff instead of just "Engine" like Engine.EngineCodes below.
 export module LSE.Serialize.WavefrontObj;
-import Data.LSMathTypes;
-import Data.LSConcepts;
-import Data.LSDataTypes;
+import LSEDataLib;
 import Engine.EngineCodes;
 
 namespace LS::Serialize

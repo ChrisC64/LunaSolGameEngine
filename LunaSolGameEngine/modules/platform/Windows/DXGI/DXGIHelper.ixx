@@ -7,11 +7,10 @@ module;
 #include <format>
 #include <string>
 #include <d3d12.h>
-#include "engine\EngineLogDefines.h"
-#include "platform\Windows\Win32\WinApiUtils.h"
-
+#include "engine/EngineLogDefines.h"
+#include "platform/Windows/Win32/WinApiUtils.h"
+#include "engine/EngineDefines.h"
 export module DXGIHelper;
-export import Data.LSDataTypes;
 
 import Engine.Logger;
 import Engine.EngineCodes;

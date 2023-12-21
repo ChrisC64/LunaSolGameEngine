@@ -12,6 +12,8 @@ module;
 #include <array>
 #include <cstdint>
 #include <d3dx12.h>
+#include "engine/EngineDefines.h"
+
 #pragma comment(lib, "dxguid.lib")
 
 export module D3D12Lib:Device;

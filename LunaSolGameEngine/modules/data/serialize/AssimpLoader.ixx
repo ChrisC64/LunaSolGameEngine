@@ -2,12 +2,12 @@ module;
 #include <vector>
 #include <filesystem>
 #include <cstdint>
-#include "assimp\Importer.hpp"
-#include "assimp\postprocess.h"
-#include "assimp\scene.h"
+#include "assimp/Importer.hpp"
+#include "assimp/postprocess.h"
+#include "assimp/scene.h"
 
 export module LSE.Serialize.AssimpLoader;
-import LSData;
+import LSEDataLib;
 import Engine.EngineCodes;
 
 namespace fs = std::filesystem;

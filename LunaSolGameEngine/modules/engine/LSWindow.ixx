@@ -3,8 +3,7 @@ module;
 #include <string>
 
 export module Engine.LSWindow;
-import Data.LSInput;
-import Data.LSDataTypes;
+import LSEDataLib;
 
 export namespace LS
 {
@@ -43,7 +42,7 @@ export namespace LS
             return m_title;
         }
 
-        void SetBackgroundColor(ColorRGB color)
+        void SetBackgroundColor(ColorRGBA color)
         {
             m_bgColor = color;
         }
@@ -127,7 +126,7 @@ export namespace LS
         LSWindowHandle m_winHandle;
         OnWindowEvent m_onWindowEvent;
         //@brief The color to fill the window background
-        ColorRGB m_bgColor{ 1.0f, 1.0f, 1.0f };
+        ColorRGBA m_bgColor{ 1.0f, 1.0f, 1.0f, 1.0f };
         MousePos m_mousePos{ 0, 0 };
         LSWindowBase(uint32_t width, uint32_t height, std::wstring_view  title) : m_width(width),
             m_height(height),

@@ -4,10 +4,9 @@ module;
 #include <filesystem>
 #include <optional>
 #include <type_traits>
+#include "engine/EngineDefines.h"
 
 export module Util.StdUtils;
-import Data.LSConcepts;
-import Data.LSDataTypes;
 
 // Set of functions to help with std stuff
 export namespace LS::Utils

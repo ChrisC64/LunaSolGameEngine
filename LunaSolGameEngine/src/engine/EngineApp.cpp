@@ -2,7 +2,7 @@
 #include <optional>
 #include <string_view>
 #include <vector>
-
+#include "engine/EngineDefines.h"
 import Engine.App;
 import D3D11Lib;
 import Platform.Win32Window;

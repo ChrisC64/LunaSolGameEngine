@@ -6,9 +6,10 @@ module;
 #include <vector>
 #include <memory>
 #include <ranges>
+#include "engine/EngineDefines.h"
 export module Engine.App;
 
-export import LSData;
+export import LSEDataLib;
 
 export import Engine.LSDevice;
 export import Engine.LSWindow;
@@ -86,7 +87,7 @@ namespace LS
 {
     LSApp::LSApp(uint32_t width, uint32_t height, std::wstring_view title) 
     {
-        Window =    BuildWindow(width, height, title);
+        Window = BuildWindow(width, height, title);
     }
 
     void LS::LSApp::RegisterKeyboardInput(LSOnKeyboardDown onKeyDown, LSOnKeyboardUp onKeyUp)

@@ -10,11 +10,11 @@ module;
 
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
+#include "engine/EngineDefines.h"
 export module D3D11.HelperStates;
 import Engine.LSDevice;
 import Util.MSUtils;
-import Data.LSShader;
-import Data.LSDataTypes;
+import LSEDataLib;
 
 export namespace LS::Win32
 {

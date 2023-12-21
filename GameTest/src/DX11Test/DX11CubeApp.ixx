@@ -44,7 +44,7 @@ import Helper.IO;
 import GeometryGenerator;
 import MathLib;
 import DirectXCommon;
-import LSData;
+import LSEDataLib;
 import LSE.Serialize.WavefrontObj;
 import LSE.Serialize.AssimpLoader;
 import DX11Systems;
@@ -282,7 +282,7 @@ auto gt::dx11::DX11CubeApp::Initialize(const LS::LSCommandArgs& args) -> LS::Sys
 {
     using enum LS::System::ErrorStatus;
     auto& window = Window;
-    LS::ColorRGB bgColor(1.0f, 0.0f, 0.0f);
+    LS::ColorRGBA bgColor(1.0f, 0.0f, 0.0f, 1.0f);
     window->SetBackgroundColor(bgColor);
 
     Window->RegisterKeyboardDown(std::bind(&gt::dx11::DX11CubeApp::OnKeyboardDown, this, _1));

@@ -7,9 +7,8 @@ module;
 #include <cstdint>
 #include <format>
 #include <optional>
-
+#include "engine/EngineDefines.h"
 export module DX11Systems:DX11BufferCache;
-import Data.LSDataTypes;
 import Engine.EngineCodes;
 import Util.MSUtils;
 

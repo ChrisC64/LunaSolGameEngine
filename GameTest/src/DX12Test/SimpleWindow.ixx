@@ -29,7 +29,7 @@ module;
 
 export module DX12.SimpleWindow;
 
-import LSData;
+import LSEDataLib;
 import Engine.App;
 import D3D12Lib;
 import Platform.Win32Window;

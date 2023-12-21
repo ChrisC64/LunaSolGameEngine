@@ -2,7 +2,7 @@ module;
 #include <concepts>
 #include <type_traits>
 
-export module Data.LSConcepts;
+export module LSEDataLib:Concepts;
 
 export namespace LS
 {

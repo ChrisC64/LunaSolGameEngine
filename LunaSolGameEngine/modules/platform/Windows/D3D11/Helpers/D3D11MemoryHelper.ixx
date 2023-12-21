@@ -8,9 +8,10 @@ module;
 #include <vector>
 #include <stdexcept>
 #include <cassert>
-#include "platform\Windows\Win32\WinApiUtils.h"
+#include "platform/Windows/Win32/WinApiUtils.h"
+#include "engine/EngineDefines.h"
 export module D3D11.MemoryHelper;
-import LSData;
+import LSEDataLib;
 import Engine.Logger;
 import Engine.EngineCodes;
 

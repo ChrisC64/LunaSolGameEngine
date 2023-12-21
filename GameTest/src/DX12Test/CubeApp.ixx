@@ -24,7 +24,7 @@ module;
 #include <format>
 export module CubeApp;
 
-import LSData;
+import LSEDataLib;
 import Engine.App;
 import D3D12Lib;
 import Platform.Win32Window;
