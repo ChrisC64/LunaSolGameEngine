@@ -27,11 +27,10 @@ export namespace LS::Global
 
 namespace LS
 {
-
     export using LSCommandArgs = std::vector<std::string>;
     export auto ParseCommands(int argc, char* argv[]) noexcept -> LSCommandArgs;
     export auto ParseCommands(std::string_view args) noexcept -> LSCommandArgs;
-    export auto ParseCommands(std::wstring_view args) noexcept -> LSCommandArgs;
+
     /**
      * @brief Creates the device with the supported rendering type
      * @param api @link LS::DEVICE_API type to use
@@ -131,9 +130,4 @@ namespace LS
 
         return commandArgs;
     }
-    auto ParseCommands([[maybe_unused]] std::wstring_view args) noexcept -> LSCommandArgs
-    {
-        return LSCommandArgs();
-    }
-
 }

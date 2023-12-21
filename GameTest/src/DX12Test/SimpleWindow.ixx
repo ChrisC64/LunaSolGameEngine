@@ -234,7 +234,7 @@ void gt::dx12::SimpleWindow::PopulateCommandList()
     auto frame = m_frameBuffer.GetCurrentFrameAsRef();
     m_commandList->ResetCommandList();
     m_commandList->TransitionResource(frame.GetFramePtr(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
-    CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_heapRtv.GetHeapStartCpu(), m_frameBuffer.GetCurrentIndex(), m_heapRtv.GetSize());
+    CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_heapRtv.GetHeapStartCpu(), static_cast<int>(m_frameBuffer.GetCurrentIndex()), m_heapRtv.GetSize());
     m_commandList->SetRenderTarget(rtvHandle);
 
     const std::array<float, 4> clearColor{ 0.0f, 0.12f, 0.34f, 1.0f };
