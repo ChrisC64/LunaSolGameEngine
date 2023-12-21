@@ -6,10 +6,11 @@ module;
 #include <vector>
 #include <unordered_map>
 #include <string>
+#include "engine/EngineDefines.h"
 export module Engine.LSDevice;
 
 import Engine.LSWindow;
-import LSData;
+import LSEDataLib;
 import Util.StdUtils;
 
 namespace LS

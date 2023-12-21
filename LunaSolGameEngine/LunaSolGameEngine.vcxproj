@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="..\packages\Microsoft.Direct3D.D3D12.1.610.3\build\native\Microsoft.Direct3D.D3D12.props" Condition="Exists('..\packages\Microsoft.Direct3D.D3D12.1.610.3\build\native\Microsoft.Direct3D.D3D12.props')" />
+  <Import Project="..\packages\Microsoft.Direct3D.D3D12.1.611.2\build\native\Microsoft.Direct3D.D3D12.props" Condition="Exists('..\packages\Microsoft.Direct3D.D3D12.1.611.2\build\native\Microsoft.Direct3D.D3D12.props')" />
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -180,29 +180,29 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="modules\data\LSBufferTypes.ixx" />
-    <ClCompile Include="modules\data\LSDataTypes.ixx" />
-    <ClCompile Include="modules\data\LSResource.ixx" />
+    <ClCompile Include="modules\data\BufferTypes.ixx" />
+    <ClCompile Include="modules\data\DataTypes.ixx" />
+    <ClCompile Include="modules\data\Resource.ixx" />
     <ClCompile Include="modules\data\serialize\AssimpLoader.ixx" />
     <ClCompile Include="modules\data\serialize\WavefrontObj.ixx" />
     <ClCompile Include="modules\engine\EngineLogger.ixx" />
     <ClCompile Include="modules\engine\EngineCodes.ixx" />
-    <ClCompile Include="modules\engine\GeometryMath.ixx" />
-    <ClCompile Include="modules\engine\MathLib.ixx" />
-    <ClCompile Include="modules\engine\MatrixMath.ixx" />
-    <ClCompile Include="modules\geometry\GeometryGenerator.ixx" />
+    <ClCompile Include="modules\math\GeometryMath.ixx" />
+    <ClCompile Include="modules\math\MathLib.ixx" />
+    <ClCompile Include="modules\math\MatrixMath.ixx" />
+    <ClCompile Include="modules\mesh\GeometryGenerator.ixx" />
     <ClCompile Include="modules\helper\IOHelper.ixx" />
     <ClCompile Include="modules\helper\LSCommonTypes.ixx" />
-    <ClCompile Include="modules\data\LSConcepts.ixx" />
-    <ClCompile Include="modules\data\DataLib.ixx" />
-    <ClCompile Include="modules\data\LSShader.ixx" />
-    <ClCompile Include="modules\data\LSTextureTypes.ixx" />
-    <ClCompile Include="modules\data\LSWindowTypes.ixx" />
+    <ClCompile Include="modules\data\Concepts.ixx" />
+    <ClCompile Include="modules\data\LSEDataLib.ixx" />
+    <ClCompile Include="modules\data\Shader.ixx" />
+    <ClCompile Include="modules\data\TextureTypes.ixx" />
+    <ClCompile Include="modules\data\Input.ixx" />
     <ClCompile Include="modules\engine\EngineApp.ixx" />
-    <ClCompile Include="modules\engine\LSCamera.ixx" />
-    <ClCompile Include="modules\engine\LSDevice.ixx" />
-    <ClCompile Include="modules\engine\LSWindow.ixx" />
-    <ClCompile Include="modules\data\LSMathTypes.ixx" />
+    <ClCompile Include="modules\engine\EngineCamera.ixx" />
+    <ClCompile Include="modules\engine\EngineDevice.ixx" />
+    <ClCompile Include="modules\engine\EngineWindow.ixx" />
+    <ClCompile Include="modules\data\MathTypes.ixx" />
     <ClCompile Include="modules\helper\PipelineFactory.ixx" />
     <ClCompile Include="modules\platform\Windows\D3D12\CommandListDx12.ixx" />
     <ClCompile Include="modules\platform\Windows\D3D12\CommandQueueDx12.ixx" />
@@ -213,7 +213,7 @@
     <ClCompile Include="modules\platform\Windows\D3D12\D3D12Lib.ixx" />
     <ClCompile Include="modules\platform\Windows\D3D12\Helpers\D3D12MemoryHelper.ixx" />
     <ClCompile Include="modules\platform\Windows\D3D12\Helpers\D3D12UtilsCommandList.ixx" />
-    <ClCompile Include="modules\platform\Windows\D3D12\ResourceManagerD3D12.ixx" />
+    <ClCompile Include="modules\platform\Windows\DirectX\ResourceManagerD3D12.ixx" />
     <ClCompile Include="modules\platform\Windows\DirectX\DirectXCommon.ixx" />
     <ClCompile Include="modules\platform\Windows\DirectX\DXCamera.ixx" />
     <ClCompile Include="modules\platform\Windows\D3D11\Helpers\EngineWrapperD3D11.ixx" />
@@ -254,6 +254,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="inc\engine\EngineDefines.h" />
     <ClInclude Include="inc\engine\EngineLogDefines.h" />
     <ClInclude Include="inc\LSTimer.h" />
     <ClInclude Include="inc\platform\Windows\Win32\WinApiUtils.h" />
@@ -263,13 +264,13 @@
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
-    <Import Project="..\packages\Microsoft.Direct3D.D3D12.1.610.3\build\native\Microsoft.Direct3D.D3D12.targets" Condition="Exists('..\packages\Microsoft.Direct3D.D3D12.1.610.3\build\native\Microsoft.Direct3D.D3D12.targets')" />
+    <Import Project="..\packages\Microsoft.Direct3D.D3D12.1.611.2\build\native\Microsoft.Direct3D.D3D12.targets" Condition="Exists('..\packages\Microsoft.Direct3D.D3D12.1.611.2\build\native\Microsoft.Direct3D.D3D12.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('..\packages\Microsoft.Direct3D.D3D12.1.610.3\build\native\Microsoft.Direct3D.D3D12.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Direct3D.D3D12.1.610.3\build\native\Microsoft.Direct3D.D3D12.props'))" />
-    <Error Condition="!Exists('..\packages\Microsoft.Direct3D.D3D12.1.610.3\build\native\Microsoft.Direct3D.D3D12.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Direct3D.D3D12.1.610.3\build\native\Microsoft.Direct3D.D3D12.targets'))" />
+    <Error Condition="!Exists('..\packages\Microsoft.Direct3D.D3D12.1.611.2\build\native\Microsoft.Direct3D.D3D12.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Direct3D.D3D12.1.611.2\build\native\Microsoft.Direct3D.D3D12.props'))" />
+    <Error Condition="!Exists('..\packages\Microsoft.Direct3D.D3D12.1.611.2\build\native\Microsoft.Direct3D.D3D12.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.Direct3D.D3D12.1.611.2\build\native\Microsoft.Direct3D.D3D12.targets'))" />
   </Target>
 </Project>

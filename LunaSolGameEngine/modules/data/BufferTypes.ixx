@@ -4,9 +4,9 @@ module;
 #include <unordered_map>
 #include <format>
 #include <optional>
-
-export module Data.LSBufferTypes;
-import Data.LSDataTypes;
+#include "engine/EngineDefines.h"
+export module LSEDataLib:BufferTypes;
+import :DataTypes;
 import Engine.EngineCodes;
 
 export namespace LS

@@ -3,7 +3,7 @@ module;
 #include <array>
 #include <vector>
 
-export module Data.LSTextureTypes;
+export module LSEDataLib:TextureTypes;
 
 export namespace LS
 {

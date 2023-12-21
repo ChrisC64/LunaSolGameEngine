@@ -21,7 +21,7 @@
 //#include "LSTimer.h"
 //export module MultiPassTestApp;
 //
-//import LSData;
+//import LSEDataLib;
 //import Engine.App;
 //import D3D11Lib;
 //import Platform.Win32Window;

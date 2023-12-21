@@ -8,7 +8,7 @@ module;
 #include <span>
 #include <format>
 
-export module Data.LSShader;
+export module LSEDataLib:Shader;
 
 import Util.StdUtils;
 

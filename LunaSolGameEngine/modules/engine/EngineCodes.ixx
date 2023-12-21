@@ -8,8 +8,6 @@ module;
 
 export module Engine.EngineCodes;
 
-import Data.LSConcepts;
-
 export namespace LS
 {
     /**

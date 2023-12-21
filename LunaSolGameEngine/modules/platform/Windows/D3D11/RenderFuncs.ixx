@@ -11,7 +11,7 @@ module;
 #pragma comment(lib, "d3d11")
 export module D3D11.RenderFuncD3D11;
 import Util.MSUtils;
-import LSData;
+import LSEDataLib;
 import Engine.LSDevice;
 
 namespace WRL = Microsoft::WRL;

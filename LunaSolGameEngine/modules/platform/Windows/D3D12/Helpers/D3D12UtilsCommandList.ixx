@@ -9,6 +9,7 @@ module;
 #include <format>
 #include <wrl/client.h>
 #include <d3dx12\d3dx12_barriers.h>
+#include <chrono>
 #include "engine\EngineLogDefines.h"
 #include "platform\Windows\Win32\WinApiUtils.h"
 #include <chrono>

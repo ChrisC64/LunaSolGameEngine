@@ -6,10 +6,10 @@ module;
 #include <optional>
 #include <format>
 #include "engine/EngineLogDefines.h"
+#include "engine/EngineDefines.h"
 export module Helper.IO;
 
 import Engine.EngineCodes;
-import Data.LSDataTypes;
 
 export namespace LS::IO
 {

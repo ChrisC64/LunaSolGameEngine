@@ -5,7 +5,7 @@ module;
 #include <stdexcept>
 export module D3D11.EngineWrapperD3D11;
 
-import LSData;
+import LSEDataLib;
 import Engine.LSDevice;
 
 /**

@@ -2,7 +2,7 @@ module;
 #include <cstdint>
 #include <compare>
 export module Engine.LSCamera;
-import Data.LSMathTypes;
+import LSEDataLib;
 
 export namespace LS
 {

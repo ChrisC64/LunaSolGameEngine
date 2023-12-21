@@ -31,7 +31,7 @@ module;
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 export module ImGuiWindowTest;
 
-import LSData;
+import LSEDataLib;
 import Engine.App;
 import D3D12Lib;
 import Platform.Win32Window;

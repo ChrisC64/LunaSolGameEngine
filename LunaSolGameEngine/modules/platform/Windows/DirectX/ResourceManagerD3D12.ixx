@@ -2,12 +2,12 @@ module;
 #include <d3d12.h>
 #include <dxgi1_6.h>
 #include <wrl/client.h>
-
+#include "engine/EngineDefines.h"
 export module D3D12Lib:ResourceManagerD3D12;
 
 import :D3D12Common;
 import Platform.Win32Window;
-import Data.LSDataTypes;
+import LSEDataLib;
 
 namespace WRL = Microsoft::WRL;
 

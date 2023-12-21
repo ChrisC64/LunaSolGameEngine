@@ -7,9 +7,10 @@ module;
 
 #include <d3d11_4.h>
 #include <wrl/client.h>
+#include "engine/EngineDefines.h"
+
 export module D3D11.PipelineFactory;
 import Helper.PipelineFactory;
-import LSData;
 import Engine.App;
 import Util;
 import D3D11.Device;

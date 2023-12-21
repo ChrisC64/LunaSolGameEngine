@@ -17,7 +17,7 @@ import D3D11.MemoryHelper;
 import D3D11.Utils;
 import D3D11.EngineWrapperD3D11;
 import Util.MSUtils;
-import LSData;
+import LSEDataLib;
 namespace WRL = Microsoft::WRL;
 
 using namespace LS::Win32;

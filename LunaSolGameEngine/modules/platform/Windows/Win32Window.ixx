@@ -6,7 +6,7 @@ module;
 #include <Windows.h>
 #include <functional>
 export module Platform.Win32Window;
-import LSData;
+import LSEDataLib;
 import Engine.LSWindow;
 
 export namespace LS::Win32

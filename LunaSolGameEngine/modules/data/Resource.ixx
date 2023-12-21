@@ -1,15 +1,15 @@
 module;
 #include <concepts>
 #include <type_traits>
+#include "engine/EngineDefines.h"
 
-export module Data.LSResource;
+export module LSEDataLib:Resource;
 
-import Data.LSDataTypes;
 import Engine.App;
 //TODO: Not sure if going to keep, my goal was to have something that keeps storage of all resource
 // objects, but I'll probably work to keep separate resources like Buffers, Textures, Sound, etc. 
 // instead of generalizing them. 
-export namespace LS::Resource
+export namespace LS
 {
     template <class Type>
         requires std::is_destructible<Type>

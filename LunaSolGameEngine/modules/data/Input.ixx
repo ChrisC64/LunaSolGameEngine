@@ -4,7 +4,7 @@ module;
 #include <vector>
 #include <functional>
 
-export module Data.LSInput;
+export module LSEDataLib:Input;
 
 export namespace LS
 {

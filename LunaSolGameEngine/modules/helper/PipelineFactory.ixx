@@ -1,8 +1,8 @@
+module;
+#include "engine/EngineDefines.h"
 export module Helper.PipelineFactory;
 
 import Engine.LSDevice;
-import Data.LSDataTypes;
-import Data.LSShader;
 
 export namespace LS
 {

@@ -79,8 +79,8 @@
     <FxCompile Include="shaders\PixelShaderD3D12.hlsl" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
     <None Include="libs\imgui\misc\debuggers\imgui.natstepfilter" />
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="libs\imgui\imconfig.h">
