@@ -8,7 +8,7 @@ namespace LS::Log
 #define LS_LOG_ERROR(x) TraceError(x)
 #define LS_LOG_DEBUG(x) TraceDebug(x)
 #define LS_LOG_INFO(x) TraceInfo(x)
-#define LS_LOG_WARNING(x) TraceWarning(x)
+#define LS_LOG_WARNING(x) TraceWarn(x)
 #else
 #define LS_LOG_ERROR(x)
 #define LS_LOG_DEBUG(x)
