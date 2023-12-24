@@ -412,4 +412,24 @@ export namespace LS::Win32
         pContext->OMSetRenderTargets(0, nullptr, nullptr);
         pContext->Flush();
     }
+
+    [[nodiscard]] constexpr auto Dx11ErrorToString(HRESULT hr) noexcept -> const char*
+    {
+        switch (hr)
+        {
+        case D3D11_ERROR_FILE_NOT_FOUND: return std::format("File not found: {}", hr).c_str();
+        case D3D11_ERROR_TOO_MANY_UNIQUE_STATE_OBJECTS: return std::format("Too many unique state objects: {}", hr).c_str();
+        case D3D11_ERROR_TOO_MANY_UNIQUE_VIEW_OBJECTS: return std::format("Too many unique view objects: {}", hr).c_str();
+        case D3D11_ERROR_DEFERRED_CONTEXT_MAP_WITHOUT_INITIAL_DISCARD: return std::format("Context map without intial discard: {}", hr).c_str();
+        case DXGI_ERROR_INVALID_CALL: return std::format("Invalid call: {}", hr).c_str();
+        case DXGI_ERROR_WAS_STILL_DRAWING: return std::format("Still drawing: {}", hr).c_str();
+        case E_FAIL: return std::format("Fail: {}", hr).c_str();
+        case E_INVALIDARG: return std::format("Invalid argument passed: {}", hr).c_str();
+        case E_OUTOFMEMORY: return std::format("Out of memory: {}", hr).c_str();
+        case E_NOTIMPL: return std::format("Not implemented: {}", hr).c_str();
+        case S_FALSE: return std::format("Successful fail - the error is okay, but not standard: {}", hr).c_str();
+        case S_OK: return std::format("Ok: {}", hr).c_str();
+        default: return std::format("Unknown value passed: {}", hr).c_str();
+        }
+    }
 }

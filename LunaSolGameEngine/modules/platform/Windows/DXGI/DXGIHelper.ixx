@@ -68,6 +68,9 @@ export namespace LS::Win32
     void LogAdapters(IDXGIFactory4* const factory) noexcept;
     void LogAdapterOutput(IDXGIAdapter* const adapter) noexcept;
     void LogOutputDisplayModes(IDXGIOutput* const output, DXGI_FORMAT format) noexcept;
+
+    // Returns a DXGI HRESULT into a LS::System::ErrorCode
+    constexpr auto DxgiErrorToString(HRESULT hr) noexcept -> const char*;
 }
 
 module : private;
@@ -340,5 +343,39 @@ void LS::Win32::LogOutputDisplayModes(IDXGIOutput* const output, DXGI_FORMAT for
         std::wstring text = std::format(L"\tResolution (WxH): {}x{}\n\tRefresh Rate: {}", std::to_wstring(x.Width),
             std::to_wstring(x.Height), std::to_wstring(n / d));
         Log::TraceInfo(text);
+    }
+}
+
+auto DxgiErrorToString(HRESULT hr) noexcept -> const char*
+{
+    using namespace LS::System;
+
+    switch(hr)
+    {
+    case DXGI_ERROR_ACCESS_DENIED: return std::format("Access denied").c_str();
+    case DXGI_ERROR_ACCESS_LOST: return std::format("Access lost: {}", hr).c_str();
+    case DXGI_ERROR_ALREADY_EXISTS: return std::format("The element already exists: {}", hr).c_str();
+    case DXGI_ERROR_CANNOT_PROTECT_CONTENT: return std::format("Cannot protect content: {}", hr).c_str();
+    case DXGI_ERROR_DEVICE_HUNG: return std::format("Device hung: {}", hr).c_str();
+    case DXGI_ERROR_DEVICE_REMOVED: return std::format("Device removed: {}", hr).c_str();
+    case DXGI_ERROR_DEVICE_RESET: return std::format("Device reset: {}", hr).c_str();
+    case DXGI_ERROR_DRIVER_INTERNAL_ERROR: return std::format("Driver internal error: {}", hr).c_str();
+    case DXGI_ERROR_FRAME_STATISTICS_DISJOINT: return std::format("Frame statistics disjoint error: {}", hr).c_str();
+    case DXGI_ERROR_GRAPHICS_VIDPN_SOURCE_IN_USE: return std::format("Graphics VIDPN source in use error: {}", hr).c_str();
+    case DXGI_ERROR_INVALID_CALL: return std::format("Invalid call: {}", hr).c_str();
+    case DXGI_ERROR_MORE_DATA: return std::format("Buffer supplied was too small for requested data: {}", hr).c_str();
+    case DXGI_ERROR_NAME_ALREADY_EXISTS: return std::format("The supplied name already exists: {}", hr).c_str();
+    case DXGI_ERROR_NONEXCLUSIVE: return std::format("Nonexclusive - Global resource in use and D3D devie cannot use the resource: {}", hr).c_str();
+    case DXGI_ERROR_NOT_CURRENTLY_AVAILABLE: return std::format("Not currently available: {}", hr).c_str();
+    case DXGI_ERROR_NOT_FOUND: return std::format("Not found: {}", hr).c_str();
+    case DXGI_ERROR_RESTRICT_TO_OUTPUT_STALE: return std::format("Restrict output stale - swap chain was disconnected or changed: {}", hr).c_str();
+    case DXGI_ERROR_SDK_COMPONENT_MISSING: return std::format("SDK Component Missing: {}", hr).c_str();
+    case DXGI_ERROR_SESSION_DISCONNECTED: return std::format("Session disconnected: {}", hr).c_str();
+    case DXGI_ERROR_UNSUPPORTED: return std::format("Requested functionality is unsupported by the device or driver: {}", hr).c_str();
+    case DXGI_ERROR_WAIT_TIMEOUT: return std::format("Wait timeout - timeout interval has elapsed: {}", hr).c_str();
+    case DXGI_ERROR_WAS_STILL_DRAWING: return std::format("Was still drawing - GPU was busy: {}", hr).c_str();
+    case S_OK: return "OK";
+    default:
+        return std::format("Unknown Error Code Passed: {}", hr).c_str();
     }
 }

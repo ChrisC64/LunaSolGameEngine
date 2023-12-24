@@ -59,6 +59,7 @@ export namespace LS
             IO, //@brief Input/Output stream category
             OS, //@brief An operating system specific error
             NETWORK,//@brief A network error occurred
+            INPUT, //@brief An error with the input device (controller/keyboard) occurred. 
         };
 
         enum class ErrorStatus : uint8_t
