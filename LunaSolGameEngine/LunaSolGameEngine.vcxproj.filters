@@ -165,7 +165,7 @@
     <ClCompile Include="modules\data\serialize\AssimpLoader.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="modules\platform\Windows\D3D12\Helpers\D3D12MemoryHelper.ixx">
+    <ClCompile Include="modules\platform\Windows\D3D12\Helpers\D3D12Utils.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="modules\platform\Windows\D3D12\Helpers\D3D12UtilsCommandList.ixx">
