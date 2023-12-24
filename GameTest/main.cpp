@@ -7,7 +7,8 @@
 #include <cstdint>
 #include <bitset>
 #include <string>
-
+#include <utility>
+#include <filesystem>
 #ifndef _DEBUG
 #include <Windows.h>
 #include <processenv.h>
@@ -72,17 +73,15 @@ Ref<LS::LSApp> CreateApp(uint32_t choice)
 #ifdef _DEBUG
 int main(int argc, char* argv[])
 {
-    /*std::ofstream myFile("ErrorFile.txt", std::ios::binary);
-    if (!myFile.is_open())
+    std::filesystem::path file = std::filesystem::current_path().string() + "log.txt";
+    /*if (!LS::Log::InitLog(file))
     {
-        std::cerr << "Failed to open file!";
-        return -1;
-    }
-    std::cerr.rdbuf(myFile.rdbuf());
-
-    std::cerr << "An output to file will occur for cerr\n";*/
-    LS::Log::InitLog();
-
+        return -2;
+    }*/
+    LS::Log::TraceError(L"Hello logger test!");
+    LS::Log::TraceDebug(L"My second test!!");
+    LS::Log::TraceWarn(L"WARNING!! Boss approaching!");
+    LS::Log::Flush();
     std::cout << "Pick an app:\n0 - DX 11 Cube\n1 - DX12 Cube\n2 - Simple DX12 Window\n3 - ImGui Sample\nChoice: ";
     std::string choice{};
     std::getline(std::cin, choice);

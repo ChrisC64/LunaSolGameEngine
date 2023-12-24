@@ -1,5 +1,4 @@
 module;
-#include <ostream>
 #include <fstream>
 #include <iostream>
 #include <chrono>
@@ -9,23 +8,26 @@ module;
 #include <format>
 #include <memory>
 #include <filesystem>
+#include <utility>
 #include "engine/EngineDefines.h"
 
 export module Engine.Logger;
 
+import Engine.EngineCodes;
 import LSEDataLib;
 
 export namespace LS::Log
 {
 #define LOGGER_CHECK if (!Logger) return
-#define LEVEL_CHECK(x) if (x <= LoggingLevel) return
+#define LEVEL_CHECK(x) if (x > Logger->GetLogLevel()) return
 
-    enum class LOG_LEVEL
+    enum class LOG_LEVEL : uint8_t
     {
-        DEBUG = 0,//@brief Messages that will only populate in DEBUG
-        INFO, //@brief Messages that will populate outside debug mode
+        DEBUG = 0,//@brief Messages that are for debug use
+        INFO, //@brief Messages that are informative but maybe not meant for debug usage
         WARN, //@brief Messages that should be looked at
-        ERROR //@brief Messages that contain critical errorrs
+        ERROR, //@brief Messages that contain critical errorrs
+        ALL //@brief print out all messages
     };
 
     constexpr const char* ErrorAsChar(LOG_LEVEL level)
@@ -63,72 +65,146 @@ export namespace LS::Log
             return L"UNKNOWN_LOG_LEVEL";
         }
     }
-    //TODO: This is fun to consider, but maybe I'll go with a logging library for now.
-    //Mainly, threading and performance could be an issue in actually evaluating the effectiveness
-    // of the engine in other areas. Plus, I'm not sure how I want to handle things, do I want
-    // to just allow any stream type be used in debug/release? Letting users choose makes sense afterall.
-    // and how do I want to handle that? 
+
     class LSLogger
     {
-    private:
-        mutable std::shared_mutex LogMutex;
     public:
-        LSLogger() = default;
+        LSLogger();
+        virtual ~LSLogger();
 
-        ~LSLogger() = default;
+        virtual auto Init() noexcept -> LS::System::ErrorCode = 0;
 
-        void Print(std::wostream& stream, LOG_LEVEL level, std::wstring_view msg) const noexcept;
-        void PrintLine(std::wostream& stream, LOG_LEVEL level, std::wstring_view msg) const noexcept;
+        void Print(std::wstring_view msg) noexcept;
+        void Print(std::string_view msg) noexcept;
+        void Print(LOG_LEVEL level, std::wstring_view msg) noexcept;
+        void Print(LOG_LEVEL level, std::string_view msg) noexcept;
+        
+        void PrintLine(std::wstring_view msg) noexcept;
+        void PrintLine(std::string_view msg) noexcept;
+        void PrintLine(LOG_LEVEL level, std::wstring_view msg) noexcept;
+        void PrintLine(LOG_LEVEL level, std::string_view msg) noexcept;
+
+        void SetLogLevel(LOG_LEVEL level) noexcept;
+        auto GetLogLevel() noexcept -> LOG_LEVEL;
+        void Flush() noexcept;
+
+    protected:
+        LOG_LEVEL m_logLevel = LOG_LEVEL::DEBUG;
+        std::wostream m_stream;
+    };
+
+    class FileLogger : public LSLogger
+    {
+    public:
+        FileLogger(std::filesystem::path file);
+        auto Init() noexcept -> LS::System::ErrorCode;
+
+    private:
+        std::wofstream m_fileStream;
+        std::filesystem::path m_path;
+    };
+
+    class ConsoleLogger : public LSLogger
+    {
+    public:
+        ConsoleLogger();
+        auto Init() noexcept -> LS::System::ErrorCode;
     };
 
     Ref<LSLogger> Logger;
-    LOG_LEVEL LoggingLevel = LOG_LEVEL::DEBUG;
-    std::wofstream LogFile;
 
     void TraceError(std::wstring_view msg);
     void TraceDebug(std::wstring_view msg);
     void TraceInfo(std::wstring_view msg);
-    void TraceWarning(std::wstring_view msg);
+    void TraceWarn(std::wstring_view msg);
+    
+    void TraceError(std::string_view msg);
+    void TraceDebug(std::string_view msg);
+    void TraceInfo(std::string_view msg);
+    void TraceWarn(std::string_view msg);
 
     /**
-     * @brief Initialize a log to the standard output 
+     * @brief Initialize a log to the standard output or cerr based on LS::Log::LOG_LEVEL. 
+     * Anything less than LS::Log::LOG_LEVEL::ERROR will print to the std::cout.
     */
-    void InitLog();
+    [[nodiscard]] auto InitLog(LOG_LEVEL level = LOG_LEVEL::DEBUG) noexcept -> LS::System::ErrorCode;
 
     /**
      * @brief Initialize a log to a file instead
      * @param filepath The file to use or create when logging
     */
-    void InitLog(std::filesystem::path filepath);
+    [[nodiscard]] auto InitLog(std::filesystem::path filepath, LOG_LEVEL level = LOG_LEVEL::DEBUG) noexcept -> LS::System::ErrorCode;
 
-    /**
-     * @brief Sets the log level to show messages of a certain level and higher only
-     * @param level The MINIMUM level to show only
-    */
-    void SetLogLevel(LOG_LEVEL level)
-    {
-        LoggingLevel = level;
-    }
+    void Flush() noexcept;
 }
 
 module : private;
 
-void LS::Log::LSLogger::Print(std::wostream& stream, LOG_LEVEL level, std::wstring_view msg) const noexcept
+LS::Log::LSLogger::LSLogger() : m_stream{ nullptr }
 {
-    std::unique_lock lock(LogMutex);
+}
+
+LS::Log::LSLogger::~LSLogger()
+{
+}
+
+void LS::Log::LSLogger::Print(std::wstring_view msg) noexcept
+{
+    Print(m_logLevel, msg);
+}
+
+void LS::Log::LSLogger::Print(std::string_view msg) noexcept
+{
+}
+
+void LS::Log::LSLogger::Print(LOG_LEVEL level, std::wstring_view msg) noexcept
+{
     const auto time = std::chrono::system_clock::now();
     const auto fmtTime = std::chrono::current_zone()->to_local(time);
     const auto fmt = std::format(L"{} : [{}] || {}", fmtTime, ErrorAsWChar(level), msg);
-    stream << fmt;
+    m_stream << fmt;
 }
 
-void LS::Log::LSLogger::PrintLine(std::wostream& stream, LOG_LEVEL level, std::wstring_view msg) const noexcept
+void LS::Log::LSLogger::Print([[maybe_unused]] LOG_LEVEL level, [[maybe_unused]] std::string_view msg) noexcept
 {
-    std::unique_lock lock(LogMutex);
+}
+
+void LS::Log::LSLogger::PrintLine(std::wstring_view msg) noexcept
+{
+    PrintLine(m_logLevel, msg);
+}
+
+void LS::Log::LSLogger::PrintLine([[maybe_unused]] std::string_view msg) noexcept
+{
+}
+
+void LS::Log::LSLogger::PrintLine(LOG_LEVEL level, std::wstring_view msg) noexcept
+{
     const auto time = std::chrono::system_clock::now();
     const auto fmtTime = std::chrono::current_zone()->to_local(time);
     const auto fmt = std::format(L"{} : [{}] || {}\n", fmtTime, ErrorAsWChar(level), msg);
-    stream << fmt;
+    m_stream << fmt;
+}
+
+void LS::Log::LSLogger::PrintLine([[maybe_unused]] LOG_LEVEL level, [[maybe_unused]] std::string_view msg) noexcept
+{
+}
+
+void LS::Log::LSLogger::SetLogLevel(LOG_LEVEL level) noexcept
+{
+    m_logLevel = level;
+}
+
+auto LS::Log::LSLogger::GetLogLevel() noexcept -> LOG_LEVEL
+{
+    return m_logLevel;
+}
+
+void LS::Log::LSLogger::Flush() noexcept
+{
+    if (!m_stream)
+        return;
+    m_stream.flush();
 }
 
 void LS::Log::TraceError([[maybe_unused]] std::wstring_view msg)
@@ -136,11 +212,7 @@ void LS::Log::TraceError([[maybe_unused]] std::wstring_view msg)
     using enum LOG_LEVEL;
     LOGGER_CHECK;
     LEVEL_CHECK(ERROR);
-#if _DEBUG
-        Logger->PrintLine(std::wcerr, ERROR, msg);
-#else
-        Logger->PrintLine(LogFile, ERROR, msg);
-#endif
+    Logger->PrintLine(ERROR, msg);
 }
 
 void LS::Log::TraceDebug([[maybe_unused]] std::wstring_view msg)
@@ -148,11 +220,7 @@ void LS::Log::TraceDebug([[maybe_unused]] std::wstring_view msg)
     using enum LOG_LEVEL;
     LOGGER_CHECK;
     LEVEL_CHECK(DEBUG);
-#if _DEBUG
-    Logger->PrintLine(std::wcout, DEBUG, msg);
-#else
-    Logger->PrintLine(LogFile, DEBUG, msg);
-#endif
+    Logger->PrintLine(DEBUG, msg);
 }
 
 void LS::Log::TraceInfo([[maybe_unused]] std::wstring_view msg)
@@ -160,33 +228,103 @@ void LS::Log::TraceInfo([[maybe_unused]] std::wstring_view msg)
     using enum LOG_LEVEL;
     LOGGER_CHECK;
     LEVEL_CHECK(INFO);
-#if _DEBUG
-        Logger->PrintLine(std::wcout, INFO, msg);
-#else
-        Logger->PrintLine(LogFile, INFO, msg);
-#endif
+    Logger->PrintLine(INFO, msg);
 }
 
-void LS::Log::TraceWarning([[maybe_unused]] std::wstring_view msg)
+void LS::Log::TraceWarn([[maybe_unused]] std::wstring_view msg)
 {
     using enum LOG_LEVEL;
-    LOGGER_CHECK; 
+    LOGGER_CHECK;
     LEVEL_CHECK(WARN);
-#if _DEBUG
-        Logger->PrintLine(std::wcout, WARN, msg);
-#else
-        Logger->PrintLine(LogFile, WARN, msg);
-#endif
-}
-void LS::Log::InitLog()
-{
-    Logger = std::make_unique<LSLogger>();
+    Logger->PrintLine(WARN, msg);
 }
 
-void LS::Log::InitLog(std::filesystem::path filepath)
+void LS::Log::TraceError([[maybe_unused]] std::string_view msg)
 {
-    Logger = std::make_unique<LSLogger>();
-    LogFile.open(filepath, std::ios::binary);
-    if (!LogFile.is_open())
-        throw std::runtime_error(std::format("Failed to init log file: {}", filepath.string()));
+    using enum LOG_LEVEL;
+    LOGGER_CHECK;
+    LEVEL_CHECK(ERROR);
+    Logger->PrintLine(ERROR, msg);
+}
+
+void LS::Log::TraceDebug([[maybe_unused]] std::string_view msg)
+{
+    using enum LOG_LEVEL;
+    LOGGER_CHECK;
+    LEVEL_CHECK(DEBUG);
+    Logger->PrintLine(DEBUG, msg);
+}
+
+void LS::Log::TraceInfo([[maybe_unused]] std::string_view msg)
+{
+    using enum LOG_LEVEL;
+    LOGGER_CHECK;
+    LEVEL_CHECK(INFO);
+    Logger->PrintLine(INFO, msg);
+}
+
+void LS::Log::TraceWarn([[maybe_unused]] std::string_view msg)
+{
+    using enum LOG_LEVEL;
+    LOGGER_CHECK;
+    LEVEL_CHECK(WARN);
+    Logger->PrintLine(WARN, msg);
+}
+
+auto LS::Log::InitLog(LOG_LEVEL level /*= LOG_LEVEL::DEBUG*/) noexcept -> LS::System::ErrorCode
+{
+    Logger = std::make_unique<ConsoleLogger>();
+    Logger->SetLogLevel(level);
+    return Logger->Init();
+}
+
+auto LS::Log::InitLog(std::filesystem::path filepath, LOG_LEVEL level /*= LOG_LEVEL::DEBUG*/) noexcept -> LS::System::ErrorCode
+{
+    Logger = std::make_unique<FileLogger>(filepath);
+    Logger->SetLogLevel(level);
+    return Logger->Init();
+}
+
+void LS::Log::Flush() noexcept
+{
+    LOGGER_CHECK;
+    Logger->Flush();
+}
+
+LS::Log::FileLogger::FileLogger(std::filesystem::path file)
+{
+    if (!std::filesystem::exists(file.relative_path()))
+    {
+        std::filesystem::create_directories(file.relative_path());
+    }
+
+    m_fileStream.open(file, std::ios::out | std::ios::binary);
+    if (!m_fileStream.is_open())
+    {
+        throw std::runtime_error("Failed to open file for logger.");
+    }
+    m_stream.rdbuf(m_fileStream.rdbuf());
+}
+
+auto LS::Log::FileLogger::Init() noexcept -> LS::System::ErrorCode
+{
+    if (!m_stream)
+    {
+        return LS::System::CreateFailCode("The stream is not initialized!", LS::System::ErrorCategory::IO);
+    }
+    return LS::System::CreateSuccessCode();
+}
+
+LS::Log::ConsoleLogger::ConsoleLogger()
+{
+    m_stream.rdbuf(std::wcout.rdbuf());
+}
+
+auto LS::Log::ConsoleLogger::Init() noexcept -> LS::System::ErrorCode
+{
+    if (!m_stream)
+    {
+        return LS::System::CreateFailCode("The stream is not initialized!", LS::System::ErrorCategory::IO);
+    }
+    return LS::System::CreateSuccessCode();
 }

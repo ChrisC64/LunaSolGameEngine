@@ -114,15 +114,6 @@
     <ClCompile Include="modules\platform\Windows\DirectX\DXMatrixUtils.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="modules\engine\MathLib.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="modules\engine\MatrixMath.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="modules\engine\GeometryMath.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="modules\platform\Windows\DirectX\DXCamera.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
