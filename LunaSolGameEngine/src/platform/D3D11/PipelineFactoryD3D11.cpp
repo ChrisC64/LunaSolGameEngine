@@ -4,10 +4,12 @@ import D3D11.PipelineFactory;
 #include <optional>
 #include <stdexcept>
 #include <memory>
+#include <string_view>
 
 #include <wrl/client.h>
 #include <d3d11_4.h>
 import Engine.App;
+import Engine.EngineCodes;
 import D3D11Lib;
 import LSEDataLib;
 
@@ -19,16 +21,18 @@ void D3D11PipelineFactory::Init(SharedRef<DeviceD3D11>& device) noexcept
     m_pDevice = device;
 }
 
-auto D3D11PipelineFactory::CreatePipelineState(const PipelineDescriptor& pipeline) noexcept -> Nullable <GuidUL>
+auto D3D11PipelineFactory::CreatePipelineState(const PipelineDescriptor& pipeline, std::string_view guid) noexcept -> LS::System::ErrorCode
 {
     assert(m_pDevice);
     if (!m_pDevice)
-        return std::nullopt;
+    {
+        return LS::System::CreateFailCode("The device cannot be null when creating the pipeline factory");
+    }
 
     auto pipelineD3D = CreatePipelineD3D11(pipeline);
 
     m_pipelines.emplace_back(pipelineD3D);
-    return std::nullopt;
+    return LS::System::CreateSuccessCode();
 }
 //TODO: Break up and put conversion functions into stand alone functions so we can reuse them.
 PipelineStateDX11 LS::Win32::D3D11PipelineFactory::CreatePipelineD3D11(const PipelineDescriptor& pipeline)
@@ -40,7 +44,7 @@ PipelineStateDX11 LS::Win32::D3D11PipelineFactory::CreatePipelineD3D11(const Pip
     if (rasterizer)
     {
         WRL::ComPtr<ID3D11RasterizerState2> rast;
-        rast.Attach(rasterizer.value());
+        rast = rasterizer.value();
         out.RasterizerState = rast;
     }
 
@@ -48,7 +52,7 @@ PipelineStateDX11 LS::Win32::D3D11PipelineFactory::CreatePipelineD3D11(const Pip
     if (blendState)
     {
         WRL::ComPtr<ID3D11BlendState1> blend;
-        blend.Attach(blendState.value());
+        blend = blendState.value();
         out.BlendState = blend;
     }
 
@@ -57,7 +61,7 @@ PipelineStateDX11 LS::Win32::D3D11PipelineFactory::CreatePipelineD3D11(const Pip
     if (depthStencilState)
     {
         WRL::ComPtr<ID3D11DepthStencilState> state;
-        state.Attach(depthStencilState.value());
+        state = depthStencilState.value();
         out.DepthStencilState = state;
     }
     // Shader Compilation //
@@ -477,7 +481,7 @@ PipelineStateDX11 LS::Win32::D3D11PipelineFactory::CreatePipelineD3D11(const Pip
         if (samplerState)
         {
             WRL::ComPtr<ID3D11SamplerState> pSampler;
-            pSampler.Attach(samplerState.value());
+            pSampler = samplerState.value();
             out.Samplers.emplace_back(slot, pSampler);
         }
     }

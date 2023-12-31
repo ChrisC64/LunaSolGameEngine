@@ -436,15 +436,15 @@ export namespace LS::Win32
         pContext->IASetIndexBuffer(pBuffer, format, offset);
     }
 
-    constexpr auto BuildSwapchainDesc1(const LS::LSSwapchainInfo& info) noexcept -> DXGI_SWAP_CHAIN_DESC1
+    constexpr auto BuildSwapchainDesc1(uint32_t frameCount, uint32_t width, uint32_t height, PIXEL_COLOR_FORMAT pixelFormat) noexcept -> DXGI_SWAP_CHAIN_DESC1
     {
         DXGI_SWAP_CHAIN_DESC1 swDesc1{};
-        swDesc1.BufferCount = info.BufferSize;
-        swDesc1.Height = info.Height;
-        swDesc1.Width = info.Width;
+        swDesc1.BufferCount = frameCount;
+        swDesc1.Height = height;
+        swDesc1.Width = width;
         using enum PIXEL_COLOR_FORMAT;
         DXGI_FORMAT format;
-        switch (info.PixelFormat)
+        switch (pixelFormat)
         {
         case RGBA8_UNORM:
             format = DXGI_FORMAT_R8G8B8A8_UNORM;

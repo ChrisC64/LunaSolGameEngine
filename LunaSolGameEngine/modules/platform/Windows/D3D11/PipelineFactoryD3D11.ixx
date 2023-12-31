@@ -4,7 +4,7 @@ module;
 #include <memory>
 #include <vector>
 #include <unordered_map>
-
+#include <string_view>
 #include <d3d11_4.h>
 #include <wrl/client.h>
 #include "engine/EngineDefines.h"
@@ -12,6 +12,7 @@ module;
 export module D3D11.PipelineFactory;
 import Helper.PipelineFactory;
 import Engine.App;
+import Engine.EngineCodes; 
 import Util;
 import D3D11.Device;
 
@@ -55,7 +56,7 @@ export namespace LS::Win32
         WRL::ComPtr<ID3D11RenderTargetView>     RenderTargetView;
 
         std::vector<BufferD3D11>                VertexBuffers;
-        std::vector<BufferD3D11>                IndexBuffers;
+        BufferD3D11                             IndexBuffer;
         std::vector<SamplerD3D11>               Samplers;
         std::vector<TextureD3D11>               Textures;
     };
@@ -72,8 +73,7 @@ export namespace LS::Win32
         D3D11PipelineFactory(const D3D11PipelineFactory&) = delete;
 
         void Init(SharedRef<DeviceD3D11>& device) noexcept;
-        [[nodiscard]]
-        auto CreatePipelineState(const PipelineDescriptor& pipeline) noexcept -> Nullable <GuidUL> final;
+        [[nodiscard]] auto CreatePipelineState(const PipelineDescriptor& pipeline, std::string_view) noexcept -> LS::System::ErrorCode final;
 
         PipelineStateDX11 CreatePipelineD3D11(const PipelineDescriptor& pipeline);
 

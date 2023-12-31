@@ -40,6 +40,7 @@ import D3D11Lib;
 import Platform.Win32Window;
 import Helper.LSCommonTypes;
 import Engine.Logger;
+import Engine.LSDevice;
 import Helper.IO;
 import GeometryGenerator;
 import MathLib;
@@ -104,17 +105,7 @@ namespace gt::dx11
         void ReadOBJFile(std::filesystem::path path);
     };
 
-
     using namespace std::placeholders;
-
-    /*constexpr auto bindResize = std::bind(&gt::dx11::DX11CubeApp::HandleResize, &g_cubeApp, _1, _2);
-    constexpr auto bindOnWindowEvent = std::bind(&gt::dx11::DX11CubeApp::OnWindowEvent, &g_cubeApp, _1);
-    constexpr auto bindOnKeyboardUp = std::bind(&gt::dx11::DX11CubeApp::OnKeyboardUp, &g_cubeApp, _1);
-    constexpr auto bindOnKeyboardDown = std::bind(&gt::dx11::DX11CubeApp::OnKeyboardDown, &g_cubeApp, _1);
-    constexpr auto bindOnMouseDown = std::bind(&gt::dx11::DX11CubeApp::OnMouseDown, &g_cubeApp, _1);
-    constexpr auto bindOnMouseUp = std::bind(&gt::dx11::DX11CubeApp::OnMouseUp, &g_cubeApp, _1);
-    constexpr auto bindOnMouseMove = std::bind(&gt::dx11::DX11CubeApp::OnMouseMove, &g_cubeApp, _1, _2);
-    constexpr auto bindOnMouseWheel = std::bind(&gt::dx11::DX11CubeApp::OnMouseWheel, &g_cubeApp, _1);*/
 
     constexpr auto SCREEN_WIDTH = 1920u;
     constexpr auto SCREEN_HEIGHT = 1080u;
@@ -143,9 +134,6 @@ namespace gt::dx11
     ComPtr<ID3D11DeviceContext4> g_immContext;
 
     std::unordered_map<LS::LS_INPUT_KEY, bool> g_keysPressedMap;
-    std::mutex g_pauseMutex;
-    std::condition_variable g_pauseCondition;
-    std::barrier g_pauseSync(1, []() noexcept { std::cout << "Pause sync complete.\n"; });
     LS::Serialize::WavefrontObj m_objFile;
     LS::Serialize::AssimpLoader m_assLoader;
     
@@ -293,10 +281,14 @@ auto gt::dx11::DX11CubeApp::Initialize(const LS::LSCommandArgs& args) -> LS::Sys
         std::bind(&gt::dx11::DX11CubeApp::OnMouseMove, this, _1, _2));
 
     window->RegisterWindowEventCallback(std::bind(&gt::dx11::DX11CubeApp::OnWindowEvent, this, _1));
-    g_device.CreateDevice();
+    
+    LS::LSDeviceSettings settings = LS::CreateDeviceSettings(window.get(), LS::DEVICE_API::DIRECTX_11);
+    if (auto deviceResult = g_device.InitDevice(settings); !deviceResult)
+    {
+        return deviceResult;
+    }
 
     g_immContext = g_device.GetImmediateContext();
-    g_device.CreateSwapchain(window.get());
 
     LS::Log::TraceDebug(L"Compiling shaders....");
     // Shader compilation //
@@ -420,14 +412,14 @@ auto gt::dx11::DX11CubeApp::Initialize(const LS::LSCommandArgs& args) -> LS::Sys
     LS::Log::TraceDebug(L"Buffers created!!");
     // Rasterizer Creation // 
     LS::Log::TraceDebug(L"Building rasterizer state...");
-    Nullable<ID3D11RasterizerState2*> rsSolidOpt = CreateRasterizerState2(g_device.GetDevice().Get(), SolidFill_BackCull_FCCW_DCE);
+    auto rsSolidOpt = CreateRasterizerState2(g_device.GetDevice().Get(), SolidFill_BackCull_FCCW_DCE);
     if (!rsSolidOpt)
     {
         LS::Log::TraceError(L"Failed to create rasterizer state");
         return CreateFailCode("Failed to create rasterizer state");
     }
 
-    rsSolid.Attach(rsSolidOpt.value());
+    rsSolid = rsSolidOpt.value();
     LS::Log::TraceDebug(L"Rasterizer state completed!!");
     // Render Target Creation //
     LS::Log::TraceDebug(L"Building render target view....");
@@ -727,8 +719,6 @@ void gt::dx11::DX11CubeApp::HandleResize(uint32_t width, uint32_t height)
     {
         dsView = nullptr;
     }
-    using std::chrono::operator""ms;
-    std::this_thread::sleep_for(50ms);
 
     HRESULT hr = g_device.ResizeSwapchain(width, height);
     if (FAILED(hr))

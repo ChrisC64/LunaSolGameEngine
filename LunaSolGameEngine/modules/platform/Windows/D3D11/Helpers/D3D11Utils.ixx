@@ -17,7 +17,7 @@ module;
 
 export module D3D11.Utils;
 
-import D3D11.EngineWrapperD3D11;
+import D3D11.LSTypeWrapper;
 import LSEDataLib;
 import Engine.LSDevice;
 

@@ -20,15 +20,14 @@ export namespace LS::Win32
         DeviceD3D11() = default;
         ~DeviceD3D11();
 
-        auto EnumerateDisplays() -> std::vector<WRL::ComPtr<IDXGIAdapter>>;
         void CreateDevice(WRL::ComPtr<IDXGIAdapter> displayAdapter = nullptr, bool isSingleThreaded = false);
-        void CreateSwapchain(HWND winHandle, const LS::LSSwapchainInfo& swapchainInfo);
+        void CreateSwapchain(HWND winHandle, uint32_t width, uint32_t height, uint32_t frameBufferCount = 2, PIXEL_COLOR_FORMAT pixelColorFormat = PIXEL_COLOR_FORMAT::RGBA8_UNORM);
         void CreateSwapchain(const LS::LSWindowBase* window, PIXEL_COLOR_FORMAT format = PIXEL_COLOR_FORMAT::RGBA8_UNORM, uint32_t bufferSize = 2);
         void CreateSwapchainAsTexture(const LS::LSWindowBase* window, PIXEL_COLOR_FORMAT format = PIXEL_COLOR_FORMAT::RGBA8_UNORM, uint32_t bufferSize = 2);
         auto ResizeSwapchain(uint32_t width, uint32_t height) noexcept -> HRESULT;
-        void PrintDisplays(const std::vector<WRL::ComPtr<IDXGIAdapter>>& adapters);
         void DebugPrintLiveObjects();
 
+        //TODO: Consider moving around params, if the "out" params have to stay (for now) then maybe move them to the back/end of the list
         [[nodiscard]] auto CreateDeferredContext(ID3D11DeviceContext** pDeferredContext) noexcept -> HRESULT;
         [[nodiscard]] auto CreateDeferredContext2(ID3D11DeviceContext2** ppDeferredContext) noexcept -> HRESULT;
         [[nodiscard]] auto CreateDeferredContext3(ID3D11DeviceContext3** ppDeferredContext) noexcept -> HRESULT;
@@ -52,11 +51,9 @@ export namespace LS::Win32
         [[nodiscard]] auto GetSwapChain() const noexcept -> WRL::ComPtr<IDXGISwapChain1>;
 
         // Inherited by ILSDevice //
-        [[nodiscard]] 
-        virtual bool InitDevice(const LS::LSDeviceSettings& settings) noexcept final;
+        [[nodiscard]] virtual auto InitDevice(const LS::LSDeviceSettings& settings) noexcept -> LS::System::ErrorCode final;
         
-        [[nodiscard]] 
-        virtual auto CreateContext() noexcept -> Nullable<Ref<LS::ILSContext>> final;
+        [[nodiscard]] virtual auto CreateContext() noexcept -> Nullable<Ref<LS::ILSContext>> final;
         virtual void Shutdown() noexcept final;
         
     private:
@@ -66,8 +63,6 @@ export namespace LS::Win32
         WRL::ComPtr<ID3D11Debug>                        m_pDebug = nullptr;
         WRL::ComPtr<IDXGISwapChain1>                    m_pSwapchain = nullptr;
         WRL::ComPtr<ID3D11Texture2D>                    m_pBackBufferFrame = nullptr;
-        WRL::ComPtr<ID3D11DepthStencilView>             m_pDepthStencil = nullptr;// @brief depth stencil based on back buffer
         D3D_FEATURE_LEVEL                               m_featureLevel{};
-        LS::LSSwapchainInfo                             m_swapchainLS;
     };
 }

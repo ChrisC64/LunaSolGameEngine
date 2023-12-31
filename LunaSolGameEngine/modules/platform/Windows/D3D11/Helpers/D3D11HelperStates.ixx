@@ -16,14 +16,36 @@ import Engine.LSDevice;
 import Util.MSUtils;
 import LSEDataLib;
 
+namespace WRL = Microsoft::WRL;
+
+namespace LS::Win32
+{
+    SharedRef<DirectX::CommonStates> g_commonStates;
+    bool g_isCommonStatesInitialized = false;
+}
+
 export namespace LS::Win32
 {
+    auto InitCommonStates(ID3D11Device* pDevice)
+    {
+        g_commonStates = std::make_shared<DirectX::CommonStates>(pDevice);
+        if (g_commonStates)
+            g_isCommonStatesInitialized = true;
+    }
+
+    auto GetCommonStates() -> SharedRef<DirectX::CommonStates>
+    {
+        assert(g_commonStates && "Please initialize the common states before calling the getter");
+        if (!g_isCommonStatesInitialized)
+            return nullptr;
+        return g_commonStates;
+    }
     // TODO: Avoid using the Create___ for common states and just return common states object for use
 
     // Generator Methods //
     // Rasterizer States //
     [[nodiscard]]
-    auto CreateRasterizerState2(ID3D11Device3* pDevice, const LS::RasterizerInfo& drawState) -> Nullable<ID3D11RasterizerState2*>
+    auto CreateRasterizerState2(ID3D11Device3* pDevice, const LS::RasterizerInfo& drawState) -> Nullable<WRL::ComPtr<ID3D11RasterizerState2>>
     {
         assert(pDevice);
         if (!pDevice)
@@ -48,9 +70,7 @@ export namespace LS::Win32
         desc.FrontCounterClockwise = drawState.IsFrontCounterClockwise;
         desc.DepthClipEnable = drawState.IsDepthClipEnabled;
 
-        using namespace Microsoft::WRL;
-
-        ID3D11RasterizerState2* rsState;
+        WRL::ComPtr<ID3D11RasterizerState2> rsState;
         auto hr = pDevice->CreateRasterizerState2(&desc, &rsState);
         if (FAILED(hr))
         {
@@ -61,40 +81,36 @@ export namespace LS::Win32
     }
 
     [[nodiscard]]
-    auto CreateCullNoneState(ID3D11Device* pDevice) noexcept -> Nullable<ID3D11RasterizerState*>
+    auto GetCullNoneState() noexcept -> Nullable<ID3D11RasterizerState*>
     {
-        DirectX::CommonStates common(pDevice);
-
-        return common.CullNone();
+        assert(g_commonStates && "Please initialize the common states before calling the getter");
+        return g_commonStates->CullNone();
     }
 
     [[nodiscard]]
-    auto CreateCullClockwiseState(ID3D11Device* pDevice) noexcept -> Nullable<ID3D11RasterizerState*>
+    auto GetCullClockwiseState() noexcept -> Nullable<ID3D11RasterizerState*>
     {
-        DirectX::CommonStates common(pDevice);
-
-        return common.CullClockwise();
+        assert(g_commonStates && "Please initialize the common states before calling the getter");
+        return g_commonStates->CullClockwise();
     }
 
     [[nodiscard]]
-    auto CreateCullCounterClockwiseState(ID3D11Device* pDevice) noexcept -> Nullable<ID3D11RasterizerState*>
+    auto GetCullCounterClockwiseState() noexcept -> Nullable<ID3D11RasterizerState*>
     {
-        DirectX::CommonStates common(pDevice);
-
-        return common.CullCounterClockwise();
+        assert(g_commonStates && "Please initialize the common states before calling the getter");
+        return g_commonStates->CullCounterClockwise();
     }
 
     [[nodiscard]]
-    auto CreateWireframeState(ID3D11Device* pDevice) noexcept -> Nullable<ID3D11RasterizerState*>
+    auto GetWireframeState() noexcept -> Nullable<ID3D11RasterizerState*>
     {
-        DirectX::CommonStates common(pDevice);
-
-        return common.Wireframe();
+        assert(g_commonStates && "Please initialize the common states before calling the getter");
+        return g_commonStates->Wireframe();
     }
 
     // Depth Stencil States //
     [[nodiscard]]
-    auto CreateDepthStencilState(ID3D11Device5* pDevice, const DepthStencil& depthStencil) -> Nullable<ID3D11DepthStencilState*>
+    auto CreateDepthStencilState(ID3D11Device5* pDevice, const DepthStencil& depthStencil) -> Nullable<WRL::ComPtr<ID3D11DepthStencilState>>
     {
         assert(pDevice);
         if (!pDevice)
@@ -188,20 +204,20 @@ export namespace LS::Win32
         dsDesc.FrontFace = convertDepthStencilOp(depthStencil.FrontFace);
         dsDesc.BackFace = convertDepthStencilOp(depthStencil.BackFace);
 
-        ID3D11DepthStencilState* pState;
+        WRL::ComPtr<ID3D11DepthStencilState> pState;
         pDevice->CreateDepthStencilState(&dsDesc, &pState);
 
         return pState;
     }
 
     [[nodiscard]]
-    auto CreateDepthStencilState(ID3D11Device5* pDevice, const D3D11_DEPTH_STENCIL_DESC depthDesc) -> Nullable<ID3D11DepthStencilState*>
+    auto CreateDepthStencilState(ID3D11Device5* pDevice, const D3D11_DEPTH_STENCIL_DESC depthDesc) -> Nullable<WRL::ComPtr<ID3D11DepthStencilState>>
     {
         assert(pDevice);
         if (!pDevice)
             return std::nullopt;
 
-        ID3D11DepthStencilState* pDepthState;
+        WRL::ComPtr<ID3D11DepthStencilState> pDepthState;
         HRESULT hr = pDevice->CreateDepthStencilState(&depthDesc, &pDepthState);
         if (FAILED(hr))
             Utils::ThrowIfFailed(hr, "Failed to create depth stencil state with DX11 Device");
@@ -210,58 +226,38 @@ export namespace LS::Win32
     }
 
     [[nodiscard]]
-    auto CreateDefaultDepthState(ID3D11Device* pDevice) noexcept -> Nullable<ID3D11DepthStencilState*>
+    auto GetDefaultDepthState() noexcept -> ID3D11DepthStencilState*
     {
-        assert(pDevice);
-        if (!pDevice)
-            return std::nullopt;
-
-        DirectX::CommonStates commonState(pDevice);
-        return commonState.DepthDefault();
+        assert(g_commonStates && "Please initialize the common states before calling the getter");
+        return g_commonStates->DepthDefault();
     }
 
     [[nodiscard]]
-    auto CreateNoDepthState(ID3D11Device* pDevice) noexcept -> Nullable<ID3D11DepthStencilState*>
+    auto GetNoDepthState() noexcept -> ID3D11DepthStencilState*
     {
-        assert(pDevice);
-        if (!pDevice)
-            return std::nullopt;
-
-        DirectX::CommonStates commonState(pDevice);
-        return commonState.DepthNone();
+        assert(g_commonStates && "Please initialize the common states before calling the getter");
+        return g_commonStates->DepthNone();
     }
 
     [[nodiscard]]
-    auto CreateDepthReadState(ID3D11Device* pDevice) noexcept -> Nullable<ID3D11DepthStencilState*>
+    auto GetDepthReadState() noexcept -> ID3D11DepthStencilState*
     {
-        assert(pDevice);
-        if (!pDevice)
-            return std::nullopt;
-
-        DirectX::CommonStates commonState(pDevice);
-        return commonState.DepthRead();
+        assert(g_commonStates && "Please initialize the common states before calling the getter");
+        return g_commonStates->DepthRead();
     }
 
     [[nodiscard]]
-    auto CreateDepthReverseZState(ID3D11Device* pDevice) noexcept -> Nullable<ID3D11DepthStencilState*>
+    auto GetDepthReverseZState() noexcept -> ID3D11DepthStencilState*
     {
-        assert(pDevice);
-        if (!pDevice)
-            return std::nullopt;
-
-        DirectX::CommonStates commonState(pDevice);
-        return commonState.DepthReverseZ();
+        assert(g_commonStates && "Please initialize the common states before calling the getter");
+        return g_commonStates->DepthReverseZ();
     }
 
     [[nodiscard]]
-    auto CreateDepthReadReverseZState(ID3D11Device* pDevice) noexcept -> Nullable<ID3D11DepthStencilState*>
+    auto GetDepthReadReverseZState() noexcept -> ID3D11DepthStencilState*
     {
-        assert(pDevice);
-        if (!pDevice)
-            return std::nullopt;
-
-        DirectX::CommonStates commonState(pDevice);
-        return commonState.DepthReadReverseZ();
+        assert(g_commonStates && "Please initialize the common states before calling the getter");
+        return g_commonStates->DepthReadReverseZ();
     }
 
     // Blend State //
@@ -391,36 +387,24 @@ export namespace LS::Win32
     }
 
     [[nodiscard]]
-    auto CreateOpaqueState(ID3D11Device* pDevice) noexcept -> Nullable<ID3D11BlendState*>
+    auto CreateOpaqueState(ID3D11Device* pDevice) noexcept -> ID3D11BlendState*
     {
-        assert(pDevice);
-        if (!pDevice)
-            return std::nullopt;
-
-        DirectX::CommonStates common(pDevice);
-        return common.Opaque();
+        assert(g_commonStates && "Please initialize the common states before calling the getter");
+        return g_commonStates->Opaque();
     }
 
     [[nodiscard]]
-    auto CreateAdditiveState(ID3D11Device* pDevice) noexcept -> Nullable<ID3D11BlendState*>
+    auto CreateAdditiveState(ID3D11Device* pDevice) noexcept -> ID3D11BlendState*
     {
-        assert(pDevice);
-        if (!pDevice)
-            return std::nullopt;
-
-        DirectX::CommonStates common(pDevice);
-        return common.Additive();
+        assert(g_commonStates && "Please initialize the common states before calling the getter");
+        return g_commonStates->Additive();
     }
 
     [[nodiscard]]
-    auto CreateNonPremultipliedState(ID3D11Device* pDevice) noexcept -> Nullable<ID3D11BlendState*>
+    auto CreateNonPremultipliedState(ID3D11Device* pDevice) noexcept -> ID3D11BlendState*
     {
-        assert(pDevice);
-        if (!pDevice)
-            return std::nullopt;
-
-        DirectX::CommonStates common(pDevice);
-        return common.NonPremultiplied();
+        assert(g_commonStates && "Please initialize the common states before calling the getter");
+        return g_commonStates->NonPremultiplied();
     }
 
     // Sampler State //
@@ -462,47 +446,31 @@ export namespace LS::Win32
     }
 
     [[nodiscard]]
-    auto CreateLinearWrapSampler(ID3D11Device* pDevice) noexcept -> Nullable<ID3D11SamplerState*>
+    auto CreateLinearWrapSampler(ID3D11Device* pDevice) noexcept -> ID3D11SamplerState*
     {
-        assert(pDevice);
-        if (!pDevice)
-            return std::nullopt;
-
-        DirectX::CommonStates commonState(pDevice);
-        return commonState.LinearWrap();
+        assert(g_commonStates && "Please initialize the common states before calling the getter");
+        return g_commonStates->LinearWrap();
     }
 
     [[nodiscard]]
-    auto CreateLinearClampSampler(ID3D11Device* pDevice) noexcept -> Nullable<ID3D11SamplerState*>
+    auto CreateLinearClampSampler(ID3D11Device* pDevice) noexcept -> ID3D11SamplerState*
     {
-        assert(pDevice);
-        if (!pDevice)
-            return std::nullopt;
-
-        DirectX::CommonStates commonState(pDevice);
-        return commonState.LinearClamp();
+        assert(g_commonStates && "Please initialize the common states before calling the getter");
+        return g_commonStates->LinearClamp();
     }
 
     [[nodiscard]]
-    auto CreateAnisotropicWrapSampler(ID3D11Device* pDevice) noexcept -> Nullable<ID3D11SamplerState*>
+    auto CreateAnisotropicWrapSampler(ID3D11Device* pDevice) noexcept -> ID3D11SamplerState*
     {
-        assert(pDevice);
-        if (!pDevice)
-            return std::nullopt;
-
-        DirectX::CommonStates commonState(pDevice);
-        return commonState.AnisotropicWrap();
+        assert(g_commonStates && "Please initialize the common states before calling the getter");
+        return g_commonStates->AnisotropicWrap();
     }
 
     [[nodiscard]]
-    auto CreateAnisotropicClampSampler(ID3D11Device* pDevice) noexcept -> Nullable<ID3D11SamplerState*>
+    auto CreateAnisotropicClampSampler(ID3D11Device* pDevice) noexcept -> ID3D11SamplerState*
     {
-        assert(pDevice);
-        if (!pDevice)
-            return std::nullopt;
-
-        DirectX::CommonStates commonState(pDevice);
-        return commonState.AnisotropicClamp();
+        assert(g_commonStates && "Please initialize the common states before calling the getter");
+        return g_commonStates->AnisotropicClamp();
     }
 
     // Setter Methods //

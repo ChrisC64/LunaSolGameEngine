@@ -5,7 +5,8 @@ module;
 #include <directxtk12\BufferHelpers.h>
 #include <directxtk12\DirectXHelpers.h>
 #include <wrl\client.h>
-#include <format>export module D3D12.Utils;
+#include <format>
+export module D3D12.Utils;
 
 import Engine.EngineCodes;
 

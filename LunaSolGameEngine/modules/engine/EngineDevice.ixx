@@ -10,6 +10,7 @@ module;
 export module Engine.LSDevice;
 
 import Engine.LSWindow;
+import Engine.EngineCodes;
 import LSEDataLib;
 import Util.StdUtils;
 
@@ -123,7 +124,7 @@ namespace LS
         GREEN = 2,
         BLUE = 4,
         ALPHA = 8,
-        ALL = ( ( (RED | GREEN) | BLUE) | ALPHA)
+        ALL = (((RED | GREEN) | BLUE) | ALPHA)
     };
 
     export struct LSBlendState
@@ -310,15 +311,36 @@ namespace LS
 
     export struct LSDeviceSettings
     {
-        uint32_t FPSTarget;
-        uint32_t FrameBufferCount;
-        DEVICE_TYPE DeviceType;
-        DEVICE_API DeviceApi;
-        LSTextureInfo RenderTargetDesc;
-        LSSwapchainInfo SwapchainInfo;
+        uint32_t FPSTarget = 60;
+        uint32_t FrameBufferCount = 2;
+        uint32_t Width;
+        uint32_t Height;
+        PIXEL_COLOR_FORMAT PixelFormat;
+        LS::LSWindowBase* Window;
         bool IsVSync;
-        LS::LSWindowHandle WindowHandle;
+        DEVICE_API DeviceApi;
+        DEVICE_TYPE DeviceType;
     };
+
+    /**
+     * @brief Helper function to create the LSDeviceSettings with the Window's given resolution
+     * @param window The window to use
+     * @param apiType The API to use
+     * @param vSynceEnabled True = enabled, False = disabled
+     * @param backBufferSize Size of the back buffer queue
+     * @param fpsTarget Target FPS (not currently used)
+     * @param pixelFormat Format of the pixels to use
+     * @param type The device type to create (Hardware or Software rendering)
+     * @return
+    */
+    export auto CreateDeviceSettings(LS::LSWindowBase* window, DEVICE_API apiType, bool vSynceEnabled = false,
+        uint32_t backBufferSize = 2, uint32_t fpsTarget = 60, PIXEL_COLOR_FORMAT pixelFormat = PIXEL_COLOR_FORMAT::RGBA8_UNORM,
+        DEVICE_TYPE type = DEVICE_TYPE::HARDWARE) -> LSDeviceSettings
+    {
+        return { .FPSTarget = fpsTarget, .FrameBufferCount = backBufferSize, .Width = window->GetWidth(),
+                .Height = window->GetHeight(), .PixelFormat = pixelFormat,
+                .Window = window, .IsVSync = vSynceEnabled, .DeviceApi = apiType, .DeviceType = type };
+    }
 
     export using ShaderMap = std::unordered_map<SHADER_TYPE, std::vector<std::byte>>;
 
@@ -386,7 +408,7 @@ namespace LS
 
         /**
          * @brief Sets the pipeline state and all required components to prepare the draw
-         * @param pipeline 
+         * @param pipeline
         */
         virtual void PreparePipeline(Ref<PipelineDescriptor> pipeline) noexcept = 0;
 
@@ -395,7 +417,7 @@ namespace LS
          * @param color The color values to set for the render target
         */
         virtual void Clear(const std::array<float, 4>& color) noexcept = 0;
-        
+
         /**
          * @brief Finalize the work and prepare it for presentation to the render target
          * @param syncInterval the frame to sync with, 0 = immediate, and N means to wait N frames before producing
@@ -406,7 +428,7 @@ namespace LS
     };
 
     /**
-     * @brief Represents the GPU physical device 
+     * @brief Represents the GPU physical device
     */
     export class ILSDevice
     {
@@ -425,10 +447,10 @@ namespace LS
         OnDeviceEvent OnDeviceEvent;
 
         /**
-         * @brief Initializes the device 
+         * @brief Initializes the device
          * @return true if successful, false if failed.
         */
-        [[nodiscard]] virtual bool InitDevice(const LSDeviceSettings& settings) noexcept = 0;
+        [[nodiscard]] virtual auto InitDevice(const LSDeviceSettings& settings) noexcept -> LS::System::ErrorCode = 0;
         [[nodiscard]] virtual auto CreateContext() noexcept -> Nullable<Ref<ILSContext>> = 0;
         virtual void Shutdown() noexcept = 0;
 
@@ -449,7 +471,7 @@ namespace LS
 
         /**
          * @brief Creates a context from the device
-         * @return the context object 
+         * @return the context object
         */
         virtual auto CreateContext() noexcept -> Ref<ILSContext> = 0;
 
