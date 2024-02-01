@@ -53,7 +53,7 @@ PipelineStateDX11 LS::Win32::D3D11PipelineFactory::CreatePipelineD3D11(const Pip
     {
         WRL::ComPtr<ID3D11BlendState1> blend;
         blend = blendState.value();
-        out.BlendState = blend;
+        out.BlendState.State = blend;
     }
 
     // Depth Stencil 
@@ -62,7 +62,7 @@ PipelineStateDX11 LS::Win32::D3D11PipelineFactory::CreatePipelineD3D11(const Pip
     {
         WRL::ComPtr<ID3D11DepthStencilState> state;
         state = depthStencilState.value();
-        out.DepthStencilState = state;
+        out.DSStage.State= state;
     }
     // Shader Compilation //
     for (auto [type, data] : pipeline.Shaders)

@@ -24,9 +24,25 @@ export namespace LS::Win32
     
     struct BufferD3D11
     {
-        D3D11_BIND_FLAG         BindFlag;
-        uint16_t                BindSLot;
-        WRL::ComPtr<ID3D11Buffer> Buffer;
+        D3D11_BUFFER_DESC           BufferDesc;
+        WRL::ComPtr<ID3D11Buffer>   Buffer;
+    };
+
+    template<class T>
+    struct VertexBufferD3D11 : BufferD3D11
+    {
+        Ref<T> Obj;
+    };
+
+    struct IndexBufferD3D11 : BufferD3D11
+    {
+        std::vector<uint32_t> IndexBuffer;
+    };
+
+    template<class T>
+    struct ConstantBufferD3D11 : BufferD3D11
+    {
+        Ref<T> Obj;
     };
 
     struct TextureD3D11
@@ -41,20 +57,35 @@ export namespace LS::Win32
         WRL::ComPtr<ID3D11SamplerState> Sampler;
     };
 
+    struct BlendStage
+    {
+        WRL::ComPtr<ID3D11BlendState> State;
+        float                         BlendFactor[4]{ 1.0f, 1.0f, 1.0f, 1.0f};
+        uint32_t                      SampleMask = 0xFFFFFFFF;
+    };
+
+    struct DepthStencilStage
+    {
+        WRL::ComPtr<ID3D11DepthStencilView>     View;
+        WRL::ComPtr<ID3D11DepthStencilState>    State;
+        uint32_t                                StencilRef;
+    };
+
     struct PipelineStateDX11
     {
         D3D_PRIMITIVE_TOPOLOGY                  PrimitiveTopology;
         WRL::ComPtr<ID3D11RasterizerState>      RasterizerState;
-        WRL::ComPtr<ID3D11BlendState>           BlendState;
-        WRL::ComPtr<ID3D11DepthStencilState>    DepthStencilState;
-        WRL::ComPtr<ID3D11DepthStencilView>     DepthStencilView;
+        DepthStencilStage                       DSStage;
         WRL::ComPtr<ID3D11VertexShader>         VertexShader;
         WRL::ComPtr<ID3D11PixelShader>          PixelShader;
         WRL::ComPtr<ID3D11GeometryShader>       GeometryShader;
+        WRL::ComPtr<ID3D11HullShader>           HullShader;
+        WRL::ComPtr<ID3D11DomainShader>         DomainShader;
         WRL::ComPtr<ID3D11InputLayout>          InputLayout;
         WRL::ComPtr<ID3D11Resource>             RenderTarget;
-        WRL::ComPtr<ID3D11RenderTargetView>     RenderTargetView;
+        WRL::ComPtr<ID3D11RenderTargetView>     RTViews[D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT];
 
+        BlendStage                              BlendState;
         std::vector<BufferD3D11>                VertexBuffers;
         BufferD3D11                             IndexBuffer;
         std::vector<SamplerD3D11>               Samplers;

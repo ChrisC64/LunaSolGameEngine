@@ -12,10 +12,18 @@ import Engine.LSDevice;
 import Engine.EngineCodes;
 import D3D11.PipelineFactory;
 import D3D11.Device;
+import D3D11.Utils;
+import D3D11.PipelineFactory;
 import DirectXCommon;
 
 namespace LS
 {
+    export struct TimeStep
+    {
+        uint64_t ElapsedMs;
+        uint64_t DeltaMs;
+    };
+
     export class IRenderable
     {
     public:
@@ -23,14 +31,9 @@ namespace LS
         virtual ~IRenderable() noexcept;
 
         virtual void Draw() noexcept = 0;
-        virtual void Update(LS::DX::DXCamera* camera) noexcept = 0;
+        virtual void Update(const LS::DX::DXCamera& camera, const TimeStep& timeStep) noexcept = 0;
     };
 
-    export struct TimeStep
-    {
-        uint64_t timeMs;
-        uint64_t deltaMs;
-    };
 }
 
 namespace WRL = Microsoft::WRL;
@@ -45,8 +48,10 @@ export namespace LS::Win32
         
         auto Initialize() noexcept -> LS::System::ErrorCode;
         void Clear(std::array<float, 4> clearColor) noexcept;
-        void SetPipeline(PipelineStateDX11* pipelineState) noexcept;
-        void Update(LS::DX::DXCamera* camera, const TimeStep& timeStep) noexcept;
+        void SetPipeline(const PipelineStateDX11* state) noexcept;
+        void LoadVertexBuffer(uint32_t startSlot, const PipelineStateDX11* state) noexcept;
+        void LoadIndexBuffer(uint32_t offset, const PipelineStateDX11* state) noexcept;
+        void Update(const LS::DX::DXCamera& camera) noexcept;
         void RenderObjects(std::span<LS::IRenderable*> objs) noexcept;
         void Draw() noexcept;
         void Shutdown() noexcept;
@@ -59,64 +64,6 @@ export namespace LS::Win32
         LS::LSDeviceSettings    m_settings;
 
         WRL::ComPtr<ID3D11RenderTargetView> m_renderTarget;
+        WRL::ComPtr<ID3D11DeviceContext> m_context;
     };
-}
-
-module : private;
-
-using namespace LS::Win32;
-namespace WRL = Microsoft::WRL;
-
-RenderD3D11::RenderD3D11(LS::LSDeviceSettings settings) : m_settings(settings),
-m_window(settings.Window)
-{
-}
-
-RenderD3D11::~RenderD3D11()
-{
-    Shutdown();
-}
-
-auto LS::Win32::RenderD3D11::Initialize() noexcept -> LS::System::ErrorCode
-{
-    LS::System::ErrorCode ec = m_device.InitDevice(m_settings);
-    if (!ec)
-    {
-        return ec;
-    }
-
-    m_device.CreateRTVFromBackBuffer(&m_renderTarget);
-}
-
-void RenderD3D11::Clear(std::array<float, 4> clearColor) noexcept
-{
-
-}
-
-void RenderD3D11::SetPipeline(PipelineStateDX11* pipelineState) noexcept
-{
-}
-
-void RenderD3D11::Update(LS::DX::DXCamera* cameram, const TimeStep& timeStep) noexcept
-{
-}
-
-void RenderD3D11::RenderObjects(std::span<LS::IRenderable*> objs) noexcept
-{
-}
-
-void RenderD3D11::Draw() noexcept
-{
-}
-
-void RenderD3D11::Shutdown() noexcept
-{
-}
-
-void RenderD3D11::Resize(uint32_t width, uint32_t height) noexcept
-{
-}
-
-void RenderD3D11::AttachToWindow(LS::LSWindowBase* window) noexcept
-{
 }

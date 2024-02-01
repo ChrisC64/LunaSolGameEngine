@@ -1,6 +1,6 @@
 module;
 #include <DirectXMath.h>
-export module DirectXCommon:DXMatrixUtils;
+export module DirectXCommon.DXMatrixUtils;
 import LSEDataLib;
 
 using namespace DirectX;
@@ -137,9 +137,5 @@ export namespace LS::DX
 
             return out;
         }
-
-
     };
-
-
 }

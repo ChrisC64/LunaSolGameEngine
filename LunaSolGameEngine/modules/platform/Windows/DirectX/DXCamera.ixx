@@ -1,21 +1,21 @@
 module;
 #include <compare>
 #include <directxmath/DirectXMath.h>
-export module DirectXCommon:DXCamera;
+export module DirectXCommon.DXCamera;
 
 import LSEDataLib;
 import MathLib;
 
+using namespace DirectX;
+using xmvec = XMVECTOR;
+using xmmat = XMMATRIX;
+using vec3 = XMFLOAT3;
+using vec4 = XMFLOAT4;
+using mat3 = XMFLOAT3X3;
+using mat4 = XMFLOAT4X4;
+
 namespace LS::DX
 {
-    using namespace DirectX;
-    using xmvec = XMVECTOR;
-    using xmmat = XMMATRIX;
-    using vec3 = XMFLOAT3;
-    using vec4 = XMFLOAT4;
-    using mat3 = XMFLOAT3X3;
-    using mat4 = XMFLOAT4X4;
-
     export class DXCamera
     {
     public:

@@ -9,6 +9,9 @@ module;
 #include <Windows.h>
 
 #pragma comment(lib, "d3d11")
+#define NOMINMAX
+#undef max
+#undef min
 export module D3D11.RenderFuncD3D11;
 import Util.MSUtils;
 import LSEDataLib;
@@ -16,9 +19,6 @@ import Engine.LSDevice;
 
 namespace WRL = Microsoft::WRL;
 
-#define NOMINMAX
-#undef max
-#undef min
 export namespace LS::Win32
 {
     // CLEAR //

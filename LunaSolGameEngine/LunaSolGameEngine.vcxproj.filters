@@ -204,6 +204,12 @@
     <ClCompile Include="modules\platform\Windows\D3D11\RenderD3D11.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\platform\D3D11\RenderD3D11.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\platform\D3D11\RenderFuncsD3D11.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\LSTimer.h">

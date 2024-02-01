@@ -243,6 +243,8 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="src\platform\D3D11\PipelineFactoryD3D11.cpp" />
+    <ClCompile Include="src\platform\D3D11\RenderD3D11.cpp" />
+    <ClCompile Include="src\platform\D3D11\RenderFuncsD3D11.cpp" />
     <ClCompile Include="src\platform\D3D12\CommandListDx12.cpp" />
     <ClCompile Include="src\platform\D3D12\CommandQueueDx12.cpp" />
     <ClCompile Include="src\platform\D3D12\DeviceD3D12.cpp" />

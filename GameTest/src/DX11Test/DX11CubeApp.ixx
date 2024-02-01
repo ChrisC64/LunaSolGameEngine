@@ -727,6 +727,7 @@ void gt::dx11::DX11CubeApp::HandleResize(uint32_t width, uint32_t height)
         g_device.DebugPrintLiveObjects();
         goto exit_resize;
     }
+
     g_device.CreateSwapchain(Window.get());
     hr = g_device.CreateRTVFromBackBuffer(rtv.GetAddressOf());
     if (FAILED(hr))

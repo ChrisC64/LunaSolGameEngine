@@ -1,5 +1,5 @@
 export module DirectXCommon;
 
-export import :DXMatrixUtils;
-export import :DXCamera;
-export import :DXCameraController;
+export import DirectXCommon.DXMatrixUtils;
+export import DirectXCommon.DXCamera;
+export import DirectXCommon.DXCameraController;
