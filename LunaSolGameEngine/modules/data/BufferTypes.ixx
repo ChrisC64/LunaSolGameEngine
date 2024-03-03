@@ -63,6 +63,12 @@ export namespace LS
         WRITE_AND_READ = 3
     };
 
+    enum class ResourceState : uint8_t
+    {
+        UNLOCKED,
+        LOCKED
+    };
+
     //TODO: Add constraints to this... because I don't know what but I'm sure I"ll think of some later!
     template<class TObject>
     class LSBuffer
@@ -75,7 +81,7 @@ export namespace LS
         BUFFER_USAGE            m_usage{ BUFFER_USAGE::DEFAULT_RW }; // @brief details how the data will be used
         BUFFER_BIND_TYPE        m_bindType{ BUFFER_BIND_TYPE::UNKNOWN }; // @brief Information on what stage in the graphics pipeline this buffer is used
         CPU_RESOURCE_ACCESS     m_cpuAccess{ CPU_RESOURCE_ACCESS::UNDEFINED };
-
+        ResourceState           m_state;
     public:
         LSBuffer(TObject obj, std::string_view name, size_t stride = 0, size_t count = 0) :
             m_bufferObject(obj),
@@ -138,71 +144,71 @@ export namespace LS
         }
     };
 
-    using LSBufferReserve = LSBuffer<void*>;
+    //using LSBufferReserve = LSBuffer<void*>;
 
-    template <class Buffer>
-    class LSBufferCache
-    {
-        using LSCacheSize = std::uint64_t;
-        using LSCache = std::unordered_map<std::string, Buffer>;
-    public:
-        LSBufferCache() = default;
-        ~LSBufferCache() = default;
+    //template <class Buffer>
+    //class LSBufferCache
+    //{
+    //    using LSCacheSize = std::uint64_t;
+    //    using LSCache = std::unordered_map<std::string, Buffer>;
+    //public:
+    //    LSBufferCache() = default;
+    //    ~LSBufferCache() = default;
 
-        LSBufferCache(const LSBufferCache&) = delete;
-        LSBufferCache& operator=(const LSBufferCache&) = delete;
+    //    LSBufferCache(const LSBufferCache&) = delete;
+    //    LSBufferCache& operator=(const LSBufferCache&) = delete;
 
-        LSBufferCache(LSBufferCache&&) = default;
-        LSBufferCache& operator=(LSBufferCache&&) = default;
+    //    LSBufferCache(LSBufferCache&&) = default;
+    //    LSBufferCache& operator=(LSBufferCache&&) = default;
 
-        /**
-         * @brief Insert a buffer into the cache
-         * @param key a unique ID
-         * @param buffer The buffer to insert
-         * @return A success error code means insertion took place, a fail error code means insertion did not
-        */
-        [[nodiscard]]
-        auto Insert(std::string_view key, const Buffer& buffer) noexcept -> LS::System::ErrorCode
-        {
-            auto [_, status] = m_cache.emplace(key.data(), buffer);
+    //    /**
+    //     * @brief Insert a buffer into the cache
+    //     * @param key a unique ID
+    //     * @param buffer The buffer to insert
+    //     * @return A success error code means insertion took place, a fail error code means insertion did not
+    //    */
+    //    [[nodiscard]]
+    //    auto Insert(std::string_view key, const Buffer& buffer) noexcept -> LS::System::ErrorCode
+    //    {
+    //        auto [_, status] = m_cache.emplace(key.data(), buffer);
 
-            if (!status)
-                return LS::System::CreateFailCode(std::format("Could not add key: {}", key));
-            return LS::System::CreateSuccessCode();
-        }
+    //        if (!status)
+    //            return LS::System::CreateFailCode(std::format("Could not add key: {}", key));
+    //        return LS::System::CreateSuccessCode();
+    //    }
 
-        [[nodiscard]]
-        auto Get(std::string_view key) noexcept -> Nullable<Buffer>
-        {
-            if (!m_cache.contains(key.data()))
-                return std::nullopt;
+    //    [[nodiscard]]
+    //    auto Get(std::string_view key) noexcept -> Nullable<Buffer>
+    //    {
+    //        if (!m_cache.contains(key.data()))
+    //            return std::nullopt;
 
-            return m_cache.at(key.data());
-        }
+    //        return m_cache.at(key.data());
+    //    }
 
-        [[nodiscard]]
-        auto Remove(std::string_view key) noexcept -> bool
-        {
-            if (!m_cache.contains(key.data()))
-                return false;
+    //    [[nodiscard]]
+    //    auto Remove(std::string_view key) noexcept -> bool
+    //    {
+    //        if (!m_cache.contains(key.data()))
+    //            return false;
 
-            m_cache.erase(key.data());
-            return true;
-        }
+    //        m_cache.erase(key.data());
+    //        return true;
+    //    }
 
-        void SetCacheSize(LSCacheSize size) noexcept
-        {
-            m_limit = size;
-        }
+    //    void SetCacheSize(LSCacheSize size) noexcept
+    //    {
+    //        m_limit = size;
+    //    }
 
-        [[nodiscard]]
-        auto GetCacheSize() noexcept -> LSCacheSize
-        {
-            return m_limit;
-        }
+    //    [[nodiscard]]
+    //    auto GetCacheSize() noexcept -> LSCacheSize
+    //    {
+    //        return m_limit;
+    //    }
 
-    private:
-        LSCacheSize m_limit = 1024u * 1024u * 1024u * 3;
-        LSCache m_cache;
-    };
+    //private:
+    //    LSCacheSize m_limit = 1024u * 1024u * 1024u * 3;
+    //    LSCache m_cache;
+    //};
 }

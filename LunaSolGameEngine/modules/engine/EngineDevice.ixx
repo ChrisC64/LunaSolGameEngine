@@ -6,16 +6,18 @@ module;
 #include <vector>
 #include <unordered_map>
 #include <string>
+#include <array>
 #include "engine/EngineDefines.h"
 export module Engine.LSDevice;
 
 import Engine.LSWindow;
+import Engine.EngineCodes;
 import LSEDataLib;
 import Util.StdUtils;
 
 namespace LS
 {
-    export enum class DEVICE_TYPE : int8_t
+    export enum class DEVICE_TYPE : int8_t 
     {
         HARDWARE,
         SOFTWARE,
@@ -31,8 +33,8 @@ namespace LS
 
     /**
      * @brief Details how the object should be drawn
-    */
-    export enum class FILL_STATE : int8_t
+     */
+    export enum class FILL_STATE : int8_t 
     {
         FILL,
         WIREFRAME
@@ -44,15 +46,15 @@ namespace LS
      * None means draw all faces, even those not visible.
      * Front means cull front facing triangles
      * Back will cull back facing triangles
-    */
-    export enum class CULL_METHOD : int8_t
+     */
+    export enum class CULL_METHOD : int8_t 
     {
         NONE,
         FRONT,
         BACK
     };
 
-    export enum class DEVICE_EVENT : int32_t
+    export enum class DEVICE_EVENT : int32_t 
     {
         ON_DEVICE_CREATE,
         ON_DEVICE_SHUTDOWN,
@@ -90,60 +92,89 @@ namespace LS
      * value. When blending, you'll generally have multiple blends to create the final
      * output, so considering the order in which you draw objects you may notice multiple
      * transparencies or other blending setups to create the effect you desire.
-    */
-    export enum class BLEND_FACTOR
+     */
+    export enum class BLEND_FACTOR 
     {
-        ZERO, // @brief Use a set of 0s for the blend factor equation
-        ONE, // @brief Use a set of 1s for the blend factor equation 
-        SRC_COLOR, // @brief Use the src color's RGB values
-        DEST_COLOR, // @brief Use the destination's RGB values
-        SRC_ALPHA, // @brief Use the src's alpha channel 
-        DEST_ALPHA, // @brief Use the desintation's alpha channel
-        INV_SRC_COLOR, // @brief Inverse (1 - R, 1 - G, 1 - B) the color based on the src RGB
-        INV_SRC_ALPHA, // @brief Inverse the Alpha (1 - A, 1 - A, 1 - A) from the src values
+        ZERO,           // @brief Use a set of 0s for the blend factor equation
+        ONE,            // @brief Use a set of 1s for the blend factor equation
+        SRC_COLOR,      // @brief Use the src color's RGB values
+        DEST_COLOR,     // @brief Use the destination's RGB values
+        SRC_ALPHA,      // @brief Use the src's alpha channel
+        DEST_ALPHA,     // @brief Use the desintation's alpha channel
+        INV_SRC_COLOR,  // @brief Inverse (1 - R, 1 - G, 1 - B) the color based on the src RGB
+        INV_SRC_ALPHA,  // @brief Inverse the Alpha (1 - A, 1 - A, 1 - A) from the src values
         INV_DEST_COLOR, // @brief Inverse (1 - R, 1 - G, 1 - B) the color based on the dest RGB
         INV_DEST_ALPHA, // @brief Inverse the Alpha (1 - A, 1 - A, 1 - A) from the dest values
     };
 
     /**
      * @brief Details the action to take on the blending procedure.
-    */
-    export enum class BLEND_OPERATION
+     */
+    export enum class BLEND_OPERATION 
     {
-        BLEND_ADD, // @brief Blends data by adding data from first and second objects
-        BLEND_SUB, // @brief Blends data by subtracting data from first and second object
+        BLEND_ADD,     // @brief Blends data by adding data from first and second objects
+        BLEND_SUB,     // @brief Blends data by subtracting data from first and second object
         BLEND_REV_SUB, // @brief Blend data by subtracting from second to first object
-        BLEND_MIN, // @brief Find the minimum average between each src data and blend together 
-        BLEND_MAX // @brief Find the max data between both sources and blend them
+        BLEND_MIN,     // @brief Find the minimum average between each src data and blend together
+        BLEND_MAX      // @brief Find the max data between both sources and blend them
     };
 
-    export enum class COLOR_CHANNEL_MASK : uint8_t
+    export enum class COLOR_CHANNEL_MASK : uint8_t 
     {
         RED = 1,
         GREEN = 2,
         BLUE = 4,
         ALPHA = 8,
-        ALL = ( ( (RED | GREEN) | BLUE) | ALPHA)
+        ALL = (((RED | GREEN) | BLUE) | ALPHA)
     };
 
-    export struct LSBlendState
+    // @brief One of the various supported blend types, use Custom to create a custom operation
+    export enum class BlendType
     {
-        bool IsAlphaSampling;
-        bool IsIndepdentBlend;
-        bool IsEnabled;
-        BLEND_OPERATION BlendOpRGB;
-        BLEND_FACTOR SrcBF;
-        BLEND_FACTOR DestBF;
-        BLEND_OPERATION BlendOpAlpha;
-        BLEND_FACTOR AlphaSrcBF;
-        BLEND_FACTOR AlphaDestBF;
+        OPAQUE_BLEND,
+        ALPHA_BLEND,
+        ADDITIVE_BLEND,
+        PRE_MULT_ALPHA_BLEND,
+        CUSTOM_BLEND,
+    };
+
+    // @brief The struct defining RGB and Alpha channel blend operations
+    export struct BlendOps
+    {
+        struct Channel
+        {
+            BLEND_OPERATION BlendOp;
+            BLEND_FACTOR Src;
+            BLEND_FACTOR Dest;
+        };
+
+        Channel Rgb;
+        Channel Alpha;
         COLOR_CHANNEL_MASK Mask;
     };
 
     /**
+     * @brief The object used to create and represent blend state for rendering
+     */
+    export struct LSBlendState
+    {
+        BlendType BlendType;
+        struct Custom
+        {
+            bool IsAlphaSampling;
+            bool IsIndepdentBlend;
+            bool IsEnabled;
+            // @brief Pointer to each Render Target support (at least one required)
+            std::vector<BlendOps> Targets;
+        };
+
+        Custom CustomOp;
+    };
+
+    /**
      * @brief Details how to use the vertex buffer to render the vertices given
-    */
-    export enum class PRIMITIVE_TOPOLOGY
+     */
+    export enum class PRIMITIVE_TOPOLOGY 
     {
         // TRIANGLES //
         TRIANGLE_LIST,
@@ -168,23 +199,23 @@ namespace LS
      * so NEVER_PASS for example means no pass regardless of state
      * but ALL_PASS means all comparisons will always be "true" or "pass"
      * the test.
-    */
-    export enum class EVAL_COMPARE : uint8_t
+     */
+    export enum class EVAL_COMPARE : uint8_t 
     {
-        NEVER_PASS = 0, //@brief condition never will pass
-        LESS_PASS, //@brief condition is true when less than only
-        LESSS_EQUAL_PASS, //@brief condition is true when less than or equal to
-        EQUAL, //@brief condition is equal to 
-        NOT_EQUAL, //@brief condition is when they are not equal
-        GREATER_PASS, //@brief condition is true when greater than
-        GREATER_EQUAL_PASS, //@brief condition is true when greater than or equal to
-        ALWAYS_PASS //@brief condition will always result in true
+        NEVER_PASS = 0,     // @brief condition never will pass
+        LESS_PASS,          // @brief condition is true when less than only
+        LESSS_EQUAL_PASS,   // @brief condition is true when less than or equal to
+        EQUAL,              // @brief condition is equal to
+        NOT_EQUAL,          // @brief condition is when they are not equal
+        GREATER_PASS,       // @brief condition is true when greater than
+        GREATER_EQUAL_PASS, // @brief condition is true when greater than or equal to
+        ALWAYS_PASS         // @brief condition will always result in true
     };
 
     /**
      * @brief How to perform operations with the depth stencil tests
-    */
-    export enum class DEPTH_STENCIL_OPS
+     */
+    export enum class DEPTH_STENCIL_OPS 
     {
         KEEP,
         ZERO,
@@ -198,7 +229,7 @@ namespace LS
 
     /**
      * @brief
-    */
+     */
     export struct LSSamplerState
     {
         uint32_t AnisotropyLevel = 0;
@@ -209,7 +240,7 @@ namespace LS
         EVAL_COMPARE Evaluator;
     };
 
-    export enum class CPU_ACCESS_FLAG
+    export enum class CPU_ACCESS_FLAG 
     {
         NOT_SET,
         READ_ONLY,
@@ -217,15 +248,15 @@ namespace LS
         READ_AND_WRITE
     };
 
-    // Callbacks // 
+    // Callbacks //
     export using OnDeviceEvent = std::function<void(DEVICE_EVENT)>;
 
     export struct RasterizerInfo
     {
-        FILL_STATE Fill;
-        CULL_METHOD Cull;
-        bool IsFrontCounterClockwise; // @brief Front Face drawn counterclockwise = true, false if not 
-        bool IsDepthClipEnabled;
+        FILL_STATE Fill = FILL_STATE::FILL;
+        CULL_METHOD Cull = CULL_METHOD::BACK;
+        bool IsFrontCounterClockwise = true; // @brief Front Face drawn counterclockwise = true, false if not
+        bool IsDepthClipEnabled = false;
 
         bool operator==(const RasterizerInfo& rhs) const
         {
@@ -246,7 +277,7 @@ namespace LS
 
     export struct LSDrawStateHashFunc
     {
-        template<typename T = LS::RasterizerInfo>
+        template <typename T = LS::RasterizerInfo>
         std::size_t operator()(T const& t) const noexcept
         {
             std::size_t h1 = LS::Utils::HashEnum(t.Fill);
@@ -274,53 +305,67 @@ namespace LS
         std::string Info;
     };
 
-    export enum class DEPTH_STENCIL_WRITE_MASK
-    {
-        ZERO,// @brief 0x0
-        ALL // @brief 0xFFFFFFFF
-    };
-
     /**
      * @brief A depth stencil object
-    */
+     */
     export struct DepthStencil
     {
-        LSTextureInfo DepthBuffer;
-        bool IsDepthEnabled;
-        bool IsStencilEnabled;
-        EVAL_COMPARE DepthComparison;// @brief How to handle depth comparison data with destination data
-        bool ShouldWriteToDepthMask;// @brief Turn on/off writing to the depth mask
-        DEPTH_STENCIL_WRITE_MASK DepthWriteMask; //@brief portion of depth stencil buffer that can be modified
-        uint8_t StencilWriteMask;// @brief The mask to perform operations on depth-stencil buffer reads
-        uint8_t StencilReadMask;// @brief The mask to perform operations on depth-stencil buffer writes
+        bool IsDepthEnabled;                     // @brief Turn on/off (true/false) depth feature 
+        bool DepthBufferWriteAll;                // @brief Writes all/none to depth buffer (true/false) 
+        EVAL_COMPARE DepthComparison;            // @brief How to handle depth comparison data with destination data
+        bool IsStencilEnabled;                   // @brief Turn on stencil (true) or off (false)
+        uint8_t StencilWriteMask;                // @brief The mask to perform operations on depth-stencil buffer reads (usually 0x00)
+        uint8_t StencilReadMask;                 // @brief The mask to perform operations on depth-stencil buffer writes (usually 0xFF)
+
         /**
          * @brief Information on how to handle depth stencil operations
-        */
+         */
         struct DepthStencilOps
         {
-            DEPTH_STENCIL_OPS StencilFailOp;// @brief stencil test fails to pass
-            DEPTH_STENCIL_OPS StencilPassDepthFailOp; //@brief stencil test passes but depth test fails
-            DEPTH_STENCIL_OPS StencilPassOp; // @brief Stencil test passes,
-            EVAL_COMPARE StencilTestFunc; // @brief function to perform for this stencil operation
+            DEPTH_STENCIL_OPS StencilFailOp;          // @brief stencil test fails to pass
+            DEPTH_STENCIL_OPS StencilPassDepthFailOp; // @brief stencil test passes but depth test fails
+            DEPTH_STENCIL_OPS BothPassOp;             // @brief Stencil AND Depth Pass 
+            EVAL_COMPARE StencilTestFunc;             // @brief function to perform for this stencil operation
         };
 
-        DepthStencilOps FrontFace;// @brief Operations for front facing pixels
-        DepthStencilOps BackFace;// @brief Operations for back facing pixels
+        DepthStencilOps FrontFace; // @brief Operations for front facing pixels
+        DepthStencilOps BackFace;  // @brief Operations for back facing pixels
     };
 
     export struct LSDeviceSettings
     {
-        uint32_t FPSTarget;
-        uint32_t FrameBufferCount;
-        DEVICE_TYPE DeviceType;
-        DEVICE_API DeviceApi;
-        LSTextureInfo RenderTargetDesc;
-        LSSwapchainInfo SwapchainInfo;
+        uint32_t FPSTarget = 60;
+        uint32_t FrameBufferCount = 2;
+        uint32_t Width;
+        uint32_t Height;
+        PIXEL_COLOR_FORMAT PixelFormat;
         bool IsVSync;
-        LS::LSWindowHandle WindowHandle;
+        DEVICE_API DeviceApi;
+        DEVICE_TYPE DeviceType;
     };
 
-    export using ShaderMap = std::unordered_map<SHADER_TYPE, std::vector<std::byte>>;
+    /**
+     * @brief Helper function to create the LSDeviceSettings with the Window's given resolution
+     * @param window The window to use
+     * @param apiType The API to use
+     * @param vSynceEnabled True = enabled, False = disabled
+     * @param backBufferSize Size of the back buffer queue
+     * @param fpsTarget Target FPS (not currently used)
+     * @param pixelFormat Format of the pixels to use
+     * @param type The device type to create (Hardware or Software rendering)
+     * @return
+     */
+    export auto CreateDeviceSettings(uint32_t width, uint32_t height, DEVICE_API apiType, bool vSynceEnabled = false,
+        uint32_t backBufferSize = 2, uint32_t fpsTarget = 60,
+        PIXEL_COLOR_FORMAT pixelFormat = PIXEL_COLOR_FORMAT::RGBA8_UNORM,
+        DEVICE_TYPE type = DEVICE_TYPE::HARDWARE) -> LSDeviceSettings
+    {
+        return { .FPSTarget = fpsTarget, .FrameBufferCount = backBufferSize,
+            .Width = width, .Height = height, .PixelFormat = pixelFormat,
+            .IsVSync = vSynceEnabled, .DeviceApi = apiType, .DeviceType = type };
+    }
+
+    export using ShaderPipeline = std::unordered_map<SHADER_TYPE, std::vector<std::byte>>;
 
     export struct BufferMap
     {
@@ -355,13 +400,13 @@ namespace LS
      * - Topology (PRIMITIVE_TOPOLOGY enum) - the way primitives will be drawn
      * - Resources - samplers, textures, and other shader resources - perhaps store as some key values
      *    so we aren't holding pointers, and can access them in some resource manager.
-    */
+     */
     export struct PipelineDescriptor
     {
         RasterizerInfo RasterizeState;
         LSBlendState BlendState;
         DepthStencil DepthStencil;
-        ShaderMap Shaders;
+        ShaderPipeline Shaders;
         LSShaderInputSignature ShaderSignature;
         PRIMITIVE_TOPOLOGY Topology;
         LSTextureInfo RenderTarget;
@@ -386,28 +431,28 @@ namespace LS
 
         /**
          * @brief Sets the pipeline state and all required components to prepare the draw
-         * @param pipeline 
-        */
+         * @param pipeline
+         */
         virtual void PreparePipeline(Ref<PipelineDescriptor> pipeline) noexcept = 0;
 
         /**
          * @brief Clears the render target associated with the given pipeline
          * @param color The color values to set for the render target
-        */
+         */
         virtual void Clear(const std::array<float, 4>& color) noexcept = 0;
-        
+
         /**
          * @brief Finalize the work and prepare it for presentation to the render target
          * @param syncInterval the frame to sync with, 0 = immediate, and N means to wait N frames before producing
-        */
+         */
         virtual void Present(uint32_t syncInterval) noexcept = 0;
 
         virtual void Finish() noexcept = 0;
     };
 
     /**
-     * @brief Represents the GPU physical device 
-    */
+     * @brief Represents the GPU physical device
+     */
     export class ILSDevice
     {
     protected:
@@ -425,13 +470,12 @@ namespace LS
         OnDeviceEvent OnDeviceEvent;
 
         /**
-         * @brief Initializes the device 
+         * @brief Initializes the device
          * @return true if successful, false if failed.
-        */
-        [[nodiscard]] virtual bool InitDevice(const LSDeviceSettings& settings) noexcept = 0;
+         */
+        [[nodiscard]] virtual auto InitDevice(const LSDeviceSettings& settings, LS::LSWindowBase* pWindow) noexcept -> LS::System::ErrorCode = 0;
         [[nodiscard]] virtual auto CreateContext() noexcept -> Nullable<Ref<ILSContext>> = 0;
         virtual void Shutdown() noexcept = 0;
-
     };
 
     export class IRenderer
@@ -449,8 +493,8 @@ namespace LS
 
         /**
          * @brief Creates a context from the device
-         * @return the context object 
-        */
+         * @return the context object
+         */
         virtual auto CreateContext() noexcept -> Ref<ILSContext> = 0;
 
         virtual auto CreateTexture(const LSTextureInfo& info) noexcept -> Nullable<GuidUL> = 0;
@@ -458,7 +502,7 @@ namespace LS
         /**
          * @brief Prepares the Context's commands for the render queue to be presented
          * @param pContext The context with commands to perform with
-        */
+         */
         virtual void QueueCommands(Ref<ILSContext>& pContext) noexcept = 0;
 
         ILSDevice* GetDevice() const
@@ -470,6 +514,5 @@ namespace LS
         {
             return m_pDevice.get();
         }
-
     };
 }

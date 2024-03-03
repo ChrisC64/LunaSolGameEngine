@@ -4,7 +4,9 @@ module;
 #include <memory>
 #include <vector>
 #include <unordered_map>
-
+#include <string_view>
+#include <utility>
+#include <array>
 #include <d3d11_4.h>
 #include <wrl/client.h>
 #include "engine/EngineDefines.h"
@@ -12,6 +14,7 @@ module;
 export module D3D11.PipelineFactory;
 import Helper.PipelineFactory;
 import Engine.App;
+import Engine.EngineCodes; 
 import Util;
 import D3D11.Device;
 
@@ -23,9 +26,25 @@ export namespace LS::Win32
     
     struct BufferD3D11
     {
-        D3D11_BIND_FLAG         BindFlag;
-        uint16_t                BindSLot;
-        WRL::ComPtr<ID3D11Buffer> Buffer;
+        D3D11_BUFFER_DESC           BufferDesc;
+        WRL::ComPtr<ID3D11Buffer>   Buffer;
+    };
+
+    template<class T>
+    struct VertexBufferD3D11 : BufferD3D11
+    {
+        Ref<T> Obj;
+    };
+
+    struct IndexBufferD3D11 : BufferD3D11
+    {
+        std::vector<uint32_t> IndexBuffer;
+    };
+
+    template<class T>
+    struct ConstantBufferD3D11 : BufferD3D11
+    {
+        Ref<T> Obj;
     };
 
     struct TextureD3D11
@@ -40,22 +59,43 @@ export namespace LS::Win32
         WRL::ComPtr<ID3D11SamplerState> Sampler;
     };
 
+    struct BlendStage
+    {
+        WRL::ComPtr<ID3D11BlendState> State;
+        float                         BlendFactor[4]{ 1.0f, 1.0f, 1.0f, 1.0f};
+        uint32_t                      SampleMask = 0xFFFFFFFF;
+    };
+
+    struct DepthStencilStage
+    {
+        WRL::ComPtr<ID3D11DepthStencilState>    State;
+        uint32_t                                StencilRef;
+    };
+
+    struct RenderTargetStage
+    {
+        std::array<WRL::ComPtr<ID3D11RenderTargetView>, 8>  RTViews;
+        DXGI_FORMAT                                         Format;
+    };
+
     struct PipelineStateDX11
     {
         D3D_PRIMITIVE_TOPOLOGY                  PrimitiveTopology;
+        BufferD3D11                             IndexBuffer;
+        BlendStage                              BlendState;
+        DepthStencilStage                       DSStage;
+
         WRL::ComPtr<ID3D11RasterizerState>      RasterizerState;
-        WRL::ComPtr<ID3D11BlendState>           BlendState;
-        WRL::ComPtr<ID3D11DepthStencilState>    DepthStencilState;
-        WRL::ComPtr<ID3D11DepthStencilView>     DepthStencilView;
         WRL::ComPtr<ID3D11VertexShader>         VertexShader;
         WRL::ComPtr<ID3D11PixelShader>          PixelShader;
         WRL::ComPtr<ID3D11GeometryShader>       GeometryShader;
+        WRL::ComPtr<ID3D11HullShader>           HullShader;
+        WRL::ComPtr<ID3D11DomainShader>         DomainShader;
+        WRL::ComPtr<ID3D11ComputeShader>        ComputeShader;
         WRL::ComPtr<ID3D11InputLayout>          InputLayout;
-        WRL::ComPtr<ID3D11Resource>             RenderTarget;
-        WRL::ComPtr<ID3D11RenderTargetView>     RenderTargetView;
+        RenderTargetStage                       RTStage;
 
         std::vector<BufferD3D11>                VertexBuffers;
-        std::vector<BufferD3D11>                IndexBuffers;
         std::vector<SamplerD3D11>               Samplers;
         std::vector<TextureD3D11>               Textures;
     };
@@ -72,8 +112,7 @@ export namespace LS::Win32
         D3D11PipelineFactory(const D3D11PipelineFactory&) = delete;
 
         void Init(SharedRef<DeviceD3D11>& device) noexcept;
-        [[nodiscard]]
-        auto CreatePipelineState(const PipelineDescriptor& pipeline) noexcept -> Nullable <GuidUL> final;
+        [[nodiscard]] auto CreatePipelineState(const PipelineDescriptor& pipeline, std::string_view) noexcept -> LS::System::ErrorCode final;
 
         PipelineStateDX11 CreatePipelineD3D11(const PipelineDescriptor& pipeline);
 
@@ -81,4 +120,5 @@ export namespace LS::Win32
         SharedRef<DeviceD3D11> m_pDevice;
         std::vector<PipelineStateDX11> m_pipelines;
     };
+
 }

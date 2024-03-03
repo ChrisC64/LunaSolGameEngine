@@ -12,14 +12,28 @@ export module DX11Systems:DX11BufferCache;
 import Engine.EngineCodes;
 import Util.MSUtils;
 
+template <class T>
+using ComPtr = Microsoft::WRL::ComPtr<T>;
+namespace LS::Platform::Dx11
+{
+    enum class LockState
+    {
+        LOCKED,
+        UNLOCKED,
+    };
+
+    struct BufferContents
+    {
+        ComPtr<ID3D11Buffer> Buffer;
+        LockState State = LockState::UNLOCKED;
+    };
+}
+
 export namespace LS::Platform::Dx11
 {
-    template <class T>
-    using ComPtr = Microsoft::WRL::ComPtr<T>;
-    using Buffer = ComPtr<ID3D11Buffer>;
-    using BufferPtr = ID3D11Buffer*;
-    using Cache = std::unordered_map<std::string, Buffer>;
-    using CacheSize = std::uint64_t;
+    using Keys = std::string;
+    using Values = BufferContents;
+    using Cache = std::unordered_map<Keys, Values>;
 
     class BufferCache
     {
@@ -35,76 +49,78 @@ export namespace LS::Platform::Dx11
 
         /**
          * @brief Insert a buffer into the cache
-         * @param key a unique ID 
+         * @param key a unique ID
          * @param buffer The buffer to insert
          * @return A success error code means insertion took place, a fail error code means insertion did not
         */
         [[nodiscard]]
-        auto Insert(std::string_view key, Buffer& buffer) noexcept -> LS::System::ErrorCode
+        auto Insert(std::string_view key, ComPtr<ID3D11Buffer> buffer) noexcept -> LS::System::ErrorCode
         {
             Utils::SetDebugName(buffer.Get(), key);
-            auto [_, status] = m_cache.emplace(key.data(), buffer);
+            BufferContents bc{ .Buffer = buffer };
+            auto [_, status] = m_cache.emplace(key.data(), bc);
 
             if (!status)
                 return LS::System::CreateFailCode(std::format("Could not add key: {}", key));
             return LS::System::CreateSuccessCode();
         }
-        
-        /**
-         * @brief Takes ownership of the ID3D11Buffer object and adds it to the cache. If not successful, will
-         * return ownership back to the object
-         * @param key A unique ID for the buffer
-         * @param pBuffer The ID3D11Buffer* object to inser
-         * @return A success error code means insertion took place, a fail error code means it did not get added
-        */
-        [[nodiscard]]
-        auto Insert(std::string_view key, BufferPtr pBuffer) noexcept -> LS::System::ErrorCode
-        {
-            Buffer buffer;
-            buffer.Attach(pBuffer);
-            Utils::SetDebugName(buffer.Get(), key);
-            auto [_, status] = m_cache.emplace(key.data(), buffer);
-
-            if (!status)
-            {
-                pBuffer = buffer.Detach(); //Give back to owner
-                return LS::System::CreateFailCode(std::format("Could not add key: {}", key));
-            }
-            return LS::System::CreateSuccessCode();
-        }
 
         [[nodiscard]]
-        auto Get(std::string_view key) noexcept -> Nullable<Buffer>
+        auto Get(std::string_view key) noexcept -> Nullable<ComPtr<ID3D11Buffer>>
         {
-            if (!m_cache.contains(key.data()))
+            if (!m_cache.contains(key.data()) || m_cache.at(key.data()).State == LockState::LOCKED)
                 return std::nullopt;
 
-            return m_cache.at(key.data());
+            return m_cache.at(key.data()).Buffer;
         }
 
         [[nodiscard]]
-        auto Remove(std::string_view key) noexcept -> bool
+        auto Remove(std::string_view key) noexcept -> LS::System::ErrorCode
         {
             if (!m_cache.contains(key.data()))
-                return false;
+            {
+                return LS::System::CreateFailCode(std::format("Cannot remove buffer: {} It does not exist.", key));
+            }
 
+            if (m_cache.at(key.data()).State == LockState::LOCKED)
+            {
+                return LS::System::CreateFailCode(std::format("Buffer {} is currently locked.", key));
+            }
             m_cache.erase(key.data());
-            return true;
+            return LS::System::CreateSuccessCode();
         }
 
-        void SetCacheSize(CacheSize size) noexcept
+        [[nodiscard]]
+        auto Lock(std::string_view key) noexcept -> Nullable<ComPtr<ID3D11Buffer>>
+        {
+            if (!m_cache.contains(key.data()) || m_cache.at(key.data()).State == LockState::LOCKED)
+                return std::nullopt;
+
+            return m_cache.at(key.data()).Buffer;
+        }
+
+        void Unlock(std::string_view key) noexcept
+        {
+            if (m_cache.contains(key.data()) && m_cache.at(key.data()).State == LockState::LOCKED)
+            {
+                m_cache.at(key.data()).State = LockState::UNLOCKED;
+                return;
+            }
+        }
+
+        void SetCacheSize(std::uint64_t size) noexcept
         {
             m_limit = size;
         }
 
         [[nodiscard]]
-        auto GetCacheSize() noexcept -> CacheSize
+        auto GetCacheSize() noexcept -> std::uint64_t
         {
             return m_limit;
         }
 
     private:
-        CacheSize m_limit = 1024u * 1024u * 1024u * 3;
+        std::uint64_t m_limit = 1024u * 1024u * 1024u * 3;
         Cache m_cache;
     };
 }

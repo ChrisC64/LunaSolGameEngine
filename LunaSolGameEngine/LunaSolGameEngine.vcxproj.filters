@@ -99,7 +99,7 @@
     <ClCompile Include="src\platform\D3D11\PipelineFactoryD3D11.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="modules\platform\Windows\D3D11\Helpers\EngineWrapperD3D11.ixx">
+    <ClCompile Include="modules\platform\Windows\D3D11\Helpers\D3D11TypeWrapper.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\engine\EngineApp.cpp">
@@ -199,6 +199,15 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="modules\math\GeometryMath.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\platform\Windows\D3D11\RenderD3D11.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\platform\D3D11\RenderD3D11.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\platform\D3D11\RenderFuncsD3D11.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

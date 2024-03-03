@@ -204,6 +204,7 @@
     <ClCompile Include="modules\engine\EngineWindow.ixx" />
     <ClCompile Include="modules\data\MathTypes.ixx" />
     <ClCompile Include="modules\helper\PipelineFactory.ixx" />
+    <ClCompile Include="modules\platform\Windows\D3D11\RenderD3D11.ixx" />
     <ClCompile Include="modules\platform\Windows\D3D12\CommandListDx12.ixx" />
     <ClCompile Include="modules\platform\Windows\D3D12\CommandQueueDx12.ixx" />
     <ClCompile Include="modules\platform\Windows\D3D12\D3D12Common.ixx" />
@@ -216,7 +217,7 @@
     <ClCompile Include="modules\platform\Windows\DirectX\ResourceManagerD3D12.ixx" />
     <ClCompile Include="modules\platform\Windows\DirectX\DirectXCommon.ixx" />
     <ClCompile Include="modules\platform\Windows\DirectX\DXCamera.ixx" />
-    <ClCompile Include="modules\platform\Windows\D3D11\Helpers\EngineWrapperD3D11.ixx" />
+    <ClCompile Include="modules\platform\Windows\D3D11\Helpers\D3D11TypeWrapper.ixx" />
     <ClCompile Include="modules\platform\Windows\D3D11\PipelineFactoryD3D11.ixx" />
     <ClCompile Include="modules\platform\Windows\D3D11\Helpers\D3D11HelperStates.ixx" />
     <ClCompile Include="modules\platform\Windows\D3D11\D3D11Lib.ixx" />
@@ -242,6 +243,8 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="src\platform\D3D11\PipelineFactoryD3D11.cpp" />
+    <ClCompile Include="src\platform\D3D11\RenderD3D11.cpp" />
+    <ClCompile Include="src\platform\D3D11\RenderFuncsD3D11.cpp" />
     <ClCompile Include="src\platform\D3D12\CommandListDx12.cpp" />
     <ClCompile Include="src\platform\D3D12\CommandQueueDx12.cpp" />
     <ClCompile Include="src\platform\D3D12\DeviceD3D12.cpp" />

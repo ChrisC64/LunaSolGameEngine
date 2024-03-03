@@ -5,10 +5,16 @@ module;
 #include <d3d11_4.h>
 #include <wrl/client.h>
 #include <limits>
+#include <dxgi.h>
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
+#include "engine/EngineDefines.h"
+#include "engine/EngineLogDefines.h"
 
 #pragma comment(lib, "d3d11")
+#define NOMINMAX
+#undef max
+#undef min
 export module D3D11.RenderFuncD3D11;
 import Util.MSUtils;
 import LSEDataLib;
@@ -16,9 +22,6 @@ import Engine.LSDevice;
 
 namespace WRL = Microsoft::WRL;
 
-#define NOMINMAX
-#undef max
-#undef min
 export namespace LS::Win32
 {
     // CLEAR //
@@ -69,6 +72,70 @@ export namespace LS::Win32
         if (FAILED(hr))
             Utils::ThrowIfFailed(hr, "Failed to create render target view");
         return pRTView;
+    }
+
+    [[nodiscard]]
+    inline auto CreateRenderTargetViewFromSwapChain(WRL::ComPtr<ID3D11Device> pDevice, WRL::ComPtr<IDXGISwapChain> pSwapChain) noexcept -> Nullable<WRL::ComPtr<ID3D11RenderTargetView>>
+    {
+        assert(pSwapChain);
+        assert(pDevice);
+        WRL::ComPtr<ID3D11Texture2D> backBuffer;
+        WRL::ComPtr<ID3D11RenderTargetView> rtv;
+        HRESULT hr = pSwapChain->GetBuffer(0, IID_PPV_ARGS(&backBuffer));
+        if (FAILED(hr))
+        {
+            LS_LOG_ERROR(L"Failed to get back buffer from swap chain");
+            return std::nullopt;
+        }
+
+        D3D11_TEXTURE2D_DESC swapDesc;
+        backBuffer->GetDesc(&swapDesc);
+        CD3D11_RENDER_TARGET_VIEW_DESC cdesc(backBuffer.Get(), D3D11_RTV_DIMENSION_TEXTURE2D, swapDesc.Format);
+
+        hr = pDevice->CreateRenderTargetView(backBuffer.Get(), &cdesc, &rtv);
+        if (FAILED(hr))
+        {
+            LS_LOG_ERROR(L"Failed to create render target view");
+            return std::nullopt;
+        }
+        return rtv;
+    }
+
+    [[nodiscard]]
+    inline auto CreateDepthStencilViewFromSwapChain(WRL::ComPtr<ID3D11Device> pDevice, WRL::ComPtr<IDXGISwapChain> pSwapChain, DXGI_FORMAT format = DXGI_FORMAT_D24_UNORM_S8_UINT) noexcept -> Nullable<WRL::ComPtr<ID3D11DepthStencilView>>
+    {
+        assert(pDevice);
+        assert(pSwapChain);
+        WRL::ComPtr<ID3D11Texture2D> backBuffer;
+        auto result = pSwapChain->GetBuffer(0, IID_PPV_ARGS(&backBuffer));
+        if (FAILED(result))
+        {
+            LS_LOG_ERROR(L"Failed to obtain back buffer for CreateDepthStencilViewFromSwapChain");
+            return std::nullopt;
+        }
+
+        D3D11_TEXTURE2D_DESC depthBufferDesc{};
+        backBuffer->GetDesc(&depthBufferDesc);
+        depthBufferDesc.Format = format;
+        depthBufferDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+
+        WRL::ComPtr<ID3D11Texture2D> depthBuffer;
+        WRL::ComPtr<ID3D11DepthStencilView> depthStencil;
+        
+        result = pDevice->CreateTexture2D(&depthBufferDesc, nullptr, &depthBuffer);
+        if (FAILED(result))
+        {
+            LS_LOG_ERROR(L"Failed to create the texture resource in CreateDepthStencilViewFromSwapChain");
+            return std::nullopt;
+        }
+
+        result = pDevice->CreateDepthStencilView(depthBuffer.Get(), nullptr, &depthStencil);
+        if (FAILED(result))
+        {
+            LS_LOG_ERROR(L"Failed to create the depth stencil view CreateDepthStencilViewFromSwapChain");
+            return std::nullopt;
+        }
+        return depthStencil;
     }
 
     constexpr void SetRenderTarget(ID3D11DeviceContext* pContext, ID3D11RenderTargetView* pRTView, ID3D11DepthStencilView* pDSView, uint32_t numViews = 1) noexcept
@@ -436,15 +503,15 @@ export namespace LS::Win32
         pContext->IASetIndexBuffer(pBuffer, format, offset);
     }
 
-    constexpr auto BuildSwapchainDesc1(const LS::LSSwapchainInfo& info) noexcept -> DXGI_SWAP_CHAIN_DESC1
+    constexpr auto BuildSwapchainDesc1(uint32_t frameCount, uint32_t width, uint32_t height, PIXEL_COLOR_FORMAT pixelFormat) noexcept -> DXGI_SWAP_CHAIN_DESC1
     {
         DXGI_SWAP_CHAIN_DESC1 swDesc1{};
-        swDesc1.BufferCount = info.BufferSize;
-        swDesc1.Height = info.Height;
-        swDesc1.Width = info.Width;
+        swDesc1.BufferCount = frameCount;
+        swDesc1.Height = height;
+        swDesc1.Width = width;
         using enum PIXEL_COLOR_FORMAT;
         DXGI_FORMAT format;
-        switch (info.PixelFormat)
+        switch (pixelFormat)
         {
         case RGBA8_UNORM:
             format = DXGI_FORMAT_R8G8B8A8_UNORM;

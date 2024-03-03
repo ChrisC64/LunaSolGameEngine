@@ -3,7 +3,7 @@ module;
 #include <dxgi1_6.h>
 #include <d3d11_4.h>
 #include <stdexcept>
-export module D3D11.EngineWrapperD3D11;
+export module D3D11.LSTypeWrapper;
 
 import LSEDataLib;
 import Engine.LSDevice;

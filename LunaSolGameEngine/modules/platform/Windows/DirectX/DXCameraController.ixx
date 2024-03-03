@@ -1,9 +1,19 @@
 module;
 #include <compare>
 #include <directxmath/DirectXMath.h>
-export module DirectXCommon:DXCameraController;
+export module DirectXCommon.DXCameraController;
 
-import :DXCamera;
+import DirectXCommon.DXCamera;
+import LSEDataLib;
+import MathLib;
+
+using namespace DirectX;
+using xmvec = XMVECTOR;
+using xmmat = XMMATRIX;
+using vec3 = XMFLOAT3;
+using vec4 = XMFLOAT4;
+using mat3 = XMFLOAT3X3;
+using mat4 = XMFLOAT4X4;
 
 export namespace LS::DX
 {
@@ -28,7 +38,7 @@ export namespace LS::DX
         }
 
         /**
-         * @brief Moves the camera based on the Camera's right vector. 
+         * @brief Moves the camera based on the Camera's right vector.
          * @param units movement in the right vector direction
         */
         void Strafe(float units)
@@ -59,7 +69,7 @@ export namespace LS::DX
         {
             m_camera.NearZ = nearDist;
         }
-        
+
         void SetFarDistance(float farDist)
         {
             m_camera.FarZ = farDist;
@@ -74,7 +84,7 @@ export namespace LS::DX
         {
             return XMMatrixOrthographicLH(viewWidth, viewHeight, m_camera.NearZ, m_camera.FarZ);
         }
-        
+
         xmmat GetPerspectiveProjection()
         {
             return XMMatrixPerspectiveFovLH(XMConvertToRadians(m_camera.FovVertical), m_camera.AspectRatio, m_camera.FarZ, m_camera.NearZ);

@@ -15,8 +15,9 @@ import D3D11.Device;
 import D3D11.RenderFuncD3D11;
 import D3D11.MemoryHelper;
 import D3D11.Utils;
-import D3D11.EngineWrapperD3D11;
+import D3D11.LSTypeWrapper;
 import Util.MSUtils;
+import Engine.Logger;
 import LSEDataLib;
 namespace WRL = Microsoft::WRL;
 
@@ -37,46 +38,6 @@ DeviceD3D11::~DeviceD3D11()
     }
 #endif
     Shutdown();
-}
-
-auto LS::Win32::DeviceD3D11::EnumerateDisplays() -> std::vector<WRL::ComPtr<IDXGIAdapter>>
-{
-    WRL::ComPtr<IDXGIFactory2> pFactory;
-    auto result = CreateDXGIFactory2(0, IID_PPV_ARGS(&pFactory));
-    if (FAILED(result))
-    {
-        //TODO: Add error handling results here
-    }
-
-    std::vector<WRL::ComPtr<IDXGIAdapter>> adapters;
-    WRL::ComPtr<IDXGIAdapter> adapter;
-    //TODO: There's a wierd bug where I am stuck in an infinite loop 
-    // explained below, but for now I'll do this. Arbitrary limit, because 
-    // I'm sure you won't have a graphics card with 10 monitors, but
-    // some may in niche cases to prove me wrong somehow. As if this would ever be released....
-    for (auto i = 0u; i < 10; ++i)
-    {
-        HRESULT hr = pFactory->EnumAdapters(i, &adapter);
-        if (hr == DXGI_ERROR_NOT_FOUND)
-            break;
-        adapters.push_back(std::move(adapter));
-    }
-
-    // TODO: There's a problem with the code below just running on forever,
-    // and I don't seem to even get anything in the adapter (like it's just stalled
-    // before running the first line of the loop.) I'm not sure what this is,
-    // could it be an MSVC bug? I'll maybe try a repro later to see 
-    // if I can determine that to be the case, not sure what this is doing.
-    /*auto i = 0u;
-    HRESULT hr = pFactory->EnumAdapters(i, &adapter);
-    while (hr != DXGI_ERROR_NOT_FOUND);
-    {
-        adapters.push_back(std::move(adapter));
-        ++i;
-        hr = pFactory->EnumAdapters(i, &adapter);
-    }*/
-
-    return adapters;
 }
 
 void DeviceD3D11::CreateDevice(WRL::ComPtr<IDXGIAdapter> displayAdapter, bool isSingleThreaded /*= false*/)
@@ -162,11 +123,11 @@ void DeviceD3D11::CreateDevice(WRL::ComPtr<IDXGIAdapter> displayAdapter, bool is
     m_bIsInitialized = true;
 }
 
-void DeviceD3D11::CreateSwapchain(HWND winHandle, const LS::LSSwapchainInfo& swapchainInfo)
+void DeviceD3D11::CreateSwapchain(HWND winHandle, uint32_t width, uint32_t height,
+    uint32_t frameBufferCount /*= 2*/, PIXEL_COLOR_FORMAT pixelColorFormat /*= PIXEL_COLOR_FORMAT::RGBA8_UNORM*/)
 {
     using namespace Microsoft::WRL;
-    m_swapchainLS = swapchainInfo;
-    auto swDesc1 = BuildSwapchainDesc1(swapchainInfo);
+    auto swDesc1 = BuildSwapchainDesc1(frameBufferCount, width, height, pixelColorFormat);
     WRL::ComPtr<IDXGIDevice1> dxgiDevice1;
     auto hr = Utils::QueryInterfaceFor(m_pDevice, dxgiDevice1);
     Utils::ThrowIfFailed(hr, "Failed to find DXGI Device1");
@@ -203,7 +164,7 @@ void DeviceD3D11::CreateSwapchain(const LSWindowBase* window, PIXEL_COLOR_FORMAT
         .MSQuality = 0
     };
 
-    CreateSwapchain(static_cast<HWND>(window->GetHandleToWindow()), info);
+    CreateSwapchain(static_cast<HWND>(window->GetHandleToWindow()), info.Width, info.Height, info.BufferSize, info.PixelFormat);
 }
 
 void DeviceD3D11::CreateSwapchainAsTexture(const LS::LSWindowBase* window, PIXEL_COLOR_FORMAT format /*PIXEL_COLOR_FORMAT::RGBA8_UNORM*/, uint32_t bufferSize /*2*/)
@@ -247,44 +208,8 @@ auto LS::Win32::DeviceD3D11::ResizeSwapchain(uint32_t width, uint32_t height) no
     {
         m_pBackBufferFrame = nullptr;
     }
-    m_swapchainLS.Width = width;
-    m_swapchainLS.Height = height;
 
-    const auto bufferSize = m_swapchainLS.BufferSize;
-    const auto format = ToDxgiFormat(m_swapchainLS.PixelFormat);
-    return m_pSwapchain->ResizeBuffers(bufferSize, width, height, format, 0);
-    //return m_pSwapchain->ResizeBuffers(0, 0, 0, DXGI_FORMAT_UNKNOWN, 0);
-}
-
-void LS::Win32::DeviceD3D11::PrintDisplays(const std::vector<WRL::ComPtr<IDXGIAdapter>>& adapters)
-{
-
-    std::vector<WRL::ComPtr<IDXGIOutput>> outputs;
-    WRL::ComPtr<IDXGIOutput> output;
-    for (const auto& a : adapters)
-    {
-        auto i = 0u;
-        while (a->EnumOutputs(i, &output) != DXGI_ERROR_NOT_FOUND)
-        {
-            outputs.push_back(std::move(output));
-            ++i;
-        }
-    }
-
-    const auto print = [](const DXGI_OUTPUT_DESC& desc)
-    {
-        const auto rc = desc.DesktopCoordinates;
-        std::wcout << std::format(L"Name: {}\nCoords: ({}x{})\nIs Attached?: {}\nRotationFlag: {}\nMon Handl: {}\n\n",
-            desc.DeviceName, (rc.right - rc.left), (rc.bottom - rc.top), desc.AttachedToDesktop, (int)desc.Rotation,
-            (void*)desc.Monitor);
-    };
-
-    DXGI_OUTPUT_DESC desc;
-    for (const auto& o : outputs)
-    {
-        o->GetDesc(&desc);
-        print(desc);
-    }
+    return m_pSwapchain->ResizeBuffers(0, width, height, DXGI_FORMAT_UNKNOWN, 0);
 }
 
 void LS::Win32::DeviceD3D11::DebugPrintLiveObjects()
@@ -335,7 +260,7 @@ auto DeviceD3D11::CreateRTVFromBackBuffer(ID3D11RenderTargetView** ppRTV) noexce
     assert(m_pSwapchain);
     assert(m_pDevice);
     WRL::ComPtr<ID3D11Texture2D> backBuffer;
-    
+
     HRESULT hr = m_pSwapchain->GetBuffer(0, IID_PPV_ARGS(&backBuffer));
     if (FAILED(hr))
     {
@@ -355,7 +280,7 @@ auto DeviceD3D11::CreateRTVFromBackBuffer(ID3D11RenderTargetView1** ppRTV) noexc
     assert(m_pSwapchain);
     assert(m_pDevice);
     WRL::ComPtr<ID3D11Texture2D> backBuffer;
-    
+
     HRESULT hr = m_pSwapchain->GetBuffer(0, IID_PPV_ARGS(&backBuffer));
     if (FAILED(hr))
     {
@@ -448,7 +373,7 @@ auto DeviceD3D11::CreateBuffer(const D3D11_BUFFER_DESC* pDesc, const D3D11_SUBRE
     return m_pDevice->CreateBuffer(pDesc, pInitialData, ppBuffer);
 }
 
-auto LS::Win32::DeviceD3D11::CreateVertexBuffer(const void* pData, uint32_t byteWidth, ID3D11Buffer** ppBuffer, 
+auto LS::Win32::DeviceD3D11::CreateVertexBuffer(const void* pData, uint32_t byteWidth, ID3D11Buffer** ppBuffer,
     D3D11_USAGE usage, uint32_t cpuAccess, uint32_t miscFlags, uint32_t structureByteStride) noexcept -> HRESULT
 {
     assert(m_pDevice);
@@ -459,7 +384,7 @@ auto LS::Win32::DeviceD3D11::CreateVertexBuffer(const void* pData, uint32_t byte
 auto LS::Win32::DeviceD3D11::CreateIndexBuffer(const void* pData, uint32_t bytes, ID3D11Buffer** ppBuffer, D3D11_USAGE usage, uint32_t cpuAccess, uint32_t miscFlags, uint32_t structureByteStride) noexcept -> HRESULT
 {
     assert(m_pDevice);
-    
+
     return CreateIndexBufferD3D11(m_pDevice.Get(), ppBuffer, pData, bytes, usage, cpuAccess, miscFlags, structureByteStride);;
 }
 
@@ -490,22 +415,26 @@ auto DeviceD3D11::GetSwapChain() const noexcept -> Microsoft::WRL::ComPtr<IDXGIS
     return m_pSwapchain;
 }
 
-bool DeviceD3D11::InitDevice(const LS::LSDeviceSettings& settings) noexcept
+auto DeviceD3D11::InitDevice(const LS::LSDeviceSettings& settings, LS::LSWindowBase* pWindow) noexcept -> LS::System::ErrorCode
 {
     try
     {
+        HWND winHandle = nullptr;
         CreateDevice();
-        CreateSwapchain(reinterpret_cast<HWND>(settings.WindowHandle), settings.SwapchainInfo);
+        if (pWindow)
+        {
+            winHandle = reinterpret_cast<HWND>(pWindow->GetHandleToWindow());
+            CreateSwapchain(winHandle, settings.Width, settings.Height, settings.FrameBufferCount, settings.PixelFormat);
+        }
     }
     catch (const std::exception& ex)
     {
-        std::cout << std::format("{}\n", ex.what());
         m_bIsInitialized = false;
-        return false;
+        return LS::System::CreateFailCode(ex.what());
     }
 
     m_bIsInitialized = true;
-    return true;
+    return LS::System::CreateSuccessCode();
 }
 
 auto DeviceD3D11::CreateContext() noexcept -> Nullable<Ref<LS::ILSContext>>
