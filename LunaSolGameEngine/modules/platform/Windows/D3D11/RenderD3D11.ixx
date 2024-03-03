@@ -43,7 +43,7 @@ export namespace LS::Win32
     class RenderD3D11
     {
     public:
-        RenderD3D11(LS::LSDeviceSettings settings);
+        RenderD3D11(const LS::LSDeviceSettings& settings, LS::LSWindowBase* pWindow);
         ~RenderD3D11();
         
         auto Initialize() noexcept -> LS::System::ErrorCode;
@@ -57,6 +57,19 @@ export namespace LS::Win32
         void Shutdown() noexcept;
         void Resize(uint32_t width, uint32_t height) noexcept;
         void AttachToWindow(LS::LSWindowBase* window) noexcept;
+        
+        auto GetDevice() noexcept -> ID3D11Device*;
+        auto GetDeviceCom() noexcept -> WRL::ComPtr<ID3D11Device>;
+        auto GetSwapChainCom() noexcept -> WRL::ComPtr<IDXGISwapChain1>;
+        auto GetDeviceContextCom() noexcept -> WRL::ComPtr<ID3D11DeviceContext>;
+
+        /**
+         * @brief Creates an input layout from the given compiled bytecode. This will not work if it was not compiled first.
+         * 
+         * @param compiledByteCode The compiled byte code of the shader
+         * @return Nullable<WRL::ComPtr<ID3D11InputLayout>> A nullable object of WRL::ComPtr<ID3D11InputLayout>> 
+         */
+        auto BuildInputLayout(std::span<std::byte> compiledByteCode) -> Nullable<WRL::ComPtr<ID3D11InputLayout>>;
 
     protected:
         LS::LSWindowBase*       m_window;

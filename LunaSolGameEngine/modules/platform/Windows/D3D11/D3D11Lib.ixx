@@ -7,3 +7,4 @@ export import D3D11.MemoryHelper;
 export import D3D11.Utils;
 export import D3D11.LSTypeWrapper;
 export import D3D11.PipelineFactory;
+export import D3D11.RenderD3D11;

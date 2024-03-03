@@ -415,18 +415,17 @@ auto DeviceD3D11::GetSwapChain() const noexcept -> Microsoft::WRL::ComPtr<IDXGIS
     return m_pSwapchain;
 }
 
-auto DeviceD3D11::InitDevice(const LS::LSDeviceSettings& settings) noexcept -> LS::System::ErrorCode
+auto DeviceD3D11::InitDevice(const LS::LSDeviceSettings& settings, LS::LSWindowBase* pWindow) noexcept -> LS::System::ErrorCode
 {
-
     try
     {
         HWND winHandle = nullptr;
-        if (settings.Window)
-        {
-            winHandle = reinterpret_cast<HWND>(settings.Window->GetHandleToWindow());
-        }
         CreateDevice();
-        CreateSwapchain(reinterpret_cast<HWND>(winHandle), settings.Width, settings.Height, settings.FrameBufferCount, settings.PixelFormat);
+        if (pWindow)
+        {
+            winHandle = reinterpret_cast<HWND>(pWindow->GetHandleToWindow());
+            CreateSwapchain(winHandle, settings.Width, settings.Height, settings.FrameBufferCount, settings.PixelFormat);
+        }
     }
     catch (const std::exception& ex)
     {

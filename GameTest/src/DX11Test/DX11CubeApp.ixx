@@ -88,11 +88,17 @@ namespace gt::dx11
         void Run() override;
 
     private:
+        LS::LSDeviceSettings m_settings;
+        LS::Win32::RenderD3D11 m_renderer;
         LS::Platform::Dx11::BufferCache m_bufferCache;
+        LS::PipelineDescriptor m_cubePipeline;
+        
+        void CompileShaders();
+        auto GetBytecodes() -> std::array<std::vector<std::byte>, 2>;
 
     public:
-        void PreDraw(ComPtr<ID3D11DeviceContext4>& context);
-        void DrawScene(ComPtr<ID3D11DeviceContext4>& context);
+        void PreDraw(ComPtr<ID3D11DeviceContext> context);
+        void DrawScene(ComPtr<ID3D11DeviceContext> context);
         void HandleResize(uint32_t width, uint32_t height);
 
         void OnKeyboardDown(const LS::InputKeyDown& input);
@@ -103,6 +109,7 @@ namespace gt::dx11
         void OnMouseWheel(const LS::InputMouseWheelScroll& input);
         void OnWindowEvent(LS::LS_WINDOW_EVENT ev);
         void ReadOBJFile(std::filesystem::path path);
+        void SetupPipeline();
     };
 
     using namespace std::placeholders;
@@ -116,7 +123,7 @@ namespace gt::dx11
     const std::string shader_path = R"(build\x64\Release\)";
 #endif
 
-    LS::Win32::DeviceD3D11 g_device;
+    // LS::Win32::DeviceD3D11 g_device;
     Cube g_Cube;
     XMVECTOR g_UpVec = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
     XMVECTOR g_LookAtDefault = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
@@ -126,20 +133,20 @@ namespace gt::dx11
     LS::LSTimer<std::uint64_t, 1ul, 1000ul> g_timer;
     ComPtr<ID3D11VertexShader> vertShader;
     ComPtr<ID3D11PixelShader> pixShader;
-    ComPtr<ID3D11RasterizerState2> rsSolid;
-    ComPtr<ID3D11RenderTargetView1> rtv;
+    ComPtr<ID3D11RasterizerState> rsSolid;
+    ComPtr<ID3D11RenderTargetView> rtv;
     ComPtr<ID3D11DepthStencilView> dsView;
     ComPtr<ID3D11InputLayout> inputLayout;
     ComPtr<ID3D11InputLayout> objIL;
-    ComPtr<ID3D11DeviceContext4> g_immContext;
+    // ComPtr<ID3D11DeviceContext4> g_immContext;
 
     std::unordered_map<LS::LS_INPUT_KEY, bool> g_keysPressedMap;
     LS::Serialize::WavefrontObj m_objFile;
     LS::Serialize::AssimpLoader m_assLoader;
     
-    auto CreateVertexShader(const LS::Win32::DeviceD3D11& device, ComPtr<ID3D11VertexShader>& shader, std::vector<std::byte>& byteCode) -> bool
+    auto CreateVertexShader(ID3D11Device* device, ComPtr<ID3D11VertexShader>& shader, std::vector<std::byte>& byteCode) -> bool
     {
-        auto vsResult = CreateVertexShaderFromByteCode(device.GetDevice().Get(), byteCode, &shader);
+        auto vsResult = CreateVertexShaderFromByteCode(device, byteCode, &shader);
         if (FAILED(vsResult))
         {
             return false;
@@ -147,9 +154,9 @@ namespace gt::dx11
         return true;
     }
 
-    auto CreatePixelShader(const LS::Win32::DeviceD3D11& device, ComPtr<ID3D11PixelShader>& shader, std::vector<std::byte>& byteCode) -> bool
+    auto CreatePixelShader(ID3D11Device* device, ComPtr<ID3D11PixelShader>& shader, std::vector<std::byte>& byteCode) -> bool
     {
-        auto psResult = CreatePixelShaderFromByteCode(device.GetDevice().Get(), byteCode, &shader);
+        auto psResult = CreatePixelShaderFromByteCode(device, byteCode, &shader);
         if (FAILED(psResult))
         {
             return false;
@@ -261,17 +268,18 @@ module : private;
 using namespace gt;
 using namespace LS;
 
-gt::dx11::DX11CubeApp::DX11CubeApp(uint32_t width, uint32_t height, std::wstring_view title)
+gt::dx11::DX11CubeApp::DX11CubeApp(uint32_t width, uint32_t height, std::wstring_view title) : LSApp(width, height, title),
+    m_settings(LS::CreateDeviceSettings(Window->GetWidth(), Window->GetHeight(), LS::DEVICE_API::DIRECTX_11)),
+    m_renderer(m_settings, Window.get())
 {
-    Window = LS::BuildWindow(width, height, title);
 }
 
 auto gt::dx11::DX11CubeApp::Initialize(const LS::LSCommandArgs& args) -> LS::System::ErrorCode
 {
     using enum LS::System::ErrorStatus;
-    auto& window = Window;
+    //auto& window = Window;
     LS::ColorRGBA bgColor(1.0f, 0.0f, 0.0f, 1.0f);
-    window->SetBackgroundColor(bgColor);
+    Window->SetBackgroundColor(bgColor);
 
     Window->RegisterKeyboardDown(std::bind(&gt::dx11::DX11CubeApp::OnKeyboardDown, this, _1));
     Window->RegisterKeyboardUp(std::bind(&gt::dx11::DX11CubeApp::OnKeyboardUp, this, _1));
@@ -280,74 +288,15 @@ auto gt::dx11::DX11CubeApp::Initialize(const LS::LSCommandArgs& args) -> LS::Sys
         std::bind(&gt::dx11::DX11CubeApp::OnMouseWheel, this, _1), 
         std::bind(&gt::dx11::DX11CubeApp::OnMouseMove, this, _1, _2));
 
-    window->RegisterWindowEventCallback(std::bind(&gt::dx11::DX11CubeApp::OnWindowEvent, this, _1));
+    Window->RegisterWindowEventCallback(std::bind(&gt::dx11::DX11CubeApp::OnWindowEvent, this, _1));
     
-    LS::LSDeviceSettings settings = LS::CreateDeviceSettings(window.get(), LS::DEVICE_API::DIRECTX_11);
-    if (auto deviceResult = g_device.InitDevice(settings); !deviceResult)
+    if (auto deviceResult = m_renderer.Initialize(); !deviceResult)
     {
         return deviceResult;
     }
 
-    g_immContext = g_device.GetImmediateContext();
+    // g_immContext = g_device.GetImmediateContext();
 
-    LS::Log::TraceDebug(L"Compiling shaders....");
-    // Shader compilation //
-    std::array<wchar_t, _MAX_PATH> modulePath{};
-    if (!GetModuleFileName(nullptr, modulePath.data(), static_cast<DWORD>(modulePath.size())))
-    {
-        return CreateFailCode("Failed to find module path.");
-    }
-
-    std::wstring path = std::wstring(modulePath.data());
-    auto lastOf = path.find_last_of(L"\\");
-    path.erase(lastOf);
-    std::wstring vsPath = std::format(L"{}\\VertexShader.cso", path);
-    std::wstring psPath = std::format(L"{}\\PixelShader.cso", path);
-
-    Nullable<std::vector<std::byte>> vsFile = LS::IO::ReadFile(vsPath);
-    if (!vsFile)
-    {
-        return CreateFailCode("Failed to read VertexShader.cso file");;
-    }
-    std::vector<std::byte> vsData = vsFile.value();
-
-    Nullable<std::vector<std::byte>> psFile = LS::IO::ReadFile(psPath);
-    if (!psFile)
-    {
-        return CreateFailCode("Failed to read PixelShader.cso");
-    }
-    std::vector<std::byte> psData = psFile.value();
-
-    bool shaderResult = CreateVertexShader(g_device, vertShader, vsData);
-    if (!shaderResult)
-    {
-        LS::Log::TraceError(L"Failed to create vertex shader");
-        return CreateFailCode("Failed to create vertex shader");
-    }
-
-    shaderResult = CreatePixelShader(g_device, pixShader, psData);
-    if (!shaderResult)
-    {
-        LS::Log::TraceError(L"Failed to create pixel shader");
-        return CreateFailCode("Failed to create pixel shader");
-    }
-    LS::Log::TraceDebug(L"Shader Compilation Complete!!");
-
-    // Input Layout // 
-    Nullable<std::vector<D3D11_INPUT_ELEMENT_DESC>> reflectResult = BuildFromReflection(vsData);
-    if (!reflectResult)
-    {
-        LS::Log::TraceError(L"Failed to create input layout for Vertex shader");
-        return CreateFailCode("Failed to create input layout from reflection.");
-    }
-
-    std::vector<D3D11_INPUT_ELEMENT_DESC> inputDescs = reflectResult.value();
-    auto ilResult = g_device.CreateInputLayout(inputDescs.data(), (uint32_t)inputDescs.size(), vsData, &inputLayout);
-    if (FAILED(ilResult))
-    {
-        LS::Log::TraceError(L"Failed to create input layout");
-        return CreateFailCode("Failed to create input layout");
-    }
     // Init Cube and Camera //
     InitCube();
     UpdateCamera();
@@ -356,7 +305,7 @@ auto gt::dx11::DX11CubeApp::Initialize(const LS::LSCommandArgs& args) -> LS::Sys
     // Vertex Buffer //
     LS::Log::TraceDebug(L"Creating buffers...");
 
-    const auto vbOpt = LS::Platform::Dx11::CreateVertexBuffer(g_device.GetDevice().Get(), g_Cube.Verts);
+    const auto vbOpt = LS::Platform::Dx11::CreateVertexBuffer(m_renderer.GetDevice(), g_Cube.Verts);
     if (!vbOpt)
     {
         LS::Log::TraceError(L"Failed to create vertex buffer");
@@ -369,7 +318,7 @@ auto gt::dx11::DX11CubeApp::Initialize(const LS::LSCommandArgs& args) -> LS::Sys
     }
     
     // Index Buffer //
-    const auto ibOpt = LS::Platform::Dx11::CreateIndexBuffer(g_device.GetDevice().Get(), g_indexData);
+    const auto ibOpt = LS::Platform::Dx11::CreateIndexBuffer(m_renderer.GetDevice(), g_indexData);
     if (!ibOpt)
     {
         LS::Log::TraceError(L"Failed to create index buffer.");
@@ -382,7 +331,7 @@ auto gt::dx11::DX11CubeApp::Initialize(const LS::LSCommandArgs& args) -> LS::Sys
     }
 
     // Camera Buffers //
-    auto bufferOptional = LS::Platform::Dx11::CreateConstantBuffer(g_device.GetDevice().Get(), g_camera.View);
+    auto bufferOptional = LS::Platform::Dx11::CreateConstantBuffer(m_renderer.GetDevice(), g_camera.View);
     if (!bufferOptional)
         return CreateFailCode("Failed to create camera view matrix buffer");
 
@@ -391,7 +340,7 @@ auto gt::dx11::DX11CubeApp::Initialize(const LS::LSCommandArgs& args) -> LS::Sys
         return result;
     }
 
-    bufferOptional = LS::Platform::Dx11::CreateConstantBuffer(g_device.GetDevice().Get(), g_camera.Projection);
+    bufferOptional = LS::Platform::Dx11::CreateConstantBuffer(m_renderer.GetDevice(), g_camera.Projection);
     if (!bufferOptional)
         return CreateFailCode("Failed to create camera projection matrix buffer");
     
@@ -400,7 +349,7 @@ auto gt::dx11::DX11CubeApp::Initialize(const LS::LSCommandArgs& args) -> LS::Sys
         return result;
     }
 
-    bufferOptional = LS::Platform::Dx11::CreateConstantBuffer(g_device.GetDevice().Get(), g_camera.Mvp);
+    bufferOptional = LS::Platform::Dx11::CreateConstantBuffer(m_renderer.GetDevice(), g_camera.Mvp);
     if (!bufferOptional)
         return CreateFailCode("Failed to create camera MVP matrix buffer");
     
@@ -412,7 +361,7 @@ auto gt::dx11::DX11CubeApp::Initialize(const LS::LSCommandArgs& args) -> LS::Sys
     LS::Log::TraceDebug(L"Buffers created!!");
     // Rasterizer Creation // 
     LS::Log::TraceDebug(L"Building rasterizer state...");
-    auto rsSolidOpt = CreateRasterizerState2(g_device.GetDevice().Get(), SolidFill_BackCull_FCCW_DCE);
+    auto rsSolidOpt = CreateRasterizerState(m_renderer.GetDeviceCom(), SolidFill_BackCull_FCCW_DCE);
     if (!rsSolidOpt)
     {
         LS::Log::TraceError(L"Failed to create rasterizer state");
@@ -423,25 +372,28 @@ auto gt::dx11::DX11CubeApp::Initialize(const LS::LSCommandArgs& args) -> LS::Sys
     LS::Log::TraceDebug(L"Rasterizer state completed!!");
     // Render Target Creation //
     LS::Log::TraceDebug(L"Building render target view....");
-
-    HRESULT hr = g_device.CreateRTVFromBackBuffer(rtv.GetAddressOf());
-    if (FAILED(hr))
+    auto rtvOpt = LS::Win32::CreateRenderTargetViewFromSwapChain(m_renderer.GetDeviceCom(), m_renderer.GetSwapChainCom());
+    //HRESULT hr = m_renderer.CreateRTVFromBackBuffer(rtv.GetAddressOf());
+    if (!rtvOpt)
     {
         LS::Log::TraceError(L"Failed to create render target view from backbuffer");
         return CreateFailCode("Failed to create render target from back buffer");
     }
+    rtv = rtvOpt.value();
     LS::Log::TraceDebug(L"Render target view created!!");
     // Depth Stencil //
     LS::Log::TraceDebug(L"Building depth stencil....");
 
-    auto dsResult = g_device.CreateDepthStencilViewForSwapchain(rtv.Get(), &dsView);
-    if (FAILED(dsResult))
+    auto dsResult = LS::Win32::CreateDepthStencilViewFromSwapChain(m_renderer.GetDeviceCom(), m_renderer.GetSwapChainCom());
+    //auto dsResult = g_device.CreateDepthStencilViewForSwapchain(rtv.Get(), &dsView);
+    if (!dsResult)
     {
         return CreateFailCode("Failed to create depth stencil");
     }
+    dsView = dsResult.value();
     /*CD3D11_DEPTH_STENCIL_DESC defaultDepthDesc(CD3D11_DEFAULT{});
     ComPtr<ID3D11DepthStencilState> defaultState;
-    auto dss = CreateDepthStencilState(g_device.GetDevice().Get(), defaultDepthDesc).value();
+    auto dss = CreateDepthStencilState(m_renderer.GetDevice(), defaultDepthDesc).value();
     defaultState.Attach(dss);
     LS::Log::TraceDebug(L"Depth stencil created!!");
     SetDepthStencilState(g_immContext.Get(), defaultState.Get(), 1);*/
@@ -470,7 +422,7 @@ auto gt::dx11::DX11CubeApp::Initialize(const LS::LSCommandArgs& args) -> LS::Sys
     
     //TODO: I use Vec3F for the vertices which now need to be converted into a Vec4F. Either I allow that to
     // be placed or I just set it in the shader instead. 
-    auto objVbOpt = LS::Platform::Dx11::CreateVertexBuffer(g_device.GetDevice().Get(), tvd);
+    auto objVbOpt = LS::Platform::Dx11::CreateVertexBuffer(m_renderer.GetDevice(), tvd);
     if (!objVbOpt)
     {
         LS::Log::TraceError(L"Failed to create vertex buffer");
@@ -483,7 +435,7 @@ auto gt::dx11::DX11CubeApp::Initialize(const LS::LSCommandArgs& args) -> LS::Sys
     }
 
     // Index Buffer //
-    auto objIbOpt = LS::Platform::Dx11::CreateIndexBuffer(g_device.GetDevice().Get(), mesh.Indices);
+    auto objIbOpt = LS::Platform::Dx11::CreateIndexBuffer(m_renderer.GetDevice(), mesh.Indices);
     if (!objIbOpt)
     {
         LS::Log::TraceError(L"Failed to create index buffer.");
@@ -494,6 +446,8 @@ auto gt::dx11::DX11CubeApp::Initialize(const LS::LSCommandArgs& args) -> LS::Sys
     {
         return result;
     }
+
+    CompileShaders();
 
     return System::CreateSuccessCode();
 }
@@ -522,7 +476,7 @@ void gt::dx11::DX11CubeApp::Run()
         if (IsPaused)
         {
             std::cout << "Paused app!\n";
-            std::this_thread::sleep_for(100ms);
+            //std::this_thread::sleep_for(100ms);
             continue;
         }
         auto elapsed = g_timer.GetTotalTimeTicked();
@@ -535,14 +489,14 @@ void gt::dx11::DX11CubeApp::Run()
         UpdateCubeTransform();
         UpdateCamera();
 
-        PreDraw(g_immContext);
-        DrawScene(g_immContext);
-        Present1(g_device.GetSwapChain().Get(), 1);
+        PreDraw(m_renderer.GetDeviceContextCom());
+        DrawScene(m_renderer.GetDeviceContextCom());
+        Present1(m_renderer.GetSwapChainCom().Get(), 1);
 
         // Update Buffers //
-        LS::Platform::Dx11::UpdateSubresource(g_immContext.Get(), mvp.Get(), &g_camera.Mvp);
-        LS::Platform::Dx11::UpdateSubresource(g_immContext.Get(), view.Get(), &g_camera.View);
-        LS::Platform::Dx11::UpdateSubresource(g_immContext.Get(), proj.Get(), &g_camera.Projection);
+        LS::Platform::Dx11::UpdateSubresource(m_renderer.GetDeviceContextCom().Get(), mvp.Get(), &g_camera.Mvp);
+        LS::Platform::Dx11::UpdateSubresource(m_renderer.GetDeviceContextCom().Get(), view.Get(), &g_camera.View);
+        LS::Platform::Dx11::UpdateSubresource(m_renderer.GetDeviceContextCom().Get(), proj.Get(), &g_camera.Projection);
     }
 }
 
@@ -666,7 +620,7 @@ void gt::dx11::DX11CubeApp::OnWindowEvent(LS::LS_WINDOW_EVENT ev)
 
 }
 
-void gt::dx11::DX11CubeApp::PreDraw(ComPtr<ID3D11DeviceContext4>& context)
+void gt::dx11::DX11CubeApp::PreDraw(ComPtr<ID3D11DeviceContext> context)
 {
     const auto view = m_bufferCache.Get("cam_view").value();
     const auto proj = m_bufferCache.Get("cam_proj").value();
@@ -701,7 +655,7 @@ void gt::dx11::DX11CubeApp::PreDraw(ComPtr<ID3D11DeviceContext4>& context)
     ClearDS(context.Get(), dsView.Get());
 }
 
-void gt::dx11::DX11CubeApp::DrawScene(ComPtr<ID3D11DeviceContext4>& context)
+void gt::dx11::DX11CubeApp::DrawScene(ComPtr<ID3D11DeviceContext> context)
 {
     DrawIndexed(context.Get(), (uint32_t)g_objIndices.size());
     //DrawIndexed(context.Get(), (uint32_t)g_indexData.size());
@@ -710,7 +664,7 @@ void gt::dx11::DX11CubeApp::DrawScene(ComPtr<ID3D11DeviceContext4>& context)
 void gt::dx11::DX11CubeApp::HandleResize(uint32_t width, uint32_t height)
 {
     IsPaused = true;
-    ClearDeviceDependentResources(g_immContext.Get());
+    ClearDeviceDependentResources(m_renderer.GetDeviceContextCom().Get());
     if (rtv)
     {
         rtv = nullptr;
@@ -720,30 +674,46 @@ void gt::dx11::DX11CubeApp::HandleResize(uint32_t width, uint32_t height)
         dsView = nullptr;
     }
 
-    HRESULT hr = g_device.ResizeSwapchain(width, height);
-    if (FAILED(hr))
-    {
-        LS::Log::TraceError(L"Failed to resize the swapchain buffer");
-        g_device.DebugPrintLiveObjects();
-        goto exit_resize;
-    }
+    m_renderer.Resize(width, height);
+    //if (FAILED(hr))
+    //{
+    //    LS::Log::TraceError(L"Failed to resize the swapchain buffer");
+    //    //g_device.DebugPrintLiveObjects();
+    //    goto exit_resize;
+    //}
 
-    g_device.CreateSwapchain(Window.get());
-    hr = g_device.CreateRTVFromBackBuffer(rtv.GetAddressOf());
-    if (FAILED(hr))
+    /*g_device.CreateSwapchain(Window.get());*/
+    auto rtvOpt = LS::Win32::CreateRenderTargetViewFromSwapChain(m_renderer.GetDeviceCom(), m_renderer.GetSwapChainCom());
+    if (!rtvOpt)
     {
-        LS::Log::TraceError(L"Failed to create render target view from backbuffer");
-        g_device.DebugPrintLiveObjects();
-        goto exit_resize;
+        LS::Log::TraceError(L"Failed to create render target view from back buffer");
+        IsPaused = false;
+        return;
     }
-    hr = g_device.CreateDepthStencilViewForSwapchain(rtv.Get(), &dsView);
-    if (FAILED(hr))
+    rtv = rtvOpt.value();
+
+    auto dsResult = LS::Win32::CreateDepthStencilViewFromSwapChain(m_renderer.GetDeviceCom(), m_renderer.GetSwapChainCom());
+    if (!dsResult)
     {
-        LS::Log::TraceError(L"Failed to create depth stencil view from backbuffer");
-        g_device.DebugPrintLiveObjects();
-        goto exit_resize;
+        LS::Log::TraceError(L"Failed to create depth stencil view from back buffer");
+        IsPaused = false;
+        return;
     }
-exit_resize:
+    dsView = dsResult.value();
+    //hr = g_device.CreateRTVFromBackBuffer(rtv.GetAddressOf());
+    //if (FAILED(hr))
+    //{
+    //    LS::Log::TraceError(L"Failed to create render target view from backbuffer");
+    //    g_device.DebugPrintLiveObjects();
+    //    goto exit_resize;
+    //}
+    //hr = g_device.CreateDepthStencilViewForSwapchain(rtv.Get(), &dsView);
+    //if (FAILED(hr))
+    //{
+    //    LS::Log::TraceError(L"Failed to create depth stencil view from backbuffer");
+    //    g_device.DebugPrintLiveObjects();
+    //    goto exit_resize;
+    //}
     IsPaused = false;
 }
 
@@ -756,4 +726,117 @@ void gt::dx11::DX11CubeApp::ReadOBJFile(std::filesystem::path path)
     {
         std::cout << result.Message();
     }
+}
+
+void gt::dx11::DX11CubeApp::SetupPipeline()
+{
+    LS::Win32::InitCommonStates(m_renderer.GetDeviceCom().Get());
+
+    LS::PipelineDescriptor desc;
+    desc.RasterizeState = LS::SolidFill_BackCull_FCCW_DCE;
+    desc.BlendState.BlendType = LS::BlendType::OPAQUE_BLEND;
+    desc.Topology = LS::PRIMITIVE_TOPOLOGY::TRIANGLE_STRIP;
+    desc.DepthStencil = LS::DefaultDepth;
+    
+    // Vertex and Pixel Shaders
+    const auto bc = GetBytecodes();
+    desc.Shaders[SHADER_TYPE::VERTEX] = bc[0];
+    desc.Shaders[SHADER_TYPE::PIXEL] = bc[1];
+    
+    //desc.RenderTarget.
+    
+
+    auto factory = LS::Win32::D3D11PipelineFactory();
+}
+
+void gt::dx11::DX11CubeApp::CompileShaders()
+{
+    LS::Log::TraceDebug(L"Compiling shaders....");
+    // Shader compilation //
+    std::array<wchar_t, _MAX_PATH> modulePath{};
+    if (!GetModuleFileName(nullptr, modulePath.data(), static_cast<DWORD>(modulePath.size())))
+    {
+        return /*CreateFailCode("Failed to find module path.")*/;
+    }
+
+    std::wstring path = std::wstring(modulePath.data());
+    auto lastOf = path.find_last_of(L"\\");
+    path.erase(lastOf);
+    std::wstring vsPath = std::format(L"{}\\VertexShader.cso", path);
+    std::wstring psPath = std::format(L"{}\\PixelShader.cso", path);
+
+    Nullable<std::vector<std::byte>> vsFile = LS::IO::ReadFile(vsPath);
+    if (!vsFile)
+    {
+        return /*CreateFailCode("Failed to read VertexShader.cso file")*/;
+    }
+    std::vector<std::byte> vsData = vsFile.value();
+
+    Nullable<std::vector<std::byte>> psFile = LS::IO::ReadFile(psPath);
+    if (!psFile)
+    {
+        return /*CreateFailCode("Failed to read PixelShader.cso")*/;
+    }
+    std::vector<std::byte> psData = psFile.value();
+
+    bool shaderResult = CreateVertexShader(m_renderer.GetDevice(), vertShader, vsData);
+    if (!shaderResult)
+    {
+        LS::Log::TraceError(L"Failed to create vertex shader");
+        return /*CreateFailCode("Failed to create vertex shader")*/;
+    }
+
+    shaderResult = CreatePixelShader(m_renderer.GetDevice(), pixShader, psData);
+    if (!shaderResult)
+    {
+        LS::Log::TraceError(L"Failed to create pixel shader");
+        return /*CreateFailCode("Failed to create pixel shader")*/;
+    }
+    LS::Log::TraceDebug(L"Shader Compilation Complete!!");
+
+    // Input Layout // 
+    auto il = m_renderer.BuildInputLayout(vsData);
+    if (!il)
+    {
+        LS::Log::TraceError(L"Failed to create input layout");
+        return /*CreateFailCode("Failed to create inputlayout")*/;
+    }
+    inputLayout = il.value();
+}
+
+auto gt::dx11::DX11CubeApp::GetBytecodes() -> std::array<std::vector<std::byte>, 2>
+{
+    std::array<std::vector<std::byte>, 2> out;
+    std::array<wchar_t, _MAX_PATH> modulePath{};
+    if (!GetModuleFileName(nullptr, modulePath.data(), static_cast<DWORD>(modulePath.size())))
+    {
+        return out;
+        //return CreateFailCode("Failed to find module path.");
+    }
+
+    std::wstring path = std::wstring(modulePath.data());
+    auto lastOf = path.find_last_of(L"\\");
+    path.erase(lastOf);
+    std::wstring vsPath = std::format(L"{}\\VertexShader.cso", path);
+    std::wstring psPath = std::format(L"{}\\PixelShader.cso", path);
+
+    Nullable<std::vector<std::byte>> vsFile = LS::IO::ReadFile(vsPath);
+    if (!vsFile)
+    {
+        return out;
+        /*return CreateFailCode("Failed to read VertexShader.cso file");;*/
+    }
+    std::vector<std::byte> vsData = vsFile.value();
+
+    Nullable<std::vector<std::byte>> psFile = LS::IO::ReadFile(psPath);
+    if (!psFile)
+    {
+        return out;
+        /*return CreateFailCode("Failed to read PixelShader.cso");*/
+    }
+    std::vector<std::byte> psData = psFile.value();
+
+    out[0] = vsData;
+    out[1] = psData;
+    return out;
 }

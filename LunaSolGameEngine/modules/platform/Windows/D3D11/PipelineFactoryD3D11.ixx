@@ -5,6 +5,8 @@ module;
 #include <vector>
 #include <unordered_map>
 #include <string_view>
+#include <utility>
+#include <array>
 #include <d3d11_4.h>
 #include <wrl/client.h>
 #include "engine/EngineDefines.h"
@@ -66,28 +68,34 @@ export namespace LS::Win32
 
     struct DepthStencilStage
     {
-        WRL::ComPtr<ID3D11DepthStencilView>     View;
         WRL::ComPtr<ID3D11DepthStencilState>    State;
         uint32_t                                StencilRef;
+    };
+
+    struct RenderTargetStage
+    {
+        std::array<WRL::ComPtr<ID3D11RenderTargetView>, 8>  RTViews;
+        DXGI_FORMAT                                         Format;
     };
 
     struct PipelineStateDX11
     {
         D3D_PRIMITIVE_TOPOLOGY                  PrimitiveTopology;
-        WRL::ComPtr<ID3D11RasterizerState>      RasterizerState;
+        BufferD3D11                             IndexBuffer;
+        BlendStage                              BlendState;
         DepthStencilStage                       DSStage;
+
+        WRL::ComPtr<ID3D11RasterizerState>      RasterizerState;
         WRL::ComPtr<ID3D11VertexShader>         VertexShader;
         WRL::ComPtr<ID3D11PixelShader>          PixelShader;
         WRL::ComPtr<ID3D11GeometryShader>       GeometryShader;
         WRL::ComPtr<ID3D11HullShader>           HullShader;
         WRL::ComPtr<ID3D11DomainShader>         DomainShader;
+        WRL::ComPtr<ID3D11ComputeShader>        ComputeShader;
         WRL::ComPtr<ID3D11InputLayout>          InputLayout;
-        WRL::ComPtr<ID3D11Resource>             RenderTarget;
-        WRL::ComPtr<ID3D11RenderTargetView>     RTViews[D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT];
+        RenderTargetStage                       RTStage;
 
-        BlendStage                              BlendState;
         std::vector<BufferD3D11>                VertexBuffers;
-        BufferD3D11                             IndexBuffer;
         std::vector<SamplerD3D11>               Samplers;
         std::vector<TextureD3D11>               Textures;
     };
@@ -112,4 +120,5 @@ export namespace LS::Win32
         SharedRef<DeviceD3D11> m_pDevice;
         std::vector<PipelineStateDX11> m_pipelines;
     };
+
 }

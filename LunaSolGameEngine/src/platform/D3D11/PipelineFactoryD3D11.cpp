@@ -48,22 +48,19 @@ PipelineStateDX11 LS::Win32::D3D11PipelineFactory::CreatePipelineD3D11(const Pip
         out.RasterizerState = rast;
     }
 
-    auto blendState = CreateBlendState1(device, pipeline.BlendState);
+    auto blendState = CreateBlendState(device, pipeline.BlendState);
     if (blendState)
     {
-        WRL::ComPtr<ID3D11BlendState1> blend;
-        blend = blendState.value();
-        out.BlendState.State = blend;
+        out.BlendState.State = blendState.value();
     }
 
     // Depth Stencil 
     auto depthStencilState = CreateDepthStencilState(device, pipeline.DepthStencil);
     if (depthStencilState)
     {
-        WRL::ComPtr<ID3D11DepthStencilState> state;
-        state = depthStencilState.value();
-        out.DSStage.State= state;
+        out.DSStage.State = depthStencilState.value();
     }
+    
     // Shader Compilation //
     for (auto [type, data] : pipeline.Shaders)
     {
@@ -104,6 +101,9 @@ PipelineStateDX11 LS::Win32::D3D11PipelineFactory::CreatePipelineD3D11(const Pip
             break;
         }
     }
+    // Input Layout through Reflection // 
+    
+
     // Topology Conversion //
     switch (pipeline.Topology)
     {

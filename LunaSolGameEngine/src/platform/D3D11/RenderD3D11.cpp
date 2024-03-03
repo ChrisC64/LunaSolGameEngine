@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include <cassert>
 #include <array>
 #include <span>
 #include <tuple>
@@ -13,13 +14,14 @@ import D3D11.Device;
 import D3D11.Utils;
 import D3D11.PipelineFactory;
 import D3D11.RenderFuncD3D11;
+import D3D11.Utils;
 import DirectXCommon;
 
 using namespace LS::Win32;
 namespace WRL = Microsoft::WRL;
 
-RenderD3D11::RenderD3D11(LS::LSDeviceSettings settings) : m_settings(settings),
-m_window(settings.Window)
+RenderD3D11::RenderD3D11(const LS::LSDeviceSettings& settings, LS::LSWindowBase* pWindow) : m_settings(settings),
+m_window(pWindow)
 {
 }
 
@@ -30,7 +32,7 @@ RenderD3D11::~RenderD3D11()
 
 auto LS::Win32::RenderD3D11::Initialize() noexcept -> LS::System::ErrorCode
 {
-    LS::System::ErrorCode ec = m_device.InitDevice(m_settings);
+    LS::System::ErrorCode ec = m_device.InitDevice(m_settings, m_window);
     if (!ec)
     {
         return ec;
@@ -53,6 +55,10 @@ void RenderD3D11::Clear(std::array<float, 4> clearColor) noexcept
 
 void RenderD3D11::SetPipeline(const PipelineStateDX11* state) noexcept
 {
+    assert(state && "state cannot be null");
+    if (!state)
+        return;
+
     auto context = m_device.GetImmediateContext();
 
     const auto findStrides = [&state]() -> std::tuple<std::vector<uint32_t>, std::vector<uint32_t>, std::vector<ID3D11Buffer*>>
@@ -83,8 +89,32 @@ void RenderD3D11::SetPipeline(const PipelineStateDX11* state) noexcept
     context->IASetPrimitiveTopology(state->PrimitiveTopology);
 
     // Load Shaders //
+    assert(state->VertexShader && "A vertex shader cannot be null");
+    context->VSSetShader(state->VertexShader.Get(), nullptr, 0);
+    assert(state->PixelShader && "A pixel shader cannot be null");
+    context->PSSetShader(state->PixelShader.Get(), nullptr, 0);
 
-    // Load Buffers //
+    if (state->GeometryShader)
+    {
+        context->GSSetShader(state->GeometryShader.Get(), nullptr, 0);
+    }
+
+    if (state->HullShader)
+    {
+        context->HSSetShader(state->HullShader.Get(), nullptr, 0);
+    }
+
+    if (state->DomainShader)
+    {
+        context->DSSetShader(state->DomainShader.Get(), nullptr, 0);
+    }
+    
+    if (state->ComputeShader)
+    {
+        context->CSSetShader(state->ComputeShader.Get(), nullptr, 0);
+    }
+
+    // Load Shader Buffers //
 
     // Load Output Merger States //
     context->OMSetBlendState(state->BlendState.State.Get(), state->BlendState.BlendFactor, state->BlendState.SampleMask);
@@ -94,15 +124,17 @@ void RenderD3D11::SetPipeline(const PipelineStateDX11* state) noexcept
             std::vector<ID3D11RenderTargetView*> views;
             for (int i = 0; i < D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT; ++i)
             {
-                if (!state->RTViews[i])
+                if (!state->RTStage.RTViews[i])
                     break;
-                views.emplace_back(state->RTViews[i].Get());
+                views.emplace_back(state->RTStage.RTViews[i].Get());
             }
 
             return views;
         };
     const auto rts = findRTs();
-    if (!state->DSStage.View)
+    // FIX-ME: Fix this issue as I removed View, it should be bound by the user, so let's split up some
+    // rendering tasks instead of having one whole "operation" like this. 
+    /*if (!state->DSStage.View)
     {
         if (rts.size() == 0)
         {
@@ -123,7 +155,7 @@ void RenderD3D11::SetPipeline(const PipelineStateDX11* state) noexcept
         {
             context->OMSetRenderTargets(static_cast<UINT>(rts.size()), rts.data(), state->DSStage.View.Get());
         }
-    }
+    }*/
 
     if (!state->DSStage.State)
     {
@@ -162,8 +194,54 @@ void RenderD3D11::Shutdown() noexcept
 
 void RenderD3D11::Resize(uint32_t width, uint32_t height) noexcept
 {
+    if (m_renderTarget)
+        m_renderTarget = nullptr;
+    m_device.ResizeSwapchain(width, height);
+    m_device.CreateRTVFromBackBuffer(&m_renderTarget);
+    
 }
 
 void RenderD3D11::AttachToWindow(LS::LSWindowBase* window) noexcept
 {
+    
+}
+
+auto LS::Win32::RenderD3D11::GetDevice() noexcept -> ID3D11Device *
+{
+    return m_device.GetDevice().Get();
+}
+
+auto LS::Win32::RenderD3D11::GetDeviceCom() noexcept -> WRL::ComPtr<ID3D11Device>
+{
+    return m_device.GetDevice();
+}
+
+auto LS::Win32::RenderD3D11::GetSwapChainCom() noexcept -> WRL::ComPtr<IDXGISwapChain1>
+{
+    return m_device.GetSwapChain();
+}
+
+auto LS::Win32::RenderD3D11::GetDeviceContextCom() noexcept -> WRL::ComPtr<ID3D11DeviceContext>
+{
+    return m_device.GetImmediateContext();
+}
+
+auto LS::Win32::RenderD3D11::BuildInputLayout(std::span<std::byte> compiledByteCode) -> Nullable<WRL::ComPtr<ID3D11InputLayout>>
+{
+    const auto elements = BuildFromReflection(compiledByteCode);
+
+    if (!elements)
+    {
+        return std::nullopt;
+    }
+    
+    const auto& e = elements.value();
+    WRL::ComPtr<ID3D11InputLayout> inputLayout;
+    const auto result = m_device.CreateInputLayout(e.data(), static_cast<UINT>(e.size()), compiledByteCode, &inputLayout);
+    if (FAILED(result))
+    {
+        return std::nullopt;
+    }
+
+    return inputLayout;
 }

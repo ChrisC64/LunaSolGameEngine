@@ -190,7 +190,7 @@ export namespace LS::Platform::Dx11
         pContext->Unmap(pResource, numSubResource);
     }*/
 
-    constexpr void UpdateSubresource(ID3D11DeviceContext4* pContext, ID3D11Resource* pResource, const void* ptrData,
+    constexpr void UpdateSubresource(ID3D11DeviceContext* pContext, ID3D11Resource* pResource, const void* ptrData,
         uint32_t dstSubresource = 0, uint32_t sourceRow = 0, uint32_t sourceDepth = 0, D3D11_BOX* dstBox = nullptr) noexcept
     {
         assert(pContext);
@@ -201,7 +201,7 @@ export namespace LS::Platform::Dx11
         pContext->UpdateSubresource(pResource, dstSubresource, dstBox, ptrData, sourceRow, sourceDepth);
     }
 
-    constexpr void UpdateSubresource1(ID3D11DeviceContext4* pContext, ID3D11Resource* pResource, const void* ptrData,
+    constexpr void UpdateSubresource1(ID3D11DeviceContext1* pContext, ID3D11Resource* pResource, const void* ptrData,
         uint32_t dstSubresource = 0, uint32_t sourceRow = 0, uint32_t sourceDepth = 0, D3D11_BOX* dstBox = nullptr,
         std::span<D3D11_COPY_FLAGS> copyFlags = {}) noexcept
     {
