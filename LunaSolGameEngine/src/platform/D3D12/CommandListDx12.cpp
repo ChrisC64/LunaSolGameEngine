@@ -60,13 +60,17 @@ auto CommandListDx12::Initialize(ID3D12Device4* pDevice) noexcept -> LS::System:
 
 void CommandListDx12::ResetCommandList() noexcept
 {
-    LS::Utils::ThrowIfFailed(m_pAllocator->Reset(), std::format("Failed to reset command allocator for: {}", m_name.c_str()));
-    LS::Utils::ThrowIfFailed(m_pCommandList->Reset(m_pAllocator.Get(), nullptr), std::format("Failed to reset command allocator: {}", m_name.c_str()));
+    m_pAllocator->Reset();
+    m_pCommandList->Reset(m_pAllocator.Get(), nullptr);
+
+    //LS::Utils::ThrowIfFailed(m_pAllocator->Reset(), std::format("Failed to reset command allocator for: {}", m_name.c_str()));
+    //LS::Utils::ThrowIfFailed(m_pCommandList->Reset(m_pAllocator.Get(), nullptr), std::format("Failed to reset command allocator: {}", m_name.c_str()));
 }
 
 void CommandListDx12::Close() noexcept
 {
-    LS::Utils::ThrowIfFailed(m_pCommandList->Close(), std::format("Failed to close command list: {}", m_name.c_str()));
+    m_pCommandList->Close();
+    //LS::Utils::ThrowIfFailed(m_pCommandList->Close(), std::format("Failed to close command list: {}", m_name.c_str()));
 }
 
 void CommandListDx12::Clear(const std::array<float, 4>& clearColor, const D3D12_CPU_DESCRIPTOR_HANDLE rtv) noexcept

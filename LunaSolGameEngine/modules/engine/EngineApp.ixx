@@ -28,8 +28,8 @@ export namespace LS::Global
 namespace LS
 {
     export using LSCommandArgs = std::vector<std::string>;
-    export auto ParseCommands(int argc, char* argv[]) noexcept -> LSCommandArgs;
-    export auto ParseCommands(std::string_view args) noexcept -> LSCommandArgs;
+    export auto ParseCommands(int argc, char* argv[]) noexcept -> SharedRef<LSCommandArgs>;
+    export auto ParseCommands(std::string_view args) noexcept -> SharedRef<LSCommandArgs>;
 
     /**
      * @brief Creates the device with the supported rendering type
@@ -65,12 +65,11 @@ namespace LS
         LSApp(LSApp&&) = default;
         LSApp& operator=(LSApp&&) = default;
 
-        [[nodiscard]] virtual auto Initialize([[maybe_unused]] const LSCommandArgs& args) -> System::ErrorCode = 0;
+        [[nodiscard]] virtual auto Initialize([[maybe_unused]] SharedRef<LSCommandArgs> args) -> System::ErrorCode = 0;
         virtual void Run() = 0;
 
     protected:
         Ref<LSWindowBase> Window;
-        LSCommandArgs CommandArgs;
         //TODO: Get rid of this ugly mess.
         bool IsRunning = false;
         bool IsPaused = false;
@@ -102,28 +101,28 @@ namespace LS
         Window->RegisterMouseMoveCallback(cursorMove);
     }
 
-    auto ParseCommands(int argc, char* argv[]) noexcept -> LSCommandArgs
+    auto ParseCommands(int argc, char* argv[]) noexcept -> SharedRef<LSCommandArgs>
     {
-        LSCommandArgs commandArgs;
+        SharedRef<LSCommandArgs> commandArgs = std::make_shared<LSCommandArgs>();
         int i = 1;
         for (; i < argc; ++i)
         {
-            commandArgs.emplace_back(argv[i]);
+            commandArgs->emplace_back(argv[i]);
         }
 
         return commandArgs;
     }
 
-    auto ParseCommands([[maybe_unused]] std::string_view args) noexcept -> LSCommandArgs
+    auto ParseCommands([[maybe_unused]] std::string_view args) noexcept -> SharedRef<LSCommandArgs>
     {
-        LSCommandArgs commandArgs;
+        SharedRef<LSCommandArgs> commandArgs = std::make_shared<LSCommandArgs>();
         const auto delim = ' ';
         std::string arg;
         for (auto i = 0; i < args.size(); ++i)
         {
             if (args[i] == delim)
             {
-                commandArgs.push_back(arg);
+                commandArgs->push_back(arg);
             }
             arg += args[i];
         }

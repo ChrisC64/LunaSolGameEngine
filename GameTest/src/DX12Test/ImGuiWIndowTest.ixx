@@ -68,7 +68,7 @@ namespace gt::dx12::ImGuiSample
 
         ~ImGuiSample() = default;
 
-        auto Initialize(const LS::LSCommandArgs& args) -> LS::System::ErrorCode override;
+        auto Initialize(SharedRef<LS::LSCommandArgs> args) -> LS::System::ErrorCode override;
         void Run() override;
         void CreateRenderTargets();
         void CleanupRenderTargets();
@@ -107,7 +107,7 @@ module : private;
 
 using namespace gt::dx12;
 
-auto gt::dx12::ImGuiSample::ImGuiSample::Initialize(const LS::LSCommandArgs& args) -> LS::System::ErrorCode
+auto gt::dx12::ImGuiSample::ImGuiSample::Initialize(SharedRef<LS::LSCommandArgs> args) -> LS::System::ErrorCode
 {
     if (!CreateDeviceD3D())
         return LS::System::CreateFailCode("Failed to create device D3D");

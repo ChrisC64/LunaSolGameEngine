@@ -153,7 +153,7 @@ void LS::Log::LSLogger::Print(std::wstring_view msg) noexcept
     Print(m_logLevel, msg);
 }
 
-void LS::Log::LSLogger::Print(std::string_view msg) noexcept
+void LS::Log::LSLogger::Print([[maybe_unused]] std::string_view msg) noexcept
 {
 }
 
