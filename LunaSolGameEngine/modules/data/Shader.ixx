@@ -8,12 +8,19 @@ module;
 #include <span>
 #include <format>
 
+#include "engine/EngineDefines.h"
 export module LSEDataLib:Shader;
 
 import Util.StdUtils;
 
 export namespace LS
 {
+    struct ShaderCompileResult
+    {
+        std::vector<std::byte> CompiledCode;
+        std::string ErrMsg;
+    };
+
     enum class SHADER_TYPE
     {
         VERTEX,
@@ -172,12 +179,11 @@ export namespace LS
 
     struct LSShaderFile
     {
-        SHADER_TYPE				m_shaderType;//@brief Shader type
-        std::filesystem::path	m_filePath{};//@brief The file's path
-        std::filesystem::path	m_includePath{ "." };//@brief The directory to look at for include (default to current directory of file)
-        std::string				m_entryPoint{ "main" }; //@brief The main entry point into the shader (if not main)
-        std::string				m_shaderTarget{};//@brief The target profile to compile in
-        std::fstream			m_file;//@brief The file
+        SHADER_TYPE             m_shaderType;//@brief Shader type
+        std::filesystem::path   m_filePath{};//@brief The file's path
+        std::filesystem::path   m_includePath{ "." };//@brief The directory to look at for include (default to current directory of file)
+        std::string             m_entryPoint{ "main" }; //@brief The main entry point into the shader (if not main)
+        std::string             m_shaderTarget{};//@brief The target profile to compile in
     };
 
     /**
@@ -229,16 +235,28 @@ export namespace LS
             };
             Elements.emplace_back(elem);
         }
-        
+
         bool operator==(const LSShaderInputSignature& rhs) const
         {
             return this->Elements == rhs.Elements;
         }
+
         bool operator!=(const LSShaderInputSignature& rhs) const
         {
             return !(*this == rhs);
         }
 
         std::vector<ShaderElement> Elements;
+    };
+
+    struct Shader
+    {
+        // Buffers/Resources
+        // * Slots 
+        // * Type
+        // * Object/View to resource
+
+        // Name 
+        // View to shader / Guid
     };
 }

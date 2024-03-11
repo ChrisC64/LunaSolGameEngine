@@ -5,9 +5,12 @@
 #include <span>
 #include <tuple>
 #include <vector>
+#include <filesystem>
 #include <wrl/client.h>
 #include <d3d11_4.h>
+
 #include "engine/EngineDefines.h"
+#include "engine/EngineLogDefines.h"
 
 import D3D11.RenderD3D11;
 import D3D11.Device;
@@ -19,6 +22,16 @@ import DirectXCommon;
 
 using namespace LS::Win32;
 namespace WRL = Microsoft::WRL;
+
+bool IsCompiled(std::span<std::byte> data)
+{
+    assert(data.size() > 4 && "The data is not valid, cannot perform check.");
+    if (data.size() < 4)
+        return false;
+    const char* flag = "DXBC";
+    const std::string check = { (char)(data[0]), (char)data[1], (char)data[2], (char)data[3] };
+    return check == flag;
+}
 
 RenderD3D11::RenderD3D11(const LS::LSDeviceSettings& settings, LS::LSWindowBase* pWindow) : m_settings(settings),
 m_window(pWindow)
@@ -41,7 +54,7 @@ auto LS::Win32::RenderD3D11::Initialize() noexcept -> LS::System::ErrorCode
     auto hresult = m_device.CreateRTVFromBackBuffer(&m_renderTarget);
     if (FAILED(hresult))
     {
-        return LS::System::CreateFailCode(LS::Win32::Dx11ErrorToString(hresult));
+        return LS::System::CreateFailCode(LS::Win32::HresultToDx11Error(hresult));
     }
     m_context = m_device.GetImmediateContext();
 
@@ -197,8 +210,11 @@ void RenderD3D11::Resize(uint32_t width, uint32_t height) noexcept
     if (m_renderTarget)
         m_renderTarget = nullptr;
     m_device.ResizeSwapchain(width, height);
-    m_device.CreateRTVFromBackBuffer(&m_renderTarget);
-    
+    const HRESULT result = m_device.CreateRTVFromBackBuffer(&m_renderTarget);
+    if (FAILED(result))
+    {
+        LS_LOG_ERROR(HresultToDx11Error(result));
+    }
 }
 
 void RenderD3D11::AttachToWindow(LS::LSWindowBase* window) noexcept
@@ -224,6 +240,163 @@ auto LS::Win32::RenderD3D11::GetSwapChainCom() noexcept -> WRL::ComPtr<IDXGISwap
 auto LS::Win32::RenderD3D11::GetDeviceContextCom() noexcept -> WRL::ComPtr<ID3D11DeviceContext>
 {
     return m_device.GetImmediateContext();
+}
+
+auto LS::Win32::RenderD3D11::CreateVertexShader(std::span<std::byte> data) noexcept -> WRL::ComPtr<ID3D11VertexShader>
+{
+    if (data.size() == 0)
+        return nullptr;
+    const char* flag = "DXBC";
+    const std::string check = { (char)(data[0]), (char)data[1], (char)data[2], (char)data[3] };
+
+    WRL::ComPtr<ID3D11VertexShader> shader;
+    if (!IsCompiled(data))
+    {
+        //TODO: Consider how I want to compile shaders, with this function (I know the name says it should)
+        // which would require additional params like entry point and shader model)
+        // or do I use thst LSShaderFile struct instead. 
+        LS_LOG_ERROR("The given shader code was not compiled.\n");
+        return nullptr;
+    }
+
+    // It's compiled already;
+    auto result = CreateVertexShaderFromByteCode(m_device.GetDevice().Get(), data, &shader);
+    if (FAILED(result))
+    {
+        LS_LOG_ERROR(LS::Win32::HresultToDx11Error(result));
+        return nullptr;
+    }
+    return shader;
+}
+
+auto LS::Win32::RenderD3D11::CreatePixelShader(std::span<std::byte> data) noexcept -> WRL::ComPtr<ID3D11PixelShader>
+{
+    if (data.size() == 0)
+        return nullptr;
+    // If compiled with fxc it will contain DXBC at the front of the compiled code
+    WRL::ComPtr<ID3D11PixelShader> shader;
+
+    if (!IsCompiled(data))
+    {
+        //TODO: Consider how I want to compile shaders, with this function (I know the name says it should)
+        // which would require additional params like entry point and shader model)
+
+        LS_LOG_ERROR("The given shader code was not compiled.\n");
+        return nullptr;
+    }
+
+    // It's compiled already;
+    auto result = CreatePixelShaderFromByteCode(m_device.GetDevice().Get(), data, &shader);
+    if (FAILED(result))
+    {
+        LS_LOG_ERROR(LS::Win32::HresultToDx11Error(result));
+        return nullptr;
+    }
+    return shader;
+}
+
+auto LS::Win32::RenderD3D11::CreateGeometryShader(std::span<std::byte> data) noexcept -> WRL::ComPtr<ID3D11GeometryShader>
+{
+    if (data.size() == 0)
+        return nullptr;
+    // If compiled with fxc it will contain DXBC at the front of the compiled code
+    WRL::ComPtr<ID3D11GeometryShader> shader;
+
+    if (!IsCompiled(data))
+    {
+        //TODO: Consider how I want to compile shaders, with this function (I know the name says it should)
+        // which would require additional params like entry point and shader model)
+
+        LS_LOG_ERROR("The given shader code was not compiled.\n");
+        return nullptr;
+    }
+
+    // It's compiled already;
+    auto result = CreateGeometryShaderFromByteCode(m_device.GetDevice().Get(), data, &shader);
+    if (FAILED(result))
+    {
+        LS_LOG_ERROR(LS::Win32::HresultToDx11Error(result));
+        return nullptr;
+    }
+    return shader;
+}
+
+auto LS::Win32::RenderD3D11::CreateDomainShader(std::span<std::byte> data) noexcept -> WRL::ComPtr<ID3D11DomainShader>
+{
+    if (data.size() == 0)
+        return nullptr;
+    // If compiled with fxc it will contain DXBC at the front of the compiled code
+    WRL::ComPtr<ID3D11DomainShader> shader;
+
+    if (!IsCompiled(data))
+    {
+        //TODO: Consider how I want to compile shaders, with this function (I know the name says it should)
+        // which would require additional params like entry point and shader model)
+
+        LS_LOG_ERROR("The given shader code was not compiled.\n");
+        return nullptr;
+    }
+
+    // It's compiled already;
+    auto result = CreateDomainShaderFromByteCode(m_device.GetDevice().Get(), data, &shader);
+    if (FAILED(result))
+    {
+        LS_LOG_ERROR(LS::Win32::HresultToDx11Error(result));
+        return nullptr;
+    }
+    return shader;
+}
+
+auto LS::Win32::RenderD3D11::CreateHullShader(std::span<std::byte> data) noexcept -> WRL::ComPtr<ID3D11HullShader>
+{
+    if (data.size() == 0)
+        return nullptr;
+    // If compiled with fxc it will contain DXBC at the front of the compiled code
+    WRL::ComPtr<ID3D11HullShader> shader;
+
+    if (!IsCompiled(data))
+    {
+        //TODO: Consider how I want to compile shaders, with this function (I know the name says it should)
+        // which would require additional params like entry point and shader model)
+
+        LS_LOG_ERROR("The given shader code was not compiled.\n");
+        return nullptr;
+    }
+
+    // It's compiled already;
+    auto result = CreateHullShaderFromByteCode(m_device.GetDevice().Get(), data, &shader);
+    if (FAILED(result))
+    {
+        LS_LOG_ERROR(LS::Win32::HresultToDx11Error(result));
+        return nullptr;
+    }
+    return shader;
+}
+
+auto LS::Win32::RenderD3D11::CreateComputeShader(std::span<std::byte> data) noexcept -> WRL::ComPtr<ID3D11ComputeShader>
+{
+    if (data.size() == 0)
+        return nullptr;
+    // If compiled with fxc it will contain DXBC at the front of the compiled code
+    WRL::ComPtr<ID3D11ComputeShader> shader;
+
+    if (!IsCompiled(data))
+    {
+        //TODO: Consider how I want to compile shaders, with this function (I know the name says it should)
+        // which would require additional params like entry point and shader model)
+
+        LS_LOG_ERROR("The given shader code was not compiled.\n");
+        return nullptr;
+    }
+
+    // It's compiled already;
+    auto result = CreateComputeShaderFromByteCode(m_device.GetDevice().Get(), data, &shader);
+    if (FAILED(result))
+    {
+        LS_LOG_ERROR(LS::Win32::HresultToDx11Error(result));
+        return nullptr;
+    }
+    return shader;
 }
 
 auto LS::Win32::RenderD3D11::BuildInputLayout(std::span<std::byte> compiledByteCode) -> Nullable<WRL::ComPtr<ID3D11InputLayout>>
