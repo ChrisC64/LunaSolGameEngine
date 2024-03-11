@@ -66,7 +66,7 @@ namespace gt::dx12
 
         ~SimpleWindow() = default;
 
-        auto Initialize(const LS::LSCommandArgs& args) -> LS::System::ErrorCode override;
+        auto Initialize(SharedRef<LS::LSCommandArgs> args) -> LS::System::ErrorCode override;
         void Run() override;
 
     private:
@@ -97,7 +97,7 @@ namespace gt::dx12
 
 module : private;
 
-auto gt::dx12::SimpleWindow::Initialize(const LS::LSCommandArgs& args) -> LS::System::ErrorCode
+auto gt::dx12::SimpleWindow::Initialize(SharedRef<LS::LSCommandArgs> args) -> LS::System::ErrorCode
 {
     if (!LoadPipeline())
     {

@@ -124,7 +124,7 @@ export namespace LS::Platform::Dx12
         {
             // TODO: Clear whole screen, maybe later can optimize to clear a part of the screen
             // using this. 
-            const DXGI_PRESENT_PARAMETERS params{ .DirtyRectsCount = 0,
+            static const DXGI_PRESENT_PARAMETERS params{ .DirtyRectsCount = 0,
             .pDirtyRects = NULL, .pScrollRect = NULL, .pScrollOffset = NULL };
 
             auto hr = m_pSwapChain->Present1(m_syncInterval, 0, &params);

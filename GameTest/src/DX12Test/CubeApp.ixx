@@ -147,7 +147,7 @@ namespace gt::dx12
         }
         ~DX12CubeApp() = default;
 
-        auto Initialize(const LS::LSCommandArgs& args) -> LS::System::ErrorCode override;
+        auto Initialize(SharedRef<LS::LSCommandArgs> args) -> LS::System::ErrorCode override;
         void Run() override;
 
         //[[nodiscard]] bool LoadPipeline();
@@ -754,7 +754,7 @@ void gt::dx12::DX12CubeApp::Update()
     m_commandList->DrawIndexedInstanced(_countof(g_indices), 1);
 }
 
-auto gt::dx12::DX12CubeApp::Initialize(const LS::LSCommandArgs& args) -> LS::System::ErrorCode
+auto gt::dx12::DX12CubeApp::Initialize(SharedRef<LS::LSCommandArgs> args) -> LS::System::ErrorCode
 {
     if (!CreateDevice())
         return LS::System::CreateFailCode("Failed to create device.");

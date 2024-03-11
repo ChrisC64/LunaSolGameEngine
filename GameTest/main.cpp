@@ -40,7 +40,7 @@ import ImGuiWindowTest;
 
 Ref<LS::LSApp> CreateApp(uint32_t choice)
 {
-    switch(choice)
+    switch (choice)
     {
     case 0:
     {
@@ -102,19 +102,13 @@ int main(int argc, char* argv[])
 #else // I know I don't need this, but wondering if maybe I just should consider supporting this?
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
-    //TODO: Come back to later because WinMain is something I still am learning to deal with.
-    /*LPSTR cmdline = GetCommandLineA();
-    auto args = LS::ParseCommands(cmdline);
-
     auto app = CreateApp(1);
-    auto appcode = app->Initialize(args);
+    auto appcode = app->Initialize(nullptr);
     if (!appcode)
     {
-        std::cout << appcode.Message() << "\n";
-        return -1;
+        return WM_QUIT;
     }
-    app->Run();*/
-
+    app->Run();
     return WM_QUIT;
 }
 #endif
