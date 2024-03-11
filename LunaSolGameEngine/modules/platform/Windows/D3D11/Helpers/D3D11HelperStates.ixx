@@ -118,7 +118,7 @@ export namespace LS::Win32
     }
 
     // Depth Stencil States //
-    [[nodiscard]] auto CreateDepthStencilState(ID3D11Device5* pDevice, const DepthStencil& depthStencil) -> Nullable<WRL::ComPtr<ID3D11DepthStencilState>>
+    [[nodiscard]] auto CreateDepthStencilState(ID3D11Device* pDevice, const DepthStencil& depthStencil) -> Nullable<WRL::ComPtr<ID3D11DepthStencilState>>
     {
         assert(pDevice);
         if (!pDevice)
@@ -211,7 +211,7 @@ export namespace LS::Win32
         return pState;
     }
 
-    [[nodiscard]] auto CreateDepthStencilState(ID3D11Device5* pDevice, const D3D11_DEPTH_STENCIL_DESC depthDesc) -> Nullable<WRL::ComPtr<ID3D11DepthStencilState>>
+    [[nodiscard]] auto CreateDepthStencilState(ID3D11Device* pDevice, const D3D11_DEPTH_STENCIL_DESC depthDesc) -> Nullable<WRL::ComPtr<ID3D11DepthStencilState>>
     {
         assert(pDevice);
         if (!pDevice)

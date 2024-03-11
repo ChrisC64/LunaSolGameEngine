@@ -70,7 +70,7 @@ export namespace LS::Win32
     void LogOutputDisplayModes(IDXGIOutput* const output, DXGI_FORMAT format) noexcept;
 
     // Returns a DXGI HRESULT into a LS::System::ErrorCode
-    constexpr auto DxgiErrorToString(HRESULT hr) noexcept -> const char*;
+    constexpr auto HResultToDxgiError(HRESULT hr) noexcept -> const char*;
 }
 
 module : private;
@@ -346,7 +346,7 @@ void LS::Win32::LogOutputDisplayModes(IDXGIOutput* const output, DXGI_FORMAT for
     }
 }
 
-auto DxgiErrorToString(HRESULT hr) noexcept -> const char*
+auto HResultToDxgiError(HRESULT hr) noexcept -> const char*
 {
     using namespace LS::System;
 

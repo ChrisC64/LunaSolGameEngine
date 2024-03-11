@@ -5,6 +5,7 @@ module;
 
 #include <wrl/client.h>
 #include <d3d11_4.h>
+#include "engine/EngineDefines.h"
 export module D3D11.Device;
 import LSEDataLib;
 import Engine.LSDevice;

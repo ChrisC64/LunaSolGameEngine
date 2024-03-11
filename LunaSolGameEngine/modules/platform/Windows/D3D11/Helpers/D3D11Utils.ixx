@@ -27,6 +27,12 @@ import Engine.LSDevice;
 */
 export namespace LS::Win32
 {
+    struct ShaderResult
+    {
+        std::vector<std::byte> Data;
+        std::string ErrMsg;
+    };
+
     [[nodiscard]]
     inline auto BlobToString(ID3DBlob* blob) -> Nullable<std::string>
     {
@@ -64,16 +70,16 @@ export namespace LS::Win32
     }
 
     [[nodiscard]]
-    inline HRESULT CompileShaderFile(std::filesystem::path filepath, std::string_view entryPoint, std::string_view targetProfile,
-        UINT compilationFlags, std::string& compiledData, std::string& errorMsg)
+    inline auto CompileShaderFile(std::filesystem::path filepath, std::string_view entryPoint, std::string_view targetProfile,
+        UINT compilationFlags) -> Nullable<ShaderResult>
     {
         if (!std::filesystem::exists(filepath))
         {
-            return ERROR_FILE_NOT_FOUND;
+            return std::nullopt;
         }
 
-        ID3DBlob* pBlob;
-        ID3DBlob* pErrorMsg;
+        Microsoft::WRL::ComPtr<ID3DBlob> pBlob;
+        Microsoft::WRL::ComPtr<ID3DBlob> pErrorMsg;
 
         auto hr = D3DCompileFromFile(filepath.wstring().c_str(), nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE,
             entryPoint.data(), targetProfile.data(), compilationFlags, 0, &pBlob, &pErrorMsg);
@@ -82,31 +88,20 @@ export namespace LS::Win32
         {
             if (pErrorMsg)
             {
-                std::string out(reinterpret_cast<char*>(pErrorMsg->GetBufferPointer()), pErrorMsg->GetBufferSize());
-                errorMsg = std::move(out);
-                pErrorMsg->Release();
+                return ShaderResult{ .ErrMsg = { reinterpret_cast<char*>(pErrorMsg->GetBufferPointer()), pErrorMsg->GetBufferSize()} };
             }
 
-            if (pBlob)
-            {
-                pBlob->Release();
-            }
-            return hr;
+            return std::nullopt;
         }
 
         if (pBlob)
         {
-            std::string out(reinterpret_cast<char*>(pBlob->GetBufferPointer()), pBlob->GetBufferSize());
-            compiledData = std::move(out);
-            pBlob->Release();
+            std::byte* begin = (std::byte*)pBlob->GetBufferPointer();
+            std::byte* end = begin + pBlob->GetBufferSize();
+            return ShaderResult{ .Data = { begin, end } };
         }
 
-        if (pErrorMsg)
-        {
-            pErrorMsg->Release();
-        }
-
-        return hr;
+        return std::nullopt;
     }
 
     /**
@@ -143,6 +138,30 @@ export namespace LS::Win32
     constexpr HRESULT CreatePixelShaderFromByteCode(ID3D11Device* pDevice, std::span<std::byte> byteCode, ID3D11PixelShader** ppShader)
     {
         return pDevice->CreatePixelShader(byteCode.data(), byteCode.size(), nullptr, ppShader);
+    }
+
+    [[nodiscard]]
+    constexpr HRESULT CreateGeometryShaderFromByteCode(ID3D11Device* pDevice, std::span<std::byte> byteCode, ID3D11GeometryShader** ppShader)
+    {
+        return pDevice->CreateGeometryShader(byteCode.data(), byteCode.size(), nullptr, ppShader);
+    }
+
+    [[nodiscard]]
+    constexpr HRESULT CreateDomainShaderFromByteCode(ID3D11Device* pDevice, std::span<std::byte> byteCode, ID3D11DomainShader** ppShader)
+    {
+        return pDevice->CreateDomainShader(byteCode.data(), byteCode.size(), nullptr, ppShader);
+    }
+
+    [[nodiscard]]
+    constexpr HRESULT CreateHullShaderFromByteCode(ID3D11Device* pDevice, std::span<std::byte> byteCode, ID3D11HullShader** ppShader)
+    {
+        return pDevice->CreateHullShader(byteCode.data(), byteCode.size(), nullptr, ppShader);
+    }
+
+    [[nodiscard]]
+    constexpr HRESULT CreateComputeShaderFromByteCode(ID3D11Device* pDevice, std::span<std::byte> byteCode, ID3D11ComputeShader** ppShader)
+    {
+        return pDevice->CreateComputeShader(byteCode.data(), byteCode.size(), nullptr, ppShader);
     }
 
     [[nodiscard]]
@@ -413,7 +432,7 @@ export namespace LS::Win32
         pContext->Flush();
     }
 
-    [[nodiscard]] constexpr auto Dx11ErrorToString(HRESULT hr) noexcept -> const char*
+    [[nodiscard]] constexpr auto HresultToDx11Error(HRESULT hr) noexcept -> const char*
     {
         switch (hr)
         {

@@ -2,6 +2,7 @@ module;
 #include <cstdint>
 #include <array>
 #include <span>
+#include <filesystem>
 #include <wrl/client.h>
 #include <d3d11_4.h>
 #include "engine/EngineDefines.h"
@@ -40,6 +41,56 @@ namespace WRL = Microsoft::WRL;
 
 export namespace LS::Win32
 {
+    enum class RENDER_MODE
+    {
+        IMMEDIATE,
+        DEFERRED
+    };
+
+    class RenderCommandD3D11
+    {
+    public:
+        RenderCommandD3D11(ID3D11Device* pDevice, RENDER_MODE mode);
+        ~RenderCommandD3D11();
+
+        // Bind Shaders to Pipeline //
+        BindVS();
+        BindPS();
+        BindGS();
+        BindCS();
+        BindHS();
+        BindDS();
+
+        // Bind Commands for Resources for Shaders //
+        SetTexture();
+        SetConstantBuffer();
+        SetVertexBuffer();
+        SetIndexBuffer();
+        SetSampler();
+
+        // Set Input For this Draw State //
+        SetRenderTarget();
+        SetRasterizerState();
+        SetPrimTopology();
+        SetInputLayout;
+        SetViewPort();
+        SetDepthStencilState();
+        SetBlendState();
+
+        // Draw Commands //
+        Clear();
+        ClearDepth();
+        DrawIndexed();
+        DrawVerts();
+
+        // State Operations //
+        Finish(); // @brief Finishes recording command list if DEFERRED, else nothing for IMMEDIATE
+        ClearState(); // @brief Resets to default state
+        FlushCommands();// @brief Expunge all commands recorded up to this point
+    private:
+        WRL::ComPtr<ID3D11DeviceContext4> m_context;
+    };
+
     class RenderD3D11
     {
     public:
@@ -62,6 +113,13 @@ export namespace LS::Win32
         auto GetDeviceCom() noexcept -> WRL::ComPtr<ID3D11Device>;
         auto GetSwapChainCom() noexcept -> WRL::ComPtr<IDXGISwapChain1>;
         auto GetDeviceContextCom() noexcept -> WRL::ComPtr<ID3D11DeviceContext>;
+
+        auto CreateVertexShader(std::span<std::byte> data) noexcept -> WRL::ComPtr<ID3D11VertexShader>;
+        auto CreatePixelShader(std::span<std::byte> data) noexcept -> WRL::ComPtr<ID3D11PixelShader>;
+        auto CreateGeometryShader(std::span<std::byte> data) noexcept -> WRL::ComPtr<ID3D11GeometryShader>;
+        auto CreateDomainShader(std::span<std::byte> data) noexcept -> WRL::ComPtr<ID3D11DomainShader>;
+        auto CreateHullShader(std::span<std::byte> data) noexcept -> WRL::ComPtr<ID3D11HullShader>;
+        auto CreateComputeShader(std::span<std::byte> data) noexcept -> WRL::ComPtr<ID3D11ComputeShader>;
 
         /**
          * @brief Creates an input layout from the given compiled bytecode. This will not work if it was not compiled first.
