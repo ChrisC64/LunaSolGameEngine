@@ -7,7 +7,6 @@ using namespace std::chrono_literals;
 
 namespace LS
 {
-    //TODO: Just simplify to a standard tick timer that has a ms timer and don't templatize this
     template <class Rep, int64_t Numerator, int64_t Denominator>
     class LSTimer
     {

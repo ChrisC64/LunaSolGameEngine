@@ -107,7 +107,6 @@ void DeviceD3D11::CreateDevice(WRL::ComPtr<IDXGIAdapter> displayAdapter, bool is
     }
     assert(device);
     assert(context);
-    //TODO: Report an error or throw exception if device and context are not set
 
     hr = context.As(&m_pImmediateContext);
     Utils::ThrowIfFailed(hr, "Failed to create ID3D11DeviceContext5 object");

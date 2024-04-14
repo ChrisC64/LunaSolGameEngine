@@ -28,7 +28,6 @@ export namespace LS::Win32
         auto ResizeSwapchain(uint32_t width, uint32_t height) noexcept -> HRESULT;
         void DebugPrintLiveObjects();
 
-        //TODO: Consider moving around params, if the "out" params have to stay (for now) then maybe move them to the back/end of the list
         [[nodiscard]] auto CreateDeferredContext(ID3D11DeviceContext** pDeferredContext) noexcept -> HRESULT;
         [[nodiscard]] auto CreateDeferredContext2(ID3D11DeviceContext2** ppDeferredContext) noexcept -> HRESULT;
         [[nodiscard]] auto CreateDeferredContext3(ID3D11DeviceContext3** ppDeferredContext) noexcept -> HRESULT;

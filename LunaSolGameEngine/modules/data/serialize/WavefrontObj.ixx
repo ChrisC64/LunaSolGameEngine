@@ -16,7 +16,6 @@ module;
 #include "assimp/scene.h"
 #include "assimp/postprocess.h"
 #include "engine/EngineDefines.h"
-//TODO: Consider making Lse prepend for "Engine" stuff instead of just "Engine" like Engine.EngineCodes below.
 export module LSE.Serialize.WavefrontObj;
 import LSEDataLib;
 import Engine.EngineCodes;

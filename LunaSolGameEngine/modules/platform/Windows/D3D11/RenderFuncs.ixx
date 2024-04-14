@@ -45,10 +45,10 @@ export namespace LS::Win32
             return;
         pContext->ClearDepthStencilView(pDSView, flags, depth, stencil);
     }
-    //TODO: Fix noexcept and return error code instead
+
     [[nodiscard]]
     constexpr auto CreateRenderTargetView(ID3D11Device* pDevice, ID3D11Resource* pResource,
-        const D3D11_RENDER_TARGET_VIEW_DESC* rtvDesc = nullptr) noexcept -> ID3D11RenderTargetView*
+        const D3D11_RENDER_TARGET_VIEW_DESC* rtvDesc = nullptr) -> ID3D11RenderTargetView*
     {
         assert(pDevice);
         assert(pResource);
@@ -59,10 +59,10 @@ export namespace LS::Win32
             Utils::ThrowIfFailed(hr, "Failed to create render target view");
         return pRTView;
     }
-    //TODO: Fix noexcept and return error code instead
+
     [[nodiscard]]
     constexpr auto CreateRenderTargetView1(ID3D11Device3* pDevice, ID3D11Resource* pResource,
-        const D3D11_RENDER_TARGET_VIEW_DESC1* rtvDesc = nullptr) noexcept -> ID3D11RenderTargetView1*
+        const D3D11_RENDER_TARGET_VIEW_DESC1* rtvDesc = nullptr) -> ID3D11RenderTargetView1*
     {
         assert(pDevice);
         assert(pResource);

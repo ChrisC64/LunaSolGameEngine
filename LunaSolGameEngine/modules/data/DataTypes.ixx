@@ -58,6 +58,5 @@ export namespace LS
         std::vector<Vec4F> Colors;
         std::vector<Vec3F> Tangents;
         std::vector<Vec3F> BitTangents;
-        //TODO: Add Texture objects
     };
 }

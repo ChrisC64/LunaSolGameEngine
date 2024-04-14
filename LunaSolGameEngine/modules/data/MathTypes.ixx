@@ -11,7 +11,6 @@ import :Concepts;
 export namespace LS
 {
     // Define Constants Here //
-    //TODO: Shouldn't probably have something like this fixed, should be user assignable
     constexpr float EPSILON_F = 0.0000001f;
 
     template<class T>
@@ -427,9 +426,6 @@ export namespace LS
     struct Mat4
     {
         std::array<T, 16> Mat;
-        //TODO: Can I make this better? Compile time checks possible? 
-        // If not, how can I make it safely be accessed? This goes for the other functions 
-        // likr Row() and Col() below too
         constexpr T& at(size_t x, size_t y) {
             if (x * 4 + y >= Mat.size())
             {

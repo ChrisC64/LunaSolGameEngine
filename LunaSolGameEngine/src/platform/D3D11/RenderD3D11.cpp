@@ -252,9 +252,6 @@ auto LS::Win32::RenderD3D11::CreateVertexShader(std::span<std::byte> data) noexc
     WRL::ComPtr<ID3D11VertexShader> shader;
     if (!IsCompiled(data))
     {
-        //TODO: Consider how I want to compile shaders, with this function (I know the name says it should)
-        // which would require additional params like entry point and shader model)
-        // or do I use thst LSShaderFile struct instead. 
         LS_LOG_ERROR("The given shader code was not compiled.\n");
         return nullptr;
     }
@@ -278,9 +275,6 @@ auto LS::Win32::RenderD3D11::CreatePixelShader(std::span<std::byte> data) noexce
 
     if (!IsCompiled(data))
     {
-        //TODO: Consider how I want to compile shaders, with this function (I know the name says it should)
-        // which would require additional params like entry point and shader model)
-
         LS_LOG_ERROR("The given shader code was not compiled.\n");
         return nullptr;
     }
@@ -304,9 +298,6 @@ auto LS::Win32::RenderD3D11::CreateGeometryShader(std::span<std::byte> data) noe
 
     if (!IsCompiled(data))
     {
-        //TODO: Consider how I want to compile shaders, with this function (I know the name says it should)
-        // which would require additional params like entry point and shader model)
-
         LS_LOG_ERROR("The given shader code was not compiled.\n");
         return nullptr;
     }
@@ -330,9 +321,6 @@ auto LS::Win32::RenderD3D11::CreateDomainShader(std::span<std::byte> data) noexc
 
     if (!IsCompiled(data))
     {
-        //TODO: Consider how I want to compile shaders, with this function (I know the name says it should)
-        // which would require additional params like entry point and shader model)
-
         LS_LOG_ERROR("The given shader code was not compiled.\n");
         return nullptr;
     }
@@ -356,9 +344,6 @@ auto LS::Win32::RenderD3D11::CreateHullShader(std::span<std::byte> data) noexcep
 
     if (!IsCompiled(data))
     {
-        //TODO: Consider how I want to compile shaders, with this function (I know the name says it should)
-        // which would require additional params like entry point and shader model)
-
         LS_LOG_ERROR("The given shader code was not compiled.\n");
         return nullptr;
     }
@@ -382,9 +367,6 @@ auto LS::Win32::RenderD3D11::CreateComputeShader(std::span<std::byte> data) noex
 
     if (!IsCompiled(data))
     {
-        //TODO: Consider how I want to compile shaders, with this function (I know the name says it should)
-        // which would require additional params like entry point and shader model)
-
         LS_LOG_ERROR("The given shader code was not compiled.\n");
         return nullptr;
     }

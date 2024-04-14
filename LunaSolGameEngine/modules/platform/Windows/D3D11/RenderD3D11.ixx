@@ -41,54 +41,122 @@ namespace WRL = Microsoft::WRL;
 
 export namespace LS::Win32
 {
-    enum class RENDER_MODE
+    enum class COMMAND_MODE
     {
         IMMEDIATE,
         DEFERRED
     };
 
+    enum class SHADER_RESOURCE_TYPE
+    {
+        CBUFFER,
+        SAMPLER,
+        TEXTURE,
+        UAV
+    };
+
+    template <class T>
+    struct ShaderResource
+    {
+        uint32_t Slot;
+        T Resource;
+        std::string Name;
+    };
+    //TODO: 3-10-24 Create and implement the definitions for the functions below
+    template <class T>
+    using ShaderArray = std::vector<ShaderResource<T>>;
+
+    template <class T>
+    class ShaderD3D11
+    {
+    public:
+        ShaderD3D11() = default;
+        ~ShaderD3D11();
+
+        auto GetConstantBuffer(std::string_view id) const noexcept -> Nullable<WRL::ComPtr<ID3D11Buffer>>;
+        auto GetConstantBuffer(uint32_t slot) const noexcept -> Nullable<WRL::ComPtr<ID3D11Buffer>>;
+        auto GetTexture(std::string_view id) const noexcept -> Nullable<WRL::ComPtr<ID3D11Resource>>;
+        auto GetTexture(uint32_t slot) const noexcept -> Nullable<WRL::ComPtr<ID3D11Resource>>;
+        auto GetSampler(std::string_view id) const noexcept -> Nullable<WRL::ComPtr<ID3D11SamplerState>>;
+        auto GetSampler(uint32_t slot) const noexcept -> Nullable<WRL::ComPtr<ID3D11SamplerState>>;
+        auto GetUav(std::string_view id) const noexcept -> Nullable<WRL::ComPtr<ID3D11UnorderedAccessView>>;
+        auto GetUav(uint32_t slot) const noexcept -> Nullable<WRL::ComPtr<ID3D11UnorderedAccessView>>;
+        
+    private:
+        T Shader;
+        ShaderArray<WRL::ComPtr<ID3D11Buffer>> ConstantBuffers;
+        ShaderArray<WRL::ComPtr<ID3D11ShaderResourceView>> Textures;
+        ShaderArray<WRL::ComPtr<ID3D11SamplerState>> Samplers;
+        ShaderArray<WRL::ComPtr<ID3D11UnorderedAccessView>> Uavs;
+    };
+
+    using VertexShaderDx11 = ShaderD3D11<WRL::ComPtr<ID3D11VertexShader>>;
+    using PixelShaderDx11 = ShaderD3D11<WRL::ComPtr<ID3D11PixelShader>>;
+    using GeometryShaderDx11 = ShaderD3D11<WRL::ComPtr<ID3D11GeometryShader>>;
+    using ComputeShaderDx11 = ShaderD3D11<WRL::ComPtr<ID3D11ComputeShader>>;
+    using DomainShaderDx11 = ShaderD3D11<WRL::ComPtr<ID3D11DomainShader>>;
+    using HullShaderDx11 = ShaderD3D11<WRL::ComPtr<ID3D11HullShader>>;
+
     class RenderCommandD3D11
     {
     public:
-        RenderCommandD3D11(ID3D11Device* pDevice, RENDER_MODE mode);
+        RenderCommandD3D11(ID3D11Device* pDevice, COMMAND_MODE mode);
         ~RenderCommandD3D11();
 
         // Bind Shaders to Pipeline //
-        BindVS();
-        BindPS();
-        BindGS();
-        BindCS();
-        BindHS();
-        BindDS();
+        void BindVS(const VertexShaderDx11& shader) noexcept;
+        void BindPS(const PixelShaderDx11& shader) noexcept;
+        void BindGS(const GeometryShaderDx11& shader) noexcept;
+        void BindCS(const ComputeShaderDx11& shader) noexcept;
+        void BindHS(const HullShaderDx11& shader) noexcept;
+        void BindDS(const DomainShaderDx11& shader) noexcept;
 
         // Bind Commands for Resources for Shaders //
-        SetTexture();
-        SetConstantBuffer();
-        SetVertexBuffer();
-        SetIndexBuffer();
-        SetSampler();
+        void UpdateTexture(ID3D11Resource* resource, const void* data) noexcept;
+        void UpdateConstantBuffer(ID3D11Buffer* buffer, const void* data) noexcept;
+
+        // Input Assembly Functions //
+        void SetInputLayout(ID3D11InputLayout* il) noexcept;
+        void SetVertexBuffer(ID3D11Buffer* vb) noexcept;
+        void SetIndexBuffer(ID3D11Buffer* ib) noexcept;
+        void SetPrimTopology(D3D11_PRIMITIVE_TOPOLOGY topology) noexcept;
+
+        // Output Merger Functions //
+        void SetRenderTargets(std::span<ID3D11RenderTargetView*> rtvs) noexcept;
+        void SetDepthStencilState(ID3D11DepthStencilState* dss, uint32_t stencilRef = 0) noexcept;
+        void SetBlendState(ID3D11BlendState* bs, uint32_t sampleMask = 0xffffffff, std::array<float, 4> blendFactor = { 1.0f, 1.0f, 1.0f, 1.0f } ) noexcept;
 
         // Set Input For this Draw State //
-        SetRenderTarget();
-        SetRasterizerState();
-        SetPrimTopology();
-        SetInputLayout;
-        SetViewPort();
-        SetDepthStencilState();
-        SetBlendState();
+        void SetRasterizerState(ID3D11RasterizerState* rss) noexcept;
+        void SetViewPort(std::span<D3D11_VIEWPORT> viewports) noexcept;
 
         // Draw Commands //
-        Clear();
-        ClearDepth();
-        DrawIndexed();
-        DrawVerts();
-
+        void Clear(const float* rgbaColor) noexcept;
+        void ClearDepth(ID3D11DepthStencilView* dsv) noexcept;
+        void DrawIndexed(uint32_t indexCount, uint32_t indexOffset = 0, 
+            uint32_t vertexOffset = 0) noexcept;
+        void DrawIndxInstances(uint32_t indexCount, uint32_t instances, uint32_t indexOffset = 0, 
+            uint32_t baseOffset = 0, uint32_t instanceOffset = 0) noexcept;
+        void DrawVerts(uint32_t vertexCount, uint32_t vertexOffset = 0) noexcept;
+        void DrawVertInstances(uint32_t vertexCount, uint32_t instances,
+            uint32_t vertexOffset = 0, uint32_t instanceOffset = 0) noexcept;
         // State Operations //
-        Finish(); // @brief Finishes recording command list if DEFERRED, else nothing for IMMEDIATE
-        ClearState(); // @brief Resets to default state
-        FlushCommands();// @brief Expunge all commands recorded up to this point
+        void ClearState() noexcept; // @brief Resets to default state
+        void FlushCommands() noexcept;// @brief Expunge all commands recorded up to this point
+    
+        auto GetMode() -> COMMAND_MODE
+        {
+            return m_mode;
+        }
+
+        auto GetContext() -> ID3D11DeviceContext*
+        {
+            return m_context.Get();
+        }
+
     private:
-        WRL::ComPtr<ID3D11DeviceContext4> m_context;
+        WRL::ComPtr<ID3D11DeviceContext> m_context;
+        COMMAND_MODE m_mode;
     };
 
     class RenderD3D11
@@ -129,6 +197,7 @@ export namespace LS::Win32
          */
         auto BuildInputLayout(std::span<std::byte> compiledByteCode) -> Nullable<WRL::ComPtr<ID3D11InputLayout>>;
 
+        auto FinishCommand(RenderCommandD3D11& command) noexcept;
     protected:
         LS::LSWindowBase*       m_window;
         DeviceD3D11             m_device;
@@ -138,3 +207,7 @@ export namespace LS::Win32
         WRL::ComPtr<ID3D11DeviceContext> m_context;
     };
 }
+
+module : private;
+
+using namespace LS::Win32;

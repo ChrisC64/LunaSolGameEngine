@@ -515,7 +515,6 @@
 //            throw std::runtime_error("Failed to create input layout for FS Quad\n");
 //        }*/
 //
-//        // TODO: Implement missing setups below that don't have an appropriate function call
 //        ComPtr<ID3D11Buffer> vertexBuffer;
 //        CD3D11_BUFFER_DESC bufferDesc(sizeof(Vertex) * static_cast<UINT>(g_triangle.size()), D3D11_BIND_VERTEX_BUFFER);
 //        D3D11_SUBRESOURCE_DATA subData{ .pSysMem = g_triangle.data(), .SysMemPitch = 0, .SysMemSlicePitch = 0 };

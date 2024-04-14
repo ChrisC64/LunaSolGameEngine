@@ -13,9 +13,6 @@ export namespace LS::Win32
 {
     using WndProcHandler = std::function<LRESULT(HWND, UINT, WPARAM, LPARAM)>;
 
-    //TODO: Would I want to make this so I can have the user only see the above LSCreateWindow()
-    // and yet still construct this for the object I need in the Win32Window.cpp file where we
-    // grab the pointer to the class so we can use the class' internal WndProc handler. 
     class Win32Window final : public LS::LSWindowBase
     {
     public:

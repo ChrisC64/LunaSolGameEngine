@@ -228,7 +228,6 @@ namespace gt::dx11
         g_cameraController.Strafe(movement.x);
     }
 
-    //TODO: Create common colors in Engine Common or make color conceptl
     std::array<float, 4> g_red = { 1.0f, 0.0f, 0.0f, 1.0f };
     std::array<float, 4> g_green = { 0.0f, 1.0f, 0.0f, 1.0f };
     std::array<float, 4> g_blue = { 0.0f, 0.0f, 1.0f, 1.0f };
@@ -388,8 +387,6 @@ auto gt::dx11::DX11CubeApp::Initialize(SharedRef<LS::LSCommandArgs> args) -> LS:
     g_objIndices.clear();
     g_objIndices.insert(g_objIndices.begin(), mesh.Indices.begin(), mesh.Indices.end());
     
-    //TODO: I use Vec3F for the vertices which now need to be converted into a Vec4F. Either I allow that to
-    // be placed or I just set it in the shader instead. 
     auto objVbOpt = LS::Platform::Dx11::CreateVertexBuffer(m_renderer.GetDevice(), tvd);
     if (!objVbOpt)
     {
