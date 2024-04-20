@@ -15,6 +15,9 @@ import D3D11.PipelineFactory;
 import D3D11.Device;
 import D3D11.Utils;
 import D3D11.PipelineFactory;
+import D3D11.RenderFuncD3D11;
+import D3D11.MemoryHelper;
+import Util.MSUtils;
 import DirectXCommon;
 
 namespace LS
@@ -74,7 +77,7 @@ export namespace LS::Win32
     };
     //TODO: 3-10-24 Create and implement the definitions for the functions below
     template <class T>
-    using ShaderArray = std::vector<ShaderResource<T>>;
+    using ShaderResArray = std::vector<ShaderResource<T>>;
 
     template <class T>
     class ShaderD3D11
@@ -82,6 +85,11 @@ export namespace LS::Win32
     public:
         ShaderD3D11() = default;
         ~ShaderD3D11() = default;
+
+        auto GetShader() const noexcept
+        {
+            return m_shader;
+        }
 
         auto GetConstantBuffer(std::string_view id) const noexcept -> Nullable<WRL::ComPtr<ID3D11Buffer>>;
         auto GetConstantBuffer(uint32_t slot) const noexcept -> Nullable<WRL::ComPtr<ID3D11Buffer>>;
@@ -94,10 +102,10 @@ export namespace LS::Win32
 
     private:
         T m_shader;
-        ShaderArray<WRL::ComPtr<ID3D11Buffer>> m_constantBuffers;
-        ShaderArray<WRL::ComPtr<ID3D11ShaderResourceView>> m_textures;
-        ShaderArray<WRL::ComPtr<ID3D11SamplerState>> m_samplers;
-        ShaderArray<WRL::ComPtr<ID3D11UnorderedAccessView>> m_uavs;
+        ShaderResArray<WRL::ComPtr<ID3D11Buffer>> m_constantBuffers;
+        ShaderResArray<WRL::ComPtr<ID3D11ShaderResourceView>> m_textures;
+        ShaderResArray<WRL::ComPtr<ID3D11SamplerState>> m_samplers;
+        ShaderResArray<WRL::ComPtr<ID3D11UnorderedAccessView>> m_uavs;
     };
 
     using VertexShaderDx11 = ShaderD3D11<WRL::ComPtr<ID3D11VertexShader>>;
@@ -110,16 +118,23 @@ export namespace LS::Win32
     class RenderCommandD3D11
     {
     public:
+        RenderCommandD3D11() = default;
         RenderCommandD3D11(ID3D11Device* pDevice, COMMAND_MODE mode);
-        ~RenderCommandD3D11();
+        ~RenderCommandD3D11() = default;
 
         // Bind Shaders to Pipeline //
         void BindVS(const VertexShaderDx11& shader) noexcept;
+        void BindVS(ID3D11VertexShader* vs) noexcept;
         void BindPS(const PixelShaderDx11& shader) noexcept;
+        void BindPS(ID3D11PixelShader* ps) noexcept;
         void BindGS(const GeometryShaderDx11& shader) noexcept;
+        void BindGS(ID3D11GeometryShader* gs) noexcept;
         void BindCS(const ComputeShaderDx11& shader) noexcept;
+        void BindCS(ID3D11ComputeShader* cs) noexcept;
         void BindHS(const HullShaderDx11& shader) noexcept;
+        void BindHS(ID3D11HullShader* hs) noexcept;
         void BindDS(const DomainShaderDx11& shader) noexcept;
+        void BindDS(ID3D11DomainShader* ds) noexcept;
 
         // Bind Commands for Resources for Shaders //
         void UpdateTexture(ID3D11Resource* resource, const void* data) noexcept;
@@ -127,22 +142,28 @@ export namespace LS::Win32
 
         // Input Assembly Functions //
         void SetInputLayout(ID3D11InputLayout* il) noexcept;
-        void SetVertexBuffer(ID3D11Buffer* vb) noexcept;
-        void SetIndexBuffer(ID3D11Buffer* ib) noexcept;
+        void SetVertexBuffers(std::span<ID3D11Buffer*> vbs, std::span<uint32_t> strides, std::span<uint32_t> offsets, uint32_t startSlot = 0) noexcept;
+        void SetVertexBuffer(ID3D11Buffer* vb, uint32_t stride, uint32_t startSlot = 0, uint32_t offset = 0) noexcept;
+        void SetIndexBuffer(ID3D11Buffer* ib, uint32_t offset = 0, DXGI_FORMAT format= DXGI_FORMAT_R32_UINT) noexcept;
         void SetPrimTopology(D3D11_PRIMITIVE_TOPOLOGY topology) noexcept;
 
         // Output Merger Functions //
-        void SetRenderTargets(std::span<ID3D11RenderTargetView*> rtvs) noexcept;
+        void SetRenderTargets(std::span<ID3D11RenderTargetView*> rtvs, ID3D11DepthStencilView* depthStencilView = nullptr) noexcept;
+        void SetRenderTarget(ID3D11RenderTargetView* rtv, ID3D11DepthStencilView* depthStencilView = nullptr) noexcept;
         void SetDepthStencilState(ID3D11DepthStencilState* dss, uint32_t stencilRef = 0) noexcept;
         void SetBlendState(ID3D11BlendState* bs, uint32_t sampleMask = 0xffffffff, std::array<float, 4> blendFactor = { 1.0f, 1.0f, 1.0f, 1.0f }) noexcept;
 
         // Set Input For this Draw State //
         void SetRasterizerState(ID3D11RasterizerState* rss) noexcept;
-        void SetViewPort(std::span<D3D11_VIEWPORT> viewports) noexcept;
+        void SetViewports(std::span<D3D11_VIEWPORT> viewports) noexcept;
+        void SetViewport(D3D11_VIEWPORT viewports) noexcept;
+        void SetViewport(float width, float height) noexcept;
 
         // Draw Commands //
-        void Clear(const float* rgbaColor) noexcept;
-        void ClearDepth(ID3D11DepthStencilView* dsv) noexcept;
+        void Clear(const float* rgbaColor, ID3D11RenderTargetView* rtv) noexcept;
+        void ClearDepth(ID3D11DepthStencilView* dsv, float depth = 1.0f) noexcept;
+        void ClearStencil(ID3D11DepthStencilView* dsv, uint8_t stencil = 0) noexcept;
+        void ClearDepthStencil(ID3D11DepthStencilView* dsv, float depth = 1.0f, uint8_t stencil = 0) noexcept;
         void DrawIndexed(uint32_t indexCount, uint32_t indexOffset = 0,
             uint32_t vertexOffset = 0) noexcept;
         void DrawIndxInstances(uint32_t indexCount, uint32_t instances, uint32_t indexOffset = 0,
@@ -151,17 +172,38 @@ export namespace LS::Win32
         void DrawVertInstances(uint32_t vertexCount, uint32_t instances,
             uint32_t vertexOffset = 0, uint32_t instanceOffset = 0) noexcept;
         // State Operations //
-        void ClearState() noexcept; // @brief Resets to default state
-        void FlushCommands() noexcept;// @brief Expunge all commands recorded up to this point
+        // @brief Resets to default state
+        void ClearState() noexcept; 
+        // @brief Expunge all commands recorded up to this point
+        void FlushCommands() noexcept;
 
-        auto GetMode() -> COMMAND_MODE
+        auto GetMode() const -> COMMAND_MODE
         {
             return m_mode;
         }
 
-        auto GetContext() -> ID3D11DeviceContext*
+        auto GetContext() const -> ID3D11DeviceContext*
         {
             return m_context.Get();
+        }
+
+        auto GetContextComPtr() const -> WRL::ComPtr<ID3D11DeviceContext>
+        {
+            return m_context;
+        }
+
+        auto GetCommandList() const -> Nullable<ID3D11CommandList*>
+        {
+            if (m_mode == COMMAND_MODE::IMMEDIATE)
+                return std::nullopt;
+            ID3D11CommandList* pCommList;
+            const auto hr = m_context->FinishCommandList(false, &pCommList);
+            if (FAILED(hr))
+            {
+                return std::nullopt;
+            }
+
+            return pCommList;
         }
 
     private:
@@ -198,7 +240,8 @@ export namespace LS::Win32
         auto CreateDomainShader(std::span<std::byte> data) noexcept -> WRL::ComPtr<ID3D11DomainShader>;
         auto CreateHullShader(std::span<std::byte> data) noexcept -> WRL::ComPtr<ID3D11HullShader>;
         auto CreateComputeShader(std::span<std::byte> data) noexcept -> WRL::ComPtr<ID3D11ComputeShader>;
-
+        auto CreateImmediateCommand() noexcept -> RenderCommandD3D11;
+        auto CreateDeferredCommand() noexcept -> RenderCommandD3D11;
         /**
          * @brief Creates an input layout from the given compiled bytecode. This will not work if it was not compiled first.
          *
@@ -209,14 +252,13 @@ export namespace LS::Win32
 
         auto ExecuteRenderCommand(const RenderCommandD3D11& command) noexcept;
     protected:
-        LS::LSWindowBase* m_window;
-        DeviceD3D11             m_device;
-        LS::LSDeviceSettings    m_settings;
+        LS::LSWindowBase*                       m_window;
+        DeviceD3D11                             m_device;
+        LS::LSDeviceSettings                    m_settings;
 
-        WRL::ComPtr<ID3D11RenderTargetView> m_renderTarget;
-        WRL::ComPtr<ID3D11DeviceContext> m_context;
+        WRL::ComPtr<ID3D11RenderTargetView>     m_renderTarget;
+        WRL::ComPtr<ID3D11DeviceContext>        m_context;
     };
-
 }
 
 module : private;
@@ -288,4 +330,203 @@ template<class T>
 auto LS::Win32::ShaderD3D11<T>::GetUav(uint32_t slot) const noexcept -> Nullable<WRL::ComPtr<ID3D11UnorderedAccessView>>
 {
     return FindOrNull<WRL::ComPtr<ID3D11UnorderedAccessView>>(m_uavs, slot);
+}
+
+RenderCommandD3D11::RenderCommandD3D11(ID3D11Device* pDevice, COMMAND_MODE mode) : m_mode(mode)
+{
+    if (mode == COMMAND_MODE::IMMEDIATE)
+    {
+        pDevice->GetImmediateContext(&m_context);
+    }
+    else
+    {
+        Utils::ThrowIfFailed(pDevice->CreateDeferredContext(0, &m_context));
+    }
+}
+
+void RenderCommandD3D11::BindVS(const VertexShaderDx11& shader) noexcept
+{
+    m_context->VSSetShader(shader.GetShader().Get(), nullptr, 0);
+}
+
+void LS::Win32::RenderCommandD3D11::BindVS(ID3D11VertexShader* vs) noexcept
+{
+    m_context->VSSetShader(vs, nullptr, 0);
+}
+
+void RenderCommandD3D11::BindPS(const PixelShaderDx11& shader) noexcept
+{
+    m_context->PSSetShader(shader.GetShader().Get(), nullptr, 0);
+}
+
+void LS::Win32::RenderCommandD3D11::BindPS(ID3D11PixelShader* ps) noexcept
+{
+    m_context->PSSetShader(ps, nullptr, 0);
+}
+
+void RenderCommandD3D11::BindGS(const GeometryShaderDx11& shader) noexcept
+{
+    m_context->GSSetShader(shader.GetShader().Get(), nullptr, 0);
+}
+
+void LS::Win32::RenderCommandD3D11::BindGS(ID3D11GeometryShader* gs) noexcept
+{
+    m_context->GSSetShader(gs, nullptr, 0);
+}
+
+void RenderCommandD3D11::BindCS(const ComputeShaderDx11& shader) noexcept
+{
+    m_context->CSSetShader(shader.GetShader().Get(), nullptr, 0);
+}
+
+void LS::Win32::RenderCommandD3D11::BindCS(ID3D11ComputeShader* cs) noexcept
+{
+    m_context->CSSetShader(cs, nullptr, 0);
+}
+
+void RenderCommandD3D11::BindHS(const HullShaderDx11& shader) noexcept
+{
+    m_context->HSSetShader(shader.GetShader().Get(), nullptr, 0);
+}
+
+void LS::Win32::RenderCommandD3D11::BindHS(ID3D11HullShader* hs) noexcept
+{
+    m_context->HSSetShader(hs, nullptr, 0);
+}
+
+void RenderCommandD3D11::BindDS(const DomainShaderDx11& shader) noexcept
+{
+    m_context->DSSetShader(shader.GetShader().Get(), nullptr, 0);
+}
+
+void LS::Win32::RenderCommandD3D11::BindDS(ID3D11DomainShader* ds) noexcept
+{
+    m_context->DSSetShader(ds, nullptr, 0);
+}
+
+void RenderCommandD3D11::UpdateTexture(ID3D11Resource* resource, const void* data) noexcept
+{
+    LS::Platform::Dx11::UpdateSubresource(m_context.Get(), resource, data);
+}
+
+void RenderCommandD3D11::UpdateConstantBuffer(ID3D11Buffer* buffer, const void* data) noexcept
+{
+    LS::Platform::Dx11::UpdateSubresource(m_context.Get(), buffer, data);
+}
+
+void RenderCommandD3D11::SetInputLayout(ID3D11InputLayout* il) noexcept
+{
+    m_context->IASetInputLayout(il);
+}
+
+void LS::Win32::RenderCommandD3D11::SetVertexBuffers(std::span<ID3D11Buffer*> vbs, 
+    std::span<uint32_t> strides, std::span<uint32_t> offsets, uint32_t startSlot) noexcept
+{
+    m_context->IASetVertexBuffers(startSlot, (UINT)vbs.size(), vbs.data(), strides.data(), offsets.data());
+}
+
+void LS::Win32::RenderCommandD3D11::SetVertexBuffer(ID3D11Buffer* vb, uint32_t stride, uint32_t startSlot, uint32_t offset) noexcept
+{
+    m_context->IASetVertexBuffers(startSlot, 1, &vb, &stride, &offset);
+}
+
+void RenderCommandD3D11::SetIndexBuffer(ID3D11Buffer* ib, uint32_t offset /*= 0*/, DXGI_FORMAT format /*= DXGI_FORMAT_R32_UINT*/) noexcept
+{
+    m_context->IASetIndexBuffer(ib, format, offset);
+}
+
+void RenderCommandD3D11::SetPrimTopology(D3D11_PRIMITIVE_TOPOLOGY topology) noexcept
+{
+    m_context->IASetPrimitiveTopology(topology);
+}
+
+void RenderCommandD3D11::SetRenderTargets(std::span<ID3D11RenderTargetView*> rtvs, ID3D11DepthStencilView* depthStencilView /*= nullptr*/) noexcept
+{
+    m_context->OMSetRenderTargets((UINT)rtvs.size(), rtvs.data(), depthStencilView ? depthStencilView : nullptr);
+}
+
+void LS::Win32::RenderCommandD3D11::SetRenderTarget(ID3D11RenderTargetView* rtv, ID3D11DepthStencilView* depthStencilView) noexcept
+{
+    m_context->OMSetRenderTargets(1, &rtv, depthStencilView ? depthStencilView : nullptr);
+}
+
+void RenderCommandD3D11::SetDepthStencilState(ID3D11DepthStencilState* dss, uint32_t stencilRef) noexcept
+{
+    m_context->OMSetDepthStencilState(dss, stencilRef);
+}
+
+void RenderCommandD3D11::SetBlendState(ID3D11BlendState* bs, uint32_t sampleMask, std::array<float, 4> blendFactor) noexcept
+{
+    m_context->OMSetBlendState(bs, blendFactor.data(), sampleMask);
+}
+
+void RenderCommandD3D11::SetRasterizerState(ID3D11RasterizerState* rss) noexcept
+{
+    m_context->RSSetState(rss);
+}
+
+void LS::Win32::RenderCommandD3D11::SetViewports(std::span<D3D11_VIEWPORT> viewports) noexcept
+{
+    m_context->RSSetViewports((UINT)viewports.size(), viewports.data());
+}
+
+void RenderCommandD3D11::SetViewport(D3D11_VIEWPORT viewport) noexcept
+{
+    m_context->RSSetViewports(1u, &viewport);
+}
+
+void LS::Win32::RenderCommandD3D11::SetViewport(float width, float height) noexcept
+{
+    const D3D11_VIEWPORT viewport{.TopLeftX = 0.0f, .TopLeftY = 0.0f, .Width = width, .Height = height, .MinDepth = 0.0f, .MaxDepth = 1.0f };
+    m_context->RSSetViewports(1, &viewport);
+}
+
+void RenderCommandD3D11::Clear(const float* rgbaColor, ID3D11RenderTargetView* rtv) noexcept
+{
+    m_context->ClearRenderTargetView(rtv, rgbaColor);
+}
+
+void RenderCommandD3D11::ClearDepth(ID3D11DepthStencilView* dsv, float depth) noexcept
+{
+    m_context->ClearDepthStencilView(dsv, (UINT)D3D11_CLEAR_DEPTH, depth, 0);
+}
+
+void LS::Win32::RenderCommandD3D11::ClearStencil(ID3D11DepthStencilView* dsv, uint8_t stencil) noexcept
+{
+    m_context->ClearDepthStencilView(dsv, (UINT)D3D11_CLEAR_STENCIL, 0, stencil);
+}
+
+void LS::Win32::RenderCommandD3D11::ClearDepthStencil(ID3D11DepthStencilView* dsv, float depth, uint8_t stencil) noexcept
+{
+    m_context->ClearDepthStencilView(dsv, (UINT)(D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL), depth, stencil);
+}
+
+void RenderCommandD3D11::DrawIndexed(uint32_t indexCount, uint32_t indexOffset, uint32_t vertexOffset) noexcept
+{
+    m_context->DrawIndexed(indexCount, indexOffset, vertexOffset);
+}
+
+void RenderCommandD3D11::DrawIndxInstances(uint32_t indexCount, uint32_t instances, uint32_t indexOffset, uint32_t baseOffset, uint32_t instanceOffset) noexcept
+{
+    m_context->DrawIndexedInstanced(indexCount, instances, indexOffset, baseOffset, instanceOffset);
+}
+
+void RenderCommandD3D11::DrawVerts(uint32_t vertexCount, uint32_t vertexOffset) noexcept
+{
+    m_context->Draw(vertexCount, vertexOffset);
+}
+
+void RenderCommandD3D11::DrawVertInstances(uint32_t vertexCount, uint32_t instances, uint32_t vertexOffset, uint32_t instanceOffset) noexcept
+{
+    m_context->DrawInstanced(vertexCount, instances, vertexOffset, instanceOffset);
+}
+
+void RenderCommandD3D11::ClearState() noexcept
+{
+    m_context->ClearState();
+}
+
+void RenderCommandD3D11::FlushCommands() noexcept
+{
+    m_context->Flush();
 }

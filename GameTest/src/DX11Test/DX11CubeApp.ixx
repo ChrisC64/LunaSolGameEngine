@@ -89,6 +89,7 @@ namespace gt::dx11
     private:
         LS::LSDeviceSettings m_settings;
         LS::Win32::RenderD3D11 m_renderer;
+        LS::Win32::RenderCommandD3D11 m_command;
         LS::Platform::Dx11::BufferCache m_bufferCache;
         LS::PipelineDescriptor m_cubePipeline;
         
@@ -246,7 +247,8 @@ using namespace LS;
 
 gt::dx11::DX11CubeApp::DX11CubeApp(uint32_t width, uint32_t height, std::wstring_view title) : LSApp(width, height, title),
     m_settings(LS::CreateDeviceSettings(Window->GetWidth(), Window->GetHeight(), LS::DEVICE_API::DIRECTX_11)),
-    m_renderer(m_settings, Window.get())
+    m_renderer(m_settings, Window.get()),
+    m_command()
 {
 }
 
@@ -269,7 +271,7 @@ auto gt::dx11::DX11CubeApp::Initialize(SharedRef<LS::LSCommandArgs> args) -> LS:
     {
         return deviceResult;
     }
-
+    m_command = m_renderer.CreateImmediateCommand();
     // Init Cube and Camera //
     InitCube();
     UpdateCamera();
@@ -363,7 +365,8 @@ auto gt::dx11::DX11CubeApp::Initialize(SharedRef<LS::LSCommandArgs> args) -> LS:
     ComPtr<ID3D11DepthStencilState> defaultState;
     auto dss = CreateDepthStencilState(m_renderer.GetDevice(), defaultDepthDesc).value();
     LS::Log::TraceDebug(L"Depth stencil created!!");
-    SetDepthStencilState(m_renderer.GetDeviceContextCom().Get(), dss.Get(), 1);
+    //SetDepthStencilState(m_renderer.GetDeviceContextCom().Get(), dss.Get(), 1);
+    m_command.SetDepthStencilState(dss.Get(), 1);
 
     ReadOBJFile("res/cube_face1.obj");
 
@@ -596,18 +599,29 @@ void gt::dx11::DX11CubeApp::PreDraw(ComPtr<ID3D11DeviceContext> context)
     const auto obj_ib = m_bufferCache.Get("obj_ib").value();
 
     // Set States and Objects //
-    SetRenderTarget(context.Get(), rtv.Get(), dsView.Get());
+    /*SetRenderTarget(context.Get(), rtv.Get(), dsView.Get());
     SetRasterizerState(context.Get(), rsSolid.Get());
     SetTopology(context.Get(), D3D11_PRIMITIVE_TOPOLOGY::D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     SetInputlayout(context.Get(), inputLayout.Get());
-    SetViewport(context.Get(), static_cast<float>(Window->GetWidth()), static_cast<float>(Window->GetHeight()));
+    SetViewport(context.Get(), static_cast<float>(Window->GetWidth()), static_cast<float>(Window->GetHeight()));*/
+
+    // Command Usage //
+    m_command.SetRenderTarget(rtv.Get(), dsView.Get());
+    m_command.SetRasterizerState(rsSolid.Get());
+    m_command.SetPrimTopology(D3D11_PRIMITIVE_TOPOLOGY::D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    m_command.SetInputLayout(inputLayout.Get());
+    m_command.SetViewport(static_cast<float>(Window->GetWidth()), static_cast<float>(Window->GetHeight()));
+    m_command.BindVS(vertShader.Get());
+    m_command.BindPS(pixShader.Get());
+    m_command.SetVertexBuffer(vb.Get(), sizeof(Vertex));
+    m_command.SetIndexBuffer(ib.Get());
 
     // Bind to State //
-    BindVS(context.Get(), vertShader.Get());
+    /*BindVS(context.Get(), vertShader.Get());
     BindPS(context.Get(), pixShader.Get());
     
     SetVertexBuffer(context.Get(), vb.Get(), 0, sizeof(Vertex));
-    SetIndexBuffer(context.Get(), ib.Get());
+    SetIndexBuffer(context.Get(), ib.Get());*/
     
     //SetVertexBuffer(context.Get(), obj_vb.Get(), 0, sizeof(Vertex));
     //SetIndexBuffer(context.Get(), obj_ib.Get());
