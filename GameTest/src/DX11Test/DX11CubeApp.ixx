@@ -599,11 +599,11 @@ void gt::dx11::DX11CubeApp::PreDraw(ComPtr<ID3D11DeviceContext> context)
     const auto obj_ib = m_bufferCache.Get("obj_ib").value();
 
     // Set States and Objects //
-    /*SetRenderTarget(context.Get(), rtv.Get(), dsView.Get());
-    SetRasterizerState(context.Get(), rsSolid.Get());
-    SetTopology(context.Get(), D3D11_PRIMITIVE_TOPOLOGY::D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-    SetInputlayout(context.Get(), inputLayout.Get());
-    SetViewport(context.Get(), static_cast<float>(Window->GetWidth()), static_cast<float>(Window->GetHeight()));*/
+    //SetRenderTarget(context.Get(), rtv.Get(), dsView.Get());
+    //SetRasterizerState(context.Get(), rsSolid.Get());
+    //SetTopology(context.Get(), D3D11_PRIMITIVE_TOPOLOGY::D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    //SetInputlayout(context.Get(), inputLayout.Get());
+    //SetViewport(context.Get(), static_cast<float>(Window->GetWidth()), static_cast<float>(Window->GetHeight()));
 
     // Command Usage //
     m_command.SetRenderTarget(rtv.Get(), dsView.Get());
@@ -615,29 +615,33 @@ void gt::dx11::DX11CubeApp::PreDraw(ComPtr<ID3D11DeviceContext> context)
     m_command.BindPS(pixShader.Get());
     m_command.SetVertexBuffer(vb.Get(), sizeof(Vertex));
     m_command.SetIndexBuffer(ib.Get());
+    std::vector<ID3D11Buffer*> buffers{ view.Get(), proj.Get(), mvp.Get() };
+    m_command.BinddVSConstantBuffers(buffers);
+    m_command.Clear(g_blue.data(), rtv.Get());
+    m_command.ClearDepthStencil(dsView.Get());
 
     // Bind to State //
     /*BindVS(context.Get(), vertShader.Get());
-    BindPS(context.Get(), pixShader.Get());
-    
-    SetVertexBuffer(context.Get(), vb.Get(), 0, sizeof(Vertex));
+    BindPS(context.Get(), pixShader.Get());*/
+    // Cube //
+    /*SetVertexBuffer(context.Get(), vb.Get(), 0, sizeof(Vertex));
     SetIndexBuffer(context.Get(), ib.Get());*/
-    
-    //SetVertexBuffer(context.Get(), obj_vb.Get(), 0, sizeof(Vertex));
-    //SetIndexBuffer(context.Get(), obj_ib.Get());
-    
-    BindVSConstantBuffer(context.Get(), 0, view.Get());
-    BindVSConstantBuffer(context.Get(), 1, proj.Get());
-    BindVSConstantBuffer(context.Get(), 2, mvp.Get());
+    // Blender Obj //
+    /*SetVertexBuffer(context.Get(), obj_vb.Get(), 0, sizeof(Vertex));
+    SetIndexBuffer(context.Get(), obj_ib.Get());*/
+    /*std::vector<ID3D11Buffer*> buffers{ view.Get(), proj.Get(), mvp.Get() };
+    BindVSConstantBuffers(context.Get(), 0, buffers);*/
+
     // Draw Setup //
-    ClearRT(context.Get(), rtv.Get(), g_blue);
-    ClearDS(context.Get(), dsView.Get());
+    /*ClearRT(context.Get(), rtv.Get(), g_blue);
+    ClearDS(context.Get(), dsView.Get());*/
 }
 
 void gt::dx11::DX11CubeApp::DrawScene(ComPtr<ID3D11DeviceContext> context)
 {
     //DrawIndexed(context.Get(), (uint32_t)g_objIndices.size());
-    DrawIndexed(context.Get(), (uint32_t)g_indexData.size());
+    m_command.DrawIndexed((uint32_t)g_indexData.size());
+    //DrawIndexed(context.Get(), (uint32_t)g_indexData.size());
 }
 
 void gt::dx11::DX11CubeApp::HandleResize(uint32_t width, uint32_t height)
