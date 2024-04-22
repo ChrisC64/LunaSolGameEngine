@@ -222,7 +222,7 @@ void RenderD3D11::AttachToWindow(LS::LSWindowBase* window) noexcept
     
 }
 
-auto LS::Win32::RenderD3D11::GetDevice() noexcept -> ID3D11Device *
+auto LS::Win32::RenderD3D11::GetDevice() noexcept -> ID3D11Device*
 {
     return m_device.GetDevice().Get();
 }
@@ -252,9 +252,6 @@ auto LS::Win32::RenderD3D11::CreateVertexShader(std::span<std::byte> data) noexc
     WRL::ComPtr<ID3D11VertexShader> shader;
     if (!IsCompiled(data))
     {
-        //TODO: Consider how I want to compile shaders, with this function (I know the name says it should)
-        // which would require additional params like entry point and shader model)
-        // or do I use thst LSShaderFile struct instead. 
         LS_LOG_ERROR("The given shader code was not compiled.\n");
         return nullptr;
     }
@@ -278,9 +275,6 @@ auto LS::Win32::RenderD3D11::CreatePixelShader(std::span<std::byte> data) noexce
 
     if (!IsCompiled(data))
     {
-        //TODO: Consider how I want to compile shaders, with this function (I know the name says it should)
-        // which would require additional params like entry point and shader model)
-
         LS_LOG_ERROR("The given shader code was not compiled.\n");
         return nullptr;
     }
@@ -304,9 +298,6 @@ auto LS::Win32::RenderD3D11::CreateGeometryShader(std::span<std::byte> data) noe
 
     if (!IsCompiled(data))
     {
-        //TODO: Consider how I want to compile shaders, with this function (I know the name says it should)
-        // which would require additional params like entry point and shader model)
-
         LS_LOG_ERROR("The given shader code was not compiled.\n");
         return nullptr;
     }
@@ -330,9 +321,6 @@ auto LS::Win32::RenderD3D11::CreateDomainShader(std::span<std::byte> data) noexc
 
     if (!IsCompiled(data))
     {
-        //TODO: Consider how I want to compile shaders, with this function (I know the name says it should)
-        // which would require additional params like entry point and shader model)
-
         LS_LOG_ERROR("The given shader code was not compiled.\n");
         return nullptr;
     }
@@ -356,9 +344,6 @@ auto LS::Win32::RenderD3D11::CreateHullShader(std::span<std::byte> data) noexcep
 
     if (!IsCompiled(data))
     {
-        //TODO: Consider how I want to compile shaders, with this function (I know the name says it should)
-        // which would require additional params like entry point and shader model)
-
         LS_LOG_ERROR("The given shader code was not compiled.\n");
         return nullptr;
     }
@@ -382,9 +367,6 @@ auto LS::Win32::RenderD3D11::CreateComputeShader(std::span<std::byte> data) noex
 
     if (!IsCompiled(data))
     {
-        //TODO: Consider how I want to compile shaders, with this function (I know the name says it should)
-        // which would require additional params like entry point and shader model)
-
         LS_LOG_ERROR("The given shader code was not compiled.\n");
         return nullptr;
     }
@@ -397,6 +379,16 @@ auto LS::Win32::RenderD3D11::CreateComputeShader(std::span<std::byte> data) noex
         return nullptr;
     }
     return shader;
+}
+
+auto LS::Win32::RenderD3D11::CreateImmediateCommand() noexcept -> RenderCommandD3D11
+{
+    return RenderCommandD3D11(m_device.GetDevice().Get(), COMMAND_MODE::IMMEDIATE);
+}
+
+auto LS::Win32::RenderD3D11::CreateDeferredCommand() noexcept -> RenderCommandD3D11
+{
+    return RenderCommandD3D11(m_device.GetDevice().Get(), COMMAND_MODE::DEFERRED);
 }
 
 auto LS::Win32::RenderD3D11::BuildInputLayout(std::span<std::byte> compiledByteCode) -> Nullable<WRL::ComPtr<ID3D11InputLayout>>
@@ -417,4 +409,21 @@ auto LS::Win32::RenderD3D11::BuildInputLayout(std::span<std::byte> compiledByteC
     }
 
     return inputLayout;
+}
+
+auto LS::Win32::RenderD3D11::ExecuteRenderCommand(const LS::Win32::RenderCommandD3D11& command) noexcept
+{
+    if (command.GetMode() == COMMAND_MODE::IMMEDIATE)
+        return;
+
+    const auto pCommList = command.GetCommandList();
+    const auto devCon = m_device.GetImmediateContext();
+    
+    if (!pCommList)
+    {
+        return;
+    }
+
+    devCon->ExecuteCommandList(pCommList.value(), false);
+
 }

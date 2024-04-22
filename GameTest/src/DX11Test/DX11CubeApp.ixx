@@ -89,6 +89,7 @@ namespace gt::dx11
     private:
         LS::LSDeviceSettings m_settings;
         LS::Win32::RenderD3D11 m_renderer;
+        LS::Win32::RenderCommandD3D11 m_command;
         LS::Platform::Dx11::BufferCache m_bufferCache;
         LS::PipelineDescriptor m_cubePipeline;
         
@@ -108,7 +109,6 @@ namespace gt::dx11
         void OnMouseWheel(const LS::InputMouseWheelScroll& input);
         void OnWindowEvent(LS::LS_WINDOW_EVENT ev);
         void ReadOBJFile(std::filesystem::path path);
-        void SetupPipeline();
     };
 
     using namespace std::placeholders;
@@ -228,7 +228,6 @@ namespace gt::dx11
         g_cameraController.Strafe(movement.x);
     }
 
-    //TODO: Create common colors in Engine Common or make color conceptl
     std::array<float, 4> g_red = { 1.0f, 0.0f, 0.0f, 1.0f };
     std::array<float, 4> g_green = { 0.0f, 1.0f, 0.0f, 1.0f };
     std::array<float, 4> g_blue = { 0.0f, 0.0f, 1.0f, 1.0f };
@@ -247,7 +246,8 @@ using namespace LS;
 
 gt::dx11::DX11CubeApp::DX11CubeApp(uint32_t width, uint32_t height, std::wstring_view title) : LSApp(width, height, title),
     m_settings(LS::CreateDeviceSettings(Window->GetWidth(), Window->GetHeight(), LS::DEVICE_API::DIRECTX_11)),
-    m_renderer(m_settings, Window.get())
+    m_renderer(m_settings, Window.get()),
+    m_command()
 {
 }
 
@@ -270,7 +270,7 @@ auto gt::dx11::DX11CubeApp::Initialize(SharedRef<LS::LSCommandArgs> args) -> LS:
     {
         return deviceResult;
     }
-
+    m_command = m_renderer.CreateImmediateCommand();
     // Init Cube and Camera //
     InitCube();
     UpdateCamera();
@@ -364,7 +364,8 @@ auto gt::dx11::DX11CubeApp::Initialize(SharedRef<LS::LSCommandArgs> args) -> LS:
     ComPtr<ID3D11DepthStencilState> defaultState;
     auto dss = CreateDepthStencilState(m_renderer.GetDevice(), defaultDepthDesc).value();
     LS::Log::TraceDebug(L"Depth stencil created!!");
-    SetDepthStencilState(m_renderer.GetDeviceContextCom().Get(), dss.Get(), 1);
+    //SetDepthStencilState(m_renderer.GetDeviceContextCom().Get(), dss.Get(), 1);
+    m_command.SetDepthStencilState(dss.Get(), 1);
 
     ReadOBJFile("res/cube_face1.obj");
 
@@ -388,8 +389,6 @@ auto gt::dx11::DX11CubeApp::Initialize(SharedRef<LS::LSCommandArgs> args) -> LS:
     g_objIndices.clear();
     g_objIndices.insert(g_objIndices.begin(), mesh.Indices.begin(), mesh.Indices.end());
     
-    //TODO: I use Vec3F for the vertices which now need to be converted into a Vec4F. Either I allow that to
-    // be placed or I just set it in the shader instead. 
     auto objVbOpt = LS::Platform::Dx11::CreateVertexBuffer(m_renderer.GetDevice(), tvd);
     if (!objVbOpt)
     {
@@ -444,7 +443,6 @@ void gt::dx11::DX11CubeApp::Run()
         if (IsPaused)
         {
             std::cout << "Paused app!\n";
-            //std::this_thread::sleep_for(100ms);
             continue;
         }
         auto elapsed = g_timer.GetTotalTimeTicked();
@@ -457,15 +455,15 @@ void gt::dx11::DX11CubeApp::Run()
         RotateCube(deltaTime.count());
         UpdateCubeTransform();
         UpdateCamera();
+        
+        // Update Buffers //
+        m_command.UpdateConstantBuffer(mvp.Get(), &g_camera.Mvp);
+        m_command.UpdateConstantBuffer(view.Get(), &g_camera.View);
+        m_command.UpdateConstantBuffer(proj.Get(), &g_camera.Projection);
 
         PreDraw(m_renderer.GetDeviceContextCom());
         DrawScene(m_renderer.GetDeviceContextCom());
         Present1(m_renderer.GetSwapChainCom().Get(), 1);
-
-        // Update Buffers //
-        LS::Platform::Dx11::UpdateSubresource(m_renderer.GetDeviceContextCom().Get(), mvp.Get(), &g_camera.Mvp);
-        LS::Platform::Dx11::UpdateSubresource(m_renderer.GetDeviceContextCom().Get(), view.Get(), &g_camera.View);
-        LS::Platform::Dx11::UpdateSubresource(m_renderer.GetDeviceContextCom().Get(), proj.Get(), &g_camera.Projection);
     }
 }
 
@@ -598,35 +596,48 @@ void gt::dx11::DX11CubeApp::PreDraw(ComPtr<ID3D11DeviceContext> context)
     const auto obj_vb = m_bufferCache.Get("obj_vb").value();
     const auto obj_ib = m_bufferCache.Get("obj_ib").value();
 
-    // Set States and Objects //
-    SetRenderTarget(context.Get(), rtv.Get(), dsView.Get());
-    SetRasterizerState(context.Get(), rsSolid.Get());
-    SetTopology(context.Get(), D3D11_PRIMITIVE_TOPOLOGY::D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-    SetInputlayout(context.Get(), inputLayout.Get());
-    SetViewport(context.Get(), static_cast<float>(Window->GetWidth()), static_cast<float>(Window->GetHeight()));
+    // Command Usage //
+    m_command.SetRenderTarget(rtv.Get(), dsView.Get());
+    m_command.SetRasterizerState(rsSolid.Get());
+    m_command.SetPrimTopology(D3D11_PRIMITIVE_TOPOLOGY::D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    m_command.SetInputLayout(inputLayout.Get());
+    m_command.SetViewport(static_cast<float>(Window->GetWidth()), static_cast<float>(Window->GetHeight()));
+    m_command.BindVS(vertShader.Get());
+    m_command.BindPS(pixShader.Get());
+    m_command.SetVertexBuffer(vb.Get(), sizeof(Vertex));
+    m_command.SetIndexBuffer(ib.Get());
+    std::array<ID3D11Buffer*, 3> buffers{ view.Get(), proj.Get(), mvp.Get() };
+    m_command.BindVSConstantBuffers(buffers);
+    m_command.Clear(g_blue.data(), rtv.Get());
+    m_command.ClearDepthStencil(dsView.Get());
 
+    // Set States and Objects //
+    //SetRenderTarget(context.Get(), rtv.Get(), dsView.Get());
+    //SetRasterizerState(context.Get(), rsSolid.Get());
+    //SetTopology(context.Get(), D3D11_PRIMITIVE_TOPOLOGY::D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    //SetInputlayout(context.Get(), inputLayout.Get());
+    //SetViewport(context.Get(), static_cast<float>(Window->GetWidth()), static_cast<float>(Window->GetHeight()));
     // Bind to State //
-    BindVS(context.Get(), vertShader.Get());
-    BindPS(context.Get(), pixShader.Get());
-    
-    SetVertexBuffer(context.Get(), vb.Get(), 0, sizeof(Vertex));
-    SetIndexBuffer(context.Get(), ib.Get());
-    
-    //SetVertexBuffer(context.Get(), obj_vb.Get(), 0, sizeof(Vertex));
-    //SetIndexBuffer(context.Get(), obj_ib.Get());
-    
-    BindVSConstantBuffer(context.Get(), 0, view.Get());
-    BindVSConstantBuffer(context.Get(), 1, proj.Get());
-    BindVSConstantBuffer(context.Get(), 2, mvp.Get());
+    /*BindVS(context.Get(), vertShader.Get());
+    BindPS(context.Get(), pixShader.Get());*/
+    // Cube //
+    /*SetVertexBuffer(context.Get(), vb.Get(), 0, sizeof(Vertex));
+    SetIndexBuffer(context.Get(), ib.Get());*/
+    // Blender Obj //
+    /*SetVertexBuffer(context.Get(), obj_vb.Get(), 0, sizeof(Vertex));
+    SetIndexBuffer(context.Get(), obj_ib.Get());*/
+    /*std::vector<ID3D11Buffer*> buffers{ view.Get(), proj.Get(), mvp.Get() };
+    BindVSConstantBuffers(context.Get(), 0, buffers);*/
     // Draw Setup //
-    ClearRT(context.Get(), rtv.Get(), g_blue);
-    ClearDS(context.Get(), dsView.Get());
+    /*ClearRT(context.Get(), rtv.Get(), g_blue);
+    ClearDS(context.Get(), dsView.Get());*/
 }
 
 void gt::dx11::DX11CubeApp::DrawScene(ComPtr<ID3D11DeviceContext> context)
 {
     //DrawIndexed(context.Get(), (uint32_t)g_objIndices.size());
-    DrawIndexed(context.Get(), (uint32_t)g_indexData.size());
+    m_command.DrawIndexed((uint32_t)g_indexData.size());
+    //DrawIndexed(context.Get(), (uint32_t)g_indexData.size());
 }
 
 void gt::dx11::DX11CubeApp::HandleResize(uint32_t width, uint32_t height)
@@ -674,27 +685,6 @@ void gt::dx11::DX11CubeApp::ReadOBJFile(std::filesystem::path path)
     {
         std::cout << result.Message();
     }
-}
-
-void gt::dx11::DX11CubeApp::SetupPipeline()
-{
-    LS::Win32::InitCommonStates(m_renderer.GetDeviceCom().Get());
-
-    LS::PipelineDescriptor desc;
-    desc.RasterizeState = LS::SolidFill_BackCull_FCCW_DCE;
-    desc.BlendState.BlendType = LS::BlendType::OPAQUE_BLEND;
-    desc.Topology = LS::PRIMITIVE_TOPOLOGY::TRIANGLE_STRIP;
-    desc.DepthStencil = LS::DefaultDepth;
-    
-    // Vertex and Pixel Shaders
-    const auto bc = GetBytecodes();
-    desc.Shaders[SHADER_TYPE::VERTEX] = bc[0];
-    desc.Shaders[SHADER_TYPE::PIXEL] = bc[1];
-    
-    //desc.RenderTarget.
-    
-
-    auto factory = LS::Win32::D3D11PipelineFactory();
 }
 
 void gt::dx11::DX11CubeApp::CompileShaders()

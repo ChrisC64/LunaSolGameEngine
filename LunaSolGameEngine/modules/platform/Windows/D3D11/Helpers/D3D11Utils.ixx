@@ -353,7 +353,7 @@ export namespace LS::Win32
     }
 
     //TODO: Make better - handle cases for value 0 isn't used for things like POSITION/TEXCOORD because 0 is implied
-    //TODO: Just redo this wohle thing, I think we cand o this better.
+    //Just redo this wohle thing, I think we cand o this better.
     inline auto FindSemanticIndex(std::string_view semanticName) noexcept -> uint32_t
     {
         uint32_t offset = 0;

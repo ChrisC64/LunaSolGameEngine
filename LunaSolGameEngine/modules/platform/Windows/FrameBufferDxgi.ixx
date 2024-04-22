@@ -58,7 +58,7 @@ export namespace LS::Platform::Dx12
             BuildFrames(rtvHeapStart, device);
             return LS::System::CreateSuccessCode();
         }
-        //TODO: When we resize the frame buffer, these would be obsolete, right? I perhaps
+        // When we resize the frame buffer, these would be obsolete, right? I perhaps
         // should consider how these are shared. A pointer would be nullified, but a reference?
         // That would cause UB if the reference held on by another is no longer existing. 
         // Maybe a pointer to the frame should be used, easier and clearer to state "This could
@@ -141,7 +141,7 @@ export namespace LS::Platform::Dx12
         {
             m_syncInterval = 1;
         }
-        //TODO: Need to insure that such a feature is available (to support something like VRR) with IDXGIFactory
+
         void DisableVsync()
         {
             m_syncInterval = 0;

@@ -509,8 +509,6 @@ bool gt::dx12::DX12CubeApp::CreateDevice()
 //            { "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 //        };
 //
-//        //TODO: Create another PSO that uses the root signature and input element descriptions for our second textured triangle
-//        // then see if we can display both on the scene at once. 
 //        // Describe and create the graphics pipeline state object (PSO).
 //        D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
 //        psoDesc.InputLayout = { inputElementDescs, _countof(inputElementDescs) };

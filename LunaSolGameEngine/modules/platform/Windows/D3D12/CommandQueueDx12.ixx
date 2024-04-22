@@ -59,7 +59,6 @@ export namespace LS::Platform::Dx12
         using CommandQueue = std::vector<CommandListDx12*>;
         
         CommandQueue                            m_queue;
-        // TODO: Other than creating the command queue, I don't seem to need it
         WRL::ComPtr<ID3D12Device4>              m_pDevice;
         WRL::ComPtr<ID3D12CommandQueue>         m_pCommandQueue;
         WRL::ComPtr<ID3D12Fence>                m_pFence;

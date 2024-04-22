@@ -15,12 +15,6 @@ import Util.StdUtils;
 
 export namespace LS
 {
-    struct ShaderCompileResult
-    {
-        std::vector<std::byte> CompiledCode;
-        std::string ErrMsg;
-    };
-
     enum class SHADER_TYPE
     {
         VERTEX,
@@ -163,7 +157,7 @@ export namespace LS
             break;
         }
     }
-    //TODO: Use a fixed size, like uint64_t or int64_t 
+
     inline size_t HashShaderElement(ShaderElement const& elem) noexcept
     {
         std::size_t h1 = Utils::HashEnum(elem.ShaderData);
