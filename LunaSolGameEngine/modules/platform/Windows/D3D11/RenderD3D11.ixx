@@ -137,18 +137,35 @@ export namespace LS::Win32
         void BindDS(ID3D11DomainShader* ds) noexcept;
 
         // Bind Buffers to Shader Stages Stages //
-        void BinddVSConstantBuffer(ID3D11Buffer* buffer, uint32_t slot = 0);
-        void BinddVSConstantBuffers(std::span<ID3D11Buffer*> buffers, uint32_t startSlot = 0);
-        void BinddPSConstantBuffer(ID3D11Buffer* buffer, uint32_t slot = 0);
-        void BinddPSConstantBuffers(std::span<ID3D11Buffer*> buffers, uint32_t startSlot = 0);
-        void BinddGSConstantBuffer(ID3D11Buffer* buffer, uint32_t slot = 0);
-        void BinddGSConstantBuffers(std::span<ID3D11Buffer*> buffers, uint32_t startSlot = 0);
-        void BinddHSConstantBuffer(ID3D11Buffer* buffer, uint32_t slot = 0);
-        void BinddHSConstantBuffers(std::span<ID3D11Buffer*> buffers, uint32_t startSlot = 0);
-        void BinddDSConstantBuffer(ID3D11Buffer* buffer, uint32_t slot = 0);
-        void BinddDSConstantBuffers(std::span<ID3D11Buffer*> buffers, uint32_t startSlot = 0);
-        void BinddCSConstantBuffer(ID3D11Buffer* buffer, uint32_t slot = 0);
-        void BinddCSConstantBuffers(std::span<ID3D11Buffer*> buffers, uint32_t startSlot = 0);
+        void BindVSConstantBuffer(ID3D11Buffer* buffer, uint32_t slot = 0);
+        void BindVSConstantBuffers(std::span<ID3D11Buffer*> buffers, uint32_t startSlot = 0);
+        void BindVSResource(ID3D11Buffer* buffer, uint32_t slot = 0);
+        void BindVSResources(std::span<ID3D11Buffer*> buffer, uint32_t slot = 0);
+        
+        void BindPSConstantBuffer(ID3D11Buffer* buffer, uint32_t slot = 0);
+        void BindPSConstantBuffers(std::span<ID3D11Buffer*> buffers, uint32_t startSlot = 0);
+        void BindPSResource(ID3D11Buffer* buffer, uint32_t slot = 0);
+        void BindPSResources(std::span<ID3D11Buffer*> buffer, uint32_t slot = 0);
+        
+        void BindGSConstantBuffer(ID3D11Buffer* buffer, uint32_t slot = 0);
+        void BindGSConstantBuffers(std::span<ID3D11Buffer*> buffers, uint32_t startSlot = 0);
+        void BindGSResource(ID3D11Buffer* buffer, uint32_t slot = 0);
+        void BindGSResources(std::span<ID3D11Buffer*> buffer, uint32_t slot = 0);
+
+        void BindHSConstantBuffer(ID3D11Buffer* buffer, uint32_t slot = 0);
+        void BindHSConstantBuffers(std::span<ID3D11Buffer*> buffers, uint32_t startSlot = 0);
+        void BindHSResource(ID3D11Buffer* buffer, uint32_t slot = 0);
+        void BindHSResources(std::span<ID3D11Buffer*> buffer, uint32_t slot = 0);
+
+        void BindDSConstantBuffer(ID3D11Buffer* buffer, uint32_t slot = 0);
+        void BindDSConstantBuffers(std::span<ID3D11Buffer*> buffers, uint32_t startSlot = 0);
+        void BindDSResource(ID3D11Buffer* buffer, uint32_t slot = 0);
+        void BindDSResources(std::span<ID3D11Buffer*> buffer, uint32_t slot = 0);
+
+        void BindCSConstantBuffer(ID3D11Buffer* buffer, uint32_t slot = 0);
+        void BindCSConstantBuffers(std::span<ID3D11Buffer*> buffers, uint32_t startSlot = 0);
+        void BindCSResource(ID3D11Buffer* buffer, uint32_t slot = 0);
+        void BindCSResources(std::span<ID3D11Buffer*> buffer, uint32_t slot = 0);
 
         // Bind Commands for Resources for Shaders //
         void UpdateTexture(ID3D11Resource* resource, const void* data) noexcept;
@@ -256,6 +273,7 @@ export namespace LS::Win32
         auto CreateComputeShader(std::span<std::byte> data) noexcept -> WRL::ComPtr<ID3D11ComputeShader>;
         auto CreateImmediateCommand() noexcept -> RenderCommandD3D11;
         auto CreateDeferredCommand() noexcept -> RenderCommandD3D11;
+        
         /**
          * @brief Creates an input layout from the given compiled bytecode. This will not work if it was not compiled first.
          *
@@ -418,64 +436,124 @@ void LS::Win32::RenderCommandD3D11::BindDS(ID3D11DomainShader* ds) noexcept
     m_context->DSSetShader(ds, nullptr, 0);
 }
 
-void LS::Win32::RenderCommandD3D11::BinddVSConstantBuffer(ID3D11Buffer* buffer, uint32_t slot)
+void LS::Win32::RenderCommandD3D11::BindVSConstantBuffer(ID3D11Buffer* buffer, uint32_t slot)
 {
     m_context->VSSetConstantBuffers(slot, 1u, &buffer);
 }
 
-void LS::Win32::RenderCommandD3D11::BinddVSConstantBuffers(std::span<ID3D11Buffer*> buffers, uint32_t startSlot)
+void LS::Win32::RenderCommandD3D11::BindVSConstantBuffers(std::span<ID3D11Buffer*> buffers, uint32_t startSlot)
 {
     m_context->VSSetConstantBuffers(startSlot, (UINT)buffers.size(), buffers.data());
 }
 
-void LS::Win32::RenderCommandD3D11::BinddPSConstantBuffer(ID3D11Buffer* buffer, uint32_t slot)
+void LS::Win32::RenderCommandD3D11::BindVSResource(ID3D11Buffer* buffer, uint32_t slot)
+{
+    m_context->VSSetShaderResources(slot, 1u, &buffer);
+}
+
+void LS::Win32::RenderCommandD3D11::BindVSResources(std::span<ID3D11Buffer*> buffer, uint32_t slot)
+{
+    m_context->VSSetShaderResources(slot, (UINT)buffer.size(), buffer.data());
+}
+
+void LS::Win32::RenderCommandD3D11::BindPSConstantBuffer(ID3D11Buffer* buffer, uint32_t slot)
 {
     m_context->PSSetConstantBuffers(slot, 1u, &buffer);
 }
 
-void LS::Win32::RenderCommandD3D11::BinddPSConstantBuffers(std::span<ID3D11Buffer*> buffers, uint32_t startSlot)
+void LS::Win32::RenderCommandD3D11::BindPSConstantBuffers(std::span<ID3D11Buffer*> buffers, uint32_t startSlot)
 {
     m_context->PSSetConstantBuffers(startSlot, (UINT)buffers.size(), buffers.data());
 }
 
-void LS::Win32::RenderCommandD3D11::BinddGSConstantBuffer(ID3D11Buffer* buffer, uint32_t slot)
+void LS::Win32::RenderCommandD3D11::BindPSResource(ID3D11Buffer* buffer, uint32_t slot)
+{
+    m_context->PSSetShaderResources(slot, 1u, &buffer);
+}
+
+void LS::Win32::RenderCommandD3D11::BindPSResources(std::span<ID3D11Buffer*> buffer, uint32_t slot)
+{
+    m_context->PSSetShaderResources(slot, (UINT)buffer.size(), buffer.data());
+}
+
+void LS::Win32::RenderCommandD3D11::BindGSConstantBuffer(ID3D11Buffer* buffer, uint32_t slot)
 {
     m_context->GSSetConstantBuffers(slot, 1u, &buffer);
 }
 
-void LS::Win32::RenderCommandD3D11::BinddGSConstantBuffers(std::span<ID3D11Buffer*> buffers, uint32_t startSlot)
+void LS::Win32::RenderCommandD3D11::BindGSConstantBuffers(std::span<ID3D11Buffer*> buffers, uint32_t startSlot)
 {
     m_context->GSSetConstantBuffers(startSlot, (UINT)buffers.size(), buffers.data());
 }
 
-void LS::Win32::RenderCommandD3D11::BinddHSConstantBuffer(ID3D11Buffer* buffer, uint32_t slot)
+void LS::Win32::RenderCommandD3D11::BindGSResource(ID3D11Buffer* buffer, uint32_t slot)
+{
+    m_context->GSSetShaderResources(slot, 1u, &buffer);
+}
+
+void LS::Win32::RenderCommandD3D11::BindGSResources(std::span<ID3D11Buffer*> buffer, uint32_t slot)
+{
+    m_context->GSSetShaderResources(slot, (UINT)buffer.size(), buffer.data());
+}
+
+void LS::Win32::RenderCommandD3D11::BindHSConstantBuffer(ID3D11Buffer* buffer, uint32_t slot)
 {
     m_context->HSSetConstantBuffers(slot , 1u, &buffer);
 }
 
-void LS::Win32::RenderCommandD3D11::BinddHSConstantBuffers(std::span<ID3D11Buffer*> buffers, uint32_t startSlot)
+void LS::Win32::RenderCommandD3D11::BindHSConstantBuffers(std::span<ID3D11Buffer*> buffers, uint32_t startSlot)
 {
     m_context->HSSetConstantBuffers(startSlot, (UINT)buffers.size(), buffers.data());
 }
 
-void LS::Win32::RenderCommandD3D11::BinddDSConstantBuffer(ID3D11Buffer* buffer, uint32_t slot)
+void LS::Win32::RenderCommandD3D11::BindHSResource(ID3D11Buffer* buffer, uint32_t slot)
+{
+    m_context->HSSetShaderResources(slot, 1u, &buffer);
+}
+
+void LS::Win32::RenderCommandD3D11::BindHSResources(std::span<ID3D11Buffer*> buffer, uint32_t slot)
+{
+    m_context->HSSetShaderResources(slot, (UINT)buffer.size(), buffer.data());
+}
+
+void LS::Win32::RenderCommandD3D11::BindDSConstantBuffer(ID3D11Buffer* buffer, uint32_t slot)
 {
     m_context->DSSetConstantBuffers(slot, 1u, &buffer);
 }
 
-void LS::Win32::RenderCommandD3D11::BinddDSConstantBuffers(std::span<ID3D11Buffer*> buffers, uint32_t startSlot)
+void LS::Win32::RenderCommandD3D11::BindDSConstantBuffers(std::span<ID3D11Buffer*> buffers, uint32_t startSlot)
 {
     m_context->DSSetConstantBuffers(startSlot, (UINT)buffers.size(), buffers.data());
 }
 
-void LS::Win32::RenderCommandD3D11::BinddCSConstantBuffer(ID3D11Buffer* buffer, uint32_t slot)
+void LS::Win32::RenderCommandD3D11::BindDSResource(ID3D11Buffer* buffer, uint32_t slot)
+{
+    m_context->DSSetShaderResources(slot, 1u, &buffer);
+}
+
+void LS::Win32::RenderCommandD3D11::BindDSResources(std::span<ID3D11Buffer*> buffer, uint32_t slot)
+{
+    m_context->DSSetShaderResources(slot, (UINT)buffer.size(), buffer.data());
+}
+
+void LS::Win32::RenderCommandD3D11::BindCSConstantBuffer(ID3D11Buffer* buffer, uint32_t slot)
 {
     m_context->CSSetConstantBuffers(slot, 1u, &buffer);
 }
 
-void LS::Win32::RenderCommandD3D11::BinddCSConstantBuffers(std::span<ID3D11Buffer*> buffers, uint32_t startSlot)
+void LS::Win32::RenderCommandD3D11::BindCSConstantBuffers(std::span<ID3D11Buffer*> buffers, uint32_t startSlot)
 {
     m_context->CSSetConstantBuffers(startSlot, (UINT)buffers.size(), buffers.data());
+}
+
+void LS::Win32::RenderCommandD3D11::BindCSResource(ID3D11Buffer* buffer, uint32_t slot)
+{
+    m_context->CSSetShaderResources(slot, 1u, &buffer);
+}
+
+void LS::Win32::RenderCommandD3D11::BindCSResources(std::span<ID3D11Buffer*> buffer, uint32_t slot)
+{
+    m_context->CSSetShaderResources(slot, (UINT)buffer.size(), buffer.data());
 }
 
 void RenderCommandD3D11::UpdateTexture(ID3D11Resource* resource, const void* data) noexcept
