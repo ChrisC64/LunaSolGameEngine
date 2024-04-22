@@ -274,6 +274,15 @@ export namespace LS::Win32
 
         pContext->VSSetConstantBuffers(startSlot, static_cast<uint32_t>(buffers.size()), buffers.data());
     }
+    
+    constexpr void BindVSConstantBuffer(ID3D11DeviceContext* pContext, uint32_t slot, ID3D11Buffer* buffer)
+    {
+        assert(pContext);
+        if (!pContext)
+            return;
+
+        pContext->VSSetConstantBuffers(slot, 1u, &buffer);
+    }
 
     constexpr void BindVSResources(ID3D11DeviceContext* pContext, std::span<ID3D11ShaderResourceView*> views, uint32_t startSlot = 0)
     {
@@ -289,13 +298,18 @@ export namespace LS::Win32
         pContext->VSSetShaderResources(slot, 1u, &view);
     }
 
-    constexpr void BindVSConstantBuffer(ID3D11DeviceContext* pContext, uint32_t slot, ID3D11Buffer* buffer)
+    constexpr void BindVSSampler(ID3D11DeviceContext* pContext, ID3D11SamplerState* sampler, uint32_t slot = 0)
     {
         assert(pContext);
-        if (!pContext)
-            return;
 
-        pContext->VSSetConstantBuffers(slot, 1u, &buffer);
+        pContext->VSSetSamplers(slot, 1u, &sampler);
+    }
+    
+    constexpr void BindVSSamplers(ID3D11DeviceContext* pContext, std::span<ID3D11SamplerState*> samplers, uint32_t slot = 0)
+    {
+        assert(pContext);
+
+        pContext->VSSetSamplers(slot, (UINT)samplers.size(), samplers.data());
     }
 
     constexpr void BindPS(ID3D11DeviceContext* pContext, ID3D11PixelShader* shader) noexcept
@@ -335,6 +349,20 @@ export namespace LS::Win32
         assert(pContext);
 
         pContext->PSSetShaderResources(slot, 1u, &view);
+    }
+
+    constexpr void BindPSSampler(ID3D11DeviceContext* pContext, ID3D11SamplerState* sampler, uint32_t slot = 0)
+    {
+        assert(pContext);
+
+        pContext->PSSetSamplers(slot, 1u, &sampler);
+    }
+
+    constexpr void BindPSSamplers(ID3D11DeviceContext* pContext, std::span<ID3D11SamplerState*> samplers, uint32_t slot = 0)
+    {
+        assert(pContext);
+
+        pContext->PSSetSamplers(slot, (UINT)samplers.size(), samplers.data());
     }
     
     constexpr void BindGS(ID3D11DeviceContext* pContext, ID3D11GeometryShader* shader) noexcept
@@ -376,6 +404,20 @@ export namespace LS::Win32
         pContext->GSSetShaderResources(slot, 1u, &view);
     }
 
+    constexpr void BindGSSampler(ID3D11DeviceContext* pContext, ID3D11SamplerState* sampler, uint32_t slot = 0)
+    {
+        assert(pContext);
+
+        pContext->GSSetSamplers(slot, 1u, &sampler);
+    }
+
+    constexpr void BindGSSamplers(ID3D11DeviceContext* pContext, std::span<ID3D11SamplerState*> samplers, uint32_t slot = 0)
+    {
+        assert(pContext);
+
+        pContext->GSSetSamplers(slot, (UINT)samplers.size(), samplers.data());
+    }
+
     constexpr void BindCS(ID3D11DeviceContext* pContext, ID3D11ComputeShader* shader) noexcept
     {
         assert(pContext);
@@ -413,6 +455,20 @@ export namespace LS::Win32
             return;
 
         pContext->CSSetConstantBuffers(startSlot, static_cast<uint32_t>(buffers.size()), buffers.data());
+    }
+
+    constexpr void BindCSSampler(ID3D11DeviceContext* pContext, ID3D11SamplerState* sampler, uint32_t slot = 0)
+    {
+        assert(pContext);
+
+        pContext->CSSetSamplers(slot, 1u, &sampler);
+    }
+
+    constexpr void BindCSSamplers(ID3D11DeviceContext* pContext, std::span<ID3D11SamplerState*> samplers, uint32_t slot = 0)
+    {
+        assert(pContext);
+
+        pContext->CSSetSamplers(slot, (UINT)samplers.size(), samplers.data());
     }
 
     constexpr void BindHS(ID3D11DeviceContext* pContext, ID3D11HullShader* shader) noexcept
@@ -454,6 +510,20 @@ export namespace LS::Win32
         pContext->HSSetShaderResources(slot, 1u, &view);
     }
 
+    constexpr void BindHSSampler(ID3D11DeviceContext* pContext, ID3D11SamplerState* sampler, uint32_t slot = 0)
+    {
+        assert(pContext);
+
+        pContext->HSSetSamplers(slot, 1u, &sampler);
+    }
+
+    constexpr void BindHSSamplers(ID3D11DeviceContext* pContext, std::span<ID3D11SamplerState*> samplers, uint32_t slot = 0)
+    {
+        assert(pContext);
+
+        pContext->HSSetSamplers(slot, (UINT)samplers.size(), samplers.data());
+    }
+
     constexpr void BindDS(ID3D11DeviceContext* pContext, ID3D11DomainShader* shader) noexcept
     {
         assert(pContext);
@@ -491,6 +561,20 @@ export namespace LS::Win32
         assert(pContext);
 
         pContext->DSSetShaderResources(slot, 1u, &view);
+    }
+
+    constexpr void BindDSSampler(ID3D11DeviceContext* pContext, ID3D11SamplerState* sampler, uint32_t slot = 0)
+    {
+        assert(pContext);
+
+        pContext->DSSetSamplers(slot, 1u, &sampler);
+    }
+
+    constexpr void BindDSSamplers(ID3D11DeviceContext* pContext, std::span<ID3D11SamplerState*> samplers, uint32_t slot = 0)
+    {
+        assert(pContext);
+
+        pContext->DSSetSamplers(slot, (UINT)samplers.size(), samplers.data());
     }
 
     // Input Assembly //
