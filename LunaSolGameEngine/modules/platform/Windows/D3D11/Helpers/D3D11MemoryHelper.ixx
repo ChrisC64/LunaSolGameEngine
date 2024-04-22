@@ -278,7 +278,7 @@ export namespace LS::Platform::Dx11
         uint32_t cpuAccess = 0, uint32_t miscFlags = 0, uint32_t structureByteStride = 0) noexcept -> Nullable<ComPtr<ID3D11Buffer>>
     {
         const auto desc = CreateBufferDescD3D11(obj, usage, bindFlags, cpuAccess, miscFlags, structureByteStride);
-        D3D11_SUBRESOURCE_DATA sr;
+        D3D11_SUBRESOURCE_DATA sr{};
         sr.pSysMem = obj.data();
 
         ComPtr<ID3D11Buffer> pBuffer;
@@ -296,7 +296,7 @@ export namespace LS::Platform::Dx11
         uint32_t cpuAccess = 0, uint32_t miscFlags = 0, uint32_t structureByteStride = 0) noexcept -> Nullable<ComPtr<ID3D11Buffer>>
     {
         const auto desc = CreateBufferDescD3D11(obj, usage, bindFlags, cpuAccess, miscFlags, structureByteStride);
-        D3D11_SUBRESOURCE_DATA sr;
+        D3D11_SUBRESOURCE_DATA sr{};
         sr.pSysMem = &obj;
 
         ComPtr<ID3D11Buffer> pBuffer;
@@ -332,8 +332,3 @@ export namespace LS::Platform::Dx11
     }
     
 }
-
-module : private;
-
-using namespace LS::Platform::Dx11;
-

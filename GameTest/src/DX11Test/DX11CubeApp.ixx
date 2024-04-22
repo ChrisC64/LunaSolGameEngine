@@ -109,7 +109,6 @@ namespace gt::dx11
         void OnMouseWheel(const LS::InputMouseWheelScroll& input);
         void OnWindowEvent(LS::LS_WINDOW_EVENT ev);
         void ReadOBJFile(std::filesystem::path path);
-        void SetupPipeline();
     };
 
     using namespace std::placeholders;
@@ -444,7 +443,6 @@ void gt::dx11::DX11CubeApp::Run()
         if (IsPaused)
         {
             std::cout << "Paused app!\n";
-            //std::this_thread::sleep_for(100ms);
             continue;
         }
         auto elapsed = g_timer.GetTotalTimeTicked();
@@ -457,15 +455,15 @@ void gt::dx11::DX11CubeApp::Run()
         RotateCube(deltaTime.count());
         UpdateCubeTransform();
         UpdateCamera();
+        
+        // Update Buffers //
+        m_command.UpdateConstantBuffer(mvp.Get(), &g_camera.Mvp);
+        m_command.UpdateConstantBuffer(view.Get(), &g_camera.View);
+        m_command.UpdateConstantBuffer(proj.Get(), &g_camera.Projection);
 
         PreDraw(m_renderer.GetDeviceContextCom());
         DrawScene(m_renderer.GetDeviceContextCom());
         Present1(m_renderer.GetSwapChainCom().Get(), 1);
-
-        // Update Buffers //
-        LS::Platform::Dx11::UpdateSubresource(m_renderer.GetDeviceContextCom().Get(), mvp.Get(), &g_camera.Mvp);
-        LS::Platform::Dx11::UpdateSubresource(m_renderer.GetDeviceContextCom().Get(), view.Get(), &g_camera.View);
-        LS::Platform::Dx11::UpdateSubresource(m_renderer.GetDeviceContextCom().Get(), proj.Get(), &g_camera.Projection);
     }
 }
 
@@ -598,13 +596,6 @@ void gt::dx11::DX11CubeApp::PreDraw(ComPtr<ID3D11DeviceContext> context)
     const auto obj_vb = m_bufferCache.Get("obj_vb").value();
     const auto obj_ib = m_bufferCache.Get("obj_ib").value();
 
-    // Set States and Objects //
-    //SetRenderTarget(context.Get(), rtv.Get(), dsView.Get());
-    //SetRasterizerState(context.Get(), rsSolid.Get());
-    //SetTopology(context.Get(), D3D11_PRIMITIVE_TOPOLOGY::D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-    //SetInputlayout(context.Get(), inputLayout.Get());
-    //SetViewport(context.Get(), static_cast<float>(Window->GetWidth()), static_cast<float>(Window->GetHeight()));
-
     // Command Usage //
     m_command.SetRenderTarget(rtv.Get(), dsView.Get());
     m_command.SetRasterizerState(rsSolid.Get());
@@ -615,11 +606,17 @@ void gt::dx11::DX11CubeApp::PreDraw(ComPtr<ID3D11DeviceContext> context)
     m_command.BindPS(pixShader.Get());
     m_command.SetVertexBuffer(vb.Get(), sizeof(Vertex));
     m_command.SetIndexBuffer(ib.Get());
-    std::vector<ID3D11Buffer*> buffers{ view.Get(), proj.Get(), mvp.Get() };
+    std::array<ID3D11Buffer*, 3> buffers{ view.Get(), proj.Get(), mvp.Get() };
     m_command.BindVSConstantBuffers(buffers);
     m_command.Clear(g_blue.data(), rtv.Get());
     m_command.ClearDepthStencil(dsView.Get());
 
+    // Set States and Objects //
+    //SetRenderTarget(context.Get(), rtv.Get(), dsView.Get());
+    //SetRasterizerState(context.Get(), rsSolid.Get());
+    //SetTopology(context.Get(), D3D11_PRIMITIVE_TOPOLOGY::D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    //SetInputlayout(context.Get(), inputLayout.Get());
+    //SetViewport(context.Get(), static_cast<float>(Window->GetWidth()), static_cast<float>(Window->GetHeight()));
     // Bind to State //
     /*BindVS(context.Get(), vertShader.Get());
     BindPS(context.Get(), pixShader.Get());*/
@@ -631,7 +628,6 @@ void gt::dx11::DX11CubeApp::PreDraw(ComPtr<ID3D11DeviceContext> context)
     SetIndexBuffer(context.Get(), obj_ib.Get());*/
     /*std::vector<ID3D11Buffer*> buffers{ view.Get(), proj.Get(), mvp.Get() };
     BindVSConstantBuffers(context.Get(), 0, buffers);*/
-
     // Draw Setup //
     /*ClearRT(context.Get(), rtv.Get(), g_blue);
     ClearDS(context.Get(), dsView.Get());*/
@@ -689,27 +685,6 @@ void gt::dx11::DX11CubeApp::ReadOBJFile(std::filesystem::path path)
     {
         std::cout << result.Message();
     }
-}
-
-void gt::dx11::DX11CubeApp::SetupPipeline()
-{
-    LS::Win32::InitCommonStates(m_renderer.GetDeviceCom().Get());
-
-    LS::PipelineDescriptor desc;
-    desc.RasterizeState = LS::SolidFill_BackCull_FCCW_DCE;
-    desc.BlendState.BlendType = LS::BlendType::OPAQUE_BLEND;
-    desc.Topology = LS::PRIMITIVE_TOPOLOGY::TRIANGLE_STRIP;
-    desc.DepthStencil = LS::DefaultDepth;
-    
-    // Vertex and Pixel Shaders
-    const auto bc = GetBytecodes();
-    desc.Shaders[SHADER_TYPE::VERTEX] = bc[0];
-    desc.Shaders[SHADER_TYPE::PIXEL] = bc[1];
-    
-    //desc.RenderTarget.
-    
-
-    auto factory = LS::Win32::D3D11PipelineFactory();
 }
 
 void gt::dx11::DX11CubeApp::CompileShaders()

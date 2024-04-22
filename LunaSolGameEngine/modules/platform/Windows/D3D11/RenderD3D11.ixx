@@ -75,7 +75,7 @@ export namespace LS::Win32
             return Name == c;
         }
     };
-    //TODO: 3-10-24 Create and implement the definitions for the functions below
+
     template <class T>
     using ShaderResArray = std::vector<ShaderResource<T>>;
 

@@ -91,7 +91,7 @@ export namespace LS::DX
         template<class T>
         constexpr XMFLOAT4X4 FromMat4(const LS::Mat4<T>& mat)
         {
-            XMFLOAT4X4 out;
+            XMFLOAT4X4 out{};
             out[0][0] = mat.at(0, 0);
             out[0][1] = mat.at(0, 1);
             out[0][2] = mat.at(0, 2);
@@ -118,7 +118,7 @@ export namespace LS::DX
         template<class T>
         constexpr XMFLOAT3X3 FromMat3(const LS::Mat3<T>& mat)
         {
-            XMFLOAT3X3 out;
+            XMFLOAT3X3 out{};
             out[0][0] = mat.at(0, 0);
             out[0][1] = mat.at(0, 1);
             out[0][2] = mat.at(0, 2);
