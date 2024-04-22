@@ -616,7 +616,7 @@ void gt::dx11::DX11CubeApp::PreDraw(ComPtr<ID3D11DeviceContext> context)
     m_command.SetVertexBuffer(vb.Get(), sizeof(Vertex));
     m_command.SetIndexBuffer(ib.Get());
     std::vector<ID3D11Buffer*> buffers{ view.Get(), proj.Get(), mvp.Get() };
-    m_command.BinddVSConstantBuffers(buffers);
+    m_command.BindVSConstantBuffers(buffers);
     m_command.Clear(g_blue.data(), rtv.Get());
     m_command.ClearDepthStencil(dsView.Get());
 
