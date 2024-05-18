@@ -187,6 +187,7 @@
     <ClCompile Include="modules\data\serialize\WavefrontObj.ixx" />
     <ClCompile Include="modules\engine\EngineLogger.ixx" />
     <ClCompile Include="modules\engine\EngineCodes.ixx" />
+    <ClCompile Include="modules\engine\Clock.ixx" />
     <ClCompile Include="modules\math\GeometryMath.ixx" />
     <ClCompile Include="modules\math\MathLib.ixx" />
     <ClCompile Include="modules\math\MatrixMath.ixx" />
