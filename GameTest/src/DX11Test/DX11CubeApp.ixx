@@ -25,7 +25,7 @@ module;
 #include <string>
 #include <ranges>
 #include <functional>
-
+#include <algorithm>
 #include <d3d11_4.h>
 #include "LSTimer.h"
 #include "assimp/Importer.hpp"
@@ -48,6 +48,7 @@ import DirectXCommon;
 import LSEDataLib;
 import LSE.Serialize.WavefrontObj;
 import LSE.Serialize.AssimpLoader;
+import Clock;
 import DX11Systems;
 
 using namespace Microsoft::WRL;
@@ -128,7 +129,8 @@ namespace gt::dx11
     LS::DX::DXCamera g_camera(SCREEN_WIDTH, SCREEN_HEIGHT, XMVectorSet(0.0f, 0.0f, -5.0f, 0.0f), g_LookAtDefault, g_UpVec, 90.0f);
     LS::DX::FreeFlyCameraControllerDX g_cameraController(g_camera);
     constexpr auto g_indexData = Geo::Generator::CreateCubeIndexArray();
-    LS::LSTimer<std::uint64_t, 1ul, 1000ul> g_timer;
+    //LS::LSTimer<std::uint64_t, 1ul, 1000ul> g_timer;
+    LS::Clock g_clock;
     ComPtr<ID3D11VertexShader> vertShader;
     ComPtr<ID3D11PixelShader> pixShader;
     ComPtr<ID3D11RasterizerState> rsSolid;
@@ -179,10 +181,21 @@ namespace gt::dx11
     {
         if (elapsed == 0)
             return;
-        auto radians = LS::Math::ToRadians(10 / static_cast<float>(elapsed));
-        XMVECTOR rotationAxis = XMVectorSet(0.450f, 1.0f, 0.250f, 1.0f);
+        static float accumulated = 0.0f;
+        accumulated += elapsed * 0.000001;
+        float angles = 360.0f * accumulated;
+        if (angles >= 360.0f)
+        {
+            angles = 360.0f;
+        }
+        auto radians = LS::Math::ToRadians(angles);
+        XMVECTOR rotationAxis = XMVectorSet(0.450f, 1.0f, 0.250f, 0.0f);
         auto rotQuat = XMQuaternionRotationNormal(rotationAxis, radians);
-        g_Cube.Rotation = XMQuaternionMultiply(g_Cube.Rotation, rotQuat);
+        g_Cube.Rotation = rotQuat;
+        if (accumulated >= 1.0f)
+        {
+            accumulated = 0.0f;
+        }
     }
 
     void UpdateCamera()
@@ -202,7 +215,8 @@ namespace gt::dx11
     {
         using enum LS::LS_INPUT_KEY;
         LS::Vec3F movement;
-        auto dt = g_timer.GetDeltaTime().count() * 1'000.0f;
+        //auto dt = g_timer.GetDeltaTime().count() * 1'000.0f;
+        auto dt = g_clock.GetDeltaTimeUs();
         float movespeed = 300.0f / dt;
         for (auto [k, p] : g_keysPressedMap)
         {
@@ -423,7 +437,7 @@ void gt::dx11::DX11CubeApp::Run()
 {
     IsRunning = true;
     Window->Show();
-    g_timer.Start();
+    g_clock.Start();
     auto viewOpt = m_bufferCache.Get("cam_view");
     auto projOpt = m_bufferCache.Get("cam_proj");
     auto mvpOpt = m_bufferCache.Get("cam_mvp");
@@ -445,14 +459,13 @@ void gt::dx11::DX11CubeApp::Run()
             std::cout << "Paused app!\n";
             continue;
         }
-        auto elapsed = g_timer.GetTotalTimeTicked();
-        auto deltaTime = g_timer.GetDeltaTime();
-
+        uint64_t dt = g_clock.GetDeltaTimeUs();
+        
         Window->PollEvent();
-        g_timer.Tick();
+        g_clock.Tick();
 
         UpdateMovement();
-        RotateCube(deltaTime.count());
+        RotateCube(dt);
         UpdateCubeTransform();
         UpdateCamera();
         
@@ -513,7 +526,8 @@ void gt::dx11::DX11CubeApp::OnMouseMove(uint32_t x, uint32_t y)
     {
         int lx = x - g_lastPoint.x;
         int ly = y - g_lastPoint.y;
-        auto dt = g_timer.GetDeltaTime().count() / 1'000.0f;
+        //auto dt = g_timer.GetDeltaTime().count() / 1'000.0f;
+        auto dt = g_clock.GetDeltaTimeUs();
         float mx = lx * 10.5f * dt;
         float my = ly * 10.75f * dt;
         // Normalize between screen size //
