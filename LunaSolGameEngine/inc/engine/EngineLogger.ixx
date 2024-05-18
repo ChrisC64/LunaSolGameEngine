@@ -9,7 +9,7 @@ module;
 #include <memory>
 #include <filesystem>
 #include <utility>
-#include "engine/EngineDefines.h"
+#include "EngineDefines.h"
 
 export module Engine.Logger;
 
