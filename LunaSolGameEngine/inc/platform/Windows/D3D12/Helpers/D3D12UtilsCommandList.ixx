@@ -11,7 +11,6 @@ module;
 #include <d3dx12\d3dx12_barriers.h>
 #include <chrono>
 #include "engine\EngineLogDefines.h"
-#include "platform\Windows\Win32\WinApiUtils.h"
 #include <chrono>
 //NOMINMAX doesn't seem to work here. Though this might be because of std
 #ifdef min
@@ -22,6 +21,7 @@ module;
 #undef max
 #endif
 export module D3D12Lib:D3D12Utils.Commands;
+import Win32.Utils;
 
 namespace WRL = Microsoft::WRL;
 

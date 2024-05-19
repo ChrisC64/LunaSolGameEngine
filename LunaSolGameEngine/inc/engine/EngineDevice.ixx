@@ -7,11 +7,12 @@ module;
 #include <unordered_map>
 #include <string>
 #include <array>
-#include "engine/EngineDefines.h"
 export module Engine.LSDevice;
 
 import Engine.LSWindow;
 import Engine.EngineCodes;
+import Engine.Shader;
+import Engine.Defines;
 import LSEDataLib;
 import Util.StdUtils;
 

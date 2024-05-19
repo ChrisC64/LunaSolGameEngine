@@ -7,10 +7,10 @@ module;
 #include <cstdint>
 #include <format>
 #include <optional>
-#include "engine/EngineDefines.h"
 export module DX11Systems:DX11BufferCache;
 import Engine.EngineCodes;
-import Util.MSUtils;
+import Engine.Defines;
+import Win32.ComUtils;
 
 template <class T>
 using ComPtr = Microsoft::WRL::ComPtr<T>;

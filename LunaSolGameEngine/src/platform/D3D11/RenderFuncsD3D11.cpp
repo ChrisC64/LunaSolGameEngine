@@ -13,7 +13,7 @@
 //#undef min
 //
 //import D3D11.RenderFuncD3D11;
-//import Util.MSUtils;
+//import Win32.ComUtils;
 //import LSEDataLib;
 //import Engine.LSDevice;
 //

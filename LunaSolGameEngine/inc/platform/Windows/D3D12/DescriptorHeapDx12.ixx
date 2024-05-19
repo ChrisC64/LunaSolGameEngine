@@ -3,11 +3,11 @@ module;
 #include <d3dx12\d3dx12_root_signature.h>
 #include <wrl/client.h>
 #include <cstdint>
-#include "platform\Windows\Win32\WinApiUtils.h"
 export module D3D12Lib:DescriptorHeapDx12;
 
 import Engine.EngineCodes;
-import Util.MSUtils;
+import Win32.ComUtils;
+import Win32.Utils;
 
 namespace WRL = Microsoft::WRL;
 

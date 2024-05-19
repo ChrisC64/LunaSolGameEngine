@@ -148,7 +148,9 @@ export namespace LS::DX
         void RotateAxis(LS::Vec3F axis, float anglesDeg)
         {
             auto rads = LS::Math::ToRadians(anglesDeg);
-            auto rotation = XMQuaternionRotationNormal(XMVectorSet(axis.x, axis.y, axis.z, 1.0f), rads);
+            auto quat = XMVectorSet(axis.x, axis.y, axis.z, 1.0f);
+            auto norm = XMQuaternionNormalize(quat);
+            auto rotation = XMQuaternionRotationNormal(norm, rads);
 
             m_camera.Forward = XMQuaternionMultiply(m_camera.Forward, rotation);
             m_camera.Up = XMQuaternionMultiply(m_camera.Up, rotation);

@@ -1,4 +1,4 @@
-#pragma once
+module;
 #include <string>
 //#include <format>
 #include <fmt/format.h>
@@ -7,7 +7,9 @@
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
 #include <Windows.h> 
-namespace LS::Win32
+export module Win32.Utils;
+
+export namespace LS::Win32
 {
     [[nodiscard]] inline std::string HrToString(HRESULT hr)
     {
@@ -27,5 +29,4 @@ namespace LS::Win32
 
         return eventHandle;
     }
-
 }

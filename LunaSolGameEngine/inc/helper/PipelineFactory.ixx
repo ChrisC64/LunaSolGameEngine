@@ -1,10 +1,10 @@
 module;
 #include <string_view>
-#include "engine/EngineDefines.h"
 export module Helper.PipelineFactory;
 
 import Engine.LSDevice;
 import Engine.EngineCodes;
+import Engine.Defines;
 
 export namespace LS
 {

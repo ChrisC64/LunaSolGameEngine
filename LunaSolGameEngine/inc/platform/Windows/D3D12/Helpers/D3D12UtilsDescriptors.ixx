@@ -5,9 +5,9 @@ module;
 #include <cassert>
 #include <directx/d3dx12.h>
 #include <vector>
-#include "platform/Windows/Win32/WinApiUtils.h"
 #include "engine/EngineLogDefines.h"
 export module D3D12Lib:D3D12Utils.Descriptors;
+import Win32.Utils;
 
 export namespace LS::Platform::Dx12
 {

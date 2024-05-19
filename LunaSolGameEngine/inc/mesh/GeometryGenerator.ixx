@@ -2,6 +2,7 @@ module;
 #include <array>
 #include <string>
 export module GeometryGenerator;
+import Engine.Defines;
 import LSEDataLib;
 
 export namespace LS::Geo::Generator

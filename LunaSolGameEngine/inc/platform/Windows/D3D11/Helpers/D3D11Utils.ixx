@@ -13,13 +13,14 @@ module;
 #include <d3dcompiler.h>
 #include <windows.h>
 #include <d3d11_4.h>
-#include "engine/EngineDefines.h"
 
 export module D3D11.Utils;
 
 import D3D11.LSTypeWrapper;
 import LSEDataLib;
 import Engine.LSDevice;
+import Engine.Shader;
+import Engine.Defines;
 
 /**
  * @brief A list of common helper functions that enable us to perform common functions a little more easily. 

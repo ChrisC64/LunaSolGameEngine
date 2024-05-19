@@ -181,7 +181,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="inc\data\BufferTypes.ixx" />
-    <ClCompile Include="inc\data\Concepts.ixx" />
+    <ClCompile Include="inc\engine\EngineDefines.ixx" />
     <ClCompile Include="inc\data\DataTypes.ixx" />
     <ClCompile Include="inc\data\Input.ixx" />
     <ClCompile Include="inc\data\LSEDataLib.ixx" />
@@ -189,7 +189,7 @@
     <ClCompile Include="inc\data\Resource.ixx" />
     <ClCompile Include="inc\data\serialize\AssimpLoader.ixx" />
     <ClCompile Include="inc\data\serialize\WavefrontObj.ixx" />
-    <ClCompile Include="inc\data\Shader.ixx" />
+    <ClCompile Include="inc\engine\EngineShader.ixx" />
     <ClCompile Include="inc\data\TextureTypes.ixx" />
     <ClCompile Include="inc\engine\Clock.ixx" />
     <ClCompile Include="inc\engine\EngineApp.ixx" />
@@ -198,6 +198,7 @@
     <ClCompile Include="inc\engine\EngineDevice.ixx" />
     <ClCompile Include="inc\engine\EngineLogger.ixx" />
     <ClCompile Include="inc\engine\EngineWindow.ixx" />
+    <ClCompile Include="inc\engine\LSEngine.ixx" />
     <ClCompile Include="inc\helper\IOHelper.ixx" />
     <ClCompile Include="inc\helper\LSCommonTypes.ixx" />
     <ClCompile Include="inc\helper\PipelineFactory.ixx" />
@@ -205,6 +206,7 @@
     <ClCompile Include="inc\math\MathLib.ixx" />
     <ClCompile Include="inc\math\MatrixMath.ixx" />
     <ClCompile Include="inc\mesh\GeometryGenerator.ixx" />
+    <ClCompile Include="inc\platform\Windows\WindowsLib.ixx" />
     <ClCompile Include="inc\platform\Windows\D3D11\D3D11Lib.ixx" />
     <ClCompile Include="inc\platform\Windows\D3D11\DeviceD3D11.ixx" />
     <ClCompile Include="inc\platform\Windows\D3D11\Helpers\D3D11HelperStates.ixx" />
@@ -230,12 +232,13 @@
     <ClCompile Include="inc\platform\Windows\DirectX\DXMatrixUtils.ixx" />
     <ClCompile Include="inc\platform\Windows\DirectX\ResourceManagerD3D12.ixx" />
     <ClCompile Include="inc\platform\Windows\DXGI\DXGIHelper.ixx" />
-    <ClCompile Include="inc\platform\Windows\FrameBufferDxgi.ixx" />
-    <ClCompile Include="inc\platform\Windows\Win32Window.ixx" />
-    <ClCompile Include="inc\utils\MSUtils.ixx" />
+    <ClCompile Include="inc\platform\Windows\DXGI\FrameBufferDxgi.ixx" />
+    <ClCompile Include="inc\platform\Windows\Win32\Win32Window.ixx" />
+    <ClCompile Include="inc\platform\Windows\Win32\Win32Utils.ixx" />
+    <ClCompile Include="inc\platform\Windows\Win32\ComUtils.ixx" />
     <ClCompile Include="inc\utils\StdUtils.ixx" />
     <ClCompile Include="inc\utils\Util.ixx" />
-       <ClCompile Include="src\engine\EngineApp.cpp" />
+    <ClCompile Include="src\engine\EngineApp.cpp" />
     <ClCompile Include="src\helper\PipelineFactory.cpp" />
     <ClCompile Include="src\platform\D3D11\DeviceD3D11.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
@@ -258,10 +261,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="inc\engine\EngineDefines.h" />
     <ClInclude Include="inc\engine\EngineLogDefines.h" />
-    <ClInclude Include="inc\LSTimer.h" />
-    <ClInclude Include="inc\platform\Windows\Win32\WinApiUtils.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

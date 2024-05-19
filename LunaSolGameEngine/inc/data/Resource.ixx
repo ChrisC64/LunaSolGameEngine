@@ -1,11 +1,12 @@
 module;
 #include <concepts>
 #include <type_traits>
-#include "engine/EngineDefines.h"
 
 export module LSEDataLib:Resource;
 
 import Engine.App;
+import Engine.Defines;
+import Engine.EngineCodes;
 //TODO: Not sure if going to keep, my goal was to have something that keeps storage of all resource
 // objects, but I'll probably work to keep separate resources like Buffers, Textures, Sound, etc. 
 // instead of generalizing them. 

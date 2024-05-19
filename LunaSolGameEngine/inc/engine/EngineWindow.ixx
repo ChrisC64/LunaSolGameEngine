@@ -42,7 +42,7 @@ export namespace LS
             return m_title;
         }
 
-        void SetBackgroundColor(ColorRGBA color)
+        void SetBackgroundColor(RGBA color)
         {
             m_bgColor = color;
         }
@@ -126,7 +126,7 @@ export namespace LS
         LSWindowHandle m_winHandle;
         OnWindowEvent m_onWindowEvent;
         //@brief The color to fill the window background
-        ColorRGBA m_bgColor{ 1.0f, 1.0f, 1.0f, 1.0f };
+        RGBA m_bgColor{ 1.0f, 1.0f, 1.0f, 1.0f };
         MousePos m_mousePos{ 0, 0 };
         LSWindowBase(uint32_t width, uint32_t height, std::wstring_view  title) : m_width(width),
             m_height(height),

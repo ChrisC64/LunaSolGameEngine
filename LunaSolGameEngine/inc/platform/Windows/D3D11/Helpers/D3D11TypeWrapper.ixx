@@ -7,6 +7,7 @@ export module D3D11.LSTypeWrapper;
 
 import LSEDataLib;
 import Engine.LSDevice;
+import Engine.Shader;
 
 /**
  * @brief A list of conversion functions from Engine common types to DirectX/DXGI formats 

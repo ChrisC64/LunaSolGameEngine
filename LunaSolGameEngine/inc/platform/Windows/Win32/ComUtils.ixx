@@ -6,11 +6,10 @@ module;
 #include <d3d11_4.h>
 #include <stdexcept>
 #include <wrl/client.h>
-
 #include <dxguids/dxguids.h>
 
-#include "platform\Windows\Win32\WinApiUtils.h"
-export module Util.MSUtils;
+export module Win32.ComUtils;
+import Win32.Utils;
 
 //Utility functions for Microsoft specific stuff //
 export namespace LS::Utils

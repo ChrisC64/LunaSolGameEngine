@@ -6,7 +6,7 @@ module;
 #include <compare>
 
 export module LSEDataLib:MathTypes;
-import :Concepts;
+import Engine.Defines;
 
 export namespace LS
 {

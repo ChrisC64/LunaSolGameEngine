@@ -15,15 +15,15 @@
 #include <exception>
 #include <iostream>
 #include <format>
-#include "platform/Windows/Win32/WinApiUtils.h"
 #include "engine/EngineLogDefines.h"
-#include "engine/EngineDefines.h"
 import D3D12Lib;
 import DXGIHelper;
 import LSEDataLib;
 import Platform.Win32Window;
 import Engine.Logger;
 import Engine.EngineCodes;
+import Engine.Defines;
+import Win32.Utils;
 
 using namespace LS::Win32;
 using namespace LS::Platform::Dx12;

@@ -9,20 +9,20 @@ import :MathTypes;
 
 export namespace LS
 {
-    struct ColorRGBA
+    struct RGBA
     {
         float R, G, B, A;
-        ColorRGBA() = default;
-        ColorRGBA(float r, float g, float b, float a) : R(r), G(g), B(b), A(a)
+        RGBA() = default;
+        RGBA(float r, float g, float b, float a) : R(r), G(g), B(b), A(a)
         {}
 
-        ColorRGBA(uint8_t r, uint8_t g, uint8_t b, uint8_t a) : R(r / 255.0f), G(g / 255.0f), B(b / 255.0f), A(a / 255.0f)
+        RGBA(uint8_t r, uint8_t g, uint8_t b, uint8_t a) : R(r / 255.0f), G(g / 255.0f), B(b / 255.0f), A(a / 255.0f)
         {}
 
-        ColorRGBA(const ColorRGBA& other) : R(other.R), G(other.G), B(other.B), A(other.A)
+        RGBA(const RGBA& other) : R(other.R), G(other.G), B(other.B), A(other.A)
         {}
 
-        bool operator==(const ColorRGBA& rhs) noexcept
+        bool operator==(const RGBA& rhs) noexcept
         {
             return R == rhs.R && G == rhs.G && B == rhs.B && A == rhs.A;
         }

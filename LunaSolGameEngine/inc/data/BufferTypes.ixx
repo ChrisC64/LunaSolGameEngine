@@ -4,10 +4,10 @@ module;
 #include <unordered_map>
 #include <format>
 #include <optional>
-#include "engine/EngineDefines.h"
 export module LSEDataLib:BufferTypes;
 import :DataTypes;
 import Engine.EngineCodes;
+import Engine.Defines;
 
 export namespace LS
 {

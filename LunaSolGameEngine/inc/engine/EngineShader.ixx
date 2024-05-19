@@ -8,10 +8,10 @@ module;
 #include <span>
 #include <format>
 
-#include "engine/EngineDefines.h"
-export module LSEDataLib:Shader;
+export module Engine.Shader;
 
 import Util.StdUtils;
+import Engine.Defines;
 
 export namespace LS
 {

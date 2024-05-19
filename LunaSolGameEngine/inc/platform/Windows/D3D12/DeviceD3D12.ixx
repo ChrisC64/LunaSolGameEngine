@@ -12,7 +12,6 @@ module;
 #include <array>
 #include <cstdint>
 #include <d3dx12.h>
-#include "engine/EngineDefines.h"
 
 #pragma comment(lib, "dxguid.lib")
 
@@ -24,6 +23,7 @@ import :ResourceManagerD3D12;
 import Platform.Win32Window;
 import Engine.App;
 import Engine.EngineCodes;
+import Engine.Defines;
 
 namespace WRL = Microsoft::WRL;
 

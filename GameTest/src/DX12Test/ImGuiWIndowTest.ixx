@@ -31,15 +31,7 @@ module;
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 export module ImGuiWindowTest;
 
-import LSEDataLib;
-import Engine.App;
-import D3D12Lib;
-import Platform.Win32Window;
-import Helper.LSCommonTypes;
-import Helper.PipelineFactory;
-import Util.MSUtils;
-import DXGIHelper;
-
+import LSEngine;
 
 namespace gt::dx12::ImGuiSample
 {
@@ -68,7 +60,7 @@ namespace gt::dx12::ImGuiSample
 
         ~ImGuiSample() = default;
 
-        auto Initialize(SharedRef<LS::LSCommandArgs> args) -> LS::System::ErrorCode override;
+        auto Initialize(LS::SharedRef<LS::LSCommandArgs> args) -> LS::System::ErrorCode override;
         void Run() override;
         void CreateRenderTargets();
         void CleanupRenderTargets();
@@ -107,7 +99,7 @@ module : private;
 
 using namespace gt::dx12;
 
-auto gt::dx12::ImGuiSample::ImGuiSample::Initialize(SharedRef<LS::LSCommandArgs> args) -> LS::System::ErrorCode
+auto gt::dx12::ImGuiSample::ImGuiSample::Initialize(LS::SharedRef<LS::LSCommandArgs> args) -> LS::System::ErrorCode
 {
     if (!CreateDeviceD3D())
         return LS::System::CreateFailCode("Failed to create device D3D");

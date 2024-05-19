@@ -9,12 +9,12 @@ module;
 #include <memory>
 #include <filesystem>
 #include <utility>
-#include "EngineDefines.h"
 
 export module Engine.Logger;
 
 import Engine.EngineCodes;
 import LSEDataLib;
+import Engine.Defines;
 
 export namespace LS::Log
 {

@@ -27,20 +27,16 @@ module;
 #include <functional>
 #include <algorithm>
 #include <d3d11_4.h>
-#include "LSTimer.h"
 #include "assimp/Importer.hpp"
 #include "assimp/scene.h"
 #include "assimp/postprocess.h"
 
-
 export module DX11CubeApp;
 
-import Engine.App;
+import LSEngine;
 import D3D11Lib;
 import Platform.Win32Window;
 import Helper.LSCommonTypes;
-import Engine.Logger;
-import Engine.LSDevice;
 import Helper.IO;
 import GeometryGenerator;
 import MathLib;
@@ -182,15 +178,17 @@ namespace gt::dx11
         if (elapsed == 0)
             return;
         static float accumulated = 0.0f;
-        accumulated += elapsed * 0.000001;
+        accumulated += elapsed * 0.000001f;
         float angles = 360.0f * accumulated;
         if (angles >= 360.0f)
         {
             angles = 360.0f;
         }
+
         auto radians = LS::Math::ToRadians(angles);
-        XMVECTOR rotationAxis = XMVectorSet(0.450f, 1.0f, 0.250f, 0.0f);
-        auto rotQuat = XMQuaternionRotationNormal(rotationAxis, radians);
+        XMVECTOR rotationAxis = XMVectorSet(angles * 0.5f, angles, angles * 0.25f, 1.0f);
+        auto norm = XMQuaternionNormalize(rotationAxis);
+        auto rotQuat = XMQuaternionRotationNormal(norm, radians);
         g_Cube.Rotation = rotQuat;
         if (accumulated >= 1.0f)
         {
@@ -268,7 +266,7 @@ gt::dx11::DX11CubeApp::DX11CubeApp(uint32_t width, uint32_t height, std::wstring
 auto gt::dx11::DX11CubeApp::Initialize(SharedRef<LS::LSCommandArgs> args) -> LS::System::ErrorCode
 {
     using enum LS::System::ErrorStatus;
-    LS::ColorRGBA bgColor(1.0f, 0.0f, 0.0f, 1.0f);
+    LS::RGBA bgColor(1.0f, 0.0f, 0.0f, 1.0f);
     Window->SetBackgroundColor(bgColor);
 
     Window->RegisterKeyboardDown(std::bind(&gt::dx11::DX11CubeApp::OnKeyboardDown, this, _1));
@@ -526,22 +524,13 @@ void gt::dx11::DX11CubeApp::OnMouseMove(uint32_t x, uint32_t y)
     {
         int lx = x - g_lastPoint.x;
         int ly = y - g_lastPoint.y;
-        //auto dt = g_timer.GetDeltaTime().count() / 1'000.0f;
         auto dt = g_clock.GetDeltaTimeUs();
-        float mx = lx * 10.5f * dt;
-        float my = ly * 10.75f * dt;
+        float mx = lx * 0.03f;
+        float my = ly * 0.02f;
         // Normalize between screen size //
-        /*auto nx = px / (float)SCREEN_WIDTH;
-        auto ny = py / (float)SCREEN_HEIGHT;*/
-        //float nx = x / (float)SCREEN_WIDTH;
-        //float ny = y / (float)SCREEN_HEIGHT;
-        LS::Vec3F rotation = { .x = 0.0f, .y = 1.0f, .z = 0.0f };
-
-        //auto value = nx / 360.0;
-        //auto value = std::lerp(0.0f, 360.0f, nx);
         std::cout << "Value: " << mx << "\n";
-        g_cameraController.RotateYaw(mx);
-        g_cameraController.RotatePitch(-my);
+        g_cameraController.RotateYaw(mx * (dt * 0.001f));
+        g_cameraController.RotatePitch(-my * (dt * 0.001f));
         g_lastPoint.x = x;
         g_lastPoint.y = y;
     }

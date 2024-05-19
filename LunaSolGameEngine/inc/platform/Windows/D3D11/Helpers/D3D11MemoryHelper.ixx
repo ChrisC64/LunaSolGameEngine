@@ -9,13 +9,12 @@ module;
 #include <stdexcept>
 #include <cassert>
 #include <wrl/client.h>
-#include "platform/Windows/Win32/WinApiUtils.h"
-#include "engine/EngineDefines.h"
 export module D3D11.MemoryHelper;
 import LSEDataLib;
 import Engine.Logger;
 import Engine.EngineCodes;
-
+import Engine.Defines;
+import Win32.Utils;
 template<class T>
 using ComPtr = Microsoft::WRL::ComPtr<T>;
 

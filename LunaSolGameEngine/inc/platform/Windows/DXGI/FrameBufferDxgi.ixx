@@ -8,13 +8,13 @@ module;
 #include <cassert>
 #include <exception>
 #include <format>
-#include "platform\Windows\Win32\WinApiUtils.h"
 
 export module D3D12Lib:FrameBufferDxgi;
 
 import :FrameDx12;
 import Engine.EngineCodes;
-import Util.MSUtils;
+import Win32.ComUtils;
+import Win32.Utils;
 
 namespace WRL = Microsoft::WRL;
 

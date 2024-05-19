@@ -7,11 +7,11 @@
 #include <string>
 #include <cassert>
 #include <format>
-#include "platform/Windows/Win32/WinApiUtils.h"
 import D3D12Lib;
 
-import Util.MSUtils;
+import Win32.ComUtils;
 import Engine.EngineCodes;
+import Win32.Utils;
 
 using namespace LS::Platform::Dx12;
 

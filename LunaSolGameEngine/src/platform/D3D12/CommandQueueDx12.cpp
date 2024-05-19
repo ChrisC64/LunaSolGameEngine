@@ -8,7 +8,7 @@
 
 import D3D12Lib;
 
-import Util.MSUtils;
+import Win32.ComUtils;
 import Engine.EngineCodes;
 
 using namespace LS::Platform::Dx12;

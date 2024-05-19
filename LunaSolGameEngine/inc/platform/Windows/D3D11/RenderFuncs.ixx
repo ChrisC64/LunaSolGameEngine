@@ -8,7 +8,6 @@ module;
 #include <dxgi.h>
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
-#include "engine/EngineDefines.h"
 #include "engine/EngineLogDefines.h"
 
 #pragma comment(lib, "d3d11")
@@ -16,9 +15,10 @@ module;
 #undef max
 #undef min
 export module D3D11.RenderFuncD3D11;
-import Util.MSUtils;
+import Win32.ComUtils;
 import LSEDataLib;
 import Engine.LSDevice;
+import Engine.Defines;
 
 namespace WRL = Microsoft::WRL;
 
@@ -85,7 +85,7 @@ export namespace LS::Win32
         if (FAILED(hr))
         {
             LS_LOG_ERROR(L"Failed to get back buffer from swap chain");
-            return std::nullopt;
+            return {};
         }
 
         D3D11_TEXTURE2D_DESC swapDesc;
@@ -96,7 +96,7 @@ export namespace LS::Win32
         if (FAILED(hr))
         {
             LS_LOG_ERROR(L"Failed to create render target view");
-            return std::nullopt;
+            return {};
         }
         return rtv;
     }
@@ -111,7 +111,7 @@ export namespace LS::Win32
         if (FAILED(result))
         {
             LS_LOG_ERROR(L"Failed to obtain back buffer for CreateDepthStencilViewFromSwapChain");
-            return std::nullopt;
+            return {};
         }
 
         D3D11_TEXTURE2D_DESC depthBufferDesc{};
@@ -126,14 +126,14 @@ export namespace LS::Win32
         if (FAILED(result))
         {
             LS_LOG_ERROR(L"Failed to create the texture resource in CreateDepthStencilViewFromSwapChain");
-            return std::nullopt;
+            return {};
         }
 
         result = pDevice->CreateDepthStencilView(depthBuffer.Get(), nullptr, &depthStencil);
         if (FAILED(result))
         {
             LS_LOG_ERROR(L"Failed to create the depth stencil view CreateDepthStencilViewFromSwapChain");
-            return std::nullopt;
+            return {};
         }
         return depthStencil;
     }

@@ -9,13 +9,13 @@ module;
 #include <array>
 #include <d3d11_4.h>
 #include <wrl/client.h>
-#include "engine/EngineDefines.h"
 
 export module D3D11.PipelineFactory;
 import Helper.PipelineFactory;
 import Engine.App;
 import Engine.EngineCodes; 
-import Util;
+import Engine.Shader;
+import Engine.Defines;
 import D3D11.Device;
 
 namespace WRL = Microsoft::WRL;

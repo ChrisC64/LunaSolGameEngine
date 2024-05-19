@@ -8,13 +8,13 @@ module;
 #include <string>
 #include <d3d12.h>
 #include "engine/EngineLogDefines.h"
-#include "platform/Windows/Win32/WinApiUtils.h"
-#include "engine/EngineDefines.h"
 export module DXGIHelper;
 
 import Engine.Logger;
 import Engine.EngineCodes;
+import Engine.Defines;
 import D3D12Lib;
+import Win32.Utils;
 
 namespace WRL = Microsoft::WRL;
 

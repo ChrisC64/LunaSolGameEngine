@@ -5,19 +5,19 @@ module;
 #include <filesystem>
 #include <wrl/client.h>
 #include <d3d11_4.h>
-#include "engine/EngineDefines.h"
 export module D3D11.RenderD3D11;
 
 import Engine.LSWindow;
 import Engine.LSDevice;
 import Engine.EngineCodes;
+import Engine.Defines;
 import D3D11.PipelineFactory;
 import D3D11.Device;
 import D3D11.Utils;
 import D3D11.PipelineFactory;
 import D3D11.RenderFuncD3D11;
 import D3D11.MemoryHelper;
-import Util.MSUtils;
+import Win32.ComUtils;
 import DirectXCommon;
 
 namespace LS
@@ -235,15 +235,15 @@ export namespace LS::Win32
             return m_context;
         }
 
-        auto GetCommandList() const -> Nullable<ID3D11CommandList*>
+        auto GetCommandList() const -> LS::Nullable<ID3D11CommandList*>
         {
             if (m_mode == COMMAND_MODE::IMMEDIATE)
-                return std::nullopt;
+                return {};
             ID3D11CommandList* pCommList;
             const auto hr = m_context->FinishCommandList(false, &pCommList);
             if (FAILED(hr))
             {
-                return std::nullopt;
+                return {};
             }
 
             return pCommList;
@@ -312,10 +312,10 @@ using namespace LS::Win32;
 #define FIND_OR_NULL(c, o, exp) \
 for (const auto& o : c) \
 { if (exp) return o; } \
-return std::nullopt
+return {}
 
 template <class T, class C>
-constexpr auto FindOrNull(const C& container, const auto& query) -> Nullable<T>
+constexpr auto FindOrNull(const C& container, const auto& query) -> LS::Nullable<T>
 {
     for (const auto& obj : container)
     {
@@ -324,7 +324,7 @@ constexpr auto FindOrNull(const C& container, const auto& query) -> Nullable<T>
             return obj.Resource;
         }
     }
-    return std::nullopt;
+    return {};
 }
 
 

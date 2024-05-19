@@ -6,15 +6,15 @@ module;
 #include <vector>
 #include <memory>
 #include <ranges>
-#include "engine/EngineDefines.h"
 export module Engine.App;
 
-export import LSEDataLib;
+import LSEDataLib;
 
-export import Engine.LSDevice;
-export import Engine.LSWindow;
-export import Engine.LSCamera;
-export import Engine.EngineCodes;
+import Engine.LSDevice;
+import Engine.LSWindow;
+import Engine.LSCamera;
+import Engine.EngineCodes;
+import Engine.Defines;
 
 export namespace LS::Global
 {

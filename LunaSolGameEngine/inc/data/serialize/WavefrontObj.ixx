@@ -15,9 +15,9 @@ module;
 #include "assimp/Importer.hpp"
 #include "assimp/scene.h"
 #include "assimp/postprocess.h"
-#include "engine/EngineDefines.h"
 export module LSE.Serialize.WavefrontObj;
 import LSEDataLib;
+import Engine.Defines;
 import Engine.EngineCodes;
 
 namespace LS::Serialize
