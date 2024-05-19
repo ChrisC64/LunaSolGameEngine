@@ -18,7 +18,7 @@
 #include "engine/EngineLogDefines.h"
 import D3D12Lib;
 import DXGIHelper;
-import LSEDataLib;
+import LSDataLib;
 import Platform.Win32Window;
 import Engine.Logger;
 import Engine.EngineCodes;

@@ -7,7 +7,7 @@ module;
 #include "assimp/scene.h"
 
 export module LSE.Serialize.AssimpLoader;
-import LSEDataLib;
+import LSDataLib;
 import Engine.EngineCodes;
 
 namespace fs = std::filesystem;

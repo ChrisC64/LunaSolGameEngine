@@ -1,12 +1,11 @@
-module;
-#include <concepts>
-#include <type_traits>
-#include <optional>
-#include <string>
-#include <memory>
-#include <vector>
-
 export module Engine.Defines;
+import <concepts>;
+import <type_traits>;
+import <optional>;
+import <string>;
+import <memory>;
+import <vector>;
+import <array>;
 
 export namespace LS
 {
@@ -66,4 +65,43 @@ export namespace LS
 
     template <class T>
     concept DestructibleNoThrow = std::is_nothrow_destructible_v<T>;
+
+    using LSWindowHandle = void*;
+    using LSAppInstance = void*;
+
+    struct Rect
+    {
+        uint32_t TopX;
+        uint32_t TopY;
+        uint32_t Width;
+        uint32_t Height;
+    };
+}
+
+export namespace LS::Colors
+{
+    struct RGBA
+    {
+        float R, G, B, A;
+        RGBA() = default;
+        RGBA(float r, float g, float b, float a) : R(r), G(g), B(b), A(a)
+        {}
+
+        RGBA(uint8_t r, uint8_t g, uint8_t b, uint8_t a) : R(r / 255.0f), G(g / 255.0f), B(b / 255.0f), A(a / 255.0f)
+        {}
+
+        RGBA(const RGBA& other) : R(other.R), G(other.G), B(other.B), A(other.A)
+        {}
+
+        bool operator==(const RGBA& rhs) noexcept
+        {
+            return R == rhs.R && G == rhs.G && B == rhs.B && A == rhs.A;
+        }
+    };
+
+    constexpr std::array<float, 4> RED = { 1.0f, 0.0f, 0.0f, 1.0f };
+    constexpr std::array<float, 4> GREEN = { 0.0f, 1.0f, 0.0f, 1.0f };
+    constexpr std::array<float, 4> BLUE = { 0.0f, 0.0f, 1.0f, 1.0f };
+    constexpr std::array<float, 4> BLACK = { 0.0f, 0.0f, 0.0f, 1.0f };
+    constexpr std::array<float, 4> WHITE = { 1.0f, 1.0f, 1.0f, 1.0f };
 }

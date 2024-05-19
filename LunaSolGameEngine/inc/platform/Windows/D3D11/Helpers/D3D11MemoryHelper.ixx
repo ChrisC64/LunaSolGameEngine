@@ -10,7 +10,7 @@ module;
 #include <cassert>
 #include <wrl/client.h>
 export module D3D11.MemoryHelper;
-import LSEDataLib;
+import LSDataLib;
 import Engine.Logger;
 import Engine.EngineCodes;
 import Engine.Defines;

@@ -11,7 +11,7 @@ import D3D11.PipelineFactory;
 import Engine.App;
 import Engine.EngineCodes;
 import D3D11Lib;
-import LSEDataLib;
+import LSDataLib;
 
 using namespace LS;
 using namespace LS::Win32;

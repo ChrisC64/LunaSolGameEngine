@@ -2,7 +2,7 @@ module;
 #include <concepts>
 #include <type_traits>
 
-export module LSEDataLib:Resource;
+export module LSDataLib:Resource;
 
 import Engine.App;
 import Engine.Defines;

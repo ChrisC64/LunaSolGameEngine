@@ -3,7 +3,8 @@ module;
 #include <string>
 
 export module Engine.LSWindow;
-import LSEDataLib;
+import Engine.Input;
+import Engine.Defines;
 
 export namespace LS
 {
@@ -11,6 +12,33 @@ export namespace LS
     {
         uint32_t x, y;
     };
+
+    enum class WINDOW_EVENT : int32_t
+    {
+        LOST_FOCUS = 0, // @brief window is no longer active window
+        GAIN_FOCUS, // @brief window is active 
+        LEAVE_WINDOW, // @brief cursor moves out of window region
+        ENTER_WINDOW, // @brief cursor has moved back into window region
+        CLOSE_WINDOW, // @brief the window has been closed
+        MINIMIZED_WINDOW, //@brief the window has been minimized
+        RESTORED_WINDOW, //@brief the window has been restored from minimized
+        MAXIMIZED_WINDOW, //@brief the window has been maximized
+        WINDOW_RESIZE_START, //@brief the start of a window resize event
+        WINDOW_RESIZE_END, //@brief the window has been resized
+        WINDOW_MOVE_START, //@brief the window is being moved
+        WINDOW_MOVE_END, //@brief the window has finished moving
+    };
+
+    /**
+    * @brief The Window Event Callback
+    *
+    * Returns events that are important to those who manage the Window
+    * @code
+    * void function_name(@link LS::WINDOW_EVENT ev)
+    * @code
+    * @param @link LS::WINDOW_EVENT the event
+    */
+    using OnWindowEvent = std::function<void(WINDOW_EVENT ev)>;
 
     class LSWindowBase
     {
@@ -42,7 +70,7 @@ export namespace LS
             return m_title;
         }
 
-        void SetBackgroundColor(RGBA color)
+        void SetBackgroundColor(Colors::RGBA color)
         {
             m_bgColor = color;
         }
@@ -75,27 +103,27 @@ export namespace LS
             return m_winHandle;
         }
 
-        void RegisterKeyboardDown(LSOnKeyboardDown keyboardDown)
+        void RegisterKeyboardDown(Input::LSOnKeyboardDown keyboardDown)
         {
             m_onKeyDown = keyboardDown;
         }
 
-        void RegisterKeyboardUp(LSOnKeyboardUp keyboardUp)
+        void RegisterKeyboardUp(Input::LSOnKeyboardUp keyboardUp)
         {
             m_onKeyUp = keyboardUp;
         }
 
-        void RegisterMouseDown(LSOnMouseDown mouseDown)
+        void RegisterMouseDown(Input::LSOnMouseDown mouseDown)
         {
             m_onMouseDown = mouseDown;
         }
 
-        void RegisterMouseUp(LSOnMouseUp mouseUp)
+        void RegisterMouseUp(Input::LSOnMouseUp mouseUp)
         {
             m_onMouseUp = mouseUp;
         }
 
-        void RegisterMouseWheel(LSOnMouseWheelScroll mouseWheel)
+        void RegisterMouseWheel(Input::LSOnMouseWheelScroll mouseWheel)
         {
             m_onMWScroll = mouseWheel;
         }
@@ -105,7 +133,7 @@ export namespace LS
             m_onWindowEvent = callback;
         }
 
-        void RegisterMouseMoveCallback(LSOnMouseMove callback)
+        void RegisterMouseMoveCallback(Input::LSOnMouseMove callback)
         {
             m_onCursorMove = callback;
         }
@@ -116,17 +144,17 @@ export namespace LS
         uint32_t m_height;
         bool m_bIsOpen = false;
 
-        LSOnMouseMove m_onCursorMove;
-        LSOnKeyboardDown m_onKeyDown;
-        LSOnKeyboardUp m_onKeyUp;
-        LSOnMouseDown m_onMouseDown;
-        LSOnMouseUp m_onMouseUp;
-        LSOnMouseWheelScroll m_onMWScroll;
+        Input::LSOnMouseMove m_onCursorMove;
+        Input::LSOnKeyboardDown m_onKeyDown;
+        Input::LSOnKeyboardUp m_onKeyUp;
+        Input::LSOnMouseDown m_onMouseDown;
+        Input::LSOnMouseUp m_onMouseUp;
+        Input::LSOnMouseWheelScroll m_onMWScroll;
 
         LSWindowHandle m_winHandle;
         OnWindowEvent m_onWindowEvent;
         //@brief The color to fill the window background
-        RGBA m_bgColor{ 1.0f, 1.0f, 1.0f, 1.0f };
+        Colors::RGBA m_bgColor{ 1.0f, 1.0f, 1.0f, 1.0f };
         MousePos m_mousePos{ 0, 0 };
         LSWindowBase(uint32_t width, uint32_t height, std::wstring_view  title) : m_width(width),
             m_height(height),
@@ -135,4 +163,5 @@ export namespace LS
         {
         }
     };
+
 }

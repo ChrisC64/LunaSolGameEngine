@@ -183,12 +183,12 @@
     <ClCompile Include="inc\data\BufferTypes.ixx" />
     <ClCompile Include="inc\engine\EngineDefines.ixx" />
     <ClCompile Include="inc\data\DataTypes.ixx" />
-    <ClCompile Include="inc\data\Input.ixx" />
-    <ClCompile Include="inc\data\LSEDataLib.ixx" />
+    <ClCompile Include="inc\data\LSDataLib.ixx" />
     <ClCompile Include="inc\data\MathTypes.ixx" />
     <ClCompile Include="inc\data\Resource.ixx" />
     <ClCompile Include="inc\data\serialize\AssimpLoader.ixx" />
     <ClCompile Include="inc\data\serialize\WavefrontObj.ixx" />
+    <ClCompile Include="inc\engine\EngineInput.ixx" />
     <ClCompile Include="inc\engine\EngineShader.ixx" />
     <ClCompile Include="inc\data\TextureTypes.ixx" />
     <ClCompile Include="inc\engine\Clock.ixx" />

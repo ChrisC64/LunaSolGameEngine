@@ -1,7 +1,7 @@
 module;
 #include <DirectXMath.h>
 export module DirectXCommon.DXMatrixUtils;
-import LSEDataLib;
+import LSDataLib;
 
 using namespace DirectX;
 

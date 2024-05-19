@@ -6,45 +6,37 @@ module;
 #include <directxmath/DirectXMath.h>
 #include <directxmath/DirectXColors.h>
 #include <dxgi1_6.h>
-#include <array>
-#include <cstdint>
-#include <filesystem>
-#include <optional>
-#include <vector>
-#include <fstream>
-#include <iostream>
-#include <format>
-#include <compare>
-#include <cmath>
-#include <unordered_map>
-#include <mutex>
-#include <condition_variable>
-#include <barrier>
-#include <thread>
-#include <iterator>
-#include <string>
-#include <ranges>
-#include <functional>
-#include <algorithm>
 #include <d3d11_4.h>
 #include "assimp/Importer.hpp"
 #include "assimp/scene.h"
 #include "assimp/postprocess.h"
 
 export module DX11CubeApp;
+import <array>;
+import <cstdint>;
+import <filesystem>;
+import <optional>;
+import <vector>;
+import <fstream>;
+import <iostream>;
+import <format>;
+import <compare>;
+import <cmath>;
+import <unordered_map>;
+import <mutex>;
+import <condition_variable>;
+import <barrier>;
+import <thread>;
+import <iterator>;
+import <string>;
+import <ranges>;
+import <functional>;
+import <algorithm>;
+
 
 import LSEngine;
-import D3D11Lib;
-import Platform.Win32Window;
-import Helper.LSCommonTypes;
-import Helper.IO;
-import GeometryGenerator;
-import MathLib;
-import DirectXCommon;
-import LSEDataLib;
 import LSE.Serialize.WavefrontObj;
 import LSE.Serialize.AssimpLoader;
-import Clock;
 import DX11Systems;
 
 using namespace Microsoft::WRL;
@@ -71,6 +63,7 @@ struct Cube
     XMMATRIX Transform;
 };
 
+
 namespace gt::dx11
 {
     export class DX11CubeApp : public LS::LSApp
@@ -89,23 +82,25 @@ namespace gt::dx11
         LS::Win32::RenderCommandD3D11 m_command;
         LS::Platform::Dx11::BufferCache m_bufferCache;
         LS::PipelineDescriptor m_cubePipeline;
-        
+        std::unordered_map<LS::Input::KEYBOARD, bool> m_keyboardMap;
+
         void CompileShaders();
         auto GetBytecodes() -> std::array<std::vector<std::byte>, 2>;
+        void InitializeKeyboardMap();
 
     public:
         void PreDraw(ComPtr<ID3D11DeviceContext> context);
         void DrawScene(ComPtr<ID3D11DeviceContext> context);
         void HandleResize(uint32_t width, uint32_t height);
-
-        void OnKeyboardDown(const LS::InputKeyDown& input);
-        void OnKeyboardUp(const LS::InputKeyUp& input);
-        void OnMouseDown(const LS::InputMouseDown& input);
-        void OnMouseUp(const LS::InputMouseUp& input);
+        void Update(uint64_t dt);
+        void Draw();
+        void OnMouseDown(const LS::Input::InputMouseDown& input);
+        void OnMouseUp(const LS::Input::InputMouseUp& input);
         void OnMouseMove(uint32_t x, uint32_t y);
-        void OnMouseWheel(const LS::InputMouseWheelScroll& input);
-        void OnWindowEvent(LS::LS_WINDOW_EVENT ev);
+        void OnMouseWheel(const LS::Input::InputMouseWheelScroll& input);
+        void OnWindowEvent(LS::WINDOW_EVENT ev);
         void ReadOBJFile(std::filesystem::path path);
+        
     };
 
     using namespace std::placeholders;
@@ -135,7 +130,7 @@ namespace gt::dx11
     ComPtr<ID3D11InputLayout> inputLayout;
     ComPtr<ID3D11InputLayout> objIL;
 
-    std::unordered_map<LS::LS_INPUT_KEY, bool> g_keysPressedMap;
+    std::unordered_map<LS::Input::KEYBOARD, bool> m_keyboardMap;
     LS::Serialize::WavefrontObj m_objFile;
     LS::Serialize::AssimpLoader m_assLoader;
     
@@ -147,7 +142,6 @@ namespace gt::dx11
     void UpdateCubeTransform()
     {
         XMMATRIX scale = XMMatrixScalingFromVector(g_Cube.Scale);
-        //XMMATRIX rot = XMMatrixRotationRollPitchYawFromVector(g_Cube.Rotation);
         XMMATRIX rot = XMMatrixRotationQuaternion(g_Cube.Rotation);
         XMMATRIX translation = XMMatrixTranslationFromVector(g_Cube.Position);
 
@@ -211,31 +205,28 @@ namespace gt::dx11
 
     void UpdateMovement()
     {
-        using enum LS::LS_INPUT_KEY;
+        using enum LS::Input::KEYBOARD;
         LS::Vec3F movement;
         //auto dt = g_timer.GetDeltaTime().count() * 1'000.0f;
         auto dt = g_clock.GetDeltaTimeUs();
         float movespeed = 300.0f / dt;
-        for (auto [k, p] : g_keysPressedMap)
-        {
-            if (k == W && p)
-            {
-                movement.z += movespeed;
-            }
-            if (k == S && p)
-            {
-                movement.z += -movespeed;
-            }
-            if (k == A && p)
-            {
-                movement.x += -movespeed;
-            }
-            if (k == D && p)
-            {
-                movement.x += movespeed;
-            }
-        }
 
+        if (LS::Win32::IsKeyPressed(W))
+        {
+            movement.z += movespeed;
+        }
+        if (LS::Win32::IsKeyPressed(S))
+        {
+            movement.z += -movespeed;
+        }
+        if (LS::Win32::IsKeyPressed(A) )
+        {
+            movement.x += -movespeed;
+        }
+        if (LS::Win32::IsKeyPressed(D))
+        {
+            movement.x += movespeed;
+        }
         g_cameraController.Walk(movement.z);
         g_cameraController.Strafe(movement.x);
     }
@@ -266,11 +257,9 @@ gt::dx11::DX11CubeApp::DX11CubeApp(uint32_t width, uint32_t height, std::wstring
 auto gt::dx11::DX11CubeApp::Initialize(SharedRef<LS::LSCommandArgs> args) -> LS::System::ErrorCode
 {
     using enum LS::System::ErrorStatus;
-    LS::RGBA bgColor(1.0f, 0.0f, 0.0f, 1.0f);
+    LS::Colors::RGBA bgColor(1.0f, 0.0f, 0.0f, 1.0f);
     Window->SetBackgroundColor(bgColor);
-
-    Window->RegisterKeyboardDown(std::bind(&gt::dx11::DX11CubeApp::OnKeyboardDown, this, _1));
-    Window->RegisterKeyboardUp(std::bind(&gt::dx11::DX11CubeApp::OnKeyboardUp, this, _1));
+    InitializeKeyboardMap();
     RegisterMouseInput(std::bind(&gt::dx11::DX11CubeApp::OnMouseDown, this, _1),
         std::bind(&gt::dx11::DX11CubeApp::OnMouseUp, this, _1), 
         std::bind(&gt::dx11::DX11CubeApp::OnMouseWheel, this, _1), 
@@ -398,6 +387,7 @@ auto gt::dx11::DX11CubeApp::Initialize(SharedRef<LS::LSCommandArgs> args) -> LS:
         vd.Color = color;
         tvd.push_back(vd);
     }
+
     g_objIndices.clear();
     g_objIndices.insert(g_objIndices.begin(), mesh.Indices.begin(), mesh.Indices.end());
     
@@ -436,69 +426,35 @@ void gt::dx11::DX11CubeApp::Run()
     IsRunning = true;
     Window->Show();
     g_clock.Start();
-    auto viewOpt = m_bufferCache.Get("cam_view");
-    auto projOpt = m_bufferCache.Get("cam_proj");
-    auto mvpOpt = m_bufferCache.Get("cam_mvp");
-
-    if (!viewOpt || !projOpt || !mvpOpt)
-    {
-        LS::Log::TraceError(L"Failed to obtain buffers for this operation");
-        return;
-    }
-
-    const auto view = viewOpt.value();
-    const auto proj = projOpt.value();
-    const auto mvp = mvpOpt.value();
-
+    
     while (Window->IsOpen())
     {
+        if (LS::Win32::IsKeyPressed(LS::Input::KEYBOARD::ESCAPE))
+        {
+            Window->Close();
+            break;
+        }
+
         if (IsPaused)
         {
             std::cout << "Paused app!\n";
             continue;
         }
-        uint64_t dt = g_clock.GetDeltaTimeUs();
-        
-        Window->PollEvent();
+
         g_clock.Tick();
-
-        UpdateMovement();
-        RotateCube(dt);
-        UpdateCubeTransform();
-        UpdateCamera();
-        
-        // Update Buffers //
-        m_command.UpdateConstantBuffer(mvp.Get(), &g_camera.Mvp);
-        m_command.UpdateConstantBuffer(view.Get(), &g_camera.View);
-        m_command.UpdateConstantBuffer(proj.Get(), &g_camera.Projection);
-
-        PreDraw(m_renderer.GetDeviceContextCom());
-        DrawScene(m_renderer.GetDeviceContextCom());
-        Present1(m_renderer.GetSwapChainCom().Get(), 1);
+        uint64_t dt = g_clock.GetDeltaTimeUs();
+        Window->PollEvent();
+        Update(dt);
+        Draw();
     }
 }
 
-void gt::dx11::DX11CubeApp::OnKeyboardDown(const LS::InputKeyDown& input)
-{
-    using enum LS::LS_INPUT_KEY;
-    if (input.Key == ESCAPE)
-    {
-        Window->Close();
-    }
-
-    g_keysPressedMap.insert_or_assign(input.Key, true);
-}
-
-void gt::dx11::DX11CubeApp::OnKeyboardUp(const LS::InputKeyUp& input)
-{
-    g_keysPressedMap.insert_or_assign(input.Key, false);
-}
 static LS::Vec2<uint32_t> g_lastPoint;
 static bool IsLMBDown = false;
 
-void gt::dx11::DX11CubeApp::OnMouseDown(const LS::InputMouseDown& input)
+void gt::dx11::DX11CubeApp::OnMouseDown(const LS::Input::InputMouseDown& input)
 {
-    if (input.Button == LS::LS_INPUT_MOUSE::LMB)
+    if (input.Button == LS::Input::MOUSE_BUTTON::LMB)
     {
         std::cout << "LMB Down!\n";
         g_lastPoint.x = input.X;
@@ -507,9 +463,9 @@ void gt::dx11::DX11CubeApp::OnMouseDown(const LS::InputMouseDown& input)
     }
 }
 
-void gt::dx11::DX11CubeApp::OnMouseUp(const LS::InputMouseUp& input)
+void gt::dx11::DX11CubeApp::OnMouseUp(const LS::Input::InputMouseUp& input)
 {
-    if (input.Button == LS::LS_INPUT_MOUSE::LMB)
+    if (input.Button == LS::Input::MOUSE_BUTTON::LMB)
     {
         std::cout << "LMB Up!\n";
         g_lastPoint.x = input.X;
@@ -520,7 +476,8 @@ void gt::dx11::DX11CubeApp::OnMouseUp(const LS::InputMouseUp& input)
 
 void gt::dx11::DX11CubeApp::OnMouseMove(uint32_t x, uint32_t y)
 {
-    if (IsLMBDown)
+    //if (IsLMBDown)
+    if (LS::Win32::IsMousePress(LS::Input::MOUSE_BUTTON::LMB))
     {
         int lx = x - g_lastPoint.x;
         int ly = y - g_lastPoint.y;
@@ -528,7 +485,6 @@ void gt::dx11::DX11CubeApp::OnMouseMove(uint32_t x, uint32_t y)
         float mx = lx * 0.03f;
         float my = ly * 0.02f;
         // Normalize between screen size //
-        std::cout << "Value: " << mx << "\n";
         g_cameraController.RotateYaw(mx * (dt * 0.001f));
         g_cameraController.RotatePitch(-my * (dt * 0.001f));
         g_lastPoint.x = x;
@@ -537,7 +493,7 @@ void gt::dx11::DX11CubeApp::OnMouseMove(uint32_t x, uint32_t y)
 }
 
 static double deltaCounter = 50.0;
-void gt::dx11::DX11CubeApp::OnMouseWheel(const LS::InputMouseWheelScroll& input)
+void gt::dx11::DX11CubeApp::OnMouseWheel(const LS::Input::InputMouseWheelScroll& input)
 {
     std::cout << std::format("Mouse Wheel Scroll: {}, Coords: {}, {}\n", input.Delta, input.X, input.Y);
     const auto upperBounds = 120.0f;
@@ -556,9 +512,9 @@ void gt::dx11::DX11CubeApp::OnMouseWheel(const LS::InputMouseWheelScroll& input)
     g_camera.FovVertical = value;
 }
 
-void gt::dx11::DX11CubeApp::OnWindowEvent(LS::LS_WINDOW_EVENT ev)
+void gt::dx11::DX11CubeApp::OnWindowEvent(LS::WINDOW_EVENT ev)
 {
-    using enum LS::LS_WINDOW_EVENT;
+    using enum LS::WINDOW_EVENT;
     switch (ev)
     {
     case CLOSE_WINDOW:
@@ -679,6 +635,40 @@ void gt::dx11::DX11CubeApp::HandleResize(uint32_t width, uint32_t height)
     IsPaused = false;
 }
 
+void gt::dx11::DX11CubeApp::Update(uint64_t dt)
+{
+    UpdateMovement();
+    RotateCube(dt);
+    UpdateCubeTransform();
+    UpdateCamera();
+}
+
+void gt::dx11::DX11CubeApp::Draw()
+{
+    auto viewOpt = m_bufferCache.Get("cam_view");
+    auto projOpt = m_bufferCache.Get("cam_proj");
+    auto mvpOpt = m_bufferCache.Get("cam_mvp");
+
+    if (!viewOpt || !projOpt || !mvpOpt)
+    {
+        LS::Log::TraceError(L"Failed to obtain buffers for this operation");
+        return;
+    }
+
+    const auto view = viewOpt.value();
+    const auto proj = projOpt.value();
+    const auto mvp = mvpOpt.value();
+
+    // Update Buffers //
+    m_command.UpdateConstantBuffer(mvp.Get(), &g_camera.Mvp);
+    m_command.UpdateConstantBuffer(view.Get(), &g_camera.View);
+    m_command.UpdateConstantBuffer(proj.Get(), &g_camera.Projection);
+
+    PreDraw(m_renderer.GetDeviceContextCom());
+    DrawScene(m_renderer.GetDeviceContextCom());
+    Present1(m_renderer.GetSwapChainCom().Get(), 1);
+}
+
 
 void gt::dx11::DX11CubeApp::ReadOBJFile(std::filesystem::path path)
 {
@@ -780,4 +770,12 @@ auto gt::dx11::DX11CubeApp::GetBytecodes() -> std::array<std::vector<std::byte>,
     out[0] = vsData;
     out[1] = psData;
     return out;
+}
+
+void gt::dx11::DX11CubeApp::InitializeKeyboardMap()
+{
+    for (int32_t i = 0; i < static_cast<int32_t>(LS::Input::KEYBOARD::INPUT_COUNT); ++i)
+    {
+        m_keyboardMap[static_cast<LS::Input::KEYBOARD>(i)] = false;
+    }
 }

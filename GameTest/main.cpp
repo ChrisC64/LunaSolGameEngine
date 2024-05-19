@@ -20,7 +20,7 @@ import DX11CubeApp;
 import CubeApp;
 import DX12.SimpleWindow;
 import Engine.App;
-import LSEDataLib;
+import LSDataLib;
 import Helper.LSCommonTypes;
 import ImGuiWindowTest;
 

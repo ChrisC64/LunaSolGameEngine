@@ -5,7 +5,7 @@ module;
 #include <array>
 #include <compare>
 
-export module LSEDataLib:MathTypes;
+export module LSDataLib:MathTypes;
 import Engine.Defines;
 
 export namespace LS

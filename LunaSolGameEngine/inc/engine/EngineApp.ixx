@@ -8,13 +8,12 @@ module;
 #include <ranges>
 export module Engine.App;
 
-import LSEDataLib;
-
 import Engine.LSDevice;
 import Engine.LSWindow;
 import Engine.LSCamera;
 import Engine.EngineCodes;
 import Engine.Defines;
+import Engine.Input;
 
 export namespace LS::Global
 {
@@ -74,8 +73,8 @@ namespace LS
         bool IsRunning = false;
         bool IsPaused = false;
 
-        void RegisterKeyboardInput(LSOnKeyboardDown onKeyDown, LSOnKeyboardUp onKeyUp);
-        void RegisterMouseInput(LSOnMouseDown onMouseDown, LSOnMouseUp onMouseUp, LSOnMouseWheelScroll mouseWheel, LSOnMouseMove cursorMove);
+        void RegisterKeyboardInput(Input::LSOnKeyboardDown onKeyDown, Input::LSOnKeyboardUp onKeyUp);
+        void RegisterMouseInput(Input::LSOnMouseDown onMouseDown, Input::LSOnMouseUp onMouseUp, Input::LSOnMouseWheelScroll mouseWheel, Input::LSOnMouseMove cursorMove);
     };
 }
 
@@ -88,12 +87,13 @@ namespace LS
         Window = BuildWindow(width, height, title);
     }
 
-    void LS::LSApp::RegisterKeyboardInput(LSOnKeyboardDown onKeyDown, LSOnKeyboardUp onKeyUp)
+    void LS::LSApp::RegisterKeyboardInput(Input::LSOnKeyboardDown onKeyDown, Input::LSOnKeyboardUp onKeyUp)
     {
         Window->RegisterKeyboardDown(onKeyDown);
         Window->RegisterKeyboardUp(onKeyUp);
     }
-    void LS::LSApp::RegisterMouseInput(LSOnMouseDown onMouseDown, LSOnMouseUp onMouseUp, LSOnMouseWheelScroll mouseWheel, LSOnMouseMove cursorMove)
+    
+    void LS::LSApp::RegisterMouseInput(Input::LSOnMouseDown onMouseDown, Input::LSOnMouseUp onMouseUp, Input::LSOnMouseWheelScroll mouseWheel, Input::LSOnMouseMove cursorMove)
     {
         Window->RegisterMouseDown(onMouseDown);
         Window->RegisterMouseUp(onMouseUp);

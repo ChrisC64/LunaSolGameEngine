@@ -3,39 +3,12 @@ module;
 #include <string>
 #include <memory>
 #include <vector>
-export module LSEDataLib:DataTypes;
+export module LSDataLib:DataTypes;
 // A list of common data types to define here for use within the engine itself
 import :MathTypes;
 
 export namespace LS
 {
-    struct RGBA
-    {
-        float R, G, B, A;
-        RGBA() = default;
-        RGBA(float r, float g, float b, float a) : R(r), G(g), B(b), A(a)
-        {}
-
-        RGBA(uint8_t r, uint8_t g, uint8_t b, uint8_t a) : R(r / 255.0f), G(g / 255.0f), B(b / 255.0f), A(a / 255.0f)
-        {}
-
-        RGBA(const RGBA& other) : R(other.R), G(other.G), B(other.B), A(other.A)
-        {}
-
-        bool operator==(const RGBA& rhs) noexcept
-        {
-            return R == rhs.R && G == rhs.G && B == rhs.B && A == rhs.A;
-        }
-    };
-
-    struct Rect
-    {
-        uint32_t TopX;
-        uint32_t TopY;
-        uint32_t Width;
-        uint32_t Height;
-    };
-
     enum class PrimitiveType : uint32_t
     {
         UNKNOWN = 0,

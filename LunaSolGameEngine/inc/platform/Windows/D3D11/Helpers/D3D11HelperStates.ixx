@@ -16,7 +16,7 @@ import Engine.Shader;
 import Engine.Defines;
 
 import Win32.ComUtils;
-import LSEDataLib;
+import LSDataLib;
 
 namespace WRL = Microsoft::WRL;
 

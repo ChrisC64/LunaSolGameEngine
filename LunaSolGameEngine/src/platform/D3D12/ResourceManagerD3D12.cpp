@@ -5,7 +5,7 @@
 #include <format>
 #include "engine/EngineLogDefines.h"
 import D3D12Lib;
-import LSEDataLib;
+import LSDataLib;
 import Platform.Win32Window;
 import Engine.App;
 import Engine.Defines;

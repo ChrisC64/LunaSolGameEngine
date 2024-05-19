@@ -18,7 +18,7 @@ import D3D11.Utils;
 import D3D11.LSTypeWrapper;
 import Win32.ComUtils;
 import Engine.Logger;
-import LSEDataLib;
+import LSDataLib;
 namespace WRL = Microsoft::WRL;
 
 using namespace LS::Win32;

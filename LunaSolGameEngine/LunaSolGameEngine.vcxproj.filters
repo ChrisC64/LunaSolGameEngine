@@ -63,10 +63,7 @@
     <ClCompile Include="inc\data\DataTypes.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="inc\data\Input.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="inc\data\LSEDataLib.ixx">
+    <ClCompile Include="inc\data\LSDataLib.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="inc\data\MathTypes.ixx">
@@ -220,6 +217,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="inc\platform\Windows\WindowsLib.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="inc\engine\EngineInput.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

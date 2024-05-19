@@ -14,7 +14,7 @@
 //
 //import D3D11.RenderFuncD3D11;
 //import Win32.ComUtils;
-//import LSEDataLib;
+//import LSDataLib;
 //import Engine.LSDevice;
 //
 //namespace WRL = Microsoft::WRL;

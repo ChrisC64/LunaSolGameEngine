@@ -9,10 +9,11 @@ export import Engine.LSWindow;
 export import Engine.Logger;
 export import Engine.Defines;
 export import Engine.Shader;
+export import Engine.Input;
 
 // Objects not pertaining to engine but could, generic tools that are for all platforms
 export import Clock;
-export import LSEDataLib;
+export import LSDataLib;
 export import Helper.IO;
 export import Helper.LSCommonTypes;
 export import MathLib;
