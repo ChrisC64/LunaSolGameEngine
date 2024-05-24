@@ -33,7 +33,6 @@ import <ranges>;
 import <functional>;
 import <algorithm>;
 
-
 import LSEngine;
 import LSE.Serialize.WavefrontObj;
 import LSE.Serialize.AssimpLoader;
@@ -63,7 +62,6 @@ struct Cube
     XMMATRIX Transform;
 };
 
-
 namespace gt::dx11
 {
     export class DX11CubeApp : public LS::LSApp
@@ -81,12 +79,9 @@ namespace gt::dx11
         LS::Win32::RenderD3D11 m_renderer;
         LS::Win32::RenderCommandD3D11 m_command;
         LS::Platform::Dx11::BufferCache m_bufferCache;
-        LS::PipelineDescriptor m_cubePipeline;
-        std::unordered_map<LS::Input::KEYBOARD, bool> m_keyboardMap;
 
         void CompileShaders();
         auto GetBytecodes() -> std::array<std::vector<std::byte>, 2>;
-        void InitializeKeyboardMap();
 
     public:
         void PreDraw(ComPtr<ID3D11DeviceContext> context);
@@ -100,7 +95,6 @@ namespace gt::dx11
         void OnMouseWheel(const LS::Input::InputMouseWheelScroll& input);
         void OnWindowEvent(LS::WINDOW_EVENT ev);
         void ReadOBJFile(std::filesystem::path path);
-        
     };
 
     using namespace std::placeholders;
@@ -119,8 +113,6 @@ namespace gt::dx11
     XMVECTOR g_LookAtDefault = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
     LS::DX::DXCamera g_camera(SCREEN_WIDTH, SCREEN_HEIGHT, XMVectorSet(0.0f, 0.0f, -5.0f, 0.0f), g_LookAtDefault, g_UpVec, 90.0f);
     LS::DX::FreeFlyCameraControllerDX g_cameraController(g_camera);
-    constexpr auto g_indexData = Geo::Generator::CreateCubeIndexArray();
-    //LS::LSTimer<std::uint64_t, 1ul, 1000ul> g_timer;
     LS::Clock g_clock;
     ComPtr<ID3D11VertexShader> vertShader;
     ComPtr<ID3D11PixelShader> pixShader;
@@ -164,7 +156,7 @@ namespace gt::dx11
             g_Cube.Verts[i].Color = LS::Vec4<float>{ 1.0f, 0.33f, 0.234f, 1.0f };
         }
 
-        g_Cube.Indices = std::move(indices);
+        g_Cube.Indices = Geo::Generator::CreateCubeIndexArray();
     }
 
     void RotateCube(uint64_t elapsed)
@@ -207,7 +199,6 @@ namespace gt::dx11
     {
         using enum LS::Input::KEYBOARD;
         LS::Vec3F movement;
-        //auto dt = g_timer.GetDeltaTime().count() * 1'000.0f;
         auto dt = g_clock.GetDeltaTimeUs();
         float movespeed = 300.0f / dt;
 
@@ -259,7 +250,6 @@ auto gt::dx11::DX11CubeApp::Initialize(SharedRef<LS::LSCommandArgs> args) -> LS:
     using enum LS::System::ErrorStatus;
     LS::Colors::RGBA bgColor(1.0f, 0.0f, 0.0f, 1.0f);
     Window->SetBackgroundColor(bgColor);
-    InitializeKeyboardMap();
     RegisterMouseInput(std::bind(&gt::dx11::DX11CubeApp::OnMouseDown, this, _1),
         std::bind(&gt::dx11::DX11CubeApp::OnMouseUp, this, _1), 
         std::bind(&gt::dx11::DX11CubeApp::OnMouseWheel, this, _1), 
@@ -271,6 +261,7 @@ auto gt::dx11::DX11CubeApp::Initialize(SharedRef<LS::LSCommandArgs> args) -> LS:
     {
         return deviceResult;
     }
+
     m_command = m_renderer.CreateImmediateCommand();
     // Init Cube and Camera //
     InitCube();
@@ -278,7 +269,6 @@ auto gt::dx11::DX11CubeApp::Initialize(SharedRef<LS::LSCommandArgs> args) -> LS:
 
     // Buffer Creation //
     LS::Log::TraceDebug(L"Creating buffers...");
-
     const auto vbOpt = LS::Platform::Dx11::CreateVertexBuffer(m_renderer.GetDevice(), g_Cube.Verts);
     if (!vbOpt)
     {
@@ -290,7 +280,7 @@ auto gt::dx11::DX11CubeApp::Initialize(SharedRef<LS::LSCommandArgs> args) -> LS:
         return result;
     }
     
-    const auto ibOpt = LS::Platform::Dx11::CreateIndexBuffer(m_renderer.GetDevice(), g_indexData);
+    const auto ibOpt = LS::Platform::Dx11::CreateIndexBuffer(m_renderer.GetDevice(), g_Cube.Indices);
     if (!ibOpt)
     {
         return CreateFailCode("Failed to create index buffer");
@@ -594,9 +584,7 @@ void gt::dx11::DX11CubeApp::PreDraw(ComPtr<ID3D11DeviceContext> context)
 
 void gt::dx11::DX11CubeApp::DrawScene(ComPtr<ID3D11DeviceContext> context)
 {
-    //DrawIndexed(context.Get(), (uint32_t)g_objIndices.size());
-    m_command.DrawIndexed((uint32_t)g_indexData.size());
-    //DrawIndexed(context.Get(), (uint32_t)g_indexData.size());
+    m_command.DrawIndexed((uint32_t)g_Cube.Indices.size());
 }
 
 void gt::dx11::DX11CubeApp::HandleResize(uint32_t width, uint32_t height)
@@ -770,12 +758,4 @@ auto gt::dx11::DX11CubeApp::GetBytecodes() -> std::array<std::vector<std::byte>,
     out[0] = vsData;
     out[1] = psData;
     return out;
-}
-
-void gt::dx11::DX11CubeApp::InitializeKeyboardMap()
-{
-    for (int32_t i = 0; i < static_cast<int32_t>(LS::Input::KEYBOARD::INPUT_COUNT); ++i)
-    {
-        m_keyboardMap[static_cast<LS::Input::KEYBOARD>(i)] = false;
-    }
 }

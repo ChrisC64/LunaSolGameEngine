@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="..\packages\Microsoft.Direct3D.D3D12.1.614.0\build\native\Microsoft.Direct3D.D3D12.props" Condition="Exists('..\packages\Microsoft.Direct3D.D3D12.1.614.0\build\native\Microsoft.Direct3D.D3D12.props')" />
   <ItemGroup Label="ProjectConfigurations">
@@ -156,6 +156,10 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy /f /d /y $(OutDir) $(SolutionDir)build\$(Platform)\$(Configuration)\
+xcopy /f /d /y $(IntDir) $(SolutionDir)build\$(Platform)\$(Configuration)\bin\</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -180,66 +184,34 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="inc\data\BufferTypes.ixx" />
-    <ClCompile Include="inc\engine\EngineDefines.ixx" />
-    <ClCompile Include="inc\data\DataTypes.ixx" />
-    <ClCompile Include="inc\data\LSDataLib.ixx" />
-    <ClCompile Include="inc\data\MathTypes.ixx" />
-    <ClCompile Include="inc\data\Resource.ixx" />
-    <ClCompile Include="inc\data\serialize\AssimpLoader.ixx" />
-    <ClCompile Include="inc\data\serialize\WavefrontObj.ixx" />
-    <ClCompile Include="inc\engine\EngineInput.ixx" />
-    <ClCompile Include="inc\engine\EngineShader.ixx" />
-    <ClCompile Include="inc\data\TextureTypes.ixx" />
-    <ClCompile Include="inc\engine\Clock.ixx" />
-    <ClCompile Include="inc\engine\EngineApp.ixx" />
-    <ClCompile Include="inc\engine\EngineCamera.ixx" />
-    <ClCompile Include="inc\engine\EngineCodes.ixx" />
-    <ClCompile Include="inc\engine\EngineDevice.ixx" />
-    <ClCompile Include="inc\engine\EngineLogger.ixx" />
-    <ClCompile Include="inc\engine\EngineWindow.ixx" />
-    <ClCompile Include="inc\engine\LSEngine.ixx" />
-    <ClCompile Include="inc\helper\IOHelper.ixx" />
-    <ClCompile Include="inc\helper\LSCommonTypes.ixx" />
-    <ClCompile Include="inc\helper\PipelineFactory.ixx" />
-    <ClCompile Include="inc\math\GeometryMath.ixx" />
-    <ClCompile Include="inc\math\MathLib.ixx" />
-    <ClCompile Include="inc\math\MatrixMath.ixx" />
-    <ClCompile Include="inc\mesh\GeometryGenerator.ixx" />
-    <ClCompile Include="inc\platform\Windows\WindowsLib.ixx" />
-    <ClCompile Include="inc\platform\Windows\D3D11\D3D11Lib.ixx" />
-    <ClCompile Include="inc\platform\Windows\D3D11\DeviceD3D11.ixx" />
-    <ClCompile Include="inc\platform\Windows\D3D11\Helpers\D3D11HelperStates.ixx" />
-    <ClCompile Include="inc\platform\Windows\D3D11\Helpers\D3D11MemoryHelper.ixx" />
-    <ClCompile Include="inc\platform\Windows\D3D11\Helpers\D3D11TypeWrapper.ixx" />
-    <ClCompile Include="inc\platform\Windows\D3D11\Helpers\D3D11Utils.ixx" />
-    <ClCompile Include="inc\platform\Windows\D3D11\PipelineFactoryD3D11.ixx" />
-    <ClCompile Include="inc\platform\Windows\D3D11\RenderD3D11.ixx" />
-    <ClCompile Include="inc\platform\Windows\D3D11\RenderFuncs.ixx" />
-    <ClCompile Include="inc\platform\Windows\D3D12\CommandListDx12.ixx" />
-    <ClCompile Include="inc\platform\Windows\D3D12\CommandQueueDx12.ixx" />
-    <ClCompile Include="inc\platform\Windows\D3D12\D3D12Common.ixx" />
-    <ClCompile Include="inc\platform\Windows\D3D12\D3D12Lib.ixx" />
-    <ClCompile Include="inc\platform\Windows\D3D12\DescriptorHeapDx12.ixx" />
-    <ClCompile Include="inc\platform\Windows\D3D12\DeviceD3D12.ixx" />
-    <ClCompile Include="inc\platform\Windows\D3D12\FrameDx12.ixx" />
-    <ClCompile Include="inc\platform\Windows\D3D12\Helpers\D3D12Utils.ixx" />
-    <ClCompile Include="inc\platform\Windows\D3D12\Helpers\D3D12UtilsCommandList.ixx" />
-    <ClCompile Include="inc\platform\Windows\D3D12\Helpers\D3D12UtilsDescriptors.ixx" />
-    <ClCompile Include="inc\platform\Windows\DirectX\DirectXCommon.ixx" />
-    <ClCompile Include="inc\platform\Windows\DirectX\DXCamera.ixx" />
-    <ClCompile Include="inc\platform\Windows\DirectX\DXCameraController.ixx" />
-    <ClCompile Include="inc\platform\Windows\DirectX\DXMatrixUtils.ixx" />
-    <ClCompile Include="inc\platform\Windows\DirectX\ResourceManagerD3D12.ixx" />
-    <ClCompile Include="inc\platform\Windows\DXGI\DXGIHelper.ixx" />
-    <ClCompile Include="inc\platform\Windows\DXGI\FrameBufferDxgi.ixx" />
-    <ClCompile Include="inc\platform\Windows\Win32\Win32Window.ixx" />
-    <ClCompile Include="inc\platform\Windows\Win32\Win32Utils.ixx" />
-    <ClCompile Include="inc\platform\Windows\Win32\ComUtils.ixx" />
-    <ClCompile Include="inc\utils\StdUtils.ixx" />
-    <ClCompile Include="inc\utils\Util.ixx" />
+    <ClCompile Include="src\data\BufferTypes.ixx" />
+    <ClCompile Include="src\engine\EngineDefines.ixx" />
+    <ClCompile Include="src\data\DataTypes.ixx" />
+    <ClCompile Include="src\data\LSDataLib.ixx" />
+    <ClCompile Include="src\data\MathTypes.ixx" />
+    <ClCompile Include="src\data\Resource.ixx" />
+    <ClCompile Include="src\data\serialize\AssimpLoader.ixx" />
+    <ClCompile Include="src\data\serialize\WavefrontObj.ixx" />
+    <ClCompile Include="src\engine\EngineInput.ixx" />
+    <ClCompile Include="src\engine\EngineShader.ixx" />
+    <ClCompile Include="src\data\TextureTypes.ixx" />
+    <ClCompile Include="src\engine\Clock.ixx" />
+    <ClCompile Include="src\engine\EngineApp.ixx" />
+    <ClCompile Include="src\engine\EngineCamera.ixx" />
+    <ClCompile Include="src\engine\EngineCodes.ixx" />
+    <ClCompile Include="src\engine\EngineDevice.ixx" />
+    <ClCompile Include="src\engine\EngineLogger.ixx" />
+    <ClCompile Include="src\engine\EngineWindow.ixx" />
+    <ClCompile Include="src\engine\LSEngine.ixx" />
     <ClCompile Include="src\engine\EngineApp.cpp" />
+    <ClCompile Include="src\helper\IOHelper.ixx" />
+    <ClCompile Include="src\helper\LSCommonTypes.ixx" />
     <ClCompile Include="src\helper\PipelineFactory.cpp" />
+    <ClCompile Include="src\helper\PipelineFactory.ixx" />
+    <ClCompile Include="src\math\GeometryMath.ixx" />
+    <ClCompile Include="src\math\MathLib.ixx" />
+    <ClCompile Include="src\math\MatrixMath.ixx" />
+    <ClCompile Include="src\mesh\GeometryGenerator.ixx" />
     <ClCompile Include="src\platform\D3D11\DeviceD3D11.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
@@ -253,12 +225,38 @@
     <ClCompile Include="src\platform\D3D12\CommandQueueDx12.cpp" />
     <ClCompile Include="src\platform\D3D12\DeviceD3D12.cpp" />
     <ClCompile Include="src\platform\D3D12\ResourceManagerD3D12.cpp" />
-    <ClCompile Include="src\platform\Windows\Win32Windows.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
-    </ClCompile>
+    <ClCompile Include="src\platform\Windows\D3D11\D3D11Lib.ixx" />
+    <ClCompile Include="src\platform\Windows\D3D11\DeviceD3D11.ixx" />
+    <ClCompile Include="src\platform\Windows\D3D11\Helpers\D3D11HelperStates.ixx" />
+    <ClCompile Include="src\platform\Windows\D3D11\Helpers\D3D11MemoryHelper.ixx" />
+    <ClCompile Include="src\platform\Windows\D3D11\Helpers\D3D11TypeWrapper.ixx" />
+    <ClCompile Include="src\platform\Windows\D3D11\Helpers\D3D11Utils.ixx" />
+    <ClCompile Include="src\platform\Windows\D3D11\PipelineFactoryD3D11.ixx" />
+    <ClCompile Include="src\platform\Windows\D3D11\RenderD3D11.ixx" />
+    <ClCompile Include="src\platform\Windows\D3D11\RenderFuncs.ixx" />
+    <ClCompile Include="src\platform\Windows\D3D12\CommandListDx12.ixx" />
+    <ClCompile Include="src\platform\Windows\D3D12\CommandQueueDx12.ixx" />
+    <ClCompile Include="src\platform\Windows\D3D12\D3D12Common.ixx" />
+    <ClCompile Include="src\platform\Windows\D3D12\D3D12Lib.ixx" />
+    <ClCompile Include="src\platform\Windows\D3D12\DescriptorHeapDx12.ixx" />
+    <ClCompile Include="src\platform\Windows\D3D12\DeviceD3D12.ixx" />
+    <ClCompile Include="src\platform\Windows\D3D12\FrameDx12.ixx" />
+    <ClCompile Include="src\platform\Windows\D3D12\Helpers\D3D12Utils.ixx" />
+    <ClCompile Include="src\platform\Windows\D3D12\Helpers\D3D12UtilsCommandList.ixx" />
+    <ClCompile Include="src\platform\Windows\D3D12\Helpers\D3D12UtilsDescriptors.ixx" />
+    <ClCompile Include="src\platform\Windows\DirectX\DirectXCommon.ixx" />
+    <ClCompile Include="src\platform\Windows\DirectX\DXCamera.ixx" />
+    <ClCompile Include="src\platform\Windows\DirectX\DXCameraController.ixx" />
+    <ClCompile Include="src\platform\Windows\DirectX\DXMatrixUtils.ixx" />
+    <ClCompile Include="src\platform\Windows\DirectX\ResourceManagerD3D12.ixx" />
+    <ClCompile Include="src\platform\Windows\DXGI\DXGIHelper.ixx" />
+    <ClCompile Include="src\platform\Windows\DXGI\FrameBufferDxgi.ixx" />
+    <ClCompile Include="src\platform\Windows\Win32\ComUtils.ixx" />
+    <ClCompile Include="src\platform\Windows\Win32\Win32Utils.ixx" />
+    <ClCompile Include="src\platform\Windows\Win32\Win32Window.ixx" />
+    <ClCompile Include="src\platform\Windows\WindowsLib.ixx" />
+    <ClCompile Include="src\utils\StdUtils.ixx" />
+    <ClCompile Include="src\utils\Util.ixx" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\engine\EngineLogDefines.h" />
