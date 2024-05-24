@@ -29,14 +29,7 @@ module;
 
 export module DX12.SimpleWindow;
 
-import LSEDataLib;
-import Engine.App;
-import D3D12Lib;
-import Platform.Win32Window;
-import Helper.LSCommonTypes;
-import Helper.PipelineFactory;
-import Util.MSUtils;
-import DXGIHelper;
+import LSEngine;
 
 namespace gt::dx12
 {
@@ -66,7 +59,7 @@ namespace gt::dx12
 
         ~SimpleWindow() = default;
 
-        auto Initialize(SharedRef<LS::LSCommandArgs> args) -> LS::System::ErrorCode override;
+        auto Initialize(LS::SharedRef<LS::LSCommandArgs> args) -> LS::System::ErrorCode override;
         void Run() override;
 
     private:
@@ -79,9 +72,9 @@ namespace gt::dx12
         uint64_t m_fenceValue;
 
         // My stuff to replace above // 
-        Ref<LS::Platform::Dx12::DeviceD3D12> m_device;
-        Ref<LS::Platform::Dx12::CommandQueueDx12> m_queue;
-        Ref<LS::Platform::Dx12::CommandListDx12> m_commandList;
+        LS::Ref<LS::Platform::Dx12::DeviceD3D12> m_device;
+        LS::Ref<LS::Platform::Dx12::CommandQueueDx12> m_queue;
+        LS::Ref<LS::Platform::Dx12::CommandListDx12> m_commandList;
         LS::Platform::Dx12::D3D12Settings m_settings{};
         LS::Platform::Dx12::FrameBufferDxgi m_frameBuffer;
 
@@ -97,7 +90,7 @@ namespace gt::dx12
 
 module : private;
 
-auto gt::dx12::SimpleWindow::Initialize(SharedRef<LS::LSCommandArgs> args) -> LS::System::ErrorCode
+auto gt::dx12::SimpleWindow::Initialize(LS::SharedRef<LS::LSCommandArgs> args) -> LS::System::ErrorCode
 {
     if (!LoadPipeline())
     {

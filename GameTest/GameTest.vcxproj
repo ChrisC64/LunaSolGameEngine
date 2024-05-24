@@ -84,8 +84,8 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)build\$(Platform)\$(Configuration)\</OutDir>
-    <IntDir>intermediate\$(Platform)\$(Configuration)\</IntDir>
-    <IncludePath>$(SolutionDir)libs;$(SolutionDir)common;$(SolutionDir)LunaSolGameEngine\inc;$(SolutionDir)LunaSolGameEngine\modules;$(ProjectDir);$(ProjectDir)libs;$(ProjectDir)libs\imgui</IncludePath>
+    <IntDir>$(SolutionDir)build\$(Platform)\$(Configuration)\bin\</IntDir>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
     <PublicIncludeDirectories>
     </PublicIncludeDirectories>
     <PublicModuleDirectories>
@@ -95,7 +95,7 @@
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)build\$(Platform)\$(Configuration)\</OutDir>
     <IntDir>intermediate\$(Platform)\$(Configuration)\</IntDir>
-    <IncludePath>$(SolutionDir)libs;$(SolutionDir)common;$(SolutionDir)LunaSolGameEngine\inc;$(SolutionDir)LunaSolGameEngine\modules;$(ProjectDir);$(ProjectDir)libs;$(ProjectDir)libs\imgui</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
     <PublicIncludeDirectories>
     </PublicIncludeDirectories>
     <PublicModuleDirectories>
@@ -111,6 +111,7 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions);LS_WINDOWS_BUILD</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>$(SolutionDir)common\libs;$(SolutionDir)LunaSolGameEngine\inc;$(SolutionDir)common\libs\imgui;$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -127,6 +128,7 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions);LS_WINDOWS_BUILD</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>$(SolutionDir)common\libs;$(SolutionDir)LunaSolGameEngine\inc;$(SolutionDir)common\libs\imgui;$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -140,10 +142,11 @@
     <ClCompile>
       <WarningLevel>Level4</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions);LS_WINDOWS_BUILD</PreprocessorDefinitions>
+      <PreprocessorDefinitions>LSE_WINDOWS_BUILD;_DEBUG;_CONSOLE;%(PreprocessorDefinitions);LS_WINDOWS_BUILD</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)libs;$(SolutionDir)LunaSolGameEngine\inc;$(SolutionDir)LunaSolGameEngine\modules;$(ProjectDir)libs;$(ProjectDir)libs\imgui;$(SolutionDir)common;$(SolutionDir)GameTest;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)vendor\imgui\backends\;$(ProjectDir)vendor\imgui\;$(SolutionDir)LunaSolGameEngine\inc\;$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ModuleOutputFile>$(IntDir)</ModuleOutputFile>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -151,6 +154,10 @@
       <AdditionalDependencies>LunaSolGameEngine.lib;dxguid.lib;d3dcompiler.lib;d3d11.lib;d3d12.lib;Dxgi.lib;dwrite.lib;d2d1.lib;$(CoreLibraryDependencies);%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(OutDir);</AdditionalLibraryDirectories>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy /f /d /y $(OutDir) $(SolutionDir)out\$(Platform)\$(Configuration)\
+xcopy /f /d /y $(IntDir) $(SolutionDir)out\$(Platform)\$(Configuration)\bin\</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -158,10 +165,10 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions);LS_WINDOWS_BUILD</PreprocessorDefinitions>
+      <PreprocessorDefinitions>LS_WINDOWS_BUILD;NDEBUG;%(PreprocessorDefinitions);LS_WINDOWS_BUILD</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)libs;$(SolutionDir)LunaSolGameEngine\inc;$(SolutionDir)LunaSolGameEngine\modules;$(ProjectDir)libs;$(ProjectDir)libs\imgui;$(SolutionDir)common;$(SolutionDir)GameTest;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)vendor\imgui\backends\;$(ProjectDir)vendor\imgui\;$(SolutionDir)LunaSolGameEngine\inc\;$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -178,15 +185,6 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="libs\imgui\backends\imgui_impl_dx11.cpp" />
-    <ClCompile Include="libs\imgui\backends\imgui_impl_dx12.cpp" />
-    <ClCompile Include="libs\imgui\backends\imgui_impl_win32.cpp" />
-    <ClCompile Include="libs\imgui\imgui.cpp" />
-    <ClCompile Include="libs\imgui\imgui_demo.cpp" />
-    <ClCompile Include="libs\imgui\imgui_draw.cpp" />
-    <ClCompile Include="libs\imgui\imgui_tables.cpp" />
-    <ClCompile Include="libs\imgui\imgui_widgets.cpp" />
-    <ClCompile Include="libs\imgui\misc\cpp\imgui_stdlib.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="src\DX11Test\DX11CubeApp.ixx" />
     <ClCompile Include="src\DX11Test\Systems\DX11BufferCache.ixx" />
@@ -195,6 +193,14 @@
     <ClCompile Include="src\DX11Test\MultiPassTestApp.ixx" />
     <ClCompile Include="src\DX12Test\ImGuiWIndowTest.ixx" />
     <ClCompile Include="src\DX12Test\SimpleWindow.ixx" />
+    <ClCompile Include="vendor\imgui\backends\imgui_impl_dx11.cpp" />
+    <ClCompile Include="vendor\imgui\backends\imgui_impl_dx12.cpp" />
+    <ClCompile Include="vendor\imgui\backends\imgui_impl_win32.cpp" />
+    <ClCompile Include="vendor\imgui\imgui.cpp" />
+    <ClCompile Include="vendor\imgui\imgui_demo.cpp" />
+    <ClCompile Include="vendor\imgui\imgui_draw.cpp" />
+    <ClCompile Include="vendor\imgui\imgui_tables.cpp" />
+    <ClCompile Include="vendor\imgui\imgui_widgets.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="shaders\FullScreenQuad.hlsl">
@@ -291,23 +297,15 @@
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="libs\imgui\misc\debuggers\imgui.natstepfilter" />
-    <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="libs\imgui\backends\imgui_impl_dx11.h" />
-    <ClInclude Include="libs\imgui\backends\imgui_impl_dx12.h" />
-    <ClInclude Include="libs\imgui\backends\imgui_impl_win32.h" />
-    <ClInclude Include="libs\imgui\imconfig.h" />
-    <ClInclude Include="libs\imgui\imgui.h" />
-    <ClInclude Include="libs\imgui\imgui_internal.h" />
-    <ClInclude Include="libs\imgui\imstb_rectpack.h" />
-    <ClInclude Include="libs\imgui\imstb_textedit.h" />
-    <ClInclude Include="libs\imgui\imstb_truetype.h" />
-    <ClInclude Include="libs\imgui\misc\cpp\imgui_stdlib.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <Natvis Include="libs\imgui\misc\debuggers\imgui.natvis" />
+    <ClInclude Include="vendor\imgui\backends\imgui_impl_dx11.h" />
+    <ClInclude Include="vendor\imgui\backends\imgui_impl_dx12.h" />
+    <ClInclude Include="vendor\imgui\backends\imgui_impl_win32.h" />
+    <ClInclude Include="vendor\imgui\imconfig.h" />
+    <ClInclude Include="vendor\imgui\imgui.h" />
+    <ClInclude Include="vendor\imgui\imgui_internal.h" />
+    <ClInclude Include="vendor\imgui\imstb_rectpack.h" />
+    <ClInclude Include="vendor\imgui\imstb_textedit.h" />
+    <ClInclude Include="vendor\imgui\imstb_truetype.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

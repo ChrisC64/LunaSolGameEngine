@@ -1,4 +1,3 @@
-#include "LSTimer.h"
 #include <iostream>
 #include <fstream>
 #include <streambuf>
@@ -14,14 +13,14 @@
 #include <processenv.h>
 #include <shellapi.h>
 #endif // 
-#include "engine/EngineDefines.h"
 import Engine.Logger;
 import Engine.EngineCodes;
+import Engine.Defines;
 import DX11CubeApp;
 import CubeApp;
 import DX12.SimpleWindow;
 import Engine.App;
-import LSEDataLib;
+import LSDataLib;
 import Helper.LSCommonTypes;
 import ImGuiWindowTest;
 
@@ -38,33 +37,33 @@ import ImGuiWindowTest;
 // TODO: Start Vulkan renderer
 // TODO: Examin needed Interfaces and build them
 
-Ref<LS::LSApp> CreateApp(uint32_t choice)
+LS::Ref<LS::LSApp> CreateApp(uint32_t choice)
 {
     switch (choice)
     {
     case 0:
     {
-        Ref<LS::LSApp> app(new gt::dx11::DX11CubeApp(800, 600, L"DX11 Cube App"));
+        LS::Ref<LS::LSApp> app(new gt::dx11::DX11CubeApp(800, 600, L"DX11 Cube App"));
         return app;
     }
     case 1:
     {
-        Ref<LS::LSApp> app(new gt::dx12::DX12CubeApp(800, 600, L"DX12 Cube App"));
+        LS::Ref<LS::LSApp> app(new gt::dx12::DX12CubeApp(800, 600, L"DX12 Cube App"));
         return app;
     }
     case 2:
     {
-        Ref<LS::LSApp> app(new gt::dx12::SimpleWindow(800, 700));
+        LS::Ref<LS::LSApp> app(new gt::dx12::SimpleWindow(800, 700));
         return app;
     }
     case 3:
     {
-        Ref<LS::LSApp> app(new gt::dx12::ImGuiSample::ImGuiSample(800, 600));
+        LS::Ref<LS::LSApp> app(new gt::dx12::ImGuiSample::ImGuiSample(800, 600));
         return app;
     }
     default:
     {
-        Ref<LS::LSApp> app(new gt::dx11::DX11CubeApp(800, 600, L"DX11 Cube App"));
+        LS::Ref<LS::LSApp> app(new gt::dx11::DX11CubeApp(800, 600, L"DX11 Cube App"));
         return app;
     }
     }

@@ -13,8 +13,8 @@
 //#undef min
 //
 //import D3D11.RenderFuncD3D11;
-//import Util.MSUtils;
-//import LSEDataLib;
+//import Win32.ComUtils;
+//import LSDataLib;
 //import Engine.LSDevice;
 //
 //namespace WRL = Microsoft::WRL;

@@ -39,31 +39,28 @@
     <ClCompile Include="src\DX12Test\ImGuiWIndowTest.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="libs\imgui\imgui.cpp">
+    <ClCompile Include="vendor\imgui\backends\imgui_impl_dx11.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="libs\imgui\imgui_demo.cpp">
+    <ClCompile Include="vendor\imgui\backends\imgui_impl_dx12.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="libs\imgui\imgui_draw.cpp">
+    <ClCompile Include="vendor\imgui\backends\imgui_impl_win32.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="libs\imgui\imgui_tables.cpp">
+    <ClCompile Include="vendor\imgui\imgui.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="libs\imgui\imgui_widgets.cpp">
+    <ClCompile Include="vendor\imgui\imgui_demo.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="libs\imgui\backends\imgui_impl_dx11.cpp">
+    <ClCompile Include="vendor\imgui\imgui_draw.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="libs\imgui\backends\imgui_impl_dx12.cpp">
+    <ClCompile Include="vendor\imgui\imgui_tables.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="libs\imgui\backends\imgui_impl_win32.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="libs\imgui\misc\cpp\imgui_stdlib.cpp">
+    <ClCompile Include="vendor\imgui\imgui_widgets.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -79,42 +76,32 @@
     <FxCompile Include="shaders\PixelShaderD3D12.hlsl" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="libs\imgui\misc\debuggers\imgui.natstepfilter" />
-    <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="libs\imgui\imconfig.h">
+    <ClInclude Include="vendor\imgui\backends\imgui_impl_dx11.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="libs\imgui\imgui.h">
+    <ClInclude Include="vendor\imgui\backends\imgui_impl_dx12.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="libs\imgui\imgui_internal.h">
+    <ClInclude Include="vendor\imgui\backends\imgui_impl_win32.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="libs\imgui\imstb_rectpack.h">
+    <ClInclude Include="vendor\imgui\imconfig.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="libs\imgui\imstb_textedit.h">
+    <ClInclude Include="vendor\imgui\imgui.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="libs\imgui\imstb_truetype.h">
+    <ClInclude Include="vendor\imgui\imgui_internal.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="libs\imgui\backends\imgui_impl_dx11.h">
+    <ClInclude Include="vendor\imgui\imstb_rectpack.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="libs\imgui\backends\imgui_impl_dx12.h">
+    <ClInclude Include="vendor\imgui\imstb_textedit.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="libs\imgui\backends\imgui_impl_win32.h">
+    <ClInclude Include="vendor\imgui\imstb_truetype.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="libs\imgui\misc\cpp\imgui_stdlib.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <Natvis Include="libs\imgui\misc\debuggers\imgui.natvis" />
   </ItemGroup>
 </Project>

@@ -9,7 +9,6 @@
 #include <wrl/client.h>
 #include <d3d11_4.h>
 
-#include "engine/EngineDefines.h"
 #include "engine/EngineLogDefines.h"
 
 import D3D11.RenderD3D11;
@@ -19,6 +18,7 @@ import D3D11.PipelineFactory;
 import D3D11.RenderFuncD3D11;
 import D3D11.Utils;
 import DirectXCommon;
+import Engine.Defines;
 
 using namespace LS::Win32;
 namespace WRL = Microsoft::WRL;

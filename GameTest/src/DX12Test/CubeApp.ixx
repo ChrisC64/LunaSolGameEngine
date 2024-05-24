@@ -24,14 +24,7 @@ module;
 #include <format>
 export module CubeApp;
 
-import LSEDataLib;
-import Engine.App;
-import D3D12Lib;
-import Platform.Win32Window;
-import Helper.LSCommonTypes;
-import Helper.PipelineFactory;
-import Util.MSUtils;
-import DXGIHelper;
+import LSEngine;
 
 inline std::string HrToString(HRESULT hr)
 {
@@ -147,7 +140,7 @@ namespace gt::dx12
         }
         ~DX12CubeApp() = default;
 
-        auto Initialize(SharedRef<LS::LSCommandArgs> args) -> LS::System::ErrorCode override;
+        auto Initialize(LS::SharedRef<LS::LSCommandArgs> args) -> LS::System::ErrorCode override;
         void Run() override;
 
         //[[nodiscard]] bool LoadPipeline();
@@ -163,10 +156,10 @@ namespace gt::dx12
         // Tutorial Stuff //
         WRL::ComPtr<IDXGIFactory4> m_pFactory;
         // My stuff to replace above // 
-        Ref<LS::Platform::Dx12::DeviceD3D12> m_device;
+        LS::Ref<LS::Platform::Dx12::DeviceD3D12> m_device;
         LS::Platform::Dx12::CommandQueueDx12 m_directQueue{ D3D12_COMMAND_LIST_TYPE_DIRECT };
         LS::Platform::Dx12::CommandQueueDx12 m_copyQueue{ D3D12_COMMAND_LIST_TYPE_COPY };
-        Ref<LS::Platform::Dx12::CommandListDx12> m_commandList, m_copyCommandList;
+        LS::Ref<LS::Platform::Dx12::CommandListDx12> m_commandList, m_copyCommandList;
         LS::Platform::Dx12::D3D12Settings m_settings{};
         LS::Platform::Dx12::FrameBufferDxgi m_frameBuffer;
         LS::Platform::Dx12::DescriptorHeapDx12 m_heapRtv{ D3D12_DESCRIPTOR_HEAP_TYPE_RTV, NUM_CONTEXT };
@@ -752,7 +745,7 @@ void gt::dx12::DX12CubeApp::Update()
     m_commandList->DrawIndexedInstanced(_countof(g_indices), 1);
 }
 
-auto gt::dx12::DX12CubeApp::Initialize(SharedRef<LS::LSCommandArgs> args) -> LS::System::ErrorCode
+auto gt::dx12::DX12CubeApp::Initialize(LS::SharedRef<LS::LSCommandArgs> args) -> LS::System::ErrorCode
 {
     if (!CreateDevice())
         return LS::System::CreateFailCode("Failed to create device.");

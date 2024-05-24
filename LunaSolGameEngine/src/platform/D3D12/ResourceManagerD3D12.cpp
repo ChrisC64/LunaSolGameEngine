@@ -3,13 +3,13 @@
 #include <wrl/client.h>
 #include <cassert>
 #include <format>
-#include "platform/Windows/Win32/WinApiUtils.h"
 #include "engine/EngineLogDefines.h"
-#include "engine/EngineDefines.h"
 import D3D12Lib;
-import LSEDataLib;
+import LSDataLib;
 import Platform.Win32Window;
 import Engine.App;
+import Engine.Defines;
+import Win32.Utils;
 
 namespace WRL = Microsoft::WRL;
 using namespace LS::Win32;
