@@ -5,13 +5,14 @@ module;
 
 export module D3D12Lib;
 
-export import :D3D12Common;
-export import :D3D12Utils.Descriptors;
-export import :D3D12Utils.Commands;
-export import :Device;
-export import :ResourceManagerD3D12;
-export import :CommandListDx12;
-export import :CommandQueueD3D12;
-export import :DescriptorHeapDx12;
-export import :FrameDx12;
-export import :FrameBufferDxgi;
+export import D3D12Lib.D3D12Common;
+export import D3D12Lib.Utils;
+export import D3D12Lib.D3D12Utils.Descriptors;
+export import D3D12Lib.D3D12Utils.Commands;
+export import D3D12Lib.Device;
+export import D3D12Lib.ResourceManagerD3D12;
+export import D3D12Lib.CommandListDx12;
+export import D3D12Lib.CommandQueueD3D12;
+export import D3D12Lib.DescriptorHeapDx12;
+export import D3D12Lib.FrameDx12;
+export import D3D12Lib.FrameBufferDxgi;

@@ -186,6 +186,7 @@ xcopy /f /d /y $(IntDir) $(SolutionDir)out\$(Platform)\$(Configuration)\bin\</Co
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="src\DX11Test\DearDx11.ixx" />
     <ClCompile Include="src\DX11Test\DX11CubeApp.ixx" />
     <ClCompile Include="src\DX11Test\Systems\DX11BufferCache.ixx" />
     <ClCompile Include="src\DX11Test\Systems\DX11Systems.ixx" />

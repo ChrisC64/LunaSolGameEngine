@@ -3,7 +3,7 @@ module;
 #include <d3dx12\d3dx12_root_signature.h>
 #include <wrl/client.h>
 #include <cstdint>
-export module D3D12Lib:DescriptorHeapDx12;
+export module D3D12Lib.DescriptorHeapDx12;
 
 import Engine.EngineCodes;
 import Win32.ComUtils;

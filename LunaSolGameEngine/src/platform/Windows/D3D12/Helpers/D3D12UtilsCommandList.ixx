@@ -8,9 +8,9 @@ module;
 #include <span>
 #include <format>
 #include <wrl/client.h>
-#include <d3dx12\d3dx12_barriers.h>
+#include <d3dx12/d3dx12_barriers.h>
 #include <chrono>
-#include "engine\EngineLogDefines.h"
+#include "engine/EngineLogDefines.h"
 #include <chrono>
 //NOMINMAX doesn't seem to work here. Though this might be because of std
 #ifdef min
@@ -20,7 +20,7 @@ module;
 #ifdef max
 #undef max
 #endif
-export module D3D12Lib:D3D12Utils.Commands;
+export module D3D12Lib.D3D12Utils.Commands;
 import Win32.Utils;
 
 namespace WRL = Microsoft::WRL;

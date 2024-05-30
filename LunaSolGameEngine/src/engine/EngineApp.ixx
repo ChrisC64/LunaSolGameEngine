@@ -47,12 +47,20 @@ namespace LS
 
     export class LSApp;
 
+    export enum class APP_STATE
+    {
+        START,
+        RUNNING,
+        PAUSED,
+        CLOSED
+    };
+
     class LSApp
     {
     public:
         LSApp()
         {
-            Window = BuildWindow(600, 600, L"LS Application");
+            m_Window = BuildWindow(600, 600, L"LS Application");
         }
 
         LSApp(uint32_t width, uint32_t height, std::wstring_view title);
@@ -68,11 +76,8 @@ namespace LS
         virtual void Run() = 0;
 
     protected:
-        Ref<LSWindowBase> Window;
-        //TODO: Get rid of this ugly mess.
-        bool IsRunning = false;
-        bool IsPaused = false;
-
+        Ref<LSWindowBase> m_Window;
+        APP_STATE m_State;
         void RegisterKeyboardInput(Input::LSOnKeyboardDown onKeyDown, Input::LSOnKeyboardUp onKeyUp);
         void RegisterMouseInput(Input::LSOnMouseDown onMouseDown, Input::LSOnMouseUp onMouseUp, Input::LSOnMouseWheelScroll mouseWheel, Input::LSOnMouseMove cursorMove);
     };
@@ -80,25 +85,28 @@ namespace LS
 
 module : private;
 
+import D3D11Lib;
+import Platform.Win32Window;
+
 namespace LS
 {
-    LSApp::LSApp(uint32_t width, uint32_t height, std::wstring_view title) 
+    LSApp::LSApp(uint32_t width, uint32_t height, std::wstring_view title)
     {
-        Window = BuildWindow(width, height, title);
+        m_Window = BuildWindow(width, height, title);
     }
 
     void LS::LSApp::RegisterKeyboardInput(Input::LSOnKeyboardDown onKeyDown, Input::LSOnKeyboardUp onKeyUp)
     {
-        Window->RegisterKeyboardDown(onKeyDown);
-        Window->RegisterKeyboardUp(onKeyUp);
+        m_Window->RegisterKeyboardDown(onKeyDown);
+        m_Window->RegisterKeyboardUp(onKeyUp);
     }
-    
+
     void LS::LSApp::RegisterMouseInput(Input::LSOnMouseDown onMouseDown, Input::LSOnMouseUp onMouseUp, Input::LSOnMouseWheelScroll mouseWheel, Input::LSOnMouseMove cursorMove)
     {
-        Window->RegisterMouseDown(onMouseDown);
-        Window->RegisterMouseUp(onMouseUp);
-        Window->RegisterMouseWheel(mouseWheel);
-        Window->RegisterMouseMoveCallback(cursorMove);
+        m_Window->RegisterMouseDown(onMouseDown);
+        m_Window->RegisterMouseUp(onMouseUp);
+        m_Window->RegisterMouseWheel(mouseWheel);
+        m_Window->RegisterMouseMoveCallback(cursorMove);
     }
 
     auto ParseCommands(int argc, char* argv[]) noexcept -> SharedRef<LSCommandArgs>
@@ -128,5 +136,26 @@ namespace LS
         }
 
         return commandArgs;
+    }
+
+    auto BuildDevice(DEVICE_API api) noexcept -> Nullable<Ref<ILSDevice>>
+    {
+        using enum DEVICE_API;
+        switch (api)
+        {
+        case NONE:
+            return std::nullopt;
+        case DIRECTX_11:
+            return std::make_unique<LS::Win32::DeviceD3D11>();
+        case DIRECTX_12:
+            return std::nullopt;
+        default:
+            return std::nullopt;
+        }
+    }
+
+    auto BuildWindow(uint32_t width, uint32_t height, std::wstring_view title) noexcept -> Ref<LSWindowBase>
+    {
+        return std::make_unique<LS::Win32::Win32Window>(width, height, title);
     }
 }

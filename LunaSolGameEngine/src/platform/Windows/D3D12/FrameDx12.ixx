@@ -3,7 +3,7 @@ module;
 #include <dxgi.h>
 #include <d3d12.h>
 #include <wrl/client.h>
-export module D3D12Lib:FrameDx12;
+export module D3D12Lib.FrameDx12;
 
 export namespace LS::Platform::Dx12
 {

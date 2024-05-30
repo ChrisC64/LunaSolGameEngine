@@ -131,11 +131,11 @@ namespace gt::dx12
     public:
         DX12CubeApp(uint32_t width, uint32_t height, std::wstring_view title) : m_frameBuffer(FRAME_COUNT)
         {
-            Window = LS::BuildWindow(width, height, title);
+            m_Window = LS::BuildWindow(width, height, title);
             m_settings.Width = width;
             m_settings.Height = height;
             m_settings.FeatureLevel = D3D_FEATURE_LEVEL_12_0;
-            m_settings.Hwnd = (HWND)Window->GetHandleToWindow();
+            m_settings.Hwnd = (HWND)m_Window->GetHandleToWindow();
             m_device = std::make_unique<LS::Platform::Dx12::DeviceD3D12>(m_settings);
         }
         ~DX12CubeApp() = default;
@@ -654,7 +654,7 @@ void gt::dx12::DX12CubeApp::CreateCommandQueue()
 
 void gt::dx12::DX12CubeApp::CreateSwapchain()
 {
-    const auto& window = Window;
+    const auto& window = m_Window;
     HWND hwnd = reinterpret_cast<HWND>(window->GetHandleToWindow());
 
     // Setup swap chain
@@ -756,7 +756,7 @@ auto gt::dx12::DX12CubeApp::Initialize(LS::SharedRef<LS::LSCommandArgs> args) ->
     LoadContent();
 
     // Create View Port //
-    m_viewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(Window->GetWidth()), static_cast<float>(Window->GetHeight()));
+    m_viewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(m_Window->GetWidth()), static_cast<float>(m_Window->GetHeight()));
     // Scissor Rect is the actual drawing area of what will be rendered. A viewport can be bigger than the scissor rect,
     // or you can use Scissor rects to specify specific regions to draw (like omitting UI areas that may never be drawn because 2D render systems would handle that)
     m_scissorRect = CD3DX12_RECT(0, 0, LONG_MAX, LONG_MAX);
@@ -769,11 +769,11 @@ auto gt::dx12::DX12CubeApp::Initialize(LS::SharedRef<LS::LSCommandArgs> args) ->
 
 void gt::dx12::DX12CubeApp::Run()
 {
-    IsRunning = true;
-    Window->Show();
-    /*while (Window->IsOpen())
+    m_State = LS::APP_STATE::RUNNING;
+    m_Window->Show();
+    /*while (m_Window->IsOpen())
     {
-        Window->PollEvent();
+        m_Window->PollEvent();
         Render(0.20f, 0.38f, 0.65f, 1.0f);
     }*/
     DemoRun();
@@ -942,7 +942,7 @@ bool gt::dx12::DX12CubeApp::LoadContent()
 
     m_contentLoaded = true;
     // Resize/Create the depth buffer.
-    ResizeDepthBuffer(Window->GetWidth(), Window->GetHeight());
+    ResizeDepthBuffer(m_Window->GetWidth(), m_Window->GetHeight());
 
     return true;
 }
@@ -951,9 +951,9 @@ void gt::dx12::DX12CubeApp::DemoRun()
 {
     const auto begin = std::chrono::high_resolution_clock::now();
     //UINT64 fenceValue = 0;
-    while (Window->IsOpen())
+    while (m_Window->IsOpen())
     {
-        Window->PollEvent();
+        m_Window->PollEvent();
         // Timing // 
         const auto tick = std::chrono::high_resolution_clock::now();
         const auto end = std::chrono::high_resolution_clock::now();
@@ -972,7 +972,7 @@ void gt::dx12::DX12CubeApp::DemoRun()
 
         m_cubeViewMat = XMMatrixLookAtLH(eyePos, focus, up);
 
-        float aspectRatio = Window->GetWidth() / static_cast<float>(Window->GetHeight());
+        float aspectRatio = m_Window->GetWidth() / static_cast<float>(m_Window->GetHeight());
         m_cubeProjMat = XMMatrixPerspectiveFovLH(XMConvertToRadians(m_fov), aspectRatio, 0.1f, 100.0f);
 
         // Draw Cycle // 

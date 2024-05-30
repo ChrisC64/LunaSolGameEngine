@@ -5,7 +5,7 @@ module;
 #include <wrl/client.h>
 #include <array>
 
-export module D3D12Lib:D3D12Common;
+export module D3D12Lib.D3D12Common;
 
 import Engine.App;
 

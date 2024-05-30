@@ -55,7 +55,7 @@ namespace gt::dx12::ImGuiSample
     public:
         ImGuiSample(uint32_t width, uint32_t height)
         {
-            Window = LS::BuildWindow(width, height, L"ImGui Sample");
+            m_Window = LS::BuildWindow(width, height, L"ImGui Sample");
         }
 
         ~ImGuiSample() = default;
@@ -112,7 +112,7 @@ auto gt::dx12::ImGuiSample::ImGuiSample::Initialize(LS::SharedRef<LS::LSCommandA
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;         // IF using Docking Branch
 
     // Setup Platform/Renderer backends
-    ImGui_ImplWin32_Init((HWND)Window->GetHandleToWindow());
+    ImGui_ImplWin32_Init((HWND)m_Window->GetHandleToWindow());
     ImGui_ImplDX12_Init(m_pDevice.Get(), NUM_FRAMES, DXGI_FORMAT_R8G8B8A8_UNORM,
         m_srvHeap.Get(),
         // You'll need to designate a descriptor from your descriptor heap for Dear ImGui to use internally for its font texture's SRV
@@ -124,7 +124,7 @@ auto gt::dx12::ImGuiSample::ImGuiSample::Initialize(LS::SharedRef<LS::LSCommandA
     CreateRenderTargets();
     CreateFrameContexts();
 
-    auto win32Window = static_cast<LS::Win32::Win32Window*>(Window.get());
+    auto win32Window = static_cast<LS::Win32::Win32Window*>(m_Window.get());
     using namespace std::placeholders;
     auto bind = std::bind(gt::dx12::ImGuiSample::WndProcImpl, _1, _2, _3, _4);
 
@@ -135,23 +135,23 @@ auto gt::dx12::ImGuiSample::ImGuiSample::Initialize(LS::SharedRef<LS::LSCommandA
 
 void gt::dx12::ImGuiSample::ImGuiSample::Run()
 {
-    Window->Show();
+    m_Window->Show();
     ImVec4 clearColor = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-    auto currWidth = Window->GetWidth();
-    auto currHeight = Window->GetHeight();
+    auto currWidth = m_Window->GetWidth();
+    auto currHeight = m_Window->GetHeight();
     ImGuiIO& io = ImGui::GetIO();
-    while (Window->IsOpen())
+    while (m_Window->IsOpen())
     {
-        Window->PollEvent();
-        auto mousePos = Window->GetMousePos();
-        if (currWidth != Window->GetWidth() && currHeight != Window->GetHeight())
+        m_Window->PollEvent();
+        auto mousePos = m_Window->GetMousePos();
+        if (currWidth != m_Window->GetWidth() && currHeight != m_Window->GetHeight())
         {
             WaitForLastSubmittedFrame();
             CleanupRenderTargets();
-            ResizeFrame(Window->GetWidth(), Window->GetHeight());
+            ResizeFrame(m_Window->GetWidth(), m_Window->GetHeight());
             CreateRenderTargets();
-            currWidth = Window->GetWidth();
-            currHeight = Window->GetHeight();
+            currWidth = m_Window->GetWidth();
+            currHeight = m_Window->GetHeight();
         }
 
         ImGui_ImplDX12_NewFrame();
@@ -342,7 +342,7 @@ bool gt::dx12::ImGuiSample::ImGuiSample::CreateDeviceD3D()
     }
 
     // Setup swap chain
-    const auto& window = Window;
+    const auto& window = m_Window;
     HWND hwnd = reinterpret_cast<HWND>(window->GetHandleToWindow());
 
     DXGI_SWAP_CHAIN_DESC1 swapchainDesc1{};

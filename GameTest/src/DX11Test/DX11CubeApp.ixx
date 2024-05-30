@@ -239,8 +239,8 @@ using namespace gt;
 using namespace LS;
 
 gt::dx11::DX11CubeApp::DX11CubeApp(uint32_t width, uint32_t height, std::wstring_view title) : LSApp(width, height, title),
-    m_settings(LS::CreateDeviceSettings(Window->GetWidth(), Window->GetHeight(), LS::DEVICE_API::DIRECTX_11)),
-    m_renderer(m_settings, Window.get()),
+    m_settings(LS::CreateDeviceSettings(m_Window->GetWidth(), m_Window->GetHeight(), LS::DEVICE_API::DIRECTX_11)),
+    m_renderer(m_settings, m_Window.get()),
     m_command()
 {
 }
@@ -249,13 +249,13 @@ auto gt::dx11::DX11CubeApp::Initialize(SharedRef<LS::LSCommandArgs> args) -> LS:
 {
     using enum LS::System::ErrorStatus;
     LS::Colors::RGBA bgColor(1.0f, 0.0f, 0.0f, 1.0f);
-    Window->SetBackgroundColor(bgColor);
+    m_Window->SetBackgroundColor(bgColor);
     RegisterMouseInput(std::bind(&gt::dx11::DX11CubeApp::OnMouseDown, this, _1),
         std::bind(&gt::dx11::DX11CubeApp::OnMouseUp, this, _1), 
         std::bind(&gt::dx11::DX11CubeApp::OnMouseWheel, this, _1), 
         std::bind(&gt::dx11::DX11CubeApp::OnMouseMove, this, _1, _2));
 
-    Window->RegisterWindowEventCallback(std::bind(&gt::dx11::DX11CubeApp::OnWindowEvent, this, _1));
+    m_Window->RegisterWindowEventCallback(std::bind(&gt::dx11::DX11CubeApp::OnWindowEvent, this, _1));
     
     if (auto deviceResult = m_renderer.Initialize(); !deviceResult)
     {
@@ -413,19 +413,19 @@ auto gt::dx11::DX11CubeApp::Initialize(SharedRef<LS::LSCommandArgs> args) -> LS:
 
 void gt::dx11::DX11CubeApp::Run()
 {
-    IsRunning = true;
-    Window->Show();
+    m_State = LS::APP_STATE::RUNNING;
+    m_Window->Show();
     g_clock.Start();
     
-    while (Window->IsOpen())
+    while (m_Window->IsOpen())
     {
         if (LS::Win32::IsKeyPressed(LS::Input::KEYBOARD::ESCAPE))
         {
-            Window->Close();
+            m_Window->Close();
             break;
         }
 
-        if (IsPaused)
+        if (m_State == LS::APP_STATE::PAUSED)
         {
             std::cout << "Paused app!\n";
             continue;
@@ -433,7 +433,7 @@ void gt::dx11::DX11CubeApp::Run()
 
         g_clock.Tick();
         uint64_t dt = g_clock.GetDeltaTimeUs();
-        Window->PollEvent();
+        m_Window->PollEvent();
         Update(dt);
         Draw();
     }
@@ -509,26 +509,25 @@ void gt::dx11::DX11CubeApp::OnWindowEvent(LS::WINDOW_EVENT ev)
     {
     case CLOSE_WINDOW:
     {
-        IsRunning = false;
-        IsPaused = true;
+        m_State = LS::APP_STATE::CLOSED;
     }
     break;
     case WINDOW_RESIZE_START:
     {
-        IsPaused = true;
+        m_State = LS::APP_STATE::PAUSED;
         break;
     }
     case WINDOW_RESIZE_END:
     {
-        const auto width = Window->GetWidth();
-        const auto height = Window->GetHeight();
+        const auto width = m_Window->GetWidth();
+        const auto height = m_Window->GetHeight();
         HandleResize(width, height);
     }
     break;
     case MAXIMIZED_WINDOW:
     {
-        const auto width = Window->GetWidth();
-        const auto height = Window->GetHeight();
+        const auto width = m_Window->GetWidth();
+        const auto height = m_Window->GetHeight();
         HandleResize(width, height);
     }
     break;
@@ -550,7 +549,7 @@ void gt::dx11::DX11CubeApp::PreDraw(ComPtr<ID3D11DeviceContext> context)
     m_command.SetRasterizerState(rsSolid.Get());
     m_command.SetPrimTopology(D3D11_PRIMITIVE_TOPOLOGY::D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     m_command.SetInputLayout(inputLayout.Get());
-    m_command.SetViewport(static_cast<float>(Window->GetWidth()), static_cast<float>(Window->GetHeight()));
+    m_command.SetViewport(static_cast<float>(m_Window->GetWidth()), static_cast<float>(m_Window->GetHeight()));
     m_command.BindVS(vertShader.Get());
     m_command.BindPS(pixShader.Get());
     m_command.SetVertexBuffer(vb.Get(), sizeof(Vertex));
@@ -565,7 +564,7 @@ void gt::dx11::DX11CubeApp::PreDraw(ComPtr<ID3D11DeviceContext> context)
     //SetRasterizerState(context.Get(), rsSolid.Get());
     //SetTopology(context.Get(), D3D11_PRIMITIVE_TOPOLOGY::D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     //SetInputlayout(context.Get(), inputLayout.Get());
-    //SetViewport(context.Get(), static_cast<float>(Window->GetWidth()), static_cast<float>(Window->GetHeight()));
+    //SetViewport(context.Get(), static_cast<float>(m_Window->GetWidth()), static_cast<float>(m_Window->GetHeight()));
     // Bind to State //
     /*BindVS(context.Get(), vertShader.Get());
     BindPS(context.Get(), pixShader.Get());*/
@@ -589,7 +588,8 @@ void gt::dx11::DX11CubeApp::DrawScene(ComPtr<ID3D11DeviceContext> context)
 
 void gt::dx11::DX11CubeApp::HandleResize(uint32_t width, uint32_t height)
 {
-    IsPaused = true;
+    m_State = LS::APP_STATE::PAUSED;
+
     ClearDeviceDependentResources(m_renderer.GetDeviceContextCom().Get());
     if (rtv)
     {
@@ -606,7 +606,7 @@ void gt::dx11::DX11CubeApp::HandleResize(uint32_t width, uint32_t height)
     if (!rtvOpt)
     {
         LS::Log::TraceError(L"Failed to create render target view from back buffer");
-        IsPaused = false;
+        m_State = LS::APP_STATE::RUNNING;
         return;
     }
     rtv = rtvOpt.value();
@@ -615,12 +615,12 @@ void gt::dx11::DX11CubeApp::HandleResize(uint32_t width, uint32_t height)
     if (!dsResult)
     {
         LS::Log::TraceError(L"Failed to create depth stencil view from back buffer");
-        IsPaused = false;
+        m_State = LS::APP_STATE::RUNNING;
         return;
     }
     dsView = dsResult.value();
     
-    IsPaused = false;
+    m_State = LS::APP_STATE::RUNNING;
 }
 
 void gt::dx11::DX11CubeApp::Update(uint64_t dt)
