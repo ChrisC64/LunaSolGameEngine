@@ -478,42 +478,4 @@ namespace LS
         [[nodiscard]] virtual auto CreateContext() noexcept -> Nullable<Ref<ILSContext>> = 0;
         virtual void Shutdown() noexcept = 0;
     };
-
-    export class IRenderer
-    {
-    protected:
-        explicit IRenderer(SharedRef<ILSDevice>& pDevice) : m_pDevice(pDevice)
-        {
-        }
-
-        SharedRef<ILSDevice> m_pDevice;
-        std::queue<SharedRef<ILSContext>> m_RenderQueue;
-
-    public:
-        virtual ~IRenderer() = default;
-
-        /**
-         * @brief Creates a context from the device
-         * @return the context object
-         */
-        virtual auto CreateContext() noexcept -> Ref<ILSContext> = 0;
-
-        virtual auto CreateTexture(const LSTextureInfo& info) noexcept -> Nullable<GuidUL> = 0;
-
-        /**
-         * @brief Prepares the Context's commands for the render queue to be presented
-         * @param pContext The context with commands to perform with
-         */
-        virtual void QueueCommands(Ref<ILSContext>& pContext) noexcept = 0;
-
-        ILSDevice* GetDevice() const
-        {
-            return m_pDevice.get();
-        }
-
-        const ILSDevice* GetDeviceConst() const
-        {
-            return m_pDevice.get();
-        }
-    };
 }

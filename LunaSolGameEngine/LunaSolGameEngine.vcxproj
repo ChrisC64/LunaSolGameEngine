@@ -203,7 +203,6 @@ xcopy /f /d /y $(IntDir) $(SolutionDir)build\$(Platform)\$(Configuration)\bin\</
     <ClCompile Include="src\engine\EngineLogger.ixx" />
     <ClCompile Include="src\engine\EngineWindow.ixx" />
     <ClCompile Include="src\engine\LSEngine.ixx" />
-    <ClCompile Include="src\engine\EngineApp.cpp" />
     <ClCompile Include="src\helper\IOHelper.ixx" />
     <ClCompile Include="src\helper\LSCommonTypes.ixx" />
     <ClCompile Include="src\helper\PipelineFactory.cpp" />
@@ -212,19 +211,6 @@ xcopy /f /d /y $(IntDir) $(SolutionDir)build\$(Platform)\$(Configuration)\bin\</
     <ClCompile Include="src\math\MathLib.ixx" />
     <ClCompile Include="src\math\MatrixMath.ixx" />
     <ClCompile Include="src\mesh\GeometryGenerator.ixx" />
-    <ClCompile Include="src\platform\D3D11\DeviceD3D11.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="src\platform\D3D11\PipelineFactoryD3D11.cpp" />
-    <ClCompile Include="src\platform\D3D11\RenderD3D11.cpp" />
-    <ClCompile Include="src\platform\D3D11\RenderFuncsD3D11.cpp" />
-    <ClCompile Include="src\platform\D3D12\CommandListDx12.cpp" />
-    <ClCompile Include="src\platform\D3D12\CommandQueueDx12.cpp" />
-    <ClCompile Include="src\platform\D3D12\DeviceD3D12.cpp" />
-    <ClCompile Include="src\platform\D3D12\ResourceManagerD3D12.cpp" />
     <ClCompile Include="src\platform\Windows\D3D11\D3D11Lib.ixx" />
     <ClCompile Include="src\platform\Windows\D3D11\DeviceD3D11.ixx" />
     <ClCompile Include="src\platform\Windows\D3D11\Helpers\D3D11HelperStates.ixx" />
@@ -248,9 +234,9 @@ xcopy /f /d /y $(IntDir) $(SolutionDir)build\$(Platform)\$(Configuration)\bin\</
     <ClCompile Include="src\platform\Windows\DirectX\DXCamera.ixx" />
     <ClCompile Include="src\platform\Windows\DirectX\DXCameraController.ixx" />
     <ClCompile Include="src\platform\Windows\DirectX\DXMatrixUtils.ixx" />
-    <ClCompile Include="src\platform\Windows\DirectX\ResourceManagerD3D12.ixx" />
+    <ClCompile Include="src\platform\Windows\D3D12\ResourceManagerD3D12.ixx" />
     <ClCompile Include="src\platform\Windows\DXGI\DXGIHelper.ixx" />
-    <ClCompile Include="src\platform\Windows\DXGI\FrameBufferDxgi.ixx" />
+    <ClCompile Include="src\platform\Windows\D3D12\FrameBufferDxgi.ixx" />
     <ClCompile Include="src\platform\Windows\Win32\ComUtils.ixx" />
     <ClCompile Include="src\platform\Windows\Win32\Win32Utils.ixx" />
     <ClCompile Include="src\platform\Windows\Win32\Win32Window.ixx" />

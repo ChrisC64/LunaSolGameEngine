@@ -41,11 +41,11 @@ namespace gt::dx12
     public:
         SimpleWindow(uint32_t width, uint32_t height) : m_frameBuffer(NUM_OF_FRAMES)
         {
-            Window = LS::BuildWindow(width, height, L"Simple Window");
+            m_Window = LS::BuildWindow(width, height, L"Simple Window");
             m_settings.Width = width;
             m_settings.Height = height;
             m_settings.FeatureLevel = D3D_FEATURE_LEVEL_12_0;
-            m_settings.Hwnd = (HWND)Window->GetHandleToWindow();
+            m_settings.Hwnd = (HWND)m_Window->GetHandleToWindow();
             m_device = std::make_unique<LS::Platform::Dx12::DeviceD3D12>(m_settings);
 
             UINT flag = 0;
@@ -102,24 +102,24 @@ auto gt::dx12::SimpleWindow::Initialize(LS::SharedRef<LS::LSCommandArgs> args) -
 
 void gt::dx12::SimpleWindow::Run()
 {
-    Window->Show();
+    m_Window->Show();
 
-    IsRunning = true;
-    auto currWidth = Window->GetWidth();
-    auto currHeight = Window->GetHeight();
-    while (Window->IsOpen())
+    m_State = LS::APP_STATE::RUNNING;
+    auto currWidth = m_Window->GetWidth();
+    auto currHeight = m_Window->GetHeight();
+    while (m_Window->IsOpen())
     {
-        Window->PollEvent();
+        m_Window->PollEvent();
         m_frameBuffer.WaitOnFrameBuffer();
-        if (currWidth != Window->GetWidth() || currHeight != Window->GetHeight())
+        if (currWidth != m_Window->GetWidth() || currHeight != m_Window->GetHeight())
         {
             m_queue->Flush();
-            if (auto result = m_frameBuffer.ResizeFrames(Window->GetWidth(), Window->GetHeight(), m_heapRtv.GetHeapStartCpu(), m_device->GetDevice().Get()); !result)
+            if (auto result = m_frameBuffer.ResizeFrames(m_Window->GetWidth(), m_Window->GetHeight(), m_heapRtv.GetHeapStartCpu(), m_device->GetDevice().Get()); !result)
             {
                 throw std::runtime_error(std::format("Failed to resize frame buffer. Error: {}", result.Message()));
             }
-            currWidth = Window->GetWidth();
-            currHeight = Window->GetHeight();
+            currWidth = m_Window->GetWidth();
+            currHeight = m_Window->GetHeight();
         }
         
         OnRender();
@@ -161,7 +161,7 @@ bool gt::dx12::SimpleWindow::LoadPipeline()
     m_commandList = std::make_unique<LS::Platform::Dx12::CommandListDx12>(device4.Get(), type, "main command list");
 
     // Setup swap chain
-    const auto& window = Window;
+    const auto& window = m_Window;
     HWND hwnd = reinterpret_cast<HWND>(window->GetHandleToWindow());
 
     DXGI_SWAP_CHAIN_DESC1 swapchainDesc1{};

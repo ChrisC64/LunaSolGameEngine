@@ -13,8 +13,8 @@ export module DXGIHelper;
 import Engine.Logger;
 import Engine.EngineCodes;
 import Engine.Defines;
-import D3D12Lib;
 import Win32.Utils;
+import D3D12Lib.D3D12Common;
 
 namespace WRL = Microsoft::WRL;
 

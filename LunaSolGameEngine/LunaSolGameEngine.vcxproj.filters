@@ -15,34 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\platform\D3D11\DeviceD3D11.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\platform\D3D11\PipelineFactoryD3D11.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\engine\EngineApp.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\helper\PipelineFactory.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\platform\D3D12\DeviceD3D12.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\platform\D3D12\ResourceManagerD3D12.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\platform\D3D12\CommandQueueDx12.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\platform\D3D12\CommandListDx12.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\platform\D3D11\RenderD3D11.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\platform\D3D11\RenderFuncsD3D11.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\data\BufferTypes.ixx">
@@ -177,13 +150,13 @@
     <ClCompile Include="src\platform\Windows\DirectX\DXMatrixUtils.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\platform\Windows\DirectX\ResourceManagerD3D12.ixx">
+    <ClCompile Include="src\platform\Windows\D3D12\ResourceManagerD3D12.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\platform\Windows\DXGI\DXGIHelper.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\platform\Windows\DXGI\FrameBufferDxgi.ixx">
+    <ClCompile Include="src\platform\Windows\D3D12\FrameBufferDxgi.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\platform\Windows\D3D11\Helpers\D3D11HelperStates.ixx">

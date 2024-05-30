@@ -13,16 +13,15 @@
 #include <processenv.h>
 #include <shellapi.h>
 #endif // 
-import Engine.Logger;
-import Engine.EngineCodes;
-import Engine.Defines;
+
+import LSEngine;
+
 import DX11CubeApp;
 import CubeApp;
 import DX12.SimpleWindow;
-import Engine.App;
-import LSDataLib;
 import Helper.LSCommonTypes;
 import ImGuiWindowTest;
+import DearDx11;
 
 //import MultiPassTestApp;
 //import CubeApp;
@@ -59,6 +58,11 @@ LS::Ref<LS::LSApp> CreateApp(uint32_t choice)
     case 3:
     {
         LS::Ref<LS::LSApp> app(new gt::dx12::ImGuiSample::ImGuiSample(800, 600));
+        return app;
+    }
+    case 4:
+    {
+        LS::Ref<LS::LSApp> app(new gt::dx11::ImGuiDx11(800, 600, L"DX11 ImGui App"));
         return app;
     }
     default:

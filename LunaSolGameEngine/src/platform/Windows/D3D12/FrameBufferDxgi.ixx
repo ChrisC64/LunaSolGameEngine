@@ -9,9 +9,9 @@ module;
 #include <exception>
 #include <format>
 
-export module D3D12Lib:FrameBufferDxgi;
+export module D3D12Lib.FrameBufferDxgi;
 
-import :FrameDx12;
+import D3D12Lib.FrameDx12;
 import Engine.EngineCodes;
 import Win32.ComUtils;
 import Win32.Utils;
