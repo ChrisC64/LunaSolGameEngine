@@ -233,7 +233,7 @@ export namespace LS
     {
         .IsDepthEnabled = false,
         .DepthBufferWriteAll = false,
-        .DepthComparison = LS::EVAL_COMPARE::LESSS_EQUAL_PASS,
+        .DepthComparison = LS::EVAL_COMPARE::NEVER_PASS,
         .IsStencilEnabled = false,
         .StencilWriteMask = 0xFF,
         .StencilReadMask = 0xFF,
@@ -241,11 +241,11 @@ export namespace LS
         .BackFace = { .StencilFailOp = DEPTH_STENCIL_OPS::KEEP, .StencilPassDepthFailOp = DEPTH_STENCIL_OPS::KEEP, .BothPassOp = DEPTH_STENCIL_OPS::KEEP, .StencilTestFunc = EVAL_COMPARE::ALWAYS_PASS },
     };
     
-    DepthStencil DefaultDepth
+    DepthStencil DepthDefault
     {
         .IsDepthEnabled = true,
         .DepthBufferWriteAll = true,
-        .DepthComparison = LS::EVAL_COMPARE::LESSS_EQUAL_PASS,
+        .DepthComparison = LS::EVAL_COMPARE::LESS_PASS,
         .IsStencilEnabled = false,
         .StencilWriteMask = 0xFF,
         .StencilReadMask = 0xFF,
@@ -257,7 +257,7 @@ export namespace LS
     {
         .IsDepthEnabled = true,
         .DepthBufferWriteAll = false,
-        .DepthComparison = LS::EVAL_COMPARE::LESSS_EQUAL_PASS,
+        .DepthComparison = LS::EVAL_COMPARE::LESS_PASS,
         .IsStencilEnabled = false,
         .StencilWriteMask = 0xFF,
         .StencilReadMask = 0xFF,
@@ -287,6 +287,28 @@ export namespace LS
         .StencilReadMask = 0xFF,
         .FrontFace = { .StencilFailOp = DEPTH_STENCIL_OPS::KEEP, .StencilPassDepthFailOp = DEPTH_STENCIL_OPS::KEEP, .BothPassOp = DEPTH_STENCIL_OPS::KEEP, .StencilTestFunc = EVAL_COMPARE::ALWAYS_PASS },
         .BackFace = { .StencilFailOp = DEPTH_STENCIL_OPS::KEEP, .StencilPassDepthFailOp = DEPTH_STENCIL_OPS::KEEP, .BothPassOp = DEPTH_STENCIL_OPS::KEEP, .StencilTestFunc = EVAL_COMPARE::ALWAYS_PASS },
+    };
+
+    DepthStencil DepthStencilDefault
+    {
+        .IsDepthEnabled = true,
+        .DepthBufferWriteAll = true,
+        .DepthComparison = LS::EVAL_COMPARE::LESS_PASS,
+        .IsStencilEnabled = true,
+        .StencilWriteMask = 0xFF,
+        .StencilReadMask = 0xFF,
+        .FrontFace = {
+            .StencilFailOp = DEPTH_STENCIL_OPS::KEEP, 
+            .StencilPassDepthFailOp = DEPTH_STENCIL_OPS::INCR_THEN_WRAP, 
+            .BothPassOp = DEPTH_STENCIL_OPS::KEEP, 
+            .StencilTestFunc = EVAL_COMPARE::ALWAYS_PASS 
+        },
+        .BackFace = {
+            .StencilFailOp = DEPTH_STENCIL_OPS::KEEP, 
+            .StencilPassDepthFailOp = DEPTH_STENCIL_OPS::DECR_THEN_WRAP, 
+            .BothPassOp = DEPTH_STENCIL_OPS::KEEP, 
+            .StencilTestFunc = EVAL_COMPARE::ALWAYS_PASS 
+        },
     };
 
     /////////////////////////

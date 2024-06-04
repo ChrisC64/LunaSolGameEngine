@@ -289,7 +289,7 @@ namespace LS::Serialize
     {
         if (!fs::exists(file))
         {
-            return LS::System::CreateFailCode(std::format("File was not found: {}", file.string()), LS::System::ErrorCategory::FILE);
+            return LS::System::CreateFailCode(std::format("File was not found: {}", file.string()), LS::ENGINE_CODE::FILE_ERROR);
         }
 
         auto stream = std::fstream(file, std::fstream::in);

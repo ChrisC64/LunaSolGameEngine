@@ -14,7 +14,7 @@ import Win32.Utils;
 //Utility functions for Microsoft specific stuff //
 export namespace LS::Utils
 {
-#ifdef LS_WINDOWS_BUILD
+#ifdef LS_WIN32_BUILD
     template <typename TType>
     inline constexpr void ComRelease(TType** comPtr)
     {
@@ -24,7 +24,7 @@ export namespace LS::Utils
             *comPtr = NULL;
         }
     }
-#endif LS_WINDOWS_BUILD
+#endif LS_WIN32_BUILD
 
     constexpr void SetDebugName([[maybe_unused]] ID3D11DeviceChild* child, [[maybe_unused]] std::string_view name)
     {
@@ -94,6 +94,12 @@ export namespace LS::Utils
     
     template<class T, class U>
     constexpr HRESULT QueryInterfaceFor(Microsoft::WRL::ComPtr<T>& obj, Microsoft::WRL::ComPtr<U>& query)
+    {
+        return obj->QueryInterface(IID_PPV_ARGS(&query));
+    }
+
+    template<class T, class U>
+    constexpr HRESULT QueryInterfaceFor(const Microsoft::WRL::ComPtr<T>& obj, Microsoft::WRL::ComPtr<U>& query)
     {
         return obj->QueryInterface(IID_PPV_ARGS(&query));
     }
