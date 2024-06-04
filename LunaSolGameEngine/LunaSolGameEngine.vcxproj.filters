@@ -192,6 +192,18 @@
     <ClCompile Include="src\mesh\GeometryGenerator.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\platform\Windows\D3D11\RenderCommandD3D11.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\platform\Windows\D3D11\ShaderD3D11.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\engine\Renderer.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\platform\Windows\DXGI\DXGISwapChain.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\engine\EngineLogDefines.h">

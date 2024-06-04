@@ -332,13 +332,13 @@ namespace LS::Win32
         // window stuff because I'd rather try and implement ImGui and be window agnostic a bit. I'd rather create
         // a new library for Window management or something, but that will come later after my work on getting a basic
         // DX12 renderer setup
-        /*LRESULT handled = 0;
+        LRESULT handled = 0;
         if (m_wndProcHandler)
         {
             handled = m_wndProcHandler(hwnd, message, wparam, lparam);
         }
         if (handled > 0)
-            return handled;*/
+            return handled;
 
         switch (message)
         {

@@ -556,7 +556,7 @@ void gt::dx11::DX11CubeApp::PreDraw(ComPtr<ID3D11DeviceContext> context)
     m_command.SetIndexBuffer(ib.Get());
     std::array<ID3D11Buffer*, 3> buffers{ view.Get(), proj.Get(), mvp.Get() };
     m_command.BindVSConstantBuffers(buffers);
-    m_command.Clear(g_blue.data(), rtv.Get());
+    m_command.Clear(g_blue, rtv.Get());
     m_command.ClearDepthStencil(dsView.Get());
 
     // Set States and Objects //

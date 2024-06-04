@@ -1,12 +1,13 @@
 module;
-#include <optional>
-#include <string_view>
-#include <cstdint>
-#include <functional>
-#include <vector>
-#include <memory>
-#include <ranges>
+
 export module Engine.App;
+import <optional>;
+import <string_view>;
+import <cstdint>;
+import <functional>;
+import <vector>;
+import <memory>;
+import <ranges>;
 
 import Engine.LSDevice;
 import Engine.LSWindow;

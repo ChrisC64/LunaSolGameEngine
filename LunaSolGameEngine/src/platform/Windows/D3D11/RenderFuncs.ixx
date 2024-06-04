@@ -1,20 +1,20 @@
 module;
-#include <cassert>
-#include <array>
-#include <span>
 #include <d3d11_4.h>
 #include <wrl/client.h>
-#include <limits>
 #include <dxgi.h>
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include "engine/EngineLogDefines.h"
+#include <cassert>
 
 #pragma comment(lib, "d3d11")
 #define NOMINMAX
 #undef max
 #undef min
 export module D3D11.RenderFuncD3D11;
+import <array>;
+import <span>;
+import <limits>;
 import Win32.ComUtils;
 import LSDataLib;
 import Engine.LSDevice;
@@ -26,7 +26,7 @@ export namespace LS::Win32
 {
     // CLEAR //
     constexpr void ClearRT(ID3D11DeviceContext* pContext, ID3D11RenderTargetView* pRTView,
-        std::array<float, 4> color) noexcept
+        const std::array<float, 4> color) noexcept
     {
         assert(pContext);
         assert(pRTView);
@@ -707,5 +707,18 @@ export namespace LS::Win32
         swDesc1.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
         swDesc1.Flags = 0;
         return swDesc1;
+    }
+
+    constexpr auto CreateTexture2D(ID3D11Device* pDevice, const D3D11_TEXTURE2D_DESC* desc, D3D11_SUBRESOURCE_DATA* res = nullptr) noexcept -> Nullable<ID3D11Texture2D*>
+    {
+        if (!pDevice)
+            return std::nullopt;
+
+        ID3D11Texture2D* texture;
+        HRESULT hr = pDevice->CreateTexture2D(desc, res, &texture);
+        if (FAILED(hr))
+            return std::nullopt;
+
+        return texture;
     }
 }

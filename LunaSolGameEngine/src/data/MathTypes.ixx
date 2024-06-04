@@ -34,9 +34,9 @@ export namespace LS
             return *this;
         }
 
-        [[nodiscard]] constexpr Vec2<T>& operator/=(T scalar) noexcept(scalar != 0)
+        [[nodiscard]] constexpr Vec2<T>& operator/=(T scalar) noexcept(scalar == 0)
         {
-            if constexpr (scalar != 0)
+            if constexpr (scalar == 0)
             {
                 throw std::invalid_argument("Cannot divide by 0!\n");
             }
@@ -108,9 +108,9 @@ export namespace LS
             return *this;
         }
 
-        [[nodiscard]] constexpr Vec3<T>& operator/=(T scalar) noexcept(scalar != 0)
+        [[nodiscard]] constexpr Vec3<T>& operator/=(T scalar) noexcept(scalar == 0)
         {
-            if constexpr (scalar != 0)
+            if constexpr (scalar == 0)
             {
                 throw std::invalid_argument("Cannot divide by 0!\n");
             }
@@ -188,9 +188,9 @@ export namespace LS
             return *this;
         }
 
-        [[nodiscard]] constexpr Vec4<T>& operator/=(T scalar) noexcept(scalar != 0)
+        [[nodiscard]] constexpr Vec4<T>& operator/=(T scalar) noexcept(scalar == 0)
         {
-            if constexpr (scalar != 0)
+            if constexpr (scalar == 0)
             {
                 throw std::invalid_argument("Cannot divide by 0!\n");
             }

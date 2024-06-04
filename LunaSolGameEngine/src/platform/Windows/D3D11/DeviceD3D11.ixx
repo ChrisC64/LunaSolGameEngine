@@ -24,7 +24,7 @@ export namespace LS::Win32
         void CreateDevice(WRL::ComPtr<IDXGIAdapter> displayAdapter = nullptr, bool isSingleThreaded = false);
         void CreateSwapchain(HWND winHandle, uint32_t width, uint32_t height, uint32_t frameBufferCount = 2, PIXEL_COLOR_FORMAT pixelColorFormat = PIXEL_COLOR_FORMAT::RGBA8_UNORM);
         void CreateSwapchain(const LS::LSWindowBase* window, PIXEL_COLOR_FORMAT format = PIXEL_COLOR_FORMAT::RGBA8_UNORM, uint32_t bufferSize = 2);
-        void CreateSwapchainAsTexture(const LS::LSWindowBase* window, PIXEL_COLOR_FORMAT format = PIXEL_COLOR_FORMAT::RGBA8_UNORM, uint32_t bufferSize = 2);
+        auto CreateSwapchainAsTexture(const LS::LSWindowBase* window, PIXEL_COLOR_FORMAT format = PIXEL_COLOR_FORMAT::RGBA8_UNORM, uint32_t bufferSize = 2) const -> Microsoft::WRL::ComPtr<ID3D11Texture2D>;
         auto ResizeSwapchain(uint32_t width, uint32_t height) noexcept -> HRESULT;
         void DebugPrintLiveObjects();
 
@@ -37,7 +37,7 @@ export namespace LS::Win32
         [[nodiscard]] auto CreateRenderTargetView(ID3D11Resource* pResource, ID3D11RenderTargetView** ppRTView, const D3D11_RENDER_TARGET_VIEW_DESC* rtvDesc = nullptr) noexcept -> HRESULT;
         [[nodiscard]] auto CreateRenderTargetView1(ID3D11Resource* pResource, ID3D11RenderTargetView1** ppRTView, const D3D11_RENDER_TARGET_VIEW_DESC1* rtvDesc = nullptr) noexcept -> HRESULT;
         [[nodiscard]] auto CreateDepthStencilView(ID3D11RenderTargetView* pRenderTargetView, ID3D11Resource* pResource, ID3D11DepthStencilView** ppDepthStencil, const D3D11_DEPTH_STENCIL_VIEW_DESC* pDesc = nullptr) noexcept -> HRESULT;
-        [[nodiscard]] auto CreateDepthStencilViewForSwapchain(ID3D11RenderTargetView* pRenderTargetView, ID3D11DepthStencilView** ppDepthStencil, DXGI_FORMAT format = DXGI_FORMAT_D24_UNORM_S8_UINT) noexcept -> HRESULT;
+        [[nodiscard]] auto CreateDepthStencilViewFromSwapchain(DXGI_FORMAT format = DXGI_FORMAT_D24_UNORM_S8_UINT) const noexcept -> Microsoft::WRL::ComPtr<ID3D11DepthStencilView>;
         [[nodiscard]] auto CreateDepthStencilState(const D3D11_DEPTH_STENCIL_DESC& depthStencilDesc, ID3D11DepthStencilState** ppDepthStencilState) noexcept -> HRESULT;
         [[nodiscard]] auto CreateBlendState(const D3D11_BLEND_DESC& blendDesc, ID3D11BlendState** ppBlendState) noexcept -> HRESULT;
         [[nodiscard]] auto CreateBuffer(const D3D11_BUFFER_DESC* pDesc, const D3D11_SUBRESOURCE_DATA* pInitialData, ID3D11Buffer** ppBuffer) noexcept -> HRESULT;
@@ -62,7 +62,7 @@ export namespace LS::Win32
         WRL::ComPtr<ID3D11DeviceContext4>               m_pImmediateContext = nullptr;
         WRL::ComPtr<ID3D11Debug>                        m_pDebug = nullptr;
         WRL::ComPtr<IDXGISwapChain1>                    m_pSwapchain = nullptr;
-        WRL::ComPtr<ID3D11Texture2D>                    m_pBackBufferFrame = nullptr;
+        //WRL::ComPtr<ID3D11Texture2D>                    m_pBackBufferFrame = nullptr;
         D3D_FEATURE_LEVEL                               m_featureLevel{};
     };
 }
@@ -214,6 +214,7 @@ void DeviceD3D11::CreateSwapchain(HWND winHandle, uint32_t width, uint32_t heigh
 
 void DeviceD3D11::CreateSwapchain(const LSWindowBase* window, PIXEL_COLOR_FORMAT format /*PIXEL_COLOR_FORMAT::RGBA8_UNORM*/, uint32_t bufferSize /*2*/)
 {
+    assert(window);
     LS::LSSwapchainInfo info{
         .BufferSize = bufferSize,
         .Width = window->GetWidth(),
@@ -227,7 +228,9 @@ void DeviceD3D11::CreateSwapchain(const LSWindowBase* window, PIXEL_COLOR_FORMAT
     CreateSwapchain(static_cast<HWND>(window->GetHandleToWindow()), info.Width, info.Height, info.BufferSize, info.PixelFormat);
 }
 
-void DeviceD3D11::CreateSwapchainAsTexture(const LS::LSWindowBase* window, PIXEL_COLOR_FORMAT format /*PIXEL_COLOR_FORMAT::RGBA8_UNORM*/, uint32_t bufferSize /*2*/)
+// Get A Texture to the Back Buffer 
+auto DeviceD3D11::CreateSwapchainAsTexture(const LS::LSWindowBase* window, 
+    PIXEL_COLOR_FORMAT format /*PIXEL_COLOR_FORMAT::RGBA8_UNORM*/, uint32_t bufferSize /*2*/) const -> Microsoft::WRL::ComPtr<ID3D11Texture2D>
 {
     LS::LSSwapchainInfo info{
         .BufferSize = bufferSize,
@@ -252,11 +255,14 @@ void DeviceD3D11::CreateSwapchainAsTexture(const LS::LSWindowBase* window, PIXEL
     rtDesc.SampleDesc.Count = info.MSCount;
     rtDesc.SampleDesc.Quality = info.MSQuality;
 
-    auto result = m_pDevice->CreateTexture2D(&rtDesc, nullptr, &m_pBackBufferFrame);
+    WRL::ComPtr<ID3D11Texture2D> bbfTexture;
+    auto result = m_pDevice->CreateTexture2D(&rtDesc, nullptr, &bbfTexture);
     if (FAILED(result))
     {
         Utils::ThrowIfFailed(result, "Failed to generate back buffer as texture.");
     }
+
+    return bbfTexture;
 }
 
 auto LS::Win32::DeviceD3D11::ResizeSwapchain(uint32_t width, uint32_t height) noexcept -> HRESULT
@@ -264,10 +270,6 @@ auto LS::Win32::DeviceD3D11::ResizeSwapchain(uint32_t width, uint32_t height) no
     assert(m_pSwapchain);
     if (!m_pSwapchain)
         return E_POINTER;
-    if (m_pBackBufferFrame)
-    {
-        m_pBackBufferFrame = nullptr;
-    }
 
     return m_pSwapchain->ResizeBuffers(0, width, height, DXGI_FORMAT_UNKNOWN, 0);
 }
@@ -381,31 +383,32 @@ auto DeviceD3D11::CreateDepthStencilView([[maybe_unused]] ID3D11RenderTargetView
     return m_pDevice->CreateDepthStencilView(pResource, pDesc, ppDepthStencil);
 }
 
-auto DeviceD3D11::CreateDepthStencilViewForSwapchain([[maybe_unused]] ID3D11RenderTargetView* pRenderTargetView, ID3D11DepthStencilView** ppDepthStencil, DXGI_FORMAT format /*= DXGI_FORMAT_D24_UNORM_S8_UINT*/) noexcept -> HRESULT
+auto DeviceD3D11::CreateDepthStencilViewFromSwapchain(DXGI_FORMAT format /*= DXGI_FORMAT_D24_UNORM_S8_UINT*/) const noexcept -> Microsoft::WRL::ComPtr<ID3D11DepthStencilView>
 {
     assert(m_pDevice);
-    assert(pRenderTargetView);
     assert(m_pSwapchain);
     //TODO: Why did I want to save the back buffer frame? Maybe reconsider and remove. 
-    auto result = m_pSwapchain->GetBuffer(0, IID_PPV_ARGS(&m_pBackBufferFrame));
-#ifdef _DEBUG
-    std::string debug = "Back Buffer Texture2D";
-    m_pBackBufferFrame->SetPrivateData(WKPDID_D3DDebugObjectName, (UINT)debug.size(), debug.data());
-#endif
+    Microsoft::WRL::ComPtr<ID3D11Texture2D> bbf;
+    auto result = m_pSwapchain->GetBuffer(0, IID_PPV_ARGS(&bbf));
+
     if (FAILED(result))
-        return result;
+        return nullptr;
 
     D3D11_TEXTURE2D_DESC depthBufferDesc{};
-    m_pBackBufferFrame->GetDesc(&depthBufferDesc);
+    bbf->GetDesc(&depthBufferDesc);
     depthBufferDesc.Format = format;
     depthBufferDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
 
     WRL::ComPtr<ID3D11Texture2D> depthBuffer;
     result = m_pDevice->CreateTexture2D(&depthBufferDesc, nullptr, &depthBuffer);
     if (FAILED(result))
-        return result;
+        return nullptr;
 
-    return m_pDevice->CreateDepthStencilView(depthBuffer.Get(), nullptr, ppDepthStencil);
+    WRL::ComPtr<ID3D11DepthStencilView> ds;
+    result = m_pDevice->CreateDepthStencilView(depthBuffer.Get(), nullptr, &ds);
+    if (FAILED(result))
+        return nullptr;
+    return ds;
 }
 
 auto DeviceD3D11::CreateDepthStencilState(const D3D11_DEPTH_STENCIL_DESC& depthStencilDesc, ID3D11DepthStencilState** ppDepthStencilState) noexcept -> HRESULT

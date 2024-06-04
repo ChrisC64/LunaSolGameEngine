@@ -66,7 +66,7 @@ export namespace LS
     template <class T>
     concept DestructibleNoThrow = std::is_nothrow_destructible_v<T>;
 
-    using LSWindowHandle = void*;
+    using LSWindowHandle = void*  ;
     using LSAppInstance = void*;
 
     struct Rect
@@ -76,6 +76,19 @@ export namespace LS
         uint32_t Width;
         uint32_t Height;
     };
+
+    template <class T, class C>
+    constexpr auto FindOrNull(const C& container, const auto& query) -> LS::Nullable<T>
+    {
+        for (const auto& obj : container)
+        {
+            if (obj == query)
+            {
+                return obj.Resource;
+            }
+        }
+        return {};
+    }
 }
 
 export namespace LS::Colors

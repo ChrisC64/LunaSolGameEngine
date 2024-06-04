@@ -1,13 +1,8 @@
-#include <iostream>
-#include <fstream>
 #include <streambuf>
-#include "engine/EngineLogDefines.h"
-#include <format>
-#include <cstdint>
 #include <bitset>
-#include <string>
 #include <utility>
-#include <filesystem>
+#include "engine/EngineLogDefines.h"
+
 #ifndef _DEBUG
 #include <Windows.h>
 #include <processenv.h>
@@ -16,10 +11,16 @@
 
 import LSEngine;
 
+import <iostream>;
+import <fstream>;
+import <format>;
+import <cstdint>;
+import <string>;
+import <filesystem>;
+
 import DX11CubeApp;
 import CubeApp;
 import DX12.SimpleWindow;
-import Helper.LSCommonTypes;
 import ImGuiWindowTest;
 import DearDx11;
 
@@ -85,7 +86,7 @@ int main(int argc, char* argv[])
     LS::Log::TraceDebug(L"My second test!!");
     LS::Log::TraceWarn(L"WARNING!! Boss approaching!");
     LS::Log::Flush();
-    std::cout << "Pick an app:\n0 - DX 11 Cube\n1 - DX12 Cube\n2 - Simple DX12 Window\n3 - ImGui Sample\nChoice: ";
+    std::cout << "Pick an app:\n0 - DX 11 Cube\n1 - DX12 Cube\n2 - Simple DX12 Window\n3 - ImGui Sample\n4 - DX11 ImGui DemoChoice: ";
     std::string choice{};
     std::getline(std::cin, choice);
     auto value = std::stoi(choice);
