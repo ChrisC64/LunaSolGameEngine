@@ -329,5 +329,4 @@ export namespace LS::Platform::Dx11
         static_assert(sizeof(obj) % 16 == 0 && "Size must be 16 byte aligned for cosntant buffers");
         return CreateBuffer(pDevice, obj, usage, (UINT)D3D11_BIND_CONSTANT_BUFFER, cpuAccess, miscFlags, structureByteStride);
     }
-    
 }

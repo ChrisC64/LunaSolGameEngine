@@ -1,12 +1,16 @@
 module;
-//#include <span>
-//#include <array>
 #include <d3d11_4.h>
 #include <wrl/client.h>
+#include <directxtk/CommonStates.h>
+
+#ifdef OPAQUE // Windows GDI leaking 
+#undef OPAQUE
+#endif
 export module D3D11.RenderCommandD3D11;
 import <span>;
 import <array>;
 import Engine.Defines;
+import D3D11.HelperStates;
 
 namespace WRL = Microsoft::WRL;
 
@@ -18,11 +22,38 @@ export namespace LS::Win32
         DEFERRED
     };
 
+    enum class CULL_METHOD
+    {
+        CULL_NONE,
+        CULL_BACKFACE,
+        CULL_BACKFACE_CC,
+        CULL_FRONTFACE,
+        CULL_FRONTFACE_CC
+    };
+
+    enum class DEPTH_BUFFER_MODE
+    {
+        NO_DEPTH,
+        DEFAULT,
+        READ,
+        REVERSE_Z,
+        READ_REVERSE_Z
+    };
+
+    enum class BLEND_MODE
+    {
+        OPAQUE,
+        ADDITIVE,
+        ALPHA_BLEND,
+        NON_PRE_MULTIPLIED
+    };
+
     class RenderCommandD3D11
     {
     private:
         WRL::ComPtr<ID3D11DeviceContext> m_context;
         COMMAND_MODE m_mode;
+        SharedRef<DirectX::CommonStates> m_commonStates;
 
     public:
         RenderCommandD3D11() = default;
@@ -115,9 +146,14 @@ export namespace LS::Win32
         void DrawVerts(uint32_t vertexCount, uint32_t vertexOffset = 0) const noexcept;
         void DrawVertInstances(uint32_t vertexCount, uint32_t instances,
             uint32_t vertexOffset = 0, uint32_t instanceOffset = 0) const noexcept;
+
         // State Operations //
         // @brief Resets to default state
         void ClearState() const noexcept;
+        void EnableWireframe() const noexcept;
+        void SetCullMethod(CULL_METHOD method) const noexcept;
+        void SetBlendMode(BLEND_MODE mode, uint32_t sampleMask = 0xffffffff, const std::array<float,4> blendFactor = {1.0f, 1.0f, 1.0f, 1.0f} ) const noexcept;
+        void SetDepthBufferMode(DEPTH_BUFFER_MODE mode, uint32_t stencilRef = 0xFF) const noexcept;
         // @brief Expunge all commands recorded up to this point
         void FlushCommands() const noexcept;
 
@@ -170,6 +206,8 @@ RenderCommandD3D11::RenderCommandD3D11(ID3D11Device* pDevice, COMMAND_MODE mode)
     {
         LS::Utils::ThrowIfFailed(pDevice->CreateDeferredContext(0, &m_context));
     }
+
+    m_commonStates = std::make_shared<DirectX::CommonStates>(pDevice);
 }
 
 void RenderCommandD3D11::BindVS(ID3D11VertexShader* vs) const noexcept
@@ -504,6 +542,83 @@ void RenderCommandD3D11::DrawVertInstances(uint32_t vertexCount, uint32_t instan
 void RenderCommandD3D11::ClearState() const noexcept
 {
     m_context->ClearState();
+}
+
+void LS::Win32::RenderCommandD3D11::EnableWireframe() const noexcept
+{
+    m_context->RSSetState(m_commonStates->Wireframe());
+}
+
+void LS::Win32::RenderCommandD3D11::SetCullMethod(CULL_METHOD method) const noexcept
+{
+    using enum CULL_METHOD;
+    switch (method)
+    {
+    case CULL_NONE:
+        m_context->RSSetState(m_commonStates->CullNone());
+        break;
+    case CULL_BACKFACE:
+        m_context->RSSetState(m_commonStates->CullClockwise());
+        break;
+    case CULL_BACKFACE_CC:
+        m_context->RSSetState(m_commonStates->CullCounterClockwise());
+        break;
+    case CULL_FRONTFACE:
+        m_context->RSSetState(m_commonStates->CullClockwise());
+        break;
+    case CULL_FRONTFACE_CC:
+        m_context->RSSetState(m_commonStates->CullCounterClockwise());
+        break;
+    }
+}
+
+void LS::Win32::RenderCommandD3D11::SetBlendMode(BLEND_MODE mode, 
+    uint32_t sampleMask, const std::array<float, 4> blendFactor) const noexcept
+{
+    using enum LS::Win32::BLEND_MODE;
+    switch (mode)
+    {
+    case OPAQUE:
+        LS::Win32::SetBlendState(m_context.Get(), m_commonStates->Opaque(), sampleMask, blendFactor);
+        break;
+    case ADDITIVE:
+        LS::Win32::SetBlendState(m_context.Get(), m_commonStates->Additive(), sampleMask, blendFactor);
+        break;
+    case ALPHA_BLEND:
+        LS::Win32::SetBlendState(m_context.Get(), m_commonStates->AlphaBlend(), sampleMask, blendFactor);
+        break;
+    case NON_PRE_MULTIPLIED:
+        LS::Win32::SetBlendState(m_context.Get(), m_commonStates->NonPremultiplied(), sampleMask, blendFactor);
+        break;
+    default:
+        break;
+    }
+}
+
+void LS::Win32::RenderCommandD3D11::SetDepthBufferMode(DEPTH_BUFFER_MODE mode, uint32_t stencilRef) const noexcept
+{
+    using enum LS::Win32::DEPTH_BUFFER_MODE;
+
+    switch (mode)
+    {
+    case NO_DEPTH:
+        LS::Win32::SetDepthStencilState(m_context.Get(), m_commonStates->DepthNone(), stencilRef);
+        break;
+    case DEFAULT:
+        LS::Win32::SetDepthStencilState(m_context.Get(), m_commonStates->DepthDefault(), stencilRef);
+        break;
+    case READ:
+        LS::Win32::SetDepthStencilState(m_context.Get(), m_commonStates->DepthRead(), stencilRef);
+        break;
+    case REVERSE_Z:
+        LS::Win32::SetDepthStencilState(m_context.Get(), m_commonStates->DepthReverseZ(), stencilRef);
+        break;
+    case READ_REVERSE_Z:
+        LS::Win32::SetDepthStencilState(m_context.Get(), m_commonStates->DepthReadReverseZ(), stencilRef);
+        break;
+    default:
+        break;
+    }
 }
 
 void RenderCommandD3D11::FlushCommands() const noexcept

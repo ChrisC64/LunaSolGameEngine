@@ -55,7 +55,7 @@ auto ImGuiDx11::Initialize(LS::SharedRef<LS::LSCommandArgs> args) -> LS::System:
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;         // IF using Docking Branch
-    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;     // Seems to make the viewports (dockable windows) extend outside bounds of window
 
     // Setup Platform/Renderer backends
     ImGui_ImplWin32_Init((HWND)m_Window->GetHandleToWindow());
@@ -73,6 +73,7 @@ auto ImGuiDx11::Initialize(LS::SharedRef<LS::LSCommandArgs> args) -> LS::System:
 
     ID3D11DeviceContext* context;
     m_renderer.GetDevice()->GetImmediateContext(&context);
+    m_renderer.SetViewport(m_Window->GetWidth(), m_Window->GetHeight());
     ImGui_ImplDX11_Init(m_renderer.GetDevice(), context);
 
     return LS::System::CreateSuccessCode();
@@ -93,6 +94,7 @@ void gt::dx11::ImGuiDx11::Run()
         if (currWidth != m_Window->GetWidth() && currHeight != m_Window->GetHeight())
         {
             m_renderer.Resize(m_Window->GetWidth(), m_Window->GetHeight());
+            m_renderer.SetViewport(m_Window->GetWidth(), m_Window->GetHeight());
             currWidth = m_Window->GetWidth();
             currHeight = m_Window->GetHeight();
         }
@@ -100,19 +102,22 @@ void gt::dx11::ImGuiDx11::Run()
         ImGui_ImplDX11_NewFrame();
         ImGui_ImplWin32_NewFrame();
         ImGui::NewFrame();
+        
 
-        ImGui::ShowDemoWindow();
+        ImGui::Begin("Hello Gui");
         ImGui::Text("Width: %d", currWidth);
         ImGui::Text("Height: %d", currHeight);
         ImGui::Text("Mouse Pos: %d x %d", mousePos.x, mousePos.y);
         ImGui::SliderFloat4("Color", color.data(), 0.0f, 1.0f);
+        ImGui::End();
 
         m_renderer.Clear(color);
 
         ImGui::Render();
         ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
-        if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+        // Uncomment for use if the flag ViewportsEnable is set in Initialize()
+        if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable && m_Window->IsOpen())
         {
             // Update and Render additional Platform Windows
             ImGui::UpdatePlatformWindows();

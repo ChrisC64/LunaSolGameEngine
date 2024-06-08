@@ -7,13 +7,20 @@ import LSDataLib;
 
 export namespace LS::Geo::Generator
 {
+    /**
+     * @brief Creates an array for a quad plane either on the XY or XZ 
+     * @tparam T The type to use for the vector (must satisfy concept @link LS::IsNumerical)
+     * @param size The totla size of units to create the quad
+     * @param isFloor True for XZ plane and False for XY plane
+     * @return The array as requrest
+     */
     template<class T>
         requires LS::IsNumerical<T>
-    [[nodiscard]] constexpr auto CreateQuadVertices(T size, bool isFloor) -> std::array<Vec3<T>, 4>
+    [[nodiscard]] consteval auto CreateQuadVertices(T size, bool isFloor) -> std::array<Vec3<T>, 4>
     {
-        std::array<Vec3<T>, 4> out;
+        constexpr std::array<Vec3<T>, 4> out;
         // Floor / Z Plane
-        if (isFloor)
+        if constexpr (isFloor)
         {
             out[0] = { .x = -size, .y = -size, .z = 0 };
             out[1] = { .x = -size, .y = +size, .z = 0 };
@@ -37,20 +44,20 @@ export namespace LS::Geo::Generator
     */
     template <class T>
         requires LS::IsNumerical<T>
-    [[nodiscard]] constexpr auto CreateCubeVertices(T size) -> std::array<Vec3<float>, 8>
+    [[nodiscard]] constexpr auto CreateCubeVertices(T size) -> std::array<Vec3<T>, 8>
     {
-        std::array<Vec3<T>, 8> out;
-        // Assuming +Z is away from screen and -Z is towward (LH)
-        // -Z axis means this will be the plane behind (back face)
-        out[0] = { .x = -size, .y = -size, .z = -size };// BBL
-        out[1] = { .x = -size, .y = +size, .z = -size };// BTL
-        out[2] = { .x = +size, .y = +size, .z = -size };// BTR
-        out[3] = { .x = +size, .y = -size, .z = -size };// BBR
-        // +Z axis means this will be the plane in front (front face)
-        out[4] = { .x = -size, .y = -size, .z = +size };// FBL
-        out[5] = { .x = -size, .y = +size, .z = +size };// FTL
-        out[6] = { .x = +size, .y = +size, .z = +size };// FTR
-        out[7] = { .x = +size, .y = -size, .z = +size };// FBR
+        std::array<Vec3<T>, 8> out
+        {
+            LS::Vec3<T>{.x = -size, .y = -size, .z = -size }, // BBL
+            LS::Vec3<T>{.x = -size, .y = +size, .z = -size }, // BTL
+            LS::Vec3<T>{.x = +size, .y = +size, .z = -size }, // BTR
+            LS::Vec3<T>{.x = +size, .y = -size, .z = -size }, // BBR
+
+            LS::Vec3<T>{.x = -size, .y = -size, .z = +size }, // FBL
+            LS::Vec3<T>{.x = -size, .y = +size, .z = +size }, // FTL
+            LS::Vec3<T>{.x = +size, .y = +size, .z = +size }, // FTR
+            LS::Vec3<T>{.x = +size, .y = -size, .z = +size }  // FBR
+        };
 
         return out;
     }
@@ -94,19 +101,23 @@ export namespace LS::Geo::Generator
     }
 
     template <class T>
+        requires LS::IsNumerical<T>
     [[nodiscard]] constexpr auto CreateCubeVertsAndIndices(T size) -> std::pair<std::array<Vec3<T>, 8>, std::array<uint32_t, 36>>
     {
-        auto verts = CreateCubeVertices(size);
-        auto indices = CreateCubeIndexArray();
+        //TODO: This call causes an issue when I try to make consteval. Wonder what the difference betweent his
+        // and the CreateQuadVertsAndIndices() is that it won't let me?
+        const auto verts = CreateCubeVertices(size); 
+        constexpr auto indices = CreateCubeIndexArray();
 
         return { verts, indices };
     }
     
     template <class T>
-    [[nodiscard]] constexpr auto CreateQuadVertsAndIndices(T size, bool isFloor) -> std::pair<std::array<Vec3<T>, 4>, std::array<uint32_t, 6>>
+        requires LS::IsNumerical<T>
+    [[nodiscard]] consteval auto CreateQuadVertsAndIndices(T size, bool isFloor) -> std::pair<std::array<Vec3<T>, 4>, std::array<uint32_t, 6>>
     {
-        auto verts = CreateQuadVertices(size, isFloor);
-        auto indices = CreateQuadIndexArray();
+        constexpr auto verts = CreateQuadVertices(size, isFloor);
+        constexpr auto indices = CreateQuadIndexArray();
 
         return { verts, indices };
     }

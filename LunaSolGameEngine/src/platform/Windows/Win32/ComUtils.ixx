@@ -97,6 +97,12 @@ export namespace LS::Utils
     {
         return obj->QueryInterface(IID_PPV_ARGS(&query));
     }
+
+    template<class T, class U>
+    constexpr HRESULT QueryInterfaceFor(const Microsoft::WRL::ComPtr<T>& obj, Microsoft::WRL::ComPtr<U>& query)
+    {
+        return obj->QueryInterface(IID_PPV_ARGS(&query));
+    }
     
     template<class T, class U>
     constexpr HRESULT QueryInterfaceFor(T* obj, U** query)

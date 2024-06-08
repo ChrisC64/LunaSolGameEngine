@@ -1,11 +1,8 @@
 module;
-//#include <cstdint>
-//#include <array>
-//#include <span>
-//#include <filesystem>
 #include <wrl/client.h>
 #include <d3d11_4.h>
 export module D3D11.RenderD3D11;
+
 import <cstdint>;
 import <array>;
 import <span>;
@@ -22,6 +19,7 @@ import D3D11.RenderFuncD3D11;
 import D3D11.MemoryHelper;
 import Win32.ComUtils;
 import DirectXCommon;
+import DXGISwapChain;
 
 namespace WRL = Microsoft::WRL;
 
@@ -34,7 +32,15 @@ export namespace LS::Win32
         TEXTURE,
         UAV
     };
-    
+
+    enum class DEPTH_STENCIL_MODE
+    {
+        NONE,
+        DEPTH_ONLY,
+        STENCIL_ONLY,
+        DEFAULT
+    };
+
     class RenderCommandD3D11;
 
     class RenderD3D11
@@ -44,50 +50,72 @@ export namespace LS::Win32
         ~RenderD3D11();
 
         // Interface Design (WIP)
-        void Clear(const std::array<float, 4>& clearColor) noexcept;
+        void SetViewport(uint32_t width, uint32_t height, uint32_t topLeft = 0u, uint32_t topRight = 0u) const noexcept;
+        void Clear(const std::array<float, 4>& clearColor, DEPTH_STENCIL_MODE mode = LS::Win32::DEPTH_STENCIL_MODE::NONE,
+            float depth = 1.0f, uint8_t stencil = 0) noexcept;
         void Draw() noexcept;
 
+        void Resize(uint32_t width, uint32_t height) noexcept;
+        void SetFps(uint32_t fps) noexcept;
+
         // Class Members // 
+        [[nodiscard]]
         auto Initialize() noexcept -> LS::System::ErrorCode;
         void SetPipeline(const PipelineStateDX11* state) noexcept;
-        void LoadVertexBuffer(uint32_t startSlot, const PipelineStateDX11* state) noexcept;
-        void LoadIndexBuffer(uint32_t offset, const PipelineStateDX11* state) noexcept;
-        void Update(const LS::DX::DXCamera& camera) noexcept;
-        void RenderObjects() noexcept;
         void Shutdown() noexcept;
-        void Resize(uint32_t width, uint32_t height) noexcept;
         void AttachToWindow(LS::LSWindowBase* window) noexcept;
 
-        auto GetDevice() noexcept -> ID3D11Device*;
-        auto GetDeviceCom() noexcept -> WRL::ComPtr<ID3D11Device>;
-        auto GetSwapChainCom() noexcept -> WRL::ComPtr<IDXGISwapChain1>;
-        auto GetDeviceContextCom() noexcept -> WRL::ComPtr<ID3D11DeviceContext>;
+        [[nodiscard]]
+        auto GetDevice() const noexcept -> ID3D11Device*;
+        [[nodiscard]]
+        auto GetDeviceCom() const noexcept -> WRL::ComPtr<ID3D11Device>;
+        [[nodiscard]]
+        auto GetSwapChainCom() const noexcept -> WRL::ComPtr<IDXGISwapChain1>;
+        [[nodiscard]]
+        auto GetDeviceContextCom() const noexcept -> WRL::ComPtr<ID3D11DeviceContext>;
 
-        auto CreateVertexShader(std::span<std::byte> data) noexcept -> WRL::ComPtr<ID3D11VertexShader>;
-        auto CreatePixelShader(std::span<std::byte> data) noexcept -> WRL::ComPtr<ID3D11PixelShader>;
-        auto CreateGeometryShader(std::span<std::byte> data) noexcept -> WRL::ComPtr<ID3D11GeometryShader>;
-        auto CreateDomainShader(std::span<std::byte> data) noexcept -> WRL::ComPtr<ID3D11DomainShader>;
-        auto CreateHullShader(std::span<std::byte> data) noexcept -> WRL::ComPtr<ID3D11HullShader>;
-        auto CreateComputeShader(std::span<std::byte> data) noexcept -> WRL::ComPtr<ID3D11ComputeShader>;
-        auto CreateImmediateCommand() noexcept -> RenderCommandD3D11;
-        auto CreateDeferredCommand() noexcept -> RenderCommandD3D11;
+        [[nodiscard]]
+        auto CreateVertexShader(std::span<std::byte> data) const noexcept -> WRL::ComPtr<ID3D11VertexShader>;
+        [[nodiscard]]
+        auto CreatePixelShader(std::span<std::byte> data) const noexcept -> WRL::ComPtr<ID3D11PixelShader>;
+        [[nodiscard]]
+        auto CreateGeometryShader(std::span<std::byte> data) const noexcept -> WRL::ComPtr<ID3D11GeometryShader>;
+        [[nodiscard]]
+        auto CreateDomainShader(std::span<std::byte> data) const noexcept -> WRL::ComPtr<ID3D11DomainShader>;
+        [[nodiscard]]
+        auto CreateHullShader(std::span<std::byte> data) const noexcept -> WRL::ComPtr<ID3D11HullShader>;
+        [[nodiscard]]
+        auto CreateComputeShader(std::span<std::byte> data) const noexcept -> WRL::ComPtr<ID3D11ComputeShader>;
+        [[nodiscard]]
+        auto CreateImmediateCommand() const noexcept -> RenderCommandD3D11;
+        [[nodiscard]]
+        auto CreateDeferredCommand() const noexcept -> RenderCommandD3D11;
         
+        [[nodiscard]]
+        auto InitializeSwapchain() noexcept -> LS::System::ErrorCode;
         /**
          * @brief Creates an input layout from the given compiled bytecode. This will not work if it was not compiled first.
          *
          * @param compiledByteCode The compiled byte code of the shader
          * @return Nullable<WRL::ComPtr<ID3D11InputLayout>> A nullable object of WRL::ComPtr<ID3D11InputLayout>>
          */
+        [[nodiscard]]
         auto BuildInputLayout(std::span<std::byte> compiledByteCode) -> Nullable<WRL::ComPtr<ID3D11InputLayout>>;
 
-        auto ExecuteRenderCommand(const RenderCommandD3D11& command) noexcept;
+        void ExecuteRenderCommand(const RenderCommandD3D11& command) noexcept;
+
     protected:
         LS::LSWindowBase*                       m_window;
+
+    private:
         DeviceD3D11                             m_device;
         LS::LSDeviceSettings                    m_settings;
 
         WRL::ComPtr<ID3D11RenderTargetView>     m_renderTarget;
+        WRL::ComPtr<ID3D11DepthStencilView>     m_dsv;
         WRL::ComPtr<ID3D11DeviceContext>        m_context;
+        DXGISwapChain                           m_swapchain;
+        DEPTH_STENCIL_MODE                      m_dsMode;
     };
 }
 
@@ -120,30 +148,116 @@ RenderD3D11::~RenderD3D11()
     Shutdown();
 }
 
-void RenderD3D11::Clear(const std::array<float, 4>& clearColor) noexcept
+void LS::Win32::RenderD3D11::SetViewport(uint32_t width, uint32_t height, uint32_t topLeft /*= 0u*/, uint32_t topRight /*= 0u*/) const noexcept
 {
+    CD3D11_VIEWPORT viewport((float)topLeft, (float)topRight, (float)width, (float)height);
+    m_context->RSSetViewports(1, &viewport);
+}
+
+void RenderD3D11::Clear(const std::array<float, 4>& clearColor, LS::Win32::DEPTH_STENCIL_MODE mode, float depth, uint8_t stencil) noexcept
+{
+    LS::Win32::SetRenderTarget(m_context.Get(), m_renderTarget.Get(), m_dsv.Get());
+    using enum LS::Win32::DEPTH_STENCIL_MODE;
+    switch (mode)
+    {
+    case NONE:
+        LS::Win32::SetRenderTarget(m_context.Get(), m_renderTarget.Get());
+        break;
+    case DEPTH_ONLY:
+        LS::Win32::SetRenderTarget(m_context.Get(), m_renderTarget.Get(), m_dsv.Get());
+        LS::Win32::ClearDS(m_context.Get(), m_dsv.Get(), depth, stencil, D3D11_CLEAR_DEPTH);
+        break;
+    case STENCIL_ONLY:
+        LS::Win32::SetRenderTarget(m_context.Get(), m_renderTarget.Get(), m_dsv.Get());
+        LS::Win32::ClearDS(m_context.Get(), m_dsv.Get(), depth, stencil, D3D11_CLEAR_STENCIL);
+        break;
+    case DEFAULT:
+        LS::Win32::SetRenderTarget(m_context.Get(), m_renderTarget.Get(), m_dsv.Get());
+        LS::Win32::ClearDS(m_context.Get(), m_dsv.Get(), depth, stencil, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL);
+        break;
+    default:
+        LS::Win32::SetRenderTarget(m_context.Get(), m_renderTarget.Get());
+        break;
+    }
+
     LS::Win32::ClearRT(m_context.Get(), m_renderTarget.Get(), clearColor);
 }
 
 void RenderD3D11::Draw() noexcept
 {
-    LS::Win32::Present1(m_device.GetSwapChain().Get(), 1);
+    LS::Win32::Present1(m_swapchain.GetSwapChain1().Get(), 0);
+}
+
+void RenderD3D11::Resize(uint32_t width, uint32_t height) noexcept
+{
+    namespace WRL = Microsoft::WRL;
+    if (m_renderTarget)
+        m_renderTarget = nullptr;
+    if (m_dsv)
+        m_dsv = nullptr;
+    // TODO: Might need to clear device context state (immediate) before doing this?
+    m_swapchain.Resize(width, height);
+
+    // Create RTV // 
+    Nullable<WRL::ComPtr<ID3D11RenderTargetView>> rtv = LS::Win32::CreateRenderTargetViewFromSwapChain(m_device.GetDevice(), m_swapchain.GetSwapChain());
+    if (!rtv)
+    {
+        LS_LOG_ERROR("Failed to create render target view during Resize");
+        return;
+    }
+    m_renderTarget = rtv.value();
+
+    // Create DSV //
+    Nullable<WRL::ComPtr<ID3D11DepthStencilView>> dsvResult = LS::Win32::CreateDepthStencilViewFromSwapChain(m_device.GetDevice(),
+        m_swapchain.GetSwapChain(), DXGI_FORMAT_D32_FLOAT);
+
+    if (!dsvResult)
+    {
+        return LS_LOG_ERROR("Failed to create Depth Stencil View during Resize");
+    }
+
+    m_dsv = dsvResult.value();
+
+}
+
+void LS::Win32::RenderD3D11::SetFps(uint32_t fps) noexcept
+{
+    m_settings.FPSTarget = fps;
 }
 
 auto LS::Win32::RenderD3D11::Initialize() noexcept -> LS::System::ErrorCode
 {
-    LS::System::ErrorCode ec = m_device.InitDevice(m_settings, m_window);
+    const LS::System::ErrorCode ec = m_device.InitDevice(m_settings, m_window);
     if (!ec)
     {
         return ec;
     }
 
-    auto hresult = m_device.CreateRTVFromBackBuffer(&m_renderTarget);
-    if (FAILED(hresult))
+    const LS::System::ErrorCode ecSwap = InitializeSwapchain();
+    if (!ecSwap)
     {
-        return LS::System::CreateFailCode(LS::Win32::HresultToDx11Error(hresult));
+        return ecSwap;
     }
+    // Create Render Target View
+    Nullable<WRL::ComPtr<ID3D11RenderTargetView>> rtv = 
+        LS::Win32::CreateRenderTargetViewFromSwapChain(m_device.GetDevice(), m_swapchain.GetSwapChain());
+    if (!rtv)
+    {
+        return LS::System::CreateFailCode("Failed to create render target view during Initialize");
+    }
+
+    m_renderTarget = rtv.value();
     m_context = m_device.GetImmediateContext();
+
+    // Create Depth Stencil 
+    Nullable<WRL::ComPtr<ID3D11DepthStencilView>> dsvResult = LS::Win32::CreateDepthStencilViewFromSwapChain(m_device.GetDevice(), 
+        m_swapchain.GetSwapChain(), DXGI_FORMAT_D32_FLOAT);
+
+    if (!dsvResult)
+    {
+        return LS::System::CreateFailCode("Failed to create depth stencil view during initialization of Renderer");
+    }
+    m_dsv = dsvResult.value();
 
     return LS::System::CreateSuccessCode();
 }
@@ -262,36 +376,8 @@ void RenderD3D11::SetPipeline(const PipelineStateDX11* state) noexcept
     }
 }
 
-void RenderD3D11::LoadVertexBuffer(uint32_t startSlot, const PipelineStateDX11* state) noexcept
-{
-}
-
-void RenderD3D11::LoadIndexBuffer(uint32_t offset, const PipelineStateDX11* state) noexcept
-{
-}
-
-void RenderD3D11::Update(const LS::DX::DXCamera& camera) noexcept
-{
-}
-
-void RenderD3D11::RenderObjects() noexcept
-{
-}
-
 void RenderD3D11::Shutdown() noexcept
 {
-}
-
-void RenderD3D11::Resize(uint32_t width, uint32_t height) noexcept
-{
-    if (m_renderTarget)
-        m_renderTarget = nullptr;
-    m_device.ResizeSwapchain(width, height);
-    const HRESULT result = m_device.CreateRTVFromBackBuffer(&m_renderTarget);
-    if (FAILED(result))
-    {
-        LS_LOG_ERROR(HresultToDx11Error(result));
-    }
 }
 
 void RenderD3D11::AttachToWindow(LS::LSWindowBase* window) noexcept
@@ -299,27 +385,27 @@ void RenderD3D11::AttachToWindow(LS::LSWindowBase* window) noexcept
 
 }
 
-auto LS::Win32::RenderD3D11::GetDevice() noexcept -> ID3D11Device*
+auto LS::Win32::RenderD3D11::GetDevice() const noexcept -> ID3D11Device*
 {
     return m_device.GetDevice().Get();
 }
 
-auto LS::Win32::RenderD3D11::GetDeviceCom() noexcept -> WRL::ComPtr<ID3D11Device>
+auto LS::Win32::RenderD3D11::GetDeviceCom() const noexcept -> WRL::ComPtr<ID3D11Device>
 {
     return m_device.GetDevice();
 }
 
-auto LS::Win32::RenderD3D11::GetSwapChainCom() noexcept -> WRL::ComPtr<IDXGISwapChain1>
+auto LS::Win32::RenderD3D11::GetSwapChainCom() const noexcept -> WRL::ComPtr<IDXGISwapChain1>
 {
-    return m_device.GetSwapChain();
+    return m_swapchain.GetSwapChain1();
 }
 
-auto LS::Win32::RenderD3D11::GetDeviceContextCom() noexcept -> WRL::ComPtr<ID3D11DeviceContext>
+auto LS::Win32::RenderD3D11::GetDeviceContextCom() const noexcept -> WRL::ComPtr<ID3D11DeviceContext>
 {
     return m_device.GetImmediateContext();
 }
 
-auto LS::Win32::RenderD3D11::CreateVertexShader(std::span<std::byte> data) noexcept -> WRL::ComPtr<ID3D11VertexShader>
+auto LS::Win32::RenderD3D11::CreateVertexShader(std::span<std::byte> data) const  noexcept -> WRL::ComPtr<ID3D11VertexShader>
 {
     if (data.size() == 0)
         return nullptr;
@@ -343,7 +429,7 @@ auto LS::Win32::RenderD3D11::CreateVertexShader(std::span<std::byte> data) noexc
     return shader;
 }
 
-auto LS::Win32::RenderD3D11::CreatePixelShader(std::span<std::byte> data) noexcept -> WRL::ComPtr<ID3D11PixelShader>
+auto LS::Win32::RenderD3D11::CreatePixelShader(std::span<std::byte> data) const noexcept -> WRL::ComPtr<ID3D11PixelShader>
 {
     if (data.size() == 0)
         return nullptr;
@@ -366,7 +452,7 @@ auto LS::Win32::RenderD3D11::CreatePixelShader(std::span<std::byte> data) noexce
     return shader;
 }
 
-auto LS::Win32::RenderD3D11::CreateGeometryShader(std::span<std::byte> data) noexcept -> WRL::ComPtr<ID3D11GeometryShader>
+auto LS::Win32::RenderD3D11::CreateGeometryShader(std::span<std::byte> data) const noexcept -> WRL::ComPtr<ID3D11GeometryShader>
 {
     if (data.size() == 0)
         return nullptr;
@@ -389,7 +475,7 @@ auto LS::Win32::RenderD3D11::CreateGeometryShader(std::span<std::byte> data) noe
     return shader;
 }
 
-auto LS::Win32::RenderD3D11::CreateDomainShader(std::span<std::byte> data) noexcept -> WRL::ComPtr<ID3D11DomainShader>
+auto LS::Win32::RenderD3D11::CreateDomainShader(std::span<std::byte> data) const noexcept -> WRL::ComPtr<ID3D11DomainShader>
 {
     if (data.size() == 0)
         return nullptr;
@@ -412,7 +498,7 @@ auto LS::Win32::RenderD3D11::CreateDomainShader(std::span<std::byte> data) noexc
     return shader;
 }
 
-auto LS::Win32::RenderD3D11::CreateHullShader(std::span<std::byte> data) noexcept -> WRL::ComPtr<ID3D11HullShader>
+auto LS::Win32::RenderD3D11::CreateHullShader(std::span<std::byte> data) const noexcept -> WRL::ComPtr<ID3D11HullShader>
 {
     if (data.size() == 0)
         return nullptr;
@@ -435,7 +521,7 @@ auto LS::Win32::RenderD3D11::CreateHullShader(std::span<std::byte> data) noexcep
     return shader;
 }
 
-auto LS::Win32::RenderD3D11::CreateComputeShader(std::span<std::byte> data) noexcept -> WRL::ComPtr<ID3D11ComputeShader>
+auto LS::Win32::RenderD3D11::CreateComputeShader(std::span<std::byte> data) const noexcept -> WRL::ComPtr<ID3D11ComputeShader>
 {
     if (data.size() == 0)
         return nullptr;
@@ -458,14 +544,52 @@ auto LS::Win32::RenderD3D11::CreateComputeShader(std::span<std::byte> data) noex
     return shader;
 }
 
-auto LS::Win32::RenderD3D11::CreateImmediateCommand() noexcept -> RenderCommandD3D11
+auto LS::Win32::RenderD3D11::CreateImmediateCommand() const noexcept -> RenderCommandD3D11
 {
     return RenderCommandD3D11(m_device.GetDevice().Get(), COMMAND_MODE::IMMEDIATE);
 }
 
-auto LS::Win32::RenderD3D11::CreateDeferredCommand() noexcept -> RenderCommandD3D11
+auto LS::Win32::RenderD3D11::CreateDeferredCommand() const noexcept -> RenderCommandD3D11
 {
     return RenderCommandD3D11(m_device.GetDevice().Get(), COMMAND_MODE::DEFERRED);
+}
+
+auto LS::Win32::RenderD3D11::InitializeSwapchain() noexcept -> LS::System::ErrorCode
+{
+    namespace WRL = Microsoft::WRL;
+    Nullable<WRL::ComPtr<IDXGIDevice1>> dev = m_device.GetIDXGDevice1();
+    if (!dev)
+    {
+        return LS::System::CreateFailCode("Failed to obtain IDXGIDevice1 interface from DeviceD3D11"); // TODO: Report error or throw?
+    }
+
+    auto dxgiDev = dev.value();
+
+    WRL::ComPtr<IDXGIAdapter> dxgiAdapter;
+    HRESULT hr = dxgiDev->GetAdapter(&dxgiAdapter);
+    if (FAILED(hr))
+    {
+        return LS::System::CreateFailCode("Failed to obtain IDXGI Adapter interface");
+    }
+
+    WRL::ComPtr<IDXGIFactory2> factory;
+    hr = dxgiAdapter->GetParent(IID_PPV_ARGS(&factory));
+    if (FAILED(hr))
+    {
+        return LS::System::CreateFailCode("Failed to create IDXGIFactory2");
+    }
+    const auto swDesc1 = BuildSwapchainDesc1(m_settings.FrameBufferCount, m_settings.Width, 
+        m_settings.Height, m_settings.PixelFormat);
+
+    bool status = m_swapchain.InitializeForHwnd(factory.Get(), static_cast<HWND>(m_window->GetHandleToWindow()),
+        m_device.GetDevice().Get(), &swDesc1);
+
+    if (!status)
+    {
+        return LS::System::CreateFailCode("Failed to initialize the swapchain with HWND");
+    }
+
+    return LS::System::CreateSuccessCode();
 }
 
 auto LS::Win32::RenderD3D11::BuildInputLayout(std::span<std::byte> compiledByteCode) -> Nullable<WRL::ComPtr<ID3D11InputLayout>>
@@ -488,7 +612,7 @@ auto LS::Win32::RenderD3D11::BuildInputLayout(std::span<std::byte> compiledByteC
     return inputLayout;
 }
 
-auto LS::Win32::RenderD3D11::ExecuteRenderCommand(const LS::Win32::RenderCommandD3D11& command) noexcept
+void LS::Win32::RenderD3D11::ExecuteRenderCommand(const LS::Win32::RenderCommandD3D11& command) noexcept
 {
     if (command.GetMode() == COMMAND_MODE::IMMEDIATE)
         return;

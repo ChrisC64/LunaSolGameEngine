@@ -36,8 +36,7 @@ export namespace LS::Win32
         pContext->ClearRenderTargetView(pRTView, color.data());
     }
 
-    constexpr void ClearDS(ID3D11DeviceContext* pContext, ID3D11DepthStencilView* pDSView, uint32_t flags = D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL,
-        float depth = 1.0f, uint8_t stencil = 0) noexcept
+    constexpr void ClearDS(ID3D11DeviceContext* pContext, ID3D11DepthStencilView* pDSView, float depth = 1.0f, uint8_t stencil = 0, uint32_t flags = D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL) noexcept
     {
         assert(pContext);
         assert(pDSView);
@@ -138,13 +137,13 @@ export namespace LS::Win32
         return depthStencil;
     }
 
-    constexpr void SetRenderTarget(ID3D11DeviceContext* pContext, ID3D11RenderTargetView* pRTView, ID3D11DepthStencilView* pDSView, uint32_t numViews = 1) noexcept
+    constexpr void SetRenderTarget(ID3D11DeviceContext* pContext, ID3D11RenderTargetView* pRTView, ID3D11DepthStencilView* pDSView = nullptr, uint32_t numViews = 1) noexcept
     {
         assert(pContext);
         assert(pRTView);
         if (!pContext || !pRTView)
             return;
-        pContext->OMSetRenderTargets(numViews, &pRTView, pDSView);
+        pContext->OMSetRenderTargets(numViews, &pRTView, pDSView ? pDSView : nullptr);
     }
 
     constexpr void SetRenderTarget(ID3D11DeviceContext* pContext, ID3D11RenderTargetView* const* pRTView, ID3D11DepthStencilView* pDSView, uint32_t numViews = 1) noexcept

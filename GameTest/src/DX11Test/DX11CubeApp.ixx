@@ -116,9 +116,8 @@ namespace gt::dx11
     LS::Clock g_clock;
     ComPtr<ID3D11VertexShader> vertShader;
     ComPtr<ID3D11PixelShader> pixShader;
-    ComPtr<ID3D11RasterizerState> rsSolid;
-    ComPtr<ID3D11RenderTargetView> rtv;
-    ComPtr<ID3D11DepthStencilView> dsView;
+    /*ComPtr<ID3D11RenderTargetView> rtv;
+    ComPtr<ID3D11DepthStencilView> dsView;*/
     ComPtr<ID3D11InputLayout> inputLayout;
     ComPtr<ID3D11InputLayout> objIL;
 
@@ -321,42 +320,7 @@ auto gt::dx11::DX11CubeApp::Initialize(SharedRef<LS::LSCommandArgs> args) -> LS:
 
     LS::Log::TraceDebug(L"Buffers created!!");
 
-    // Rasterizer Creation // 
-    LS::Log::TraceDebug(L"Building rasterizer state...");
-    auto rsSolidOpt = CreateRasterizerState(m_renderer.GetDeviceCom(), SolidFill_BackCull_FCW_DCE);
-    if (!rsSolidOpt)
-    {
-        return CreateFailCode("Failed to create rasterizer state");
-    }
-
-    rsSolid = rsSolidOpt.value();
-    LS::Log::TraceDebug(L"Rasterizer state completed!!");
-    // Render Target Creation //
-    LS::Log::TraceDebug(L"Building render target view....");
-    auto rtvOpt = LS::Win32::CreateRenderTargetViewFromSwapChain(m_renderer.GetDeviceCom(), m_renderer.GetSwapChainCom());
-    if (!rtvOpt)
-    {
-        return CreateFailCode("Failed to create render target from back buffer");
-    }
-    rtv = rtvOpt.value();
-    LS::Log::TraceDebug(L"Render target view created!!");
-
-    // Depth Stencil //
-    LS::Log::TraceDebug(L"Building depth stencil....");
-
-    auto dsResult = LS::Win32::CreateDepthStencilViewFromSwapChain(m_renderer.GetDeviceCom(), m_renderer.GetSwapChainCom());
-    if (!dsResult)
-    {
-        return CreateFailCode("Failed to create depth stencil");
-    }
-    dsView = dsResult.value();
-    
-    CD3D11_DEPTH_STENCIL_DESC defaultDepthDesc(CD3D11_DEFAULT{});
-    ComPtr<ID3D11DepthStencilState> defaultState;
-    auto dss = CreateDepthStencilState(m_renderer.GetDevice(), defaultDepthDesc).value();
-    LS::Log::TraceDebug(L"Depth stencil created!!");
-    //SetDepthStencilState(m_renderer.GetDeviceContextCom().Get(), dss.Get(), 1);
-    m_command.SetDepthStencilState(dss.Get(), 1);
+    m_command.SetDepthBufferMode(LS::Win32::DEPTH_BUFFER_MODE::DEFAULT);
 
     ReadOBJFile("res/cube_face1.obj");
 
@@ -545,8 +509,7 @@ void gt::dx11::DX11CubeApp::PreDraw(ComPtr<ID3D11DeviceContext> context)
     const auto obj_ib = m_bufferCache.Get("obj_ib").value();
 
     // Command Usage //
-    m_command.SetRenderTarget(rtv.Get(), dsView.Get());
-    m_command.SetRasterizerState(rsSolid.Get());
+    m_command.SetCullMethod(LS::Win32::CULL_METHOD::CULL_BACKFACE_CC);
     m_command.SetPrimTopology(D3D11_PRIMITIVE_TOPOLOGY::D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     m_command.SetInputLayout(inputLayout.Get());
     m_command.SetViewport(static_cast<float>(m_Window->GetWidth()), static_cast<float>(m_Window->GetHeight()));
@@ -556,8 +519,8 @@ void gt::dx11::DX11CubeApp::PreDraw(ComPtr<ID3D11DeviceContext> context)
     m_command.SetIndexBuffer(ib.Get());
     std::array<ID3D11Buffer*, 3> buffers{ view.Get(), proj.Get(), mvp.Get() };
     m_command.BindVSConstantBuffers(buffers);
-    m_command.Clear(g_blue, rtv.Get());
-    m_command.ClearDepthStencil(dsView.Get());
+
+    m_renderer.Clear(g_blue, LS::Win32::DEPTH_STENCIL_MODE::DEFAULT);
 
     // Set States and Objects //
     //SetRenderTarget(context.Get(), rtv.Get(), dsView.Get());
@@ -591,35 +554,7 @@ void gt::dx11::DX11CubeApp::HandleResize(uint32_t width, uint32_t height)
     m_State = LS::APP_STATE::PAUSED;
 
     ClearDeviceDependentResources(m_renderer.GetDeviceContextCom().Get());
-    if (rtv)
-    {
-        rtv = nullptr;
-    }
-    if (dsView)
-    {
-        dsView = nullptr;
-    }
-
     m_renderer.Resize(width, height);
-    
-    auto rtvOpt = LS::Win32::CreateRenderTargetViewFromSwapChain(m_renderer.GetDeviceCom(), m_renderer.GetSwapChainCom());
-    if (!rtvOpt)
-    {
-        LS::Log::TraceError(L"Failed to create render target view from back buffer");
-        m_State = LS::APP_STATE::RUNNING;
-        return;
-    }
-    rtv = rtvOpt.value();
-
-    auto dsResult = LS::Win32::CreateDepthStencilViewFromSwapChain(m_renderer.GetDeviceCom(), m_renderer.GetSwapChainCom());
-    if (!dsResult)
-    {
-        LS::Log::TraceError(L"Failed to create depth stencil view from back buffer");
-        m_State = LS::APP_STATE::RUNNING;
-        return;
-    }
-    dsView = dsResult.value();
-    
     m_State = LS::APP_STATE::RUNNING;
 }
 
