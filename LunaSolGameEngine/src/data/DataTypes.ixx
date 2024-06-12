@@ -18,7 +18,7 @@ export namespace LS
         POLYGON
     };
 
-    struct LSMesh
+    struct MeshData
     {
         std::string Name;
         uint32_t NumUvComponents;

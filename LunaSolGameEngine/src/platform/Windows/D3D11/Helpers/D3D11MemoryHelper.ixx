@@ -111,7 +111,7 @@ export namespace LS::Platform::Dx11
     }
 
     template<class T>
-    [[nodiscard]] constexpr auto CreateBufferDescD3D11(const std::vector<T>& obj, D3D11_USAGE usage, UINT bindFlags,
+    [[nodiscard]] constexpr auto CreateBufferDescD3D11(std::span<T> obj, D3D11_USAGE usage, UINT bindFlags,
         UINT cpuAccess = 0, UINT miscFlags = 0, UINT structuredByteStride = 0) noexcept -> D3D11_BUFFER_DESC
     {
         D3D11_BUFFER_DESC out{
@@ -307,6 +307,23 @@ export namespace LS::Platform::Dx11
 
         return pBuffer;
     }
+    
+    [[nodiscard]] auto CreateBuffer(ID3D11Device* pDevice, std::span<uint32_t> obj, D3D11_USAGE usage = D3D11_USAGE_DEFAULT, UINT bindFlags = 0,
+        uint32_t cpuAccess = 0, uint32_t miscFlags = 0, uint32_t structureByteStride = 0) noexcept -> Nullable<ComPtr<ID3D11Buffer>>
+    {
+        const auto desc = CreateBufferDescD3D11(obj, usage, bindFlags, cpuAccess, miscFlags, structureByteStride);
+        D3D11_SUBRESOURCE_DATA sr{};
+        sr.pSysMem = obj.data();
+
+        ComPtr<ID3D11Buffer> pBuffer;
+        const auto hr = pDevice->CreateBuffer(&desc, &sr, &pBuffer);
+        if (FAILED(hr))
+        {
+            return std::nullopt;
+        }
+
+        return pBuffer;
+    }
 
     template<class T>
     [[nodiscard]] auto CreateVertexBuffer(ID3D11Device* pDevice, const T& obj, D3D11_USAGE usage = D3D11_USAGE_DEFAULT,
@@ -321,7 +338,7 @@ export namespace LS::Platform::Dx11
     {
         return CreateBuffer(pDevice, obj, usage, (UINT)D3D11_BIND_INDEX_BUFFER, cpuAccess, miscFlags, structureByteStride);
     }
-
+    
     template<class T>
     [[nodiscard]] auto CreateConstantBuffer(ID3D11Device* pDevice, const T& obj, D3D11_USAGE usage = D3D11_USAGE_DEFAULT,
         uint32_t cpuAccess = 0, uint32_t miscFlags = 0, uint32_t structureByteStride = 0) noexcept -> Nullable<ComPtr<ID3D11Buffer>>

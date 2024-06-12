@@ -79,6 +79,7 @@ namespace gt::dx11
         LS::Win32::RenderD3D11 m_renderer;
         LS::Win32::RenderCommandD3D11 m_command;
         LS::Platform::Dx11::BufferCache m_bufferCache;
+        uint32_t view, proj, mvp, vb, ib, obj_vb, obj_ib;
 
         void CompileShaders();
         auto GetBytecodes() -> std::array<std::vector<std::byte>, 2>;
@@ -268,55 +269,22 @@ auto gt::dx11::DX11CubeApp::Initialize(SharedRef<LS::LSCommandArgs> args) -> LS:
 
     // Buffer Creation //
     LS::Log::TraceDebug(L"Creating buffers...");
-    const auto vbOpt = LS::Platform::Dx11::CreateVertexBuffer(m_renderer.GetDevice(), g_Cube.Verts);
-    if (!vbOpt)
-    {
-        return CreateFailCode("Failed to create vertex buffer");
-    }
-
-    if (const auto result = m_bufferCache.Insert("vertex_buffer", vbOpt.value()); !result)
-    {
-        return result;
-    }
+    uint32_t max = 0xFFFFFFFF;
+    const auto vbResult = m_bufferCache.CreateVertexBuffer(g_Cube.Verts, m_renderer.GetDevice());
+    vb = vbResult.value_or(max);
     
-    const auto ibOpt = LS::Platform::Dx11::CreateIndexBuffer(m_renderer.GetDevice(), g_Cube.Indices);
-    if (!ibOpt)
-    {
-        return CreateFailCode("Failed to create index buffer");
-    }
-
-    if (const auto result = m_bufferCache.Insert("index_buffer", ibOpt.value()); !result)
-    {
-        return result;
-    }
+    const auto ibResult = m_bufferCache.CreateIndexBuffer(g_Cube.Indices, m_renderer.GetDevice());
+    ib = ibResult.value_or(max);
 
     // Camera Buffers //
-    auto bufferOptional = LS::Platform::Dx11::CreateConstantBuffer(m_renderer.GetDevice(), g_camera.View);
-    if (!bufferOptional)
-        return CreateFailCode("Failed to create camera view matrix buffer");
+    const auto viewResult = m_bufferCache.CreateConstantBuffer(g_camera.View, m_renderer.GetDevice());
+    view = viewResult.value_or(max);
 
-    if (const auto result = m_bufferCache.Insert("cam_view", bufferOptional.value()); !result)
-    {
-        return result;
-    }
+    const auto projResult = m_bufferCache.CreateConstantBuffer(g_camera.Projection, m_renderer.GetDevice());
+    proj = projResult.value_or(max);
 
-    bufferOptional = LS::Platform::Dx11::CreateConstantBuffer(m_renderer.GetDevice(), g_camera.Projection);
-    if (!bufferOptional)
-        return CreateFailCode("Failed to create camera projection matrix buffer");
-    
-    if (const auto result = m_bufferCache.Insert("cam_proj", bufferOptional.value()); !result)
-    {
-        return result;
-    }
-
-    bufferOptional = LS::Platform::Dx11::CreateConstantBuffer(m_renderer.GetDevice(), g_camera.Mvp);
-    if (!bufferOptional)
-        return CreateFailCode("Failed to create camera MVP matrix buffer");
-    
-    if (const auto result = m_bufferCache.Insert("cam_mvp", bufferOptional.value()); !result)
-    {
-        return result;
-    }
+    const auto mvpResult = m_bufferCache.CreateConstantBuffer(g_camera.Mvp, m_renderer.GetDevice());
+    mvp = mvpResult.value_or(max);
 
     LS::Log::TraceDebug(L"Buffers created!!");
 
@@ -345,30 +313,17 @@ auto gt::dx11::DX11CubeApp::Initialize(SharedRef<LS::LSCommandArgs> args) -> LS:
     g_objIndices.clear();
     g_objIndices.insert(g_objIndices.begin(), mesh.Indices.begin(), mesh.Indices.end());
     
-    auto objVbOpt = LS::Platform::Dx11::CreateVertexBuffer(m_renderer.GetDevice(), tvd);
-    if (!objVbOpt)
-    {
-        LS::Log::TraceError(L"Failed to create vertex buffer");
-        return CreateFailCode("Failed to create vertex buffer");
-    }
-
-    if (const auto result = m_bufferCache.Insert("obj_vb", objVbOpt.value()); !result)
-    {
-        return result;
-    }
+    const auto objVbResult = m_bufferCache.CreateVertexBuffer(tvd, m_renderer.GetDevice());
+    obj_vb = objVbResult.value_or(max);
 
     // Index Buffer //
-    auto objIbOpt = LS::Platform::Dx11::CreateIndexBuffer(m_renderer.GetDevice(), mesh.Indices);
-    if (!objIbOpt)
-    {
-        LS::Log::TraceError(L"Failed to create index buffer.");
-        return CreateFailCode("Failed to create index buffer");
-    }
+    const auto objIbResult = m_bufferCache.CreateVertexBuffer(tvd, m_renderer.GetDevice());
+    obj_ib = objIbResult.value_or(max);
 
-    if (const auto result = m_bufferCache.Insert("obj_ib", objIbOpt.value()); !result)
-    {
-        return result;
-    }
+    
+    if (vb == max || ib == max || view == max 
+        || proj == max || mvp == max || obj_vb == max || obj_ib == max)
+        return System::CreateFailCode("Error when creating buffer");
 
     CompileShaders();
 
@@ -500,13 +455,13 @@ void gt::dx11::DX11CubeApp::OnWindowEvent(LS::WINDOW_EVENT ev)
 
 void gt::dx11::DX11CubeApp::PreDraw(ComPtr<ID3D11DeviceContext> context)
 {
-    const auto view = m_bufferCache.Get("cam_view").value();
-    const auto proj = m_bufferCache.Get("cam_proj").value();
-    const auto mvp = m_bufferCache.Get("cam_mvp").value();
-    const auto vb = m_bufferCache.Get("vertex_buffer").value();
-    const auto ib = m_bufferCache.Get("index_buffer").value();
-    const auto obj_vb = m_bufferCache.Get("obj_vb").value();
-    const auto obj_ib = m_bufferCache.Get("obj_ib").value();
+    const auto viewBuff = m_bufferCache.Get(view).value();
+    const auto projBuff = m_bufferCache.Get(proj).value();
+    const auto mvpBuff = m_bufferCache.Get(mvp).value();
+    const auto vbBuff = m_bufferCache.Get(vb).value();
+    const auto ibBuff = m_bufferCache.Get(ib).value();
+    const auto obj_vbBuff = m_bufferCache.Get(obj_vb).value();
+    const auto obj_ibBuff = m_bufferCache.Get(obj_ib).value();
 
     // Command Usage //
     m_command.SetCullMethod(LS::Win32::CULL_METHOD::CULL_BACKFACE_CC);
@@ -515,9 +470,9 @@ void gt::dx11::DX11CubeApp::PreDraw(ComPtr<ID3D11DeviceContext> context)
     m_command.SetViewport(static_cast<float>(m_Window->GetWidth()), static_cast<float>(m_Window->GetHeight()));
     m_command.BindVS(vertShader.Get());
     m_command.BindPS(pixShader.Get());
-    m_command.SetVertexBuffer(vb.Get(), sizeof(Vertex));
-    m_command.SetIndexBuffer(ib.Get());
-    std::array<ID3D11Buffer*, 3> buffers{ view.Get(), proj.Get(), mvp.Get() };
+    m_command.SetVertexBuffer(vbBuff.Get(), sizeof(Vertex));
+    m_command.SetIndexBuffer(ibBuff.Get());
+    std::array<ID3D11Buffer*, 3> buffers{ viewBuff.Get(), projBuff.Get(), mvpBuff.Get() };
     m_command.BindVSConstantBuffers(buffers);
 
     m_renderer.Clear(g_blue, LS::Win32::DEPTH_STENCIL_MODE::DEFAULT);
@@ -568,24 +523,23 @@ void gt::dx11::DX11CubeApp::Update(uint64_t dt)
 
 void gt::dx11::DX11CubeApp::Draw()
 {
-    auto viewOpt = m_bufferCache.Get("cam_view");
-    auto projOpt = m_bufferCache.Get("cam_proj");
-    auto mvpOpt = m_bufferCache.Get("cam_mvp");
-
+    auto viewOpt = m_bufferCache.Get(view);
+    auto projOpt = m_bufferCache.Get(proj);
+    auto mvpOpt = m_bufferCache.Get(mvp);
     if (!viewOpt || !projOpt || !mvpOpt)
     {
         LS::Log::TraceError(L"Failed to obtain buffers for this operation");
         return;
     }
 
-    const auto view = viewOpt.value();
-    const auto proj = projOpt.value();
-    const auto mvp = mvpOpt.value();
+    const auto viewBuff = viewOpt.value();
+    const auto projBuff = projOpt.value();
+    const auto mvpBuff = mvpOpt.value();
 
     // Update Buffers //
-    m_command.UpdateConstantBuffer(mvp.Get(), &g_camera.Mvp);
-    m_command.UpdateConstantBuffer(view.Get(), &g_camera.View);
-    m_command.UpdateConstantBuffer(proj.Get(), &g_camera.Projection);
+    m_command.UpdateConstantBuffer(mvpBuff.Get(), &g_camera.Mvp);
+    m_command.UpdateConstantBuffer(viewBuff.Get(), &g_camera.View);
+    m_command.UpdateConstantBuffer(projBuff.Get(), &g_camera.Projection);
 
     PreDraw(m_renderer.GetDeviceContextCom());
     DrawScene(m_renderer.GetDeviceContextCom());

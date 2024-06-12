@@ -116,6 +116,9 @@ export namespace LS::Win32
         WRL::ComPtr<ID3D11DeviceContext>        m_context;
         DXGISwapChain                           m_swapchain;
         DEPTH_STENCIL_MODE                      m_dsMode;
+
+        [[nodiscard]]
+        bool InitializeRtvAndDsv() noexcept;
     };
 }
 
@@ -198,26 +201,10 @@ void RenderD3D11::Resize(uint32_t width, uint32_t height) noexcept
     // TODO: Might need to clear device context state (immediate) before doing this?
     m_swapchain.Resize(width, height);
 
-    // Create RTV // 
-    Nullable<WRL::ComPtr<ID3D11RenderTargetView>> rtv = LS::Win32::CreateRenderTargetViewFromSwapChain(m_device.GetDevice(), m_swapchain.GetSwapChain());
-    if (!rtv)
+    if (!InitializeRtvAndDsv())
     {
-        LS_LOG_ERROR("Failed to create render target view during Resize");
-        return;
+        LS_LOG_ERROR("Failed to re-initialize the RTV or DSV during resize");
     }
-    m_renderTarget = rtv.value();
-
-    // Create DSV //
-    Nullable<WRL::ComPtr<ID3D11DepthStencilView>> dsvResult = LS::Win32::CreateDepthStencilViewFromSwapChain(m_device.GetDevice(),
-        m_swapchain.GetSwapChain(), DXGI_FORMAT_D32_FLOAT);
-
-    if (!dsvResult)
-    {
-        return LS_LOG_ERROR("Failed to create Depth Stencil View during Resize");
-    }
-
-    m_dsv = dsvResult.value();
-
 }
 
 void LS::Win32::RenderD3D11::SetFps(uint32_t fps) noexcept
@@ -232,6 +219,7 @@ auto LS::Win32::RenderD3D11::Initialize() noexcept -> LS::System::ErrorCode
     {
         return ec;
     }
+    m_context = m_device.GetImmediateContext();
 
     const LS::System::ErrorCode ecSwap = InitializeSwapchain();
     if (!ecSwap)
@@ -239,25 +227,10 @@ auto LS::Win32::RenderD3D11::Initialize() noexcept -> LS::System::ErrorCode
         return ecSwap;
     }
     // Create Render Target View
-    Nullable<WRL::ComPtr<ID3D11RenderTargetView>> rtv = 
-        LS::Win32::CreateRenderTargetViewFromSwapChain(m_device.GetDevice(), m_swapchain.GetSwapChain());
-    if (!rtv)
+    if (!InitializeRtvAndDsv())
     {
-        return LS::System::CreateFailCode("Failed to create render target view during Initialize");
+        return LS::System::CreateFailCode("Failed to create Render Target View or Depth Stencil View");
     }
-
-    m_renderTarget = rtv.value();
-    m_context = m_device.GetImmediateContext();
-
-    // Create Depth Stencil 
-    Nullable<WRL::ComPtr<ID3D11DepthStencilView>> dsvResult = LS::Win32::CreateDepthStencilViewFromSwapChain(m_device.GetDevice(), 
-        m_swapchain.GetSwapChain(), DXGI_FORMAT_D32_FLOAT);
-
-    if (!dsvResult)
-    {
-        return LS::System::CreateFailCode("Failed to create depth stencil view during initialization of Renderer");
-    }
-    m_dsv = dsvResult.value();
 
     return LS::System::CreateSuccessCode();
 }
@@ -626,4 +599,29 @@ void LS::Win32::RenderD3D11::ExecuteRenderCommand(const LS::Win32::RenderCommand
     }
 
     devCon->ExecuteCommandList(pCommList.value(), false);
+}
+
+bool LS::Win32::RenderD3D11::InitializeRtvAndDsv() noexcept
+{
+    // Create RTV // 
+    Nullable<WRL::ComPtr<ID3D11RenderTargetView>> rtv = LS::Win32::CreateRenderTargetViewFromSwapChain(m_device.GetDevice(), m_swapchain.GetSwapChain());
+    if (!rtv)
+    {
+        LS_LOG_ERROR("Failed to create render target view during Resize");
+        return false;
+    }
+    m_renderTarget = rtv.value();
+
+    // Create DSV //
+    Nullable<WRL::ComPtr<ID3D11DepthStencilView>> dsvResult = LS::Win32::CreateDepthStencilViewFromSwapChain(m_device.GetDevice(),
+        m_swapchain.GetSwapChain(), DXGI_FORMAT_D32_FLOAT);
+
+    if (!dsvResult)
+    {
+        LS_LOG_ERROR("Failed to create Depth Stencil View during Resize");
+        return false;
+    }
+
+    m_dsv = dsvResult.value();
+    return true;
 }

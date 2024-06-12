@@ -25,17 +25,17 @@ export namespace LS::Serialize
         AssimpLoader(AssimpLoader&&) = default;
 
         auto Load(fs::path file, uint32_t flags = 0) noexcept -> LS::System::ErrorCode;
-        auto GetMeshes() const noexcept -> const std::vector<LSMesh>&
+        auto GetMeshes() const noexcept -> const std::vector<MeshData>&
         {
             return m_meshes;
         }
 
     private:
         Assimp::Importer m_importer;
-        std::vector<LSMesh> m_meshes;
+        std::vector<MeshData> m_meshes;
 
-        void ProcessFace(const aiFace* face, LSMesh& lsMesh) noexcept;
-        void ProcessMesh(const aiMesh* mesh, LSMesh& lsMesh) noexcept;
+        void ProcessFace(const aiFace* face, MeshData& lsMesh) noexcept;
+        void ProcessMesh(const aiMesh* mesh, MeshData& lsMesh) noexcept;
         void ProcessRootNode(const aiNode* node, const aiScene* scene) noexcept;
         void ProcessScene(const aiScene* scene) noexcept;
     };
@@ -44,7 +44,7 @@ export namespace LS::Serialize
 module : private;
 
 using namespace LS;
-
+//TODO: Unwind recursive calling and utilize a more state machine operation instead
 auto Serialize::AssimpLoader::Load(fs::path file, uint32_t flags) noexcept -> LS::System::ErrorCode
 {
     Assimp::Importer importer;
@@ -62,7 +62,7 @@ auto Serialize::AssimpLoader::Load(fs::path file, uint32_t flags) noexcept -> LS
     return LS::System::CreateSuccessCode();
 }
 
-void Serialize::AssimpLoader::ProcessFace(const aiFace* face, LSMesh& lsMesh) noexcept
+void Serialize::AssimpLoader::ProcessFace(const aiFace* face, MeshData& lsMesh) noexcept
 {
     if (!face)
         return;
@@ -75,7 +75,7 @@ void Serialize::AssimpLoader::ProcessFace(const aiFace* face, LSMesh& lsMesh) no
     lsMesh.Indices.insert(lsMesh.Indices.end(), indices.begin(), indices.end());
 }
 
-void Serialize::AssimpLoader::ProcessMesh(const aiMesh* mesh, LSMesh& lsMesh) noexcept
+void Serialize::AssimpLoader::ProcessMesh(const aiMesh* mesh, MeshData& lsMesh) noexcept
 {
     if (!mesh || !mesh->HasPositions())
         return;
@@ -129,7 +129,7 @@ void Serialize::AssimpLoader::ProcessRootNode(const aiNode* node, const aiScene*
     for (auto i = 0u; i < node->mNumMeshes; ++i)
     {
         auto index = node->mMeshes[i];
-        LSMesh mesh;
+        MeshData mesh;
         ProcessMesh(scene->mMeshes[index], mesh);
         m_meshes.at(i) = mesh;
     }
