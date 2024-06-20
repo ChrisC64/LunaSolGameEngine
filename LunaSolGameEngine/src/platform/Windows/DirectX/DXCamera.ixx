@@ -80,6 +80,22 @@ namespace LS::DX
             View = XMMatrixLookAtLH(Position, XMVectorAdd(Position, forwardNorm), upNorm);
         }
 
+        void Initialize(uint32_t width, uint32_t height, xmvec pos, xmvec target, xmvec up, float fovY = 45.0f, float farZ = 1'000.0f, float nearZ = 0.1f)
+        {
+            FovVertical = fovY;
+            AspectRatio = static_cast<float>(width / height);
+            Projection = XMMatrixPerspectiveFovLH(XMConvertToRadians(FovVertical), AspectRatio, farZ, nearZ);
+            View = XMMatrixLookAtLH(pos, target, up);
+            Width = width;
+            Height = height;
+            Position = pos;
+            Up = up;
+            Forward = target;
+            FarZ = farZ;
+            NearZ = nearZ;
+            Right = XMVector3Cross(Up, Forward);
+        }
+
         uint32_t Width;
         uint32_t Height;
         float NearZ = 0.1f;
@@ -102,5 +118,11 @@ namespace LS::DX
         xmvec Forward = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
         xmvec Right;
 
+        XMFLOAT3 PositionF3()
+        {
+            XMFLOAT3 out;
+            XMStoreFloat3(&out, Position);
+            return out;
+        }
     };
 }

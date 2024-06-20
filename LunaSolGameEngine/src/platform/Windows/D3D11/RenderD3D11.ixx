@@ -116,7 +116,7 @@ export namespace LS::Win32
         WRL::ComPtr<ID3D11DeviceContext>        m_context;
         DXGISwapChain                           m_swapchain;
         DEPTH_STENCIL_MODE                      m_dsMode;
-
+        
         [[nodiscard]]
         bool InitializeRtvAndDsv() noexcept;
     };
@@ -137,7 +137,7 @@ bool IsCompiled(std::span<std::byte> data)
     if (data.size() < 4)
         return false;
     const char* flag = "DXBC";
-    const std::string check = { (char)(data[0]), (char)data[1], (char)data[2], (char)data[3] };
+    const std::string check{ (char)(data[0]), (char)data[1], (char)data[2], (char)data[3] };
     return check == flag;
 }
 
@@ -153,7 +153,7 @@ RenderD3D11::~RenderD3D11()
 
 void LS::Win32::RenderD3D11::SetViewport(uint32_t width, uint32_t height, uint32_t topLeft /*= 0u*/, uint32_t topRight /*= 0u*/) const noexcept
 {
-    CD3D11_VIEWPORT viewport((float)topLeft, (float)topRight, (float)width, (float)height);
+    const CD3D11_VIEWPORT viewport((float)topLeft, (float)topRight, (float)width, (float)height);
     m_context->RSSetViewports(1, &viewport);
 }
 
@@ -382,8 +382,6 @@ auto LS::Win32::RenderD3D11::CreateVertexShader(std::span<std::byte> data) const
 {
     if (data.size() == 0)
         return nullptr;
-
-    const std::string check = { (char)(data[0]), (char)data[1], (char)data[2], (char)data[3] };
 
     WRL::ComPtr<ID3D11VertexShader> shader;
     if (!IsCompiled(data))

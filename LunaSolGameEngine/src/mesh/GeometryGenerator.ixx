@@ -8,7 +8,7 @@ import LSDataLib;
 export namespace LS::Geo::Generator
 {
     /**
-     * @brief Creates an array for a quad plane either on the XY or XZ 
+     * @brief Creates an array for a quad plane either on the XY or XZ
      * @tparam T The type to use for the vector (must satisfy concept @link LS::IsNumerical)
      * @param size The totla size of units to create the quad
      * @param isFloor True for XZ plane and False for XY plane
@@ -22,19 +22,45 @@ export namespace LS::Geo::Generator
         // Floor / Z Plane
         if constexpr (isFloor)
         {
-            out[0] = { .x = -size, .y = -size, .z = 0 };
-            out[1] = { .x = -size, .y = +size, .z = 0 };
-            out[2] = { .x = +size, .y = +size, .z = 0 };
-            out[3] = { .x = +size, .y = -size, .z = 0 };
-        }
-        else
-        {
             out[0] = { .x = -size, .y = 0, .z = -size };
             out[1] = { .x = -size, .y = 0, .z = +size };
             out[2] = { .x = +size, .y = 0, .z = +size };
             out[3] = { .x = +size, .y = 0, .z = -size };
         }
+        else
+        {
+            out[0] = { .x = -size, .y = -size, .z = 0 };
+            out[1] = { .x = -size, .y = +size, .z = 0 };
+            out[2] = { .x = +size, .y = +size, .z = 0 };
+            out[3] = { .x = +size, .y = -size, .z = 0 };
+        }
         return out;
+    }
+
+    template<size_t Rows, size_t Cols, float CellSize = 1.0f>
+    [[nodiscard]] consteval auto CreateFloor() -> std::array<Vec3<float>, Rows * Cols>
+    {
+        static_assert(CellSize > 0.0f, "Cell size cannot be 0 or less");
+        static_assert(Rows % 2 == 0, "Grid must be aligned with an even set of rows");
+        static_assert(Cols % 2 == 0, "Grid must be aligned with an even set of columns");
+
+        constexpr size_t size = Rows * Cols;
+        uint32_t offset = 0u;
+        std::array<Vec3<float>, size> points;
+
+        for (size_t r = 0; r < Rows; ++r)
+        {
+            for (size_t c = 0; c < Cols; c += 2)
+            {
+                points[c + (r * Rows)] = Vec3<float>{ .x = offset * CellSize, .y = 0.0f, .z = r * CellSize };
+                points[c + (r * Rows) + 1] = Vec3<float>{ .x = offset * CellSize, .y = 0.0f, .z = (r + 1) * CellSize };
+
+                ++offset;
+            }
+            offset = 0u;
+        }
+
+        return points;
     }
 
     /**
@@ -106,12 +132,12 @@ export namespace LS::Geo::Generator
     {
         //TODO: This call causes an issue when I try to make consteval. Wonder what the difference betweent his
         // and the CreateQuadVertsAndIndices() is that it won't let me?
-        const auto verts = CreateCubeVertices(size); 
+        const auto verts = CreateCubeVertices(size);
         constexpr auto indices = CreateCubeIndexArray();
 
         return { verts, indices };
     }
-    
+
     template <class T>
         requires LS::IsNumerical<T>
     [[nodiscard]] consteval auto CreateQuadVertsAndIndices(T size, bool isFloor) -> std::pair<std::array<Vec3<T>, 4>, std::array<uint32_t, 6>>

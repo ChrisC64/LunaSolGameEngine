@@ -90,7 +90,7 @@ export namespace LS
         {
             return m_deltaTime.count();
         }
-
+        
         /**
          * @brief The total time passed since the start of the clock as milliseconds (ms). Does not require ticking
          * @return Time passed since the epoch (clock start)

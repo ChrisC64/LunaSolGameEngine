@@ -45,6 +45,11 @@ export namespace LS::DX
         {
             m_camera.Position = XMVectorMultiplyAdd(XMVectorSet(units, units, units, 0.0f), m_camera.Right, m_camera.Position);
         }
+        
+        void Rise(float units)
+        {
+            m_camera.Position = XMVectorMultiplyAdd(XMVectorSet(units, units, units, 0.0f), m_camera.Up, m_camera.Position);
+        }
 
         /**
          * @brief Moves the camera in the given vector of directions.

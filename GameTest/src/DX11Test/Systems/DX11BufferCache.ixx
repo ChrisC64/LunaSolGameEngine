@@ -10,11 +10,13 @@ import <string_view>;
 import <cstdint>;
 import <format>;
 import <optional>;
+import <filesystem>;
 
 import Engine.EngineCodes;
 import Engine.Defines;
 import Win32.ComUtils;
 import D3D11.MemoryHelper;
+import Helper.IO;
 
 /*
 * A class that isn't really much. I will over time try different strategies. 
@@ -50,6 +52,48 @@ export namespace LS::Platform::Dx11
     using Key = uint32_t;
     using Values = BufferContents;
     using Cache = std::unordered_map<Key, Values>;
+    template<class T>
+    using ResMap = std::unordered_map<Key, T>;
+
+    template<class T>
+    class ShaderMap
+    {
+    public:
+        ShaderMap() = default;
+        ~ShaderMap() = default;
+
+        ShaderMap(const ShaderMap&) = delete;
+        ShaderMap(ShaderMap&&) = default;
+
+        ShaderMap& operator=(const ShaderMap&) = delete;
+        ShaderMap& operator=(ShaderMap&&) = default;
+
+    private:
+        Key m_key = 0;
+        ResMap<T> m_map;
+
+    public:
+        [[nodiscard]]
+        auto Add(const T& obj) noexcept -> Nullable<Key>
+        {
+            const auto [_, status] = m_map.emplace(m_key, obj);
+
+            if (!status)
+                return std::nullopt;
+            m_key++;
+            return m_key - 1;
+        }
+
+        [[nodiscard]]
+        auto Get(Key key) noexcept -> Nullable<T>
+        {
+            if (!m_map.contains(key))
+                return std::nullopt;
+
+            return m_map.at(key);
+        }
+    };
+
 
     class BufferCache
     {
@@ -63,6 +107,7 @@ export namespace LS::Platform::Dx11
         BufferCache(BufferCache&&) = default;
         BufferCache& operator=(BufferCache&&) = default;
 
+    private:
         /**
          * @brief Insert a buffer into the cache
          * @param key a unique ID
@@ -85,6 +130,7 @@ export namespace LS::Platform::Dx11
             return m_key - 1;
         }
 
+    public:
         [[nodiscard]]
         auto Get(Key key) noexcept -> Nullable<ComPtr<ID3D11Buffer>>
         {
@@ -151,7 +197,7 @@ export namespace LS::Platform::Dx11
             return Insert(ibOpt.value());
         }
 
-        template<class T>
+        /*template<class T>
         [[nodiscard]]
         auto CreateVertexBuffer(const T& data, ID3D11Device* pDevice) noexcept -> Nullable<Key>
         {
@@ -162,13 +208,26 @@ export namespace LS::Platform::Dx11
             }
             
             return Insert(ibOpt.value());
-        }
+        }*/
 
         template<class T>
         [[nodiscard]]
-        auto CreateConstantBuffer(const T& data, ID3D11Device* pDevice) noexcept -> Nullable<Key>
+        auto CreateConstantBuffer(const T* data, size_t size, ID3D11Device* pDevice) noexcept -> Nullable<Key>
         {
-            const auto ibOpt = LS::Platform::Dx11::CreateConstantBuffer(pDevice, data);
+            const auto ibOpt = LS::Platform::Dx11::CreateConstantBuffer(pDevice, data, size);
+            if (!ibOpt)
+            {
+                return std::nullopt;
+            }
+            
+            return Insert(ibOpt.value());
+        }
+        
+        template<class T>
+        [[nodiscard]]
+        auto CreateVertexBuffer(const T* data, size_t size, ID3D11Device* pDevice) noexcept -> Nullable<Key>
+        {
+            const auto ibOpt = LS::Platform::Dx11::CreateVertexBuffer(pDevice, data, size);
             if (!ibOpt)
             {
                 return std::nullopt;

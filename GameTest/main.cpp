@@ -36,6 +36,8 @@ import DearDx11;
 // TODO: Start DX12 renderer
 // TODO: Start Vulkan renderer
 // TODO: Examin needed Interfaces and build them
+constexpr uint32_t SCREEN_WIDTH = 1920;
+constexpr uint32_t SCREEN_HEIGHT = 1080;
 
 LS::Ref<LS::LSApp> CreateApp(uint32_t choice)
 {
@@ -43,32 +45,32 @@ LS::Ref<LS::LSApp> CreateApp(uint32_t choice)
     {
     case 0:
     {
-        LS::Ref<LS::LSApp> app(new gt::dx11::DX11CubeApp(800, 600, L"DX11 Cube App"));
+        LS::Ref<LS::LSApp> app(new gt::dx11::DX11CubeApp(SCREEN_WIDTH, SCREEN_HEIGHT, L"DX11 Cube App"));
         return app;
     }
     case 1:
     {
-        LS::Ref<LS::LSApp> app(new gt::dx12::DX12CubeApp(800, 600, L"DX12 Cube App"));
+        LS::Ref<LS::LSApp> app(new gt::dx12::DX12CubeApp(SCREEN_WIDTH, SCREEN_HEIGHT, L"DX12 Cube App"));
         return app;
     }
     case 2:
     {
-        LS::Ref<LS::LSApp> app(new gt::dx12::SimpleWindow(800, 700));
+        LS::Ref<LS::LSApp> app(new gt::dx12::SimpleWindow(SCREEN_WIDTH, SCREEN_HEIGHT));
         return app;
     }
     case 3:
     {
-        LS::Ref<LS::LSApp> app(new gt::dx12::ImGuiSample::ImGuiSample(800, 600));
+        LS::Ref<LS::LSApp> app(new gt::dx12::ImGuiSample::ImGuiSample(SCREEN_WIDTH, SCREEN_HEIGHT));
         return app;
     }
     case 4:
     {
-        LS::Ref<LS::LSApp> app(new gt::dx11::ImGuiDx11(800, 600, L"DX11 ImGui App"));
+        LS::Ref<LS::LSApp> app(new gt::dx11::ImGuiDx11(SCREEN_WIDTH, SCREEN_HEIGHT, L"DX11 ImGui App"));
         return app;
     }
     default:
     {
-        LS::Ref<LS::LSApp> app(new gt::dx11::DX11CubeApp(800, 600, L"DX11 Cube App"));
+        LS::Ref<LS::LSApp> app(new gt::dx11::DX11CubeApp(SCREEN_WIDTH, SCREEN_HEIGHT, L"DX11 Cube App"));
         return app;
     }
     }
@@ -106,7 +108,7 @@ int main(int argc, char* argv[])
 #else // I know I don't need this, but wondering if maybe I just should consider supporting this?
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
-    auto app = CreateApp(1);
+    auto app = CreateApp(4);
     auto appcode = app->Initialize(nullptr);
     if (!appcode)
     {

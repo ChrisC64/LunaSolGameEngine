@@ -28,7 +28,9 @@ export namespace LS::Win32
         CULL_BACKFACE,
         CULL_BACKFACE_CC,
         CULL_FRONTFACE,
-        CULL_FRONTFACE_CC
+        CULL_FRONTFACE_CC,
+        WIREFRAME,
+        WIREFRAME_CC
     };
 
     enum class DEPTH_BUFFER_MODE
@@ -568,6 +570,12 @@ void LS::Win32::RenderCommandD3D11::SetCullMethod(CULL_METHOD method) const noex
         break;
     case CULL_FRONTFACE_CC:
         m_context->RSSetState(m_commonStates->CullCounterClockwise());
+        break;
+    case WIREFRAME:
+        m_context->RSSetState(m_commonStates->Wireframe());
+        break;
+    case WIREFRAME_CC:
+        m_context->RSSetState(m_commonStates->Wireframe());
         break;
     }
 }
