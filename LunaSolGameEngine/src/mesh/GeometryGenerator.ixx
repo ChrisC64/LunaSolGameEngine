@@ -52,8 +52,8 @@ export namespace LS::Geo::Generator
         {
             for (size_t c = 0; c < Cols; c += 2)
             {
-                points[c + (r * Rows)] = Vec3<float>{ .x = offset * CellSize, .y = 0.0f, .z = r * CellSize };
-                points[c + (r * Rows) + 1] = Vec3<float>{ .x = offset * CellSize, .y = 0.0f, .z = (r + 1) * CellSize };
+                points[c + (r * Cols)] = Vec3<float>{ .x = offset * CellSize, .y = 0.0f, .z = r * CellSize };
+                points[c + (r * Cols) + 1] = Vec3<float>{ .x = offset * CellSize, .y = 0.0f, .z = (r + 1) * CellSize };
 
                 ++offset;
             }

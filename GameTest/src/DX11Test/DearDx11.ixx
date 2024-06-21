@@ -60,9 +60,10 @@ struct Cube
     XMMATRIX Transform;
 };
 
-constexpr size_t CELL_DEPTH = 20;
-constexpr size_t CELL_WIDTH = 20;
-std::array<LS::Vec3<float>, CELL_DEPTH * CELL_WIDTH> g_floor = LS::Geo::Generator::CreateFloor<CELL_DEPTH, CELL_WIDTH>();;
+constexpr size_t CELL_ROWS = 120;
+constexpr size_t CELL_COLS = 160;
+constexpr size_t CELL_TOTAL = CELL_ROWS * CELL_COLS;
+std::array<LS::Vec3<float>, CELL_TOTAL> g_floor = LS::Geo::Generator::CreateFloor<CELL_ROWS, CELL_COLS>();
 XMMATRIX g_floorTransform;
 
 export namespace gt::dx11
@@ -206,11 +207,11 @@ void gt::dx11::ImGuiDx11::Run()
         const auto cpos = m_camera.PositionF3();
         ImGui::Text("Camera Pos: (%.4f, %.4f %.4f)", cpos.x, cpos.y, cpos.z);
         ImGui::BeginListBox("Draw Mode", ImVec2(300.0f, 50.0f));
-        ImGui::ListBox("Foo", &DrawMethodSelection, items, 2);
+        ImGui::ListBox("Draw Method", &DrawMethodSelection, items, 2);
         ImGui::EndListBox();
         ImGui::End();
 
-        m_renderer.Clear(m_clearColor);
+        //m_renderer.Clear(m_clearColor);
         Draw();
         ImGui::Render();
         ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
@@ -463,7 +464,7 @@ void gt::dx11::ImGuiDx11::Draw()
     const auto floorBuff = m_bufferCache.Get(floorKey).value();
     const auto ibBuff = m_bufferCache.Get(ibKey).value();
 
-    // Command Usage //
+    // Draw Cube //
     switch (DrawMethodSelection)
     {
     case 0:
@@ -490,22 +491,34 @@ void gt::dx11::ImGuiDx11::Draw()
 
     m_command.DrawIndexed((uint32_t)m_cube.Indices.size());
 
+    // Draw floor //
     m_camera.Mvp = g_floorTransform;
     m_command.UpdateConstantBuffer(mvpBuff.Get(), &m_camera.Mvp);
-
-    //m_command.SetCullMethod(LS::Win32::CULL_METHOD::CULL_NONE);
+    switch (DrawMethodSelection)
+    {
+    case 0:
+        m_command.SetCullMethod(LS::Win32::CULL_METHOD::CULL_BACKFACE);
+        break;
+    case 1:
+        m_command.SetCullMethod(LS::Win32::CULL_METHOD::WIREFRAME);
+        break;
+    default:
+        m_command.SetCullMethod(LS::Win32::CULL_METHOD::CULL_BACKFACE);
+        break;
+    }
+    
     m_command.SetPrimTopology(D3D11_PRIMITIVE_TOPOLOGY::D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
     m_command.SetInputLayout(m_terrainIL.Get());
     m_command.BindVS(m_terrainShaderVs.Get());
     m_command.BindPS(m_pixShader.Get());
-    m_command.SetVertexBuffer(floorBuff.Get(), sizeof(LS::Vec3F));
+    m_command.SetVertexBuffer(floorBuff.Get(), sizeof(float) * 3);
     m_command.SetIndexBuffer(nullptr);
     std::array<ID3D11Buffer*, 2> buffers2{ viewBuff.Get(), projBuff.Get() };
     m_command.BindVSConstantBuffers(buffers2);
 
-    for (int i = 0u; i < CELL_DEPTH; ++i)
+    for (int i = 0u; i < CELL_ROWS; ++i)
     {
-        m_command.DrawVerts((uint32_t)CELL_WIDTH, i * CELL_DEPTH);
+        m_command.DrawVerts((uint32_t)CELL_COLS, i * CELL_COLS);
     }
 }
 

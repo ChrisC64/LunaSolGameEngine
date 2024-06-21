@@ -159,7 +159,6 @@ void LS::Win32::RenderD3D11::SetViewport(uint32_t width, uint32_t height, uint32
 
 void RenderD3D11::Clear(const std::array<float, 4>& clearColor, LS::Win32::DEPTH_STENCIL_MODE mode, float depth, uint8_t stencil) noexcept
 {
-    LS::Win32::SetRenderTarget(m_context.Get(), m_renderTarget.Get(), m_dsv.Get());
     using enum LS::Win32::DEPTH_STENCIL_MODE;
     switch (mode)
     {
