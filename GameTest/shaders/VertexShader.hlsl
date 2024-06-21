@@ -41,7 +41,7 @@ VS_OUTPUT vs(VS_INPUT input, uint instanceId : SV_VertexID)
     output.Pos = mul(output.Pos, View);
     output.Pos = mul(output.Pos, Projection);*/
     //output.Uv = input.UV;
-    output.Uv = float2(0.0f, 0.0f);
+    output.Uv = input.UV;
     //output.Color = input.Color;
     output.Color = input.Pos;
     //output.Color = ModelColor;

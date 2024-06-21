@@ -60,9 +60,9 @@ struct Cube
     XMMATRIX Transform;
 };
 
-constexpr size_t ROWS = 10;
-constexpr size_t COLS = 10;
-std::array<LS::Vec3<float>, ROWS * COLS> g_floor = LS::Geo::Generator::CreateFloor<ROWS, COLS>();;
+constexpr size_t CELL_DEPTH = 20;
+constexpr size_t CELL_WIDTH = 20;
+std::array<LS::Vec3<float>, CELL_DEPTH * CELL_WIDTH> g_floor = LS::Geo::Generator::CreateFloor<CELL_DEPTH, CELL_WIDTH>();;
 XMMATRIX g_floorTransform;
 
 export namespace gt::dx11
@@ -94,7 +94,9 @@ export namespace gt::dx11
         LS::Platform::Dx11::BufferCache m_bufferCache;
         ComPtr<ID3D11VertexShader> m_vertShader;
         ComPtr<ID3D11PixelShader> m_pixShader;
+        ComPtr<ID3D11VertexShader> m_terrainShaderVs;
         ComPtr<ID3D11InputLayout> m_inputLayout;
+        ComPtr<ID3D11InputLayout> m_terrainIL;
 
         int DrawMethodSelection = 0;
 
@@ -244,20 +246,23 @@ void gt::dx11::ImGuiDx11::CompileShaders()
     path.erase(lastOf);
     std::wstring vsPath = std::format(L"{}\\VertexShader.cso", path);
     std::wstring psPath = std::format(L"{}\\PixelShader.cso", path);
+    std::wstring terrainPath = std::format(L"{}\\TerrainVS.cso", path);
 
-    auto vsFile = LS::IO::ReadFile(vsPath);
-    if (!vsFile)
-    {
-        return;
-    }
-    std::vector<std::byte> vsData = vsFile.value();
+    auto readFile = [](std::filesystem::path path) -> std::vector<std::byte>
+        {
+            if (auto result = LS::IO::ReadFile(path); result)
+            {
+                return result.value();
+            }
+            return std::vector<std::byte>{};
+        };
 
-    auto psFile = LS::IO::ReadFile(psPath);
-    if (!psFile)
-    {
-        return;
-    }
-    std::vector<std::byte> psData = psFile.value();
+    std::vector<std::byte> vsData = readFile(vsPath);
+    std::vector<std::byte> psData = readFile(psPath);
+    std::vector<std::byte> terrainData = readFile(terrainPath);
+    assert(vsData.size() > 0 && "Data was empty, cannot continue");
+    assert(psData.size() > 0 && "Data was empty, cannot continue");
+    assert(terrainData.size() > 0 && "Data was empty, cannot continue");
 
     m_vertShader = m_renderer.CreateVertexShader(vsData);
     if (!m_vertShader)
@@ -273,6 +278,13 @@ void gt::dx11::ImGuiDx11::CompileShaders()
         return;
     }
 
+    m_terrainShaderVs = m_renderer.CreateVertexShader(terrainData);
+    if (!m_terrainShaderVs)
+    {
+        LS::Log::TraceError(L"Failed to create terrain shader");
+        return;
+    }
+
     LS::Log::TraceDebug(L"Shader Compilation Complete!!");
 
     // Input Layout // 
@@ -284,6 +296,15 @@ void gt::dx11::ImGuiDx11::CompileShaders()
     }
 
     m_inputLayout = il.value();
+
+    auto til = m_renderer.BuildInputLayout(terrainData);
+    if (!til)
+    {
+        LS::Log::TraceError(L"Failed to create input layout");
+        return;
+    }
+
+    m_terrainIL = til.value();
 
 }
 
@@ -472,18 +493,20 @@ void gt::dx11::ImGuiDx11::Draw()
     m_camera.Mvp = g_floorTransform;
     m_command.UpdateConstantBuffer(mvpBuff.Get(), &m_camera.Mvp);
 
-    m_command.SetCullMethod(LS::Win32::CULL_METHOD::CULL_NONE);
+    //m_command.SetCullMethod(LS::Win32::CULL_METHOD::CULL_NONE);
     m_command.SetPrimTopology(D3D11_PRIMITIVE_TOPOLOGY::D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
-    //m_command.SetInputLayout(m_inputLayout.Get());
-    //m_command.SetViewport(static_cast<float>(m_Window->GetWidth()), static_cast<float>(m_Window->GetHeight()));
-    //m_command.BindVS(m_vertShader.Get());
-    //m_command.BindPS(m_pixShader.Get());
-    m_command.SetVertexBuffer(floorBuff.Get(), sizeof(float) * 3);
-    //m_command.SetIndexBuffer(ibBuff.Get());
-    std::array<ID3D11Buffer*, 3> buffers2{ viewBuff.Get(), projBuff.Get(), mvpBuff.Get() };
+    m_command.SetInputLayout(m_terrainIL.Get());
+    m_command.BindVS(m_terrainShaderVs.Get());
+    m_command.BindPS(m_pixShader.Get());
+    m_command.SetVertexBuffer(floorBuff.Get(), sizeof(LS::Vec3F));
+    m_command.SetIndexBuffer(nullptr);
+    std::array<ID3D11Buffer*, 2> buffers2{ viewBuff.Get(), projBuff.Get() };
     m_command.BindVSConstantBuffers(buffers2);
 
-    m_command.DrawVerts((uint32_t)g_floor.size());
+    for (int i = 0u; i < CELL_DEPTH; ++i)
+    {
+        m_command.DrawVerts((uint32_t)CELL_WIDTH, i * CELL_DEPTH);
+    }
 }
 
 LRESULT gt::dx11::WndProcImpl(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)

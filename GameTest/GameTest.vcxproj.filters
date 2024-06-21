@@ -72,11 +72,12 @@
     <FxCompile Include="shaders\PixelShader.hlsl" />
     <FxCompile Include="shaders\TextureShader.hlsl" />
     <FxCompile Include="shaders\PixelShader2.hlsl" />
-    <FxCompile Include="shaders\ScreenQuad.hlsl" />
+    <FxCompile Include="shaders\VertexPassthrough.hlsl" />
     <FxCompile Include="shaders\VertexShader2.hlsl" />
-    <FxCompile Include="shaders\FullScreenQuad.hlsl" />
+    <FxCompile Include="shaders\FullScreenQuadVS.hlsl" />
     <FxCompile Include="shaders\VertexShaderD3D12.hlsl" />
     <FxCompile Include="shaders\PixelShaderD3D12.hlsl" />
+    <FxCompile Include="shaders\TerrainVS.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="vendor\imgui\backends\imgui_impl_dx11.h">
