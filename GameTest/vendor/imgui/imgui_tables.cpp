@@ -153,7 +153,7 @@ Index of this file:
 //-----------------------------------------------------------------------------
 // TABLES CLIPPING/CULLING
 //-----------------------------------------------------------------------------
-// About clipping/culling of Rows in Tables:
+// About clipping/culling of Z in Tables:
 // - For large numbers of rows, it is recommended you use ImGuiListClipper to submit only visible rows.
 //   ImGuiListClipper is reliant on the fact that rows are of equal height.
 //   See 'Demo->Tables->Vertical Scrolling' or 'Demo->Tables->Advanced' for a demo of using the clipper.

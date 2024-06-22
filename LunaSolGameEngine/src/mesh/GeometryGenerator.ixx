@@ -4,6 +4,21 @@ module;
 export module GeometryGenerator;
 import Engine.Defines;
 import LSDataLib;
+import <vector>;
+
+namespace LS::Geo::Generator::Detail
+{
+    /**
+     * @brief Find the number of points within a grid (row/col) for our floor generator
+     * @param value Number of cells (can be either column or rows)
+     * @return The number of vertices that are needed for this group
+     */
+    [[nodiscard]]
+    constexpr auto FindGridCellSize(auto value)
+    {
+        return 4 + (2 * (value - 1));
+    }
+}
 
 export namespace LS::Geo::Generator
 {
@@ -37,23 +52,30 @@ export namespace LS::Geo::Generator
         return out;
     }
 
-    template<size_t Rows, size_t Cols, float CellSize = 1.0f>
-    [[nodiscard]] consteval auto CreateFloor() -> std::array<Vec3<float>, Rows * Cols>
+    /**
+     * @brief Creates a floor, left handed coords for the depth
+     * @tparam X Number of columns to create for the width
+     * @tparam Z Number of cells to create for the depth
+     * @tparam CellSize Size of each cell
+     * @return
+     */
+    template<size_t X, size_t Z, float CellSize = 1.0f>
+    [[nodiscard]] 
+    auto CreateFloorLH() -> std::vector<Vec3<float>>
     {
         static_assert(CellSize > 0.0f, "Cell size cannot be 0 or less");
-        static_assert(Rows % 2 == 0, "Grid must be aligned with an even set of rows");
-        static_assert(Cols % 2 == 0, "Grid must be aligned with an even set of columns");
 
-        constexpr size_t size = Rows * Cols;
         uint32_t offset = 0u;
-        std::array<Vec3<float>, size> points;
-
-        for (size_t r = 0; r < Rows; ++r)
+        constexpr size_t zPoints = Detail::FindGridCellSize(Z);
+        constexpr size_t xPoints = Detail::FindGridCellSize(X);
+        constexpr size_t size = xPoints * Z;
+        std::vector<Vec3<float>> points(size);
+        for (size_t z = 0; z < Z; ++z)
         {
-            for (size_t c = 0; c < Cols; c += 2)
+            for (size_t x = 0; x < xPoints; x += 2)
             {
-                points[c + (r * Cols)] = Vec3<float>{ .x = offset * CellSize, .y = 0.0f, .z = r * CellSize };
-                points[c + (r * Cols) + 1] = Vec3<float>{ .x = offset * CellSize, .y = 0.0f, .z = (r + 1) * CellSize };
+                points[x + (z * xPoints)] = Vec3<float>{ .x = offset * CellSize, .y = 0.0f, .z = -(z * CellSize) };
+                points[x + (z * xPoints) + 1] = Vec3<float>{ .x = offset * CellSize, .y = 0.0f, .z = -((z + 1) * CellSize) };
 
                 ++offset;
             }

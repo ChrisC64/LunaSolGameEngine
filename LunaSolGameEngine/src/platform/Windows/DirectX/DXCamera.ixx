@@ -25,7 +25,7 @@ namespace LS::DX
         DXCamera(uint32_t width, uint32_t height, xmvec position, xmvec forward, xmvec up, float fovY = 45.0f, float farZ = 1'000.0f, float nearZ = 0.1f)
         {
             FovVertical = fovY;
-            AspectRatio = static_cast<float>(width / height);
+            AspectRatio = static_cast<float>(width / (float)height);
             Projection = XMMatrixPerspectiveFovLH(XMConvertToRadians(FovVertical), AspectRatio, farZ, nearZ);
             View = XMMatrixLookAtLH(position, forward, up);
             Width = width;
@@ -41,7 +41,7 @@ namespace LS::DX
         DXCamera(uint32_t width, uint32_t height, LS::Vec3F position, LS::Vec3F forward, LS::Vec3F up, float fovY = 45.0f, float farZ = 1'000.0f, float nearZ = 0.1f)
         {
             FovVertical = fovY;
-            Projection = XMMatrixPerspectiveFovLH(XMConvertToRadians(FovVertical), static_cast<float>(width / height), farZ, nearZ);
+            Projection = XMMatrixPerspectiveFovLH(XMConvertToRadians(FovVertical), static_cast<float>(width / (float)height), farZ, nearZ);
             auto vecPos = XMVectorSet(position.x, position.y, position.z, 0.0f);
             auto vecUp = XMVectorSet(up.x, up.y, up.z, 0.0f);
             auto vecForward = XMVectorSet(forward.x, forward.y, forward.z, 0.0f);
@@ -83,7 +83,7 @@ namespace LS::DX
         void Initialize(uint32_t width, uint32_t height, xmvec pos, xmvec target, xmvec up, float fovY = 45.0f, float farZ = 1'000.0f, float nearZ = 0.1f)
         {
             FovVertical = fovY;
-            AspectRatio = static_cast<float>(width / height);
+            AspectRatio = static_cast<float>(width / (float)height);
             Projection = XMMatrixPerspectiveFovLH(XMConvertToRadians(FovVertical), AspectRatio, farZ, nearZ);
             View = XMMatrixLookAtLH(pos, target, up);
             Width = width;

@@ -24,7 +24,7 @@ import <string_view>;
 import <array>;
 import <string>;
 import <chrono>;
-
+import <vector>;
 #ifdef DEBUG
 const std::string shader_path = R"(build\x64\Debug\)";
 #else
@@ -60,10 +60,10 @@ struct Cube
     XMMATRIX Transform;
 };
 
-constexpr size_t CELL_ROWS = 120;
-constexpr size_t CELL_COLS = 160;
+constexpr size_t CELL_ROWS = 140;
+constexpr size_t CELL_COLS = 225;
 constexpr size_t CELL_TOTAL = CELL_ROWS * CELL_COLS;
-std::array<LS::Vec3<float>, CELL_TOTAL> g_floor = LS::Geo::Generator::CreateFloor<CELL_ROWS, CELL_COLS>();
+std::vector<LS::Vec3<float>> g_floor = LS::Geo::Generator::CreateFloorLH<CELL_COLS, CELL_ROWS>();
 XMMATRIX g_floorTransform;
 
 export namespace gt::dx11
@@ -202,6 +202,9 @@ void gt::dx11::ImGuiDx11::Run()
         ImGui::SliderFloat3("Cube Pos", m_posArr.data(), 0.0f, 1.0f);
         ImGui::SliderFloat3("Cube Rot", m_rotArr.data(), 0.0f, 360.0f);
         ImGui::SliderFloat3("Cube Scale", m_scaleArr.data(), 1.0f, 2.0f);
+        ImGui::SliderFloat("Camera Fov", &(m_camera.FovVertical), 30.0f, 120.0f);
+        ImGui::SliderFloat("Camera Far", &(m_camera.FarZ), 0.001f, 1000.0f);
+        ImGui::SliderFloat("Camera AR", &(m_camera.AspectRatio), 0.85f, 2.16f);
         ImGui::Text("Time: %d", m_clock.GetTotalTimeSecs());
         ImGui::Text("Delta Time: %.6f ms", m_clock.GetDeltaTimeUs() / 100'000.0f);
         const auto cpos = m_camera.PositionF3();
@@ -497,13 +500,13 @@ void gt::dx11::ImGuiDx11::Draw()
     switch (DrawMethodSelection)
     {
     case 0:
-        m_command.SetCullMethod(LS::Win32::CULL_METHOD::CULL_BACKFACE);
+        m_command.SetCullMethod(LS::Win32::CULL_METHOD::CULL_BACKFACE_CC);
         break;
     case 1:
         m_command.SetCullMethod(LS::Win32::CULL_METHOD::WIREFRAME);
         break;
     default:
-        m_command.SetCullMethod(LS::Win32::CULL_METHOD::CULL_BACKFACE);
+        m_command.SetCullMethod(LS::Win32::CULL_METHOD::CULL_BACKFACE_CC);
         break;
     }
     
@@ -515,10 +518,11 @@ void gt::dx11::ImGuiDx11::Draw()
     m_command.SetIndexBuffer(nullptr);
     std::array<ID3D11Buffer*, 2> buffers2{ viewBuff.Get(), projBuff.Get() };
     m_command.BindVSConstantBuffers(buffers2);
+    const uint32_t vertsPerRow = 4 + (2 * (CELL_COLS - 1));
 
     for (int i = 0u; i < CELL_ROWS; ++i)
     {
-        m_command.DrawVerts((uint32_t)CELL_COLS, i * CELL_COLS);
+        m_command.DrawVerts((uint32_t)vertsPerRow, i * vertsPerRow);
     }
 }
 
