@@ -66,7 +66,7 @@ export namespace LS::Geo::Generator
         static_assert(CellSize > 0.0f, "Cell size cannot be 0 or less");
 
         uint32_t offset = 0u;
-        constexpr size_t zPoints = Detail::FindGridCellSize(Z);
+
         constexpr size_t xPoints = Detail::FindGridCellSize(X);
         constexpr size_t size = xPoints * Z;
         std::vector<Vec3<float>> points(size);

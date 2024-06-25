@@ -47,11 +47,6 @@ float4x4 TransMatrixFromVector(float4 vec)
     mat[3][0] = vec.x;
     mat[3][1] = vec.y;
     mat[3][2] = vec.z;
-    
-    mat[3][0] = vec.x;
-    mat[3][1] = vec.y;
-    mat[3][2] = vec.z;
-    mat[3][3] = 1.0f;
     return mat;
 }
 
@@ -129,5 +124,5 @@ VS_OUTPUT main(float3 pos : POSITION0)
     output.Color = float4(0.4f, 1.0f, 0.3f, 1.0f);
     output.Uv = float2(0.0f, 0.0f);
     
-	return output;
+    return output;
 }

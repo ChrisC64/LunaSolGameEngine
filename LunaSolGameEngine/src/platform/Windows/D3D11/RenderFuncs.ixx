@@ -22,6 +22,52 @@ import Engine.Defines;
 
 namespace WRL = Microsoft::WRL;
 
+namespace LS::Win32::Detail
+{
+    /**
+     * @brief Creates a Texture resource that has no additional subsets. The most detailed mip level is 0 and the only level, without
+     * any additional sub arrays, has only 1 in size. 
+     * @param pDevice The device to create with
+     * @param width The width in texels (number of pixels on the image's X axis)
+     * @param height The height in texels (number of pixels on the image's Y axis)
+     * @param data The data to set for this resource
+     * @param bytesPerRow Number of bytes in a row of the 2D image (includes any additional padding not specified in width)
+     * @param format The format of the pixels arrangement
+     * @param memUsage What state of @link D3D11_USAGE this will bind to and restrictions it has to be operated on by the run time
+     * @param d3dBindFlags The pipeline stages to bind to
+     * @param d3dCpuAccess The CPU's read/write access allowed
+     * @param samplesPerPixel Number of samples to make this texture with
+     * @param msQualityLevel The hardware specified requirement of Multisampled Qualtiy allowed (-1 of given value from ID3D11Device::CheckMultisampleQualityLevels)
+     * @param mipLevels Number of mip map levels this texture has
+     * @return An ID3D11Texture2D* resource that is either initialized or null
+     */
+    [[nodiscard]]
+    constexpr auto CreateTextureResource2DSingle(ID3D11Device* pDevice, uint32_t width, uint32_t height, const void* data, uint32_t bytesPerRow,
+        DXGI_FORMAT format, uint32_t d3dBindFlags, D3D11_USAGE memUsage = D3D11_USAGE_DEFAULT,
+        uint32_t d3dCpuAccess = 0, uint32_t samplesPerPixel = 1, uint32_t msQualityLevel = 0, uint32_t mipLevels = 0, uint32_t miscFlags = 0) noexcept -> ID3D11Texture2D*
+    {
+        D3D11_TEXTURE2D_DESC desc{ .Width = width, .Height = height, .MipLevels = mipLevels,
+        .ArraySize = 1, .Format = format, .SampleDesc = {.Count = samplesPerPixel, .Quality = msQualityLevel},
+        .Usage = memUsage, .BindFlags = d3dBindFlags, .CPUAccessFlags = d3dCpuAccess, .MiscFlags = miscFlags };
+
+        D3D11_SUBRESOURCE_DATA initData{ .pSysMem = data, .SysMemPitch = bytesPerRow, .SysMemSlicePitch = 0 };
+
+        ID3D11Texture2D* pTexture = nullptr;
+        HRESULT hr = pDevice->CreateTexture2D(&desc, &initData, &pTexture);
+        if (FAILED(hr))
+        {
+            if (pTexture)
+            {
+                pTexture->Release();
+                pTexture = nullptr;
+            }
+            return nullptr;
+        }
+
+        return pTexture;
+    }
+}
+
 export namespace LS::Win32
 {
     // CLEAR //
@@ -720,4 +766,29 @@ export namespace LS::Win32
 
         return texture;
     }
+    
+    constexpr auto CreateTexture2D1(ID3D11Device3* pDevice, const D3D11_TEXTURE2D_DESC1* desc, D3D11_SUBRESOURCE_DATA* res = nullptr) noexcept -> Nullable<ID3D11Texture2D1*>
+    {
+        if (!pDevice)
+            return std::nullopt;
+
+        ID3D11Texture2D1* texture;
+        HRESULT hr = pDevice->CreateTexture2D1(desc, res, &texture);
+        if (FAILED(hr))
+            return std::nullopt;
+
+        return texture;
+    }
+
+    constexpr auto CreateDefaultTexture2D(ID3D11Device* pDevice, uint32_t width, uint32_t height, const void* data, uint32_t bytesPerRow, 
+        DXGI_FORMAT format, D3D11_USAGE usage, uint32_t d3d11BindFlags, uint32_t d3d11CpuAccess = 0) -> Nullable<ID3D11Texture2D*>
+    {
+        assert(pDevice && "Device cannot be null");
+
+        if (!pDevice)
+            return std::nullopt;
+
+        Detail::CreateTextureResource2DSingle(pDevice, width, height, data, bytesPerRow, format, d3d11BindFlags, usage, d3d11CpuAccess);
+    }
+
 }

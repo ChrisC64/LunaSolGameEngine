@@ -24,22 +24,6 @@ export namespace LS
         COPY_ONLY // @brief Buffer can copy contents from GPU to CPU
     };
 
-    /***
-     * @enum BUFFER_PIPELINE_STAGES
-     * @brief The description of what pipeline stage this buffer object will be used for in the graphics pipeline.
-     */
-    enum class BUFFER_PIPELINE_STAGES : uint16_t
-    {
-        UNDEFINED = 0,
-        VERTEX, // @brief Buffer can be used for vertex pipeline
-        INDEX, // @brief Buffer can be used for index pipeline
-        HULL, // @brief Buffer is used for Hull-shader pipeline
-        TESSELATOR, // @brief Buffer is used for Tesselator pipeline
-        GEOMETRY, // @brief Buffer is used for Geometry pipeline
-        CONSTANT, // @brief Buffer is constant buffer data used by shader objects(not a pipeline stage)
-        SHADER_RESOURCE // @brief Buffer is a resource (texture or other type) that is used for shaders (not a constant buffer data)
-    };
-
     /**
      * @brief Denotes where the buffer is expected to be bound to 
      */
@@ -150,7 +134,7 @@ export namespace LS
             return m_usage;
         }
 
-        constexpr auto GetBindStage() const -> BUFFER_PIPELINE_STAGES
+        constexpr auto GetBindStage() const -> RENDER_PIPELINE_STAGE
         {
             return m_bindType;
         }
