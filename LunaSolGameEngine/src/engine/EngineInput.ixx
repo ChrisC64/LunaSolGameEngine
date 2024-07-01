@@ -87,7 +87,7 @@ export namespace LS::Input
         GAMEPAD
     };
 
-    enum class WINDOW_SETTING
+    enum class WINDOW_SETTING : uint8_t
     {
         FULLSCREEN,
         WINDOW,
@@ -120,7 +120,9 @@ export namespace LS::Input
 
     // TYPEDEFS //
     /**
-    * @brief The cursor move callback function signature
+    * @brief The cursor move callback function signature. Returns coordinates 
+    * based on the Window's coordinate system with top left/top right being 0,0
+    * to the screen's WIDTH/HEIGHT
     *
     * A cursor move is fired when the mouse cursor is moved
     * @code
@@ -131,11 +133,6 @@ export namespace LS::Input
     * @param yPos the current Y position of the cursor starting at 0 from the top
     */
     using LSOnMouseMove = std::function<void(uint32_t x, uint32_t y)>;
-
-    /**
-     * @brief A mouse scroll wheel callback that passes over an integer value that is system dependent
-    */
-    using LSMouseWheelScrollCallback = std::function<void(int64_t delta)>;
 
     using LSOnKeyboardDown = std::function<void(KEYBOARD input)>;
     using LSOnKeyboardUp = std::function<void(KEYBOARD input)>;

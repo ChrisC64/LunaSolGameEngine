@@ -205,7 +205,7 @@ namespace LS
     {
         NEVER_PASS = 0,     // @brief condition never will pass
         LESS_PASS,          // @brief condition is true when less than only
-        LESSS_EQUAL_PASS,   // @brief condition is true when less than or equal to
+        LESS_EQUAL_PASS,   // @brief condition is true when less than or equal to
         EQUAL,              // @brief condition is equal to
         NOT_EQUAL,          // @brief condition is when they are not equal
         GREATER_PASS,       // @brief condition is true when greater than

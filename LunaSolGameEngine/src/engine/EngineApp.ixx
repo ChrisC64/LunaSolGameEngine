@@ -79,6 +79,7 @@ namespace LS
     protected:
         Ref<LSWindowBase> m_Window;
         APP_STATE m_State;
+
         void RegisterKeyboardInput(Input::LSOnKeyboardDown onKeyDown, Input::LSOnKeyboardUp onKeyUp);
         void RegisterMouseInput(Input::LSOnMouseDown onMouseDown, Input::LSOnMouseUp onMouseUp, Input::LSOnMouseWheelScroll mouseWheel, Input::LSOnMouseMove cursorMove);
     };

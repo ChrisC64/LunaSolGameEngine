@@ -286,7 +286,7 @@ PipelineStateDX11 LS::Win32::D3D11PipelineFactory::CreatePipelineD3D11(const Pip
                 return D3D11_COMPARISON_NEVER;
             case LESS_PASS:
                 return D3D11_COMPARISON_LESS;
-            case LESSS_EQUAL_PASS:
+            case LESS_EQUAL_PASS:
                 return D3D11_COMPARISON_LESS_EQUAL;
             case EQUAL:
                 return D3D11_COMPARISON_EQUAL;

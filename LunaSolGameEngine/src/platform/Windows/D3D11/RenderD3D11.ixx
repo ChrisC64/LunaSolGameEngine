@@ -104,6 +104,11 @@ export namespace LS::Win32
 
         void ExecuteRenderCommand(const RenderCommandD3D11& command) noexcept;
 
+        auto GetFrameIndex() const noexcept -> uint64_t
+        {
+            return m_frameIndex;
+        }
+
     protected:
         LS::LSWindowBase*                       m_window;
 
@@ -116,7 +121,8 @@ export namespace LS::Win32
         WRL::ComPtr<ID3D11DeviceContext>        m_context;
         DXGISwapChain                           m_swapchain;
         DEPTH_STENCIL_MODE                      m_dsMode;
-        
+        uint64_t                                m_frameIndex;
+
         [[nodiscard]]
         bool InitializeRtvAndDsv() noexcept;
     };
@@ -188,6 +194,7 @@ void RenderD3D11::Clear(const std::array<float, 4>& clearColor, LS::Win32::DEPTH
 void RenderD3D11::Draw() noexcept
 {
     LS::Win32::Present1(m_swapchain.GetSwapChain1().Get(), 0);
+    ++m_frameIndex;
 }
 
 void RenderD3D11::Resize(uint32_t width, uint32_t height) noexcept

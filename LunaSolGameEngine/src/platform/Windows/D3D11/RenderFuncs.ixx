@@ -780,15 +780,15 @@ export namespace LS::Win32
         return texture;
     }
 
-    constexpr auto CreateDefaultTexture2D(ID3D11Device* pDevice, uint32_t width, uint32_t height, const void* data, uint32_t bytesPerRow, 
-        DXGI_FORMAT format, D3D11_USAGE usage, uint32_t d3d11BindFlags, uint32_t d3d11CpuAccess = 0) -> Nullable<ID3D11Texture2D*>
+    constexpr auto CreateTexture2D(ID3D11Device* pDevice, uint32_t width, uint32_t height, const void* data, uint32_t bytesPerRow, 
+        DXGI_FORMAT format, uint32_t d3d11BindFlags, D3D11_USAGE usage = D3D11_USAGE_DEFAULT, uint32_t d3d11CpuAccess = 0) -> Nullable<ID3D11Texture2D*>
     {
         assert(pDevice && "Device cannot be null");
 
         if (!pDevice)
             return std::nullopt;
 
-        Detail::CreateTextureResource2DSingle(pDevice, width, height, data, bytesPerRow, format, d3d11BindFlags, usage, d3d11CpuAccess);
+        return Detail::CreateTextureResource2DSingle(pDevice, width, height, data, bytesPerRow, format, d3d11BindFlags, usage, d3d11CpuAccess);
     }
 
 }

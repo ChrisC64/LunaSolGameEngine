@@ -60,8 +60,8 @@ struct Cube
     XMMATRIX Transform;
 };
 
-constexpr size_t CELL_ROWS = 140;
-constexpr size_t CELL_COLS = 225;
+constexpr size_t CELL_ROWS = 10;
+constexpr size_t CELL_COLS = 15;
 constexpr size_t CELL_TOTAL = CELL_ROWS * CELL_COLS;
 std::vector<LS::Vec3<float>> g_floor = LS::Geo::Generator::CreateFloorLH<CELL_COLS, CELL_ROWS>();
 XMMATRIX g_floorTransform;
@@ -79,6 +79,7 @@ export namespace gt::dx11
 
     private:
         uint32_t viewKey, projKey, mvpKey, vbKey, ibKey, floorKey;
+        uint32_t fpsTarget = 30;
         XMVECTOR m_UpVec = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
         XMVECTOR m_LookAtDefault = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
         std::array<float, 4> m_clearColor{ 1.0f, 0.43f, 0.02f, 1.0f };
@@ -100,7 +101,7 @@ export namespace gt::dx11
         ComPtr<ID3D11InputLayout> m_terrainIL;
 
         int DrawMethodSelection = 0;
-
+        float m_moveSpeed = 0.025f; 
         void CompileShaders();
         void CreateBuffers();
 
@@ -163,23 +164,41 @@ auto ImGuiDx11::Initialize(LS::SharedRef<LS::LSCommandArgs> args) -> LS::System:
     m_command = m_renderer.CreateImmediateCommand();
     CompileShaders();
     CreateBuffers();
+    if (!LS::Win32::InitHelperStates(m_renderer.GetDevice()))
+    {
+        return LS::System::CreateFailCode("Failed to create global render states");
+    }
     return LS::System::CreateSuccessCode();
 }
 
 void gt::dx11::ImGuiDx11::Run()
 {
+    using namespace std::chrono_literals;
+
     m_Window->Show();
     ImGuiIO& io = ImGui::GetIO();
 
     auto currWidth = m_Window->GetWidth();
     auto currHeight = m_Window->GetHeight();
-    m_clock.Start();
-
     const char* items[]{ "solid", "wireframe" };
+    using targetFps = std::ratio<1, 60>;
+    using frameDuration = std::chrono::duration<double, targetFps>;
+    const frameDuration fps = frameDuration(1s);
+    const double drawTarget = std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(frameDuration(1)).count();
+    uint64_t frameCounter = 0;
+    double currentTimeSecs = 0.0;
+    double timepoint = 0.0;
+    double deltaTimeMs = 0.0;
+    double elapsedDeltaMs = 0.0;
+    uint64_t framesPerSecond = 0;
+    m_clock.Start();
     while (m_Window->IsOpen())
     {
-        m_Window->PollEvent();
         m_clock.Tick();
+        currentTimeSecs = m_clock.TotalTimeAs<double, std::ratio<1, 1>>();
+        deltaTimeMs = m_clock.DeltaTimeAs<double, std::ratio<1, 1'000>>();
+        elapsedDeltaMs += deltaTimeMs;
+        m_Window->PollEvent();
         auto mousePos = m_Window->GetMousePos();
         if (currWidth != m_Window->GetWidth() && currHeight != m_Window->GetHeight())
         {
@@ -188,7 +207,13 @@ void gt::dx11::ImGuiDx11::Run()
             currWidth = m_Window->GetWidth();
             currHeight = m_Window->GetHeight();
         }
+
         Update();
+
+        if (elapsedDeltaMs < drawTarget)
+        {
+            continue;
+        }
 
         ImGui_ImplDX11_NewFrame();
         ImGui_ImplWin32_NewFrame();
@@ -205,17 +230,22 @@ void gt::dx11::ImGuiDx11::Run()
         ImGui::SliderFloat("Camera Fov", &(m_camera.FovVertical), 30.0f, 120.0f);
         ImGui::SliderFloat("Camera Far", &(m_camera.FarZ), 0.001f, 1000.0f);
         ImGui::SliderFloat("Camera AR", &(m_camera.AspectRatio), 0.85f, 2.16f);
-        ImGui::Text("Time: %d", m_clock.GetTotalTimeSecs());
-        ImGui::Text("Delta Time: %.6f ms", m_clock.GetDeltaTimeUs() / 100'000.0f);
+        ImGui::InputFloat("Cam Move Speed", &m_moveSpeed, 0.025f);
+        ImGui::Text("Time: %.6f", currentTimeSecs);
+        ImGui::Text("Delta Time: %.6f ms", deltaTimeMs);
+        ImGui::Text("Draw Target: %.6f ms", drawTarget);
         const auto cpos = m_camera.PositionF3();
         ImGui::Text("Camera Pos: (%.4f, %.4f %.4f)", cpos.x, cpos.y, cpos.z);
+        ImGui::Text("Target FPS: %.6f", fps.count());
+        ImGui::Text("FPS (actual): %u", framesPerSecond);
+        ImGui::Text("Frame Index: %u", m_renderer.GetFrameIndex());
         ImGui::BeginListBox("Draw Mode", ImVec2(300.0f, 50.0f));
         ImGui::ListBox("Draw Method", &DrawMethodSelection, items, 2);
         ImGui::EndListBox();
         ImGui::End();
 
-        //m_renderer.Clear(m_clearColor);
         Draw();
+        frameCounter++;
         ImGui::Render();
         ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
@@ -227,6 +257,13 @@ void gt::dx11::ImGuiDx11::Run()
             ImGui::RenderPlatformWindowsDefault();
         }
         m_renderer.Draw();
+        elapsedDeltaMs = elapsedDeltaMs - drawTarget;
+        if (currentTimeSecs - timepoint >= 1.0)
+        {
+            timepoint += 1.0;
+            framesPerSecond = frameCounter;
+            frameCounter = 0;
+        }
     }
 
     ImGui_ImplDX11_Shutdown();
@@ -365,8 +402,9 @@ void gt::dx11::ImGuiDx11::UpdateCamera()
 {
     using enum LS::Input::KEYBOARD;
     LS::Vec3F movement;
-    auto dt = m_clock.GetDeltaTimeUs() / 100'000.0f;
-    float movespeed = 1.0f * dt;
+    auto dt = m_clock.DeltaTimeAs<double, std::milli>();
+
+    float movespeed = m_moveSpeed * (float)dt;
 
     if (LS::Win32::IsKeyPressed(W))
     {
@@ -489,7 +527,7 @@ void gt::dx11::ImGuiDx11::Draw()
     m_command.SetIndexBuffer(ibBuff.Get());
     std::array<ID3D11Buffer*, 3> buffers{ viewBuff.Get(), projBuff.Get(), mvpBuff.Get() };
     m_command.BindVSConstantBuffers(buffers);
-
+    m_command.SetDepthStencilState(LS::Win32::GlobalStates()->GetDSDefault().Get(), 1);
     m_renderer.Clear(m_clearColor, LS::Win32::DEPTH_STENCIL_MODE::DEFAULT);
 
     m_command.DrawIndexed((uint32_t)m_cube.Indices.size());
@@ -509,7 +547,7 @@ void gt::dx11::ImGuiDx11::Draw()
         m_command.SetCullMethod(LS::Win32::CULL_METHOD::CULL_BACKFACE_CC);
         break;
     }
-    
+
     m_command.SetPrimTopology(D3D11_PRIMITIVE_TOPOLOGY::D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
     m_command.SetInputLayout(m_terrainIL.Get());
     m_command.BindVS(m_terrainShaderVs.Get());

@@ -51,6 +51,16 @@ namespace LS::Win32
         WRL::ComPtr<ID3D11RasterizerState2> m_wireframeNoCull;
         WRL::ComPtr<ID3D11RasterizerState2> m_wireframeNoCullCc;
 
+        // Depth States //
+        WRL::ComPtr<ID3D11DepthStencilState> m_depthNone;
+        WRL::ComPtr<ID3D11DepthStencilState> m_depthDefault;
+        WRL::ComPtr<ID3D11DepthStencilState> m_depthRead;
+        WRL::ComPtr<ID3D11DepthStencilState> m_depthReverseZ;
+        WRL::ComPtr<ID3D11DepthStencilState> m_depthReadReverseZ;
+
+        // Depth Stencil States //
+        WRL::ComPtr<ID3D11DepthStencilState> m_depthStencilDefault;
+
     public:
         // Front Face States //
         auto GetSolid() const noexcept -> const Microsoft::WRL::ComPtr<ID3D11RasterizerState>
@@ -154,6 +164,38 @@ namespace LS::Win32
         {
             return m_wireframeNoCullCc;
         }
+        
+        auto GetDepthNone() const noexcept -> const Microsoft::WRL::ComPtr<ID3D11DepthStencilState>
+        {
+            return m_depthNone;
+        }
+
+        auto GetDepthDefault() const noexcept -> const Microsoft::WRL::ComPtr<ID3D11DepthStencilState>
+        {
+            return m_depthDefault;
+        }
+        
+        auto GetDepthRead() const noexcept -> const Microsoft::WRL::ComPtr<ID3D11DepthStencilState>
+        {
+            return m_depthRead;
+        }
+        
+        auto GetDepthReverseZ() const noexcept -> const Microsoft::WRL::ComPtr<ID3D11DepthStencilState>
+        {
+            return m_depthReverseZ;
+        }
+
+        auto GetDepthReadReverseZ() const noexcept -> const Microsoft::WRL::ComPtr<ID3D11DepthStencilState>
+        {
+            return m_depthReadReverseZ;
+        }
+
+        // Depth Stencil States //
+        auto GetDSDefault() const noexcept -> const Microsoft::WRL::ComPtr<ID3D11DepthStencilState>
+        {
+            return m_depthStencilDefault;
+        }
+        
     };
 
     Ref<DXStates> g_states;
@@ -311,7 +353,7 @@ export namespace LS::Win32
                     return D3D11_COMPARISON_NEVER;
                 case LESS_PASS:
                     return D3D11_COMPARISON_LESS;
-                case LESSS_EQUAL_PASS:
+                case LESS_EQUAL_PASS:
                     return D3D11_COMPARISON_LESS_EQUAL;
                 case EQUAL:
                     return D3D11_COMPARISON_EQUAL;
@@ -714,5 +756,14 @@ bool LS::Win32::DXStates::Initialize(ID3D11Device* pDevice)
     m_wireframeNoCull = LS::Win32::CreateRasterizerState2(dev3.Get(), LS::SolidFill_NoneCull_FCW_DCE).value();;
     m_wireframeNoCullCc = LS::Win32::CreateRasterizerState2(dev3.Get(), LS::SolidFill_NoneCull_FCCW_DCE).value();;
 
+    // Depth States //
+    m_depthNone = LS::Win32::CreateDepthStencilState(dev3.Get(), LS::DepthNone).value();
+    m_depthDefault = LS::Win32::CreateDepthStencilState(dev3.Get(), LS::DepthDefault).value();
+    m_depthRead = LS::Win32::CreateDepthStencilState(dev3.Get(), LS::DepthRead).value();
+    m_depthReverseZ = LS::Win32::CreateDepthStencilState(dev3.Get(), LS::DepthReverseZ).value();
+    m_depthReadReverseZ = LS::Win32::CreateDepthStencilState(dev3.Get(), LS::DepthReadReverseZ).value();
+    
+    // Depth Stencil States //
+    m_depthStencilDefault = LS::Win32::CreateDepthStencilState(dev3.Get(), LS::DepthStencilDefault).value();
     return true;
 }
