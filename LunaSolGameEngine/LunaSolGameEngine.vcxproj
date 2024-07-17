@@ -102,7 +102,7 @@
     <ClCompile>
       <WarningLevel>Level4</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>LS_WINDOWS_BUILD;LSE_API;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>LS_WIN32_BUILD;LSE_API;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
@@ -122,7 +122,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>LS_WINDOWS_BUILD;LSE_API;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>LS_WIN32_BUILD;LSE_API;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
@@ -142,7 +142,7 @@
     <ClCompile>
       <WarningLevel>Level4</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>LS_WINDOWS_BUILD;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>LS_WIN32_BUILD;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
@@ -167,7 +167,7 @@ xcopy /f /d /y $(IntDir) $(SolutionDir)build\$(Platform)\$(Configuration)\bin\</
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>LS_WINDOWS_BUILD;LSE_API;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>LS_WIN32_BUILD;LSE_API;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
@@ -203,6 +203,7 @@ xcopy /f /d /y $(IntDir) $(SolutionDir)build\$(Platform)\$(Configuration)\bin\</
     <ClCompile Include="src\engine\EngineLogger.ixx" />
     <ClCompile Include="src\engine\EngineWindow.ixx" />
     <ClCompile Include="src\engine\LSEngine.ixx" />
+    <ClCompile Include="src\engine\Renderer.ixx" />
     <ClCompile Include="src\helper\IOHelper.ixx" />
     <ClCompile Include="src\helper\LSCommonTypes.ixx" />
     <ClCompile Include="src\helper\PipelineFactory.cpp" />
@@ -218,8 +219,10 @@ xcopy /f /d /y $(IntDir) $(SolutionDir)build\$(Platform)\$(Configuration)\bin\</
     <ClCompile Include="src\platform\Windows\D3D11\Helpers\D3D11TypeWrapper.ixx" />
     <ClCompile Include="src\platform\Windows\D3D11\Helpers\D3D11Utils.ixx" />
     <ClCompile Include="src\platform\Windows\D3D11\PipelineFactoryD3D11.ixx" />
+    <ClCompile Include="src\platform\Windows\D3D11\RenderCommandD3D11.ixx" />
     <ClCompile Include="src\platform\Windows\D3D11\RenderD3D11.ixx" />
     <ClCompile Include="src\platform\Windows\D3D11\RenderFuncs.ixx" />
+    <ClCompile Include="src\platform\Windows\D3D11\ShaderD3D11.ixx" />
     <ClCompile Include="src\platform\Windows\D3D12\CommandListDx12.ixx" />
     <ClCompile Include="src\platform\Windows\D3D12\CommandQueueDx12.ixx" />
     <ClCompile Include="src\platform\Windows\D3D12\D3D12Common.ixx" />
@@ -237,6 +240,7 @@ xcopy /f /d /y $(IntDir) $(SolutionDir)build\$(Platform)\$(Configuration)\bin\</
     <ClCompile Include="src\platform\Windows\D3D12\ResourceManagerD3D12.ixx" />
     <ClCompile Include="src\platform\Windows\DXGI\DXGIHelper.ixx" />
     <ClCompile Include="src\platform\Windows\D3D12\FrameBufferDxgi.ixx" />
+    <ClCompile Include="src\platform\Windows\DXGI\DXGISwapChain.ixx" />
     <ClCompile Include="src\platform\Windows\Win32\ComUtils.ixx" />
     <ClCompile Include="src\platform\Windows\Win32\Win32Utils.ixx" />
     <ClCompile Include="src\platform\Windows\Win32\Win32Window.ixx" />

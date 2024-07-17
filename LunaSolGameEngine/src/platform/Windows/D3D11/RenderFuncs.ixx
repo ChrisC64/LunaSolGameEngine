@@ -1,20 +1,20 @@
 module;
-#include <cassert>
-#include <array>
-#include <span>
 #include <d3d11_4.h>
 #include <wrl/client.h>
-#include <limits>
 #include <dxgi.h>
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include "engine/EngineLogDefines.h"
+#include <cassert>
 
 #pragma comment(lib, "d3d11")
 #define NOMINMAX
 #undef max
 #undef min
 export module D3D11.RenderFuncD3D11;
+import <array>;
+import <span>;
+import <limits>;
 import Win32.ComUtils;
 import LSDataLib;
 import Engine.LSDevice;
@@ -22,11 +22,57 @@ import Engine.Defines;
 
 namespace WRL = Microsoft::WRL;
 
+namespace LS::Win32::Detail
+{
+    /**
+     * @brief Creates a Texture resource that has no additional subsets. The most detailed mip level is 0 and the only level, without
+     * any additional sub arrays, has only 1 in size.
+     * @param pDevice The device to create with
+     * @param width The width in texels (number of pixels on the image's X axis)
+     * @param height The height in texels (number of pixels on the image's Y axis)
+     * @param data The data to set for this resource
+     * @param bytesPerRow Number of bytes in a row of the 2D image (includes any additional padding not specified in width)
+     * @param format The format of the pixels arrangement
+     * @param memUsage What state of @link D3D11_USAGE this will bind to and restrictions it has to be operated on by the run time
+     * @param d3dBindFlags The pipeline stages to bind to
+     * @param d3dCpuAccess The CPU's read/write access allowed
+     * @param samplesPerPixel Number of samples to make this texture with
+     * @param msQualityLevel The hardware specified requirement of Multisampled Qualtiy allowed (-1 of given value from ID3D11Device::CheckMultisampleQualityLevels)
+     * @param mipLevels Number of mip map levels this texture has
+     * @return An ID3D11Texture2D* resource that is either initialized or null
+     */
+    [[nodiscard]]
+    constexpr auto CreateTextureResource2DSingle(ID3D11Device* pDevice, uint32_t width, uint32_t height, const void* data, uint32_t bytesPerRow,
+        DXGI_FORMAT format, uint32_t d3dBindFlags, D3D11_USAGE memUsage = D3D11_USAGE_DEFAULT,
+        uint32_t d3dCpuAccess = 0, uint32_t samplesPerPixel = 1, uint32_t msQualityLevel = 0, uint32_t mipLevels = 0, uint32_t miscFlags = 0) noexcept -> ID3D11Texture2D*
+    {
+        D3D11_TEXTURE2D_DESC desc{ .Width = width, .Height = height, .MipLevels = mipLevels,
+        .ArraySize = 1, .Format = format, .SampleDesc = {.Count = samplesPerPixel, .Quality = msQualityLevel},
+        .Usage = memUsage, .BindFlags = d3dBindFlags, .CPUAccessFlags = d3dCpuAccess, .MiscFlags = miscFlags };
+
+        D3D11_SUBRESOURCE_DATA initData{ .pSysMem = data, .SysMemPitch = bytesPerRow, .SysMemSlicePitch = 0 };
+
+        ID3D11Texture2D* pTexture = nullptr;
+        HRESULT hr = pDevice->CreateTexture2D(&desc, &initData, &pTexture);
+        if (FAILED(hr))
+        {
+            if (pTexture)
+            {
+                pTexture->Release();
+                pTexture = nullptr;
+            }
+            return nullptr;
+        }
+
+        return pTexture;
+    }
+}
+
 export namespace LS::Win32
 {
     // CLEAR //
     constexpr void ClearRT(ID3D11DeviceContext* pContext, ID3D11RenderTargetView* pRTView,
-        std::array<float, 4> color) noexcept
+        const std::array<float, 4> color) noexcept
     {
         assert(pContext);
         assert(pRTView);
@@ -36,8 +82,8 @@ export namespace LS::Win32
         pContext->ClearRenderTargetView(pRTView, color.data());
     }
 
-    constexpr void ClearDS(ID3D11DeviceContext* pContext, ID3D11DepthStencilView* pDSView, uint32_t flags = D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL,
-        float depth = 1.0f, uint8_t stencil = 0) noexcept
+    constexpr void ClearDS(ID3D11DeviceContext* pContext, ID3D11DepthStencilView* pDSView,
+        float depth = 1.0f, uint8_t stencil = 0, uint32_t flags = D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL) noexcept
     {
         assert(pContext);
         assert(pDSView);
@@ -102,7 +148,8 @@ export namespace LS::Win32
     }
 
     [[nodiscard]]
-    inline auto CreateDepthStencilViewFromSwapChain(WRL::ComPtr<ID3D11Device> pDevice, WRL::ComPtr<IDXGISwapChain> pSwapChain, DXGI_FORMAT format = DXGI_FORMAT_D24_UNORM_S8_UINT) noexcept -> Nullable<WRL::ComPtr<ID3D11DepthStencilView>>
+    inline auto CreateDepthStencilViewFromSwapChain(WRL::ComPtr<ID3D11Device> pDevice, WRL::ComPtr<IDXGISwapChain> pSwapChain, WRL::ComPtr<ID3D11Texture2D>& depthBufferOut,
+        DXGI_FORMAT format = DXGI_FORMAT_D24_UNORM_S8_UINT) noexcept -> Nullable<WRL::ComPtr<ID3D11DepthStencilView>>
     {
         assert(pDevice);
         assert(pSwapChain);
@@ -121,7 +168,7 @@ export namespace LS::Win32
 
         WRL::ComPtr<ID3D11Texture2D> depthBuffer;
         WRL::ComPtr<ID3D11DepthStencilView> depthStencil;
-        
+
         result = pDevice->CreateTexture2D(&depthBufferDesc, nullptr, &depthBuffer);
         if (FAILED(result))
         {
@@ -129,22 +176,26 @@ export namespace LS::Win32
             return {};
         }
 
-        result = pDevice->CreateDepthStencilView(depthBuffer.Get(), nullptr, &depthStencil);
+        auto dsv = CD3D11_DEPTH_STENCIL_VIEW_DESC(D3D11_DSV_DIMENSION_TEXTURE2D, format);
+        result = pDevice->CreateDepthStencilView(depthBuffer.Get(), &dsv, &depthStencil);
         if (FAILED(result))
         {
             LS_LOG_ERROR(L"Failed to create the depth stencil view CreateDepthStencilViewFromSwapChain");
             return {};
         }
+
+        depthBufferOut = depthBuffer;
+
         return depthStencil;
     }
 
-    constexpr void SetRenderTarget(ID3D11DeviceContext* pContext, ID3D11RenderTargetView* pRTView, ID3D11DepthStencilView* pDSView, uint32_t numViews = 1) noexcept
+    constexpr void SetRenderTarget(ID3D11DeviceContext* pContext, ID3D11RenderTargetView* pRTView, ID3D11DepthStencilView* pDSView = nullptr, uint32_t numViews = 1) noexcept
     {
         assert(pContext);
         assert(pRTView);
         if (!pContext || !pRTView)
             return;
-        pContext->OMSetRenderTargets(numViews, &pRTView, pDSView);
+        pContext->OMSetRenderTargets(numViews, &pRTView, pDSView ? pDSView : nullptr);
     }
 
     constexpr void SetRenderTarget(ID3D11DeviceContext* pContext, ID3D11RenderTargetView* const* pRTView, ID3D11DepthStencilView* pDSView, uint32_t numViews = 1) noexcept
@@ -274,7 +325,7 @@ export namespace LS::Win32
 
         pContext->VSSetConstantBuffers(startSlot, static_cast<uint32_t>(buffers.size()), buffers.data());
     }
-    
+
     constexpr void BindVSConstantBuffer(ID3D11DeviceContext* pContext, uint32_t slot, ID3D11Buffer* buffer)
     {
         assert(pContext);
@@ -304,7 +355,7 @@ export namespace LS::Win32
 
         pContext->VSSetSamplers(slot, 1u, &sampler);
     }
-    
+
     constexpr void BindVSSamplers(ID3D11DeviceContext* pContext, std::span<ID3D11SamplerState*> samplers, uint32_t slot = 0)
     {
         assert(pContext);
@@ -364,7 +415,7 @@ export namespace LS::Win32
 
         pContext->PSSetSamplers(slot, (UINT)samplers.size(), samplers.data());
     }
-    
+
     constexpr void BindGS(ID3D11DeviceContext* pContext, ID3D11GeometryShader* shader) noexcept
     {
         assert(pContext);
@@ -708,4 +759,42 @@ export namespace LS::Win32
         swDesc1.Flags = 0;
         return swDesc1;
     }
+
+    constexpr auto CreateTexture2D(ID3D11Device* pDevice, const D3D11_TEXTURE2D_DESC* desc, D3D11_SUBRESOURCE_DATA* res = nullptr) noexcept -> Nullable<ID3D11Texture2D*>
+    {
+        if (!pDevice)
+            return std::nullopt;
+
+        ID3D11Texture2D* texture;
+        HRESULT hr = pDevice->CreateTexture2D(desc, res, &texture);
+        if (FAILED(hr))
+            return std::nullopt;
+
+        return texture;
+    }
+
+    constexpr auto CreateTexture2D1(ID3D11Device3* pDevice, const D3D11_TEXTURE2D_DESC1* desc, D3D11_SUBRESOURCE_DATA* res = nullptr) noexcept -> Nullable<ID3D11Texture2D1*>
+    {
+        if (!pDevice)
+            return std::nullopt;
+
+        ID3D11Texture2D1* texture;
+        HRESULT hr = pDevice->CreateTexture2D1(desc, res, &texture);
+        if (FAILED(hr))
+            return std::nullopt;
+
+        return texture;
+    }
+
+    constexpr auto CreateTexture2D(ID3D11Device* pDevice, uint32_t width, uint32_t height, const void* data, uint32_t bytesPerRow,
+        DXGI_FORMAT format, uint32_t d3d11BindFlags, D3D11_USAGE usage = D3D11_USAGE_DEFAULT, uint32_t d3d11CpuAccess = 0) -> Nullable<ID3D11Texture2D*>
+    {
+        assert(pDevice && "Device cannot be null");
+
+        if (!pDevice)
+            return std::nullopt;
+
+        return Detail::CreateTextureResource2DSingle(pDevice, width, height, data, bytesPerRow, format, d3d11BindFlags, usage, d3d11CpuAccess);
+    }
+
 }

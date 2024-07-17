@@ -1,12 +1,14 @@
 module;
-#include <optional>
-#include <string_view>
-#include <cstdint>
-#include <functional>
-#include <vector>
-#include <memory>
-#include <ranges>
+
 export module Engine.App;
+import <optional>;
+import <string_view>;
+import <cstdint>;
+import <functional>;
+import <vector>;
+import <memory>;
+import <ranges>;
+import <filesystem>;
 
 import Engine.LSDevice;
 import Engine.LSWindow;
@@ -63,7 +65,6 @@ namespace LS
             m_Window = BuildWindow(600, 600, L"LS Application");
         }
 
-        LSApp(uint32_t width, uint32_t height, std::wstring_view title);
         virtual ~LSApp() = default;
 
         LSApp(const LSApp&) = delete;
@@ -72,26 +73,43 @@ namespace LS
         LSApp(LSApp&&) = default;
         LSApp& operator=(LSApp&&) = default;
 
-        [[nodiscard]] virtual auto Initialize([[maybe_unused]] SharedRef<LSCommandArgs> args) -> System::ErrorCode = 0;
+        [[nodiscard]] virtual auto Initialize([[maybe_unused]] SharedRef<LSCommandArgs> args = nullptr) -> System::ErrorCode = 0;
         virtual void Run() = 0;
 
     protected:
+        LSApp(uint32_t width, uint32_t height, std::wstring_view title);
+
         Ref<LSWindowBase> m_Window;
         APP_STATE m_State;
+        std::filesystem::path m_appDir;
         void RegisterKeyboardInput(Input::LSOnKeyboardDown onKeyDown, Input::LSOnKeyboardUp onKeyUp);
         void RegisterMouseInput(Input::LSOnMouseDown onMouseDown, Input::LSOnMouseUp onMouseUp, Input::LSOnMouseWheelScroll mouseWheel, Input::LSOnMouseMove cursorMove);
+        void BaseInit();
+
+    private:
+        void FindAppDir();
     };
+
+    export template<class T, class... Args>
+        requires std::derived_from<T, LS::LSApp>
+    auto CreateApp(Args&&... args) -> LS::Ref<LS::LSApp>
+    {
+        LS::Ref<LS::LSApp> out = std::make_unique<T>(args...);
+        return out;
+    }
 }
 
 module : private;
 
 import D3D11Lib;
 import Platform.Win32Window;
+import Win32.Utils;
 
 namespace LS
 {
     LSApp::LSApp(uint32_t width, uint32_t height, std::wstring_view title)
     {
+        BaseInit();
         m_Window = BuildWindow(width, height, title);
     }
 
@@ -109,11 +127,22 @@ namespace LS
         m_Window->RegisterMouseMoveCallback(cursorMove);
     }
 
+    void LSApp::BaseInit()
+    {
+        FindAppDir();
+    }
+
+    void LSApp::FindAppDir()
+    {
+#ifdef LS_WIN32_BUILD
+        m_appDir = LS::Win32::FindModuleDir();
+#endif
+    }
+
     auto ParseCommands(int argc, char* argv[]) noexcept -> SharedRef<LSCommandArgs>
     {
         SharedRef<LSCommandArgs> commandArgs = std::make_shared<LSCommandArgs>();
-        int i = 1;
-        for (; i < argc; ++i)
+        for (int i = 0; i < argc; ++i)
         {
             commandArgs->emplace_back(argv[i]);
         }

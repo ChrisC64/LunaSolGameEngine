@@ -25,7 +25,7 @@ namespace LS::DX
         DXCamera(uint32_t width, uint32_t height, xmvec position, xmvec forward, xmvec up, float fovY = 45.0f, float farZ = 1'000.0f, float nearZ = 0.1f)
         {
             FovVertical = fovY;
-            AspectRatio = static_cast<float>(width / height);
+            AspectRatio = static_cast<float>(width / (float)height);
             Projection = XMMatrixPerspectiveFovLH(XMConvertToRadians(FovVertical), AspectRatio, farZ, nearZ);
             View = XMMatrixLookAtLH(position, forward, up);
             Width = width;
@@ -41,7 +41,7 @@ namespace LS::DX
         DXCamera(uint32_t width, uint32_t height, LS::Vec3F position, LS::Vec3F forward, LS::Vec3F up, float fovY = 45.0f, float farZ = 1'000.0f, float nearZ = 0.1f)
         {
             FovVertical = fovY;
-            Projection = XMMatrixPerspectiveFovLH(XMConvertToRadians(FovVertical), static_cast<float>(width / height), farZ, nearZ);
+            Projection = XMMatrixPerspectiveFovLH(XMConvertToRadians(FovVertical), static_cast<float>(width / (float)height), farZ, nearZ);
             auto vecPos = XMVectorSet(position.x, position.y, position.z, 0.0f);
             auto vecUp = XMVectorSet(up.x, up.y, up.z, 0.0f);
             auto vecForward = XMVectorSet(forward.x, forward.y, forward.z, 0.0f);
@@ -80,6 +80,22 @@ namespace LS::DX
             View = XMMatrixLookAtLH(Position, XMVectorAdd(Position, forwardNorm), upNorm);
         }
 
+        void Initialize(uint32_t width, uint32_t height, xmvec pos, xmvec target, xmvec up, float fovY = 45.0f, float farZ = 1'000.0f, float nearZ = 0.1f)
+        {
+            FovVertical = fovY;
+            AspectRatio = static_cast<float>(width / (float)height);
+            Projection = XMMatrixPerspectiveFovLH(XMConvertToRadians(FovVertical), AspectRatio, farZ, nearZ);
+            View = XMMatrixLookAtLH(pos, target, up);
+            Width = width;
+            Height = height;
+            Position = pos;
+            Up = up;
+            Forward = target;
+            FarZ = farZ;
+            NearZ = nearZ;
+            Right = XMVector3Cross(Up, Forward);
+        }
+
         uint32_t Width;
         uint32_t Height;
         float NearZ = 0.1f;
@@ -102,5 +118,11 @@ namespace LS::DX
         xmvec Forward = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
         xmvec Right;
 
+        XMFLOAT3 PositionF3()
+        {
+            XMFLOAT3 out;
+            XMStoreFloat3(&out, Position);
+            return out;
+        }
     };
 }

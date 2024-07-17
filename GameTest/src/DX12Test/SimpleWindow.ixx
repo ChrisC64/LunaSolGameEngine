@@ -1,34 +1,34 @@
 module;
-#include <filesystem>
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include <d3d12.h>
 #include <dxgi1_6.h>
 #include <stdint.h>
-#include <array>
-#include <vector>
-#include <span>
-#include <algorithm>
 #include <wrl/client.h>
 #include <d3dcompiler.h>
 #include <directx/d3dx12.h>
-#include <thread>
-#include <optional>
-#include <stdexcept>
-#include <mutex>
-#include <ranges>
-#include <semaphore>
-#include <functional>
 #include <DirectXMath.h>
 #include <d3dx12.h>
-#include <format>
-#include <memory>
-#include <array>
-#include <cstdint>
-#include <iostream>
 
 export module DX12.SimpleWindow;
 
+import <filesystem>;
+import <array>;
+import <vector>;
+import <span>;
+import <algorithm>;
+import <thread>;
+import <optional>;
+import <stdexcept>;
+import <mutex>;
+import <ranges>;
+import <semaphore>;
+import <functional>;
+import <format>;
+import <memory>;
+import <array>;
+import <cstdint>;
+import <iostream>;
 import LSEngine;
 
 namespace gt::dx12

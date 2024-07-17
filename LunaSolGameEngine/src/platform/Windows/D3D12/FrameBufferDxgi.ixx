@@ -3,13 +3,13 @@ module;
 #include <d3d12.h>
 #include <d3dx12_root_signature.h>
 #include <wrl/client.h>
-#include <vector>
-#include <cstdint>
-#include <cassert>
-#include <exception>
-#include <format>
 
 export module D3D12Lib.FrameBufferDxgi;
+import <vector>;
+import <cstdint>;
+import <cassert>;
+import <exception>;
+import <format>;
 
 import D3D12Lib.FrameDx12;
 import Engine.EngineCodes;

@@ -313,7 +313,7 @@
 //
 //        // Depth Stencil //
 //        ComPtr<ID3D11DepthStencilView> dsView;
-//        auto dsResult = g_device.CreateDepthStencilViewForSwapchain(defaultRTView.Get(), &dsView);
+//        auto dsResult = g_device.CreateDepthStencilViewFromSwapchain(defaultRTView.Get(), &dsView);
 //        if (FAILED(dsResult))
 //            return System::CreateFailCode("Failed to crete depth stencil view");
 //

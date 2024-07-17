@@ -1,13 +1,8 @@
-#include <iostream>
-#include <fstream>
 #include <streambuf>
-#include "engine/EngineLogDefines.h"
-#include <format>
-#include <cstdint>
 #include <bitset>
-#include <string>
 #include <utility>
-#include <filesystem>
+#include "engine/EngineLogDefines.h"
+
 #ifndef _DEBUG
 #include <Windows.h>
 #include <processenv.h>
@@ -16,10 +11,16 @@
 
 import LSEngine;
 
+import <iostream>;
+import <fstream>;
+import <format>;
+import <cstdint>;
+import <string>;
+import <filesystem>;
+
 import DX11CubeApp;
 import CubeApp;
 import DX12.SimpleWindow;
-import Helper.LSCommonTypes;
 import ImGuiWindowTest;
 import DearDx11;
 
@@ -35,6 +36,8 @@ import DearDx11;
 // TODO: Start DX12 renderer
 // TODO: Start Vulkan renderer
 // TODO: Examin needed Interfaces and build them
+constexpr uint32_t SCREEN_WIDTH = 1920;
+constexpr uint32_t SCREEN_HEIGHT = 1080;
 
 LS::Ref<LS::LSApp> CreateApp(uint32_t choice)
 {
@@ -42,33 +45,27 @@ LS::Ref<LS::LSApp> CreateApp(uint32_t choice)
     {
     case 0:
     {
-        LS::Ref<LS::LSApp> app(new gt::dx11::DX11CubeApp(800, 600, L"DX11 Cube App"));
-        return app;
+        return LS::CreateApp<gt::dx11::DX11CubeApp>(SCREEN_WIDTH, SCREEN_HEIGHT, L"DX11 Cube App");
     }
     case 1:
     {
-        LS::Ref<LS::LSApp> app(new gt::dx12::DX12CubeApp(800, 600, L"DX12 Cube App"));
-        return app;
+        return LS::CreateApp<gt::dx12::DX12CubeApp>(SCREEN_WIDTH, SCREEN_HEIGHT, L"DX12 Cube App");
     }
     case 2:
     {
-        LS::Ref<LS::LSApp> app(new gt::dx12::SimpleWindow(800, 700));
-        return app;
+        return LS::CreateApp<gt::dx12::SimpleWindow>(SCREEN_WIDTH, SCREEN_HEIGHT);
     }
     case 3:
     {
-        LS::Ref<LS::LSApp> app(new gt::dx12::ImGuiSample::ImGuiSample(800, 600));
-        return app;
+        return LS::CreateApp<gt::dx12::ImGuiSample::ImGuiSample>(SCREEN_WIDTH, SCREEN_HEIGHT);
     }
     case 4:
     {
-        LS::Ref<LS::LSApp> app(new gt::dx11::ImGuiDx11(800, 600, L"DX11 ImGui App"));
-        return app;
+        return LS::CreateApp<gt::dx11::ImGuiDx11>(SCREEN_WIDTH, SCREEN_HEIGHT, L"DX11 ImGui App");
     }
     default:
     {
-        LS::Ref<LS::LSApp> app(new gt::dx11::DX11CubeApp(800, 600, L"DX11 Cube App"));
-        return app;
+        return LS::CreateApp<gt::dx11::DX11CubeApp>(SCREEN_WIDTH, SCREEN_HEIGHT, L"DX11 Cube App");
     }
     }
 }
@@ -77,15 +74,11 @@ LS::Ref<LS::LSApp> CreateApp(uint32_t choice)
 int main(int argc, char* argv[])
 {
     std::filesystem::path file = std::filesystem::current_path().string() + "log.txt";
-    /*if (!LS::Log::InitLog(file))
-    {
-        return -2;
-    }*/
     LS::Log::TraceError(L"Hello logger test!");
     LS::Log::TraceDebug(L"My second test!!");
     LS::Log::TraceWarn(L"WARNING!! Boss approaching!");
     LS::Log::Flush();
-    std::cout << "Pick an app:\n0 - DX 11 Cube\n1 - DX12 Cube\n2 - Simple DX12 Window\n3 - ImGui Sample\nChoice: ";
+    std::cout << "Pick an app:\n0 - DX 11 Cube\n1 - DX12 Cube\n2 - Simple DX12 Window\n3 - ImGui Sample\n4 - DX11 ImGui DemoChoice: ";
     std::string choice{};
     std::getline(std::cin, choice);
     auto value = std::stoi(choice);
@@ -105,7 +98,7 @@ int main(int argc, char* argv[])
 #else // I know I don't need this, but wondering if maybe I just should consider supporting this?
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
-    auto app = CreateApp(1);
+    auto app = CreateApp(4);
     auto appcode = app->Initialize(nullptr);
     if (!appcode)
     {

@@ -310,7 +310,7 @@ auto LS::Log::FileLogger::Init() noexcept -> LS::System::ErrorCode
 {
     if (!m_stream)
     {
-        return LS::System::CreateFailCode("The stream is not initialized!", LS::System::ErrorCategory::IO);
+        return LS::System::CreateFailCode("The stream is not initialized!", LS::ENGINE_CODE::IO_FAIL);
     }
     return LS::System::CreateSuccessCode();
 }
@@ -324,7 +324,7 @@ auto LS::Log::ConsoleLogger::Init() noexcept -> LS::System::ErrorCode
 {
     if (!m_stream)
     {
-        return LS::System::CreateFailCode("The stream is not initialized!", LS::System::ErrorCategory::IO);
+        return LS::System::CreateFailCode("The stream is not initialized!", LS::ENGINE_CODE::IO_FAIL);
     }
     return LS::System::CreateSuccessCode();
 }

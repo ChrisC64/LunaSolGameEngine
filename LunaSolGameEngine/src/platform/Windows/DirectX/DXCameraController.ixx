@@ -45,6 +45,11 @@ export namespace LS::DX
         {
             m_camera.Position = XMVectorMultiplyAdd(XMVectorSet(units, units, units, 0.0f), m_camera.Right, m_camera.Position);
         }
+        
+        void Rise(float units)
+        {
+            m_camera.Position = XMVectorMultiplyAdd(XMVectorSet(units, units, units, 0.0f), m_camera.Up, m_camera.Position);
+        }
 
         /**
          * @brief Moves the camera in the given vector of directions.
@@ -106,7 +111,7 @@ export namespace LS::DX
         */
         void RotateYaw(float anglesDeg)
         {
-            auto rads = LS::Math::ToRadians(anglesDeg);
+            float rads = (float)LS::Math::ToRadians(anglesDeg);
             auto rotMat = XMMatrixRotationY(rads);
             m_camera.Up = XMVector3TransformNormal(m_camera.Up, rotMat);
             m_camera.Forward = XMVector3TransformNormal(m_camera.Forward, rotMat);
@@ -120,7 +125,7 @@ export namespace LS::DX
         */
         void RotateRoll(float anglesDeg)
         {
-            auto rads = LS::Math::ToRadians(anglesDeg);
+            float rads = (float)LS::Math::ToRadians(anglesDeg);
             auto rotMat = XMMatrixRotationZ(rads);
             m_camera.Right = XMVector3TransformNormal(m_camera.Right, rotMat);
             m_camera.Up = XMVector3TransformNormal(m_camera.Up, rotMat);
@@ -133,7 +138,7 @@ export namespace LS::DX
         */
         void RotatePitch(float anglesDeg)
         {
-            auto rads = LS::Math::ToRadians(anglesDeg);
+            float rads = (float)LS::Math::ToRadians(anglesDeg);
             auto rotMat = XMMatrixRotationX(rads);
             //Right = XMVector3TransformNormal(Right, rotMat);
             m_camera.Up = XMVector3TransformNormal(m_camera.Up, rotMat);
@@ -147,7 +152,7 @@ export namespace LS::DX
         */
         void RotateAxis(LS::Vec3F axis, float anglesDeg)
         {
-            auto rads = LS::Math::ToRadians(anglesDeg);
+            float rads = (float)LS::Math::ToRadians(anglesDeg);
             auto quat = XMVectorSet(axis.x, axis.y, axis.z, 1.0f);
             auto norm = XMQuaternionNormalize(quat);
             auto rotation = XMQuaternionRotationNormal(norm, rads);

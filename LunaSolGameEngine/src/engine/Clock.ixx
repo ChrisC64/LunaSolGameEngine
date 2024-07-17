@@ -29,8 +29,8 @@ export namespace LS
     {
         using Steady = std::chrono::steady_clock;
         using TimePoint = std::chrono::steady_clock::time_point;
-        // Microseconds represented as UInt64 (1s = 1'000'000us)
-        using Duration = std::chrono::duration<uint64_t, std::ratio<1, 1'000'000>>;
+        // Microseconds represented as UInt64 (1s = 1'000'000'000us, 1ms = 1'000'000us)
+        using Duration = std::chrono::nanoseconds;
 
     public:
         Clock() = default;
@@ -90,7 +90,7 @@ export namespace LS
         {
             return m_deltaTime.count();
         }
-
+        
         /**
          * @brief The total time passed since the start of the clock as milliseconds (ms). Does not require ticking
          * @return Time passed since the epoch (clock start)
@@ -113,7 +113,7 @@ export namespace LS
          * @brief Returns the time between ticks as your desired format
          * @tparam Type The data type to return as (float, uint)
          * @tparam Ratio 
-         * @return 
+         * @return DeltaTime time as the requested type and duration
          */
         template<class Type, class Ratio> requires is_allowed_time_type<Type>
         constexpr Type DeltaTimeAs() const

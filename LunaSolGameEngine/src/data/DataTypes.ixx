@@ -18,7 +18,23 @@ export namespace LS
         POLYGON
     };
 
-    struct LSMesh
+    /***
+     * @enum RENDER_PIPELINE_STAGE
+     * @brief The description of what pipeline stage this buffer object will be used for in the graphics pipeline.
+     */
+    enum class RENDER_PIPELINE_STAGE : uint16_t
+    {
+        UNDEFINED = 0,
+        VERTEX, // @brief Buffer can be used for vertex pipeline
+        INDEX, // @brief Buffer can be used for index pipeline
+        HULL, // @brief Buffer is used for Hull-shader pipeline
+        TESSELATOR, // @brief Buffer is used for Tesselator pipeline
+        GEOMETRY, // @brief Buffer is used for Geometry pipeline
+        CONSTANT, // @brief Buffer is constant buffer data used by shader objects(not a pipeline stage)
+        SHADER_RESOURCE // @brief Buffer is a resource (texture or other type) that is used for shaders (not a constant buffer data)
+    };
+
+    struct MeshData
     {
         std::string Name;
         uint32_t NumUvComponents;

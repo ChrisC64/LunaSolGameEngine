@@ -79,12 +79,13 @@ export namespace LS
          * @brief Fills the window with the backgroudn color
         */
         virtual void ClearDisplay() noexcept = 0;
+        
         /**
           * @brief Display the window to the user
          */
         virtual void Show() noexcept = 0;
 
-        /*******
+        /**
          * @brief Closes the window, destroying this and freeing resources it may have had.
         */
         virtual void Close() noexcept = 0;
@@ -93,6 +94,18 @@ export namespace LS
           * @brief Continuously poll for events in this window's event queue.
         */
         virtual void PollEvent() noexcept = 0;
+
+        /**
+         * @brief Set the cursor to be hidden or visible to the user.
+         * @param isVisible TRUE to show the cursor, FALSE to hide the cursor
+         */
+        virtual void SetCursorVisible(bool isVisible) noexcept = 0;
+
+        /**
+         * @brief Set the cursor to be clamped to the window boundaries or not
+         * @param isClamped TRUE to bind within the Window's viewport, FALSE to unbind
+         */
+        virtual void SetCursorClamp(bool isClamped) noexcept = 0;
 
         /**
           * @brief Obtain the window's handle.
@@ -156,6 +169,7 @@ export namespace LS
         //@brief The color to fill the window background
         Colors::RGBA m_bgColor{ 1.0f, 1.0f, 1.0f, 1.0f };
         MousePos m_mousePos{ 0, 0 };
+        
         LSWindowBase(uint32_t width, uint32_t height, std::wstring_view  title) : m_width(width),
             m_height(height),
             m_title(title),

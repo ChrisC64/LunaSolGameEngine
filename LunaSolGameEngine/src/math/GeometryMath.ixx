@@ -4,51 +4,31 @@ import LSDataLib;
 
 export namespace LS::Math
 {
-    constexpr float LS_PI = 3.141592654f;
-    constexpr float LS_PI2 = 6.283185307f;
-    constexpr float LS_1DIVPI = 0.318309886f;
-    constexpr float LS_1DIV2PI = 0.159154943f;
-    constexpr float LS_PIDIV2 = 1.570796327f;
-    constexpr float LS_PIDIV4 = 0.785398163f;
-    constexpr float LS_RADIANS = LS_PI / 180.0f;
-    constexpr float LS_DEGREES = 180 / LS_PI;
+    constexpr double LS_PI = 3.141592654f;
+    constexpr double LS_PI2 = 6.283185307f;
+    constexpr double LS_1DIVPI = 0.318309886f;
+    constexpr double LS_1DIV2PI = 0.159154943f;
+    constexpr double LS_PIDIV2 = 1.570796327f;
+    constexpr double LS_PIDIV4 = 0.785398163f;
+    constexpr double LS_RADIANS = LS_PI / 180.0f;
+    constexpr double LS_DEGREES = 180 / LS_PI;
 
-    consteval float ConstEvalToDegrees(float radians)
+    consteval double ConstEvalToDegrees(float radians)
     {
         return radians * LS_DEGREES;
     }
-    
-    consteval float ConstEvalToRadians(float degrees)
+
+    consteval double ConstEvalToRadians(float degrees)
     {
         return degrees * LS_RADIANS;
     }
-    
-    consteval double ConstEvalToDegreesDouble(double radians)
+
+    constexpr double ToDegrees(double radians)
     {
         return radians * LS_DEGREES;
     }
-    
-    consteval double ConstEvalToRadiansDouble(double degrees)
-    {
-        return degrees * LS_RADIANS;
-    }
-    
-    constexpr float ToDegrees(float radians)
-    {
-        return radians * LS_DEGREES;
-    }
-    
-    constexpr float ToRadians(float degrees)
-    {
-        return degrees * LS_RADIANS;
-    }
-    
-    constexpr double ToDegreesDouble(double radians)
-    {
-        return radians * LS_DEGREES;
-    }
-    
-    constexpr double ToRadiansDouble(double degrees)
+
+    constexpr double ToRadians(double degrees)
     {
         return degrees * LS_RADIANS;
     }
