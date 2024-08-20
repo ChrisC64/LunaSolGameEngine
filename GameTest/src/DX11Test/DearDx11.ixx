@@ -194,7 +194,7 @@ void gt::dx11::ImGuiDx11::Run()
     {
         m_clock.Tick();
         currentTimeSecs = m_clock.TotalTimeAs<double, std::ratio<1, 1>>();
-        deltaTimeMs = m_clock.DeltaTimeAs<double, std::ratio<1, 1'000>>();
+        deltaTimeMs = m_clock.DeltaTimeAs<double, std::milli>();
         elapsedDeltaMs += deltaTimeMs;
         m_Window->PollEvent();
         auto mousePos = m_Window->GetMousePos();

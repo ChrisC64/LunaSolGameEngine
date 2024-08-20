@@ -306,7 +306,7 @@ bool gt::dx12::ImGuiSample::ImGuiSample::CreateDeviceD3D()
 
     flag = (UINT)DXGI_CREATE_FACTORY_DEBUG;
 #endif
-    auto factory = LS::Win32::CreateFactory(flag).value();
+    auto factory = LS::Win32::CreateDXGIFactory2(flag).value();
 
     LS::Utils::ThrowIfFailed(factory.As(&m_pFactory), "Failed to create DXGI Factory");
 

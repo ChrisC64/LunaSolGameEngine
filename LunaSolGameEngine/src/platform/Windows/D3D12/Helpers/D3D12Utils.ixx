@@ -2,6 +2,7 @@ module;
 #include <string>
 #include <span>
 #include <d3d12.h>
+#include <d3dx12\d3dx12.h>
 #include <directxtk12\BufferHelpers.h>
 #include <directxtk12\DirectXHelpers.h>
 #include <wrl\client.h>
@@ -9,10 +10,17 @@ module;
 export module D3D12Lib.Utils;
 
 import Engine.EngineCodes;
+import Engine.Defines;
 
 namespace WRL = Microsoft::WRL;
 
 using namespace LS::System;
+
+namespace LS::Platform::Dx12
+{
+    Microsoft::WRL::ComPtr<ID3D12Device> g_pDevice;
+    Ref<CD3DX12FeatureSupport> g_features;
+}
 
 export namespace LS::Platform::Dx12
 {
@@ -33,4 +41,22 @@ export namespace LS::Platform::Dx12
         default: return std::format("Unknown HRESULT code: {}", hr).c_str();
         }
     }
+
+    [[nodiscard]] bool InitFeaturesSupport(Microsoft::WRL::ComPtr<ID3D12Device> device)
+    {
+        g_pDevice = device;
+        g_features = std::make_unique<CD3DX12FeatureSupport>();
+        g_features->Init(g_pDevice.Get());
+        return g_pDevice != nullptr;
+    }
+
+    [[nodiscard]] auto CheckMaxFeatureLevel() -> D3D_FEATURE_LEVEL
+    {
+        assert(g_pDevice && "The Util's Device is null. Did you forget to call InitFeaturesUtil()?");
+        assert(g_features && "The features object was not initialized. Call InitFeaturesUtil() first");
+
+        return g_features->MaxSupportedFeatureLevel();
+    }
+
+
 }

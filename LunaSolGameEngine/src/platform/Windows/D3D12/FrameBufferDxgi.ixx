@@ -23,10 +23,28 @@ export namespace LS::Platform::Dx12
     class FrameBufferDxgi
     {
     public:
-        FrameBufferDxgi(uint64_t size) noexcept : m_frames(size),
-            m_pFactory(nullptr),
-            FRAME_LATENCY(size)
-        {}
+        FrameBufferDxgi(uint32_t size, uint32_t width, uint32_t height,
+            DXGI_FORMAT format,
+            DXGI_SWAP_EFFECT swapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD,
+            DXGI_SCALING scaling = DXGI_SCALING_NONE, DXGI_ALPHA_MODE alphaMode = DXGI_ALPHA_MODE_UNSPECIFIED, 
+            uint32_t flags = 0,
+            DXGI_USAGE bufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT,
+            uint32_t sampleCount = 1, uint32_t sampleQuality = 0, 
+            bool isStereo = false) noexcept :
+            m_frames(size)
+        {
+            m_swapChainDesc = DXGI_SWAP_CHAIN_DESC1 {.Width = width,
+                .Height = height,
+                .Format = format,
+                .Stereo = isStereo,
+                .SampleDesc{.Count = sampleCount, .Quality = sampleQuality},
+                .BufferUsage = bufferUsage,
+                .BufferCount = size,
+                .Scaling = scaling,
+                .SwapEffect = swapEffect,
+                .AlphaMode = alphaMode,
+                .Flags = flags };
+        }
 
         FrameBufferDxgi(const FrameBufferDxgi&) noexcept = default;
         FrameBufferDxgi(FrameBufferDxgi&&) noexcept = default;
@@ -34,27 +52,22 @@ export namespace LS::Platform::Dx12
         FrameBufferDxgi& operator=(const FrameBufferDxgi&) noexcept = default;
         FrameBufferDxgi& operator=(FrameBufferDxgi&&) noexcept = default;
 
-        [[nodiscard]] auto InitializeFrameBuffer(Microsoft::WRL::ComPtr<IDXGIFactory2> pFactory, ID3D12CommandQueue* commandQueue, 
-            HWND hwnd, const DXGI_SWAP_CHAIN_DESC1& swapDesc,
+        [[nodiscard]] auto Initialize(Microsoft::WRL::ComPtr<IDXGIFactory2> pFactory, ID3D12CommandQueue* commandQueue, 
+            HWND hwnd,
             D3D12_CPU_DESCRIPTOR_HANDLE rtvHeapStart, ID3D12Device* device,
             DXGI_SWAP_CHAIN_FULLSCREEN_DESC* fullscreenDesc = nullptr, IDXGIOutput* dxgiOutput = nullptr) -> LS::System::ErrorCode
         {
             assert(pFactory && "Factory cannot be null");
-            m_pFactory = pFactory;
+            pFactory;
             Microsoft::WRL::ComPtr<IDXGISwapChain1> temp;
-            auto hr = m_pFactory->CreateSwapChainForHwnd(commandQueue, hwnd, &swapDesc, fullscreenDesc, dxgiOutput, &temp);
+            auto hr = pFactory->CreateSwapChainForHwnd(commandQueue, hwnd, &m_swapChainDesc, fullscreenDesc, dxgiOutput, &temp);
             if (FAILED(hr))
             {
                 return LS::System::CreateFailCode("Failed to create swap chain for hwnd");
             }
-            assert(m_pFactory && "Failed to create swapchain");
+            assert(temp && "Failed to create swapchain");
             temp.As(&m_pSwapChain);
-            m_pSwapChain->SetMaximumFrameLatency(static_cast<UINT>(FRAME_LATENCY));
-            m_format = swapDesc.Format;
-            // If we use DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT it needs it again
-            // in our resize buffer call, so I'm saving the flags provided to give them
-            // during that call
-            m_swapchainFlags = swapDesc.Flags;
+            m_pSwapChain->SetMaximumFrameLatency(static_cast<UINT>(m_swapChainDesc.BufferCount));
             BuildFrames(rtvHeapStart, device);
             return LS::System::CreateSuccessCode();
         }
@@ -91,7 +104,7 @@ export namespace LS::Platform::Dx12
         {
             if (pos >= m_frames.size())
             {
-                throw std::out_of_range(std::format("Out of bounds Access! Position {} for Frame Count of {}", pos, FRAME_LATENCY));
+                throw std::out_of_range(std::format("Out of bounds Access! Position {} for Frame Count of {}", pos, m_swapChainDesc.BufferCount));
             }
 
             return &m_frames.at(pos);
@@ -154,13 +167,13 @@ export namespace LS::Platform::Dx12
             CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(rtvHeapStart);
             const auto size = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
-            for (auto i = 0u; i < FRAME_LATENCY; ++i)
+            for (auto i = 0u; i < m_swapChainDesc.BufferCount; ++i)
             {
                 m_frames[i].InitFrame(m_pSwapChain.Get(), i);
                 device->CreateRenderTargetView(m_frames[i].GetFrame().Get(), nullptr, rtvHandle);
                 m_frames[i].SetDescriptorHandle(rtvHandle);
                 rtvHandle.Offset(1, size);
-                m_frames[i].SetDxgiFormat(m_format);
+                m_frames[i].SetDxgiFormat(m_swapChainDesc.Format);
             }
         }
 
@@ -172,7 +185,7 @@ export namespace LS::Platform::Dx12
             }
 
             m_frames.clear();
-            m_frames.resize(FRAME_LATENCY);
+            m_frames.resize(m_swapChainDesc.BufferCount);
         }
 
         [[nodiscard]] auto ResizeFrames(uint32_t width, uint32_t height,
@@ -180,7 +193,7 @@ export namespace LS::Platform::Dx12
         {
             CleanupFrames();
 
-            auto hr = m_pSwapChain->ResizeBuffers(0, width, height, DXGI_FORMAT_UNKNOWN, m_swapchainFlags);
+            auto hr = m_pSwapChain->ResizeBuffers(0, width, height, DXGI_FORMAT_UNKNOWN, m_swapChainDesc.Flags);
             if (FAILED(hr))
             {
                 return LS::System::CreateFailCode(LS::Win32::HrToString(hr));
@@ -223,13 +236,11 @@ export namespace LS::Platform::Dx12
         }
 
     private:
+        DXGI_SWAP_CHAIN_DESC1                    m_swapChainDesc;
+        uint32_t                                 m_syncInterval = 1;
+        mutable uint64_t                         m_frameIndex = 1;
         WRL::ComPtr<IDXGISwapChain3>             m_pSwapChain;
         WRL::ComPtr<IDXGIFactory2>               m_pFactory;
-        const uint64_t                           FRAME_LATENCY = 0;
-        mutable uint64_t                         m_frameIndex = 1;
-        uint32_t                                 m_syncInterval = 1;
         std::vector<FrameDx12>                   m_frames;
-        DXGI_FORMAT                              m_format = DXGI_FORMAT_R8G8B8A8_UNORM;
-        UINT                                     m_swapchainFlags;
     };
 }

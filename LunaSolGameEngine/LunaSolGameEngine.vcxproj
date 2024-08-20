@@ -151,6 +151,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>LSEFramework.h</PrecompiledHeaderFile>
       <ShowIncludes>false</ShowIncludes>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -175,6 +176,7 @@ xcopy /f /d /y $(IntDir) $(SolutionDir)build\$(Platform)\$(Configuration)\bin\</
       <AdditionalIncludeDirectories>$(ProjectDir)inc</AdditionalIncludeDirectories>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>LSEFramework.h</PrecompiledHeaderFile>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -233,6 +235,7 @@ xcopy /f /d /y $(IntDir) $(SolutionDir)build\$(Platform)\$(Configuration)\bin\</
     <ClCompile Include="src\platform\Windows\D3D12\Helpers\D3D12Utils.ixx" />
     <ClCompile Include="src\platform\Windows\D3D12\Helpers\D3D12UtilsCommandList.ixx" />
     <ClCompile Include="src\platform\Windows\D3D12\Helpers\D3D12UtilsDescriptors.ixx" />
+    <ClCompile Include="src\platform\Windows\D3D12\RendererDX12.ixx" />
     <ClCompile Include="src\platform\Windows\DirectX\DirectXCommon.ixx" />
     <ClCompile Include="src\platform\Windows\DirectX\DXCamera.ixx" />
     <ClCompile Include="src\platform\Windows\DirectX\DXCameraController.ixx" />

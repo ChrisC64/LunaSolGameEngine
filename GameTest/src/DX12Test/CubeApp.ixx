@@ -129,14 +129,15 @@ namespace gt::dx12
     export class DX12CubeApp : public LS::LSApp
     {
     public:
-        DX12CubeApp(uint32_t width, uint32_t height, std::wstring_view title) : m_frameBuffer(FRAME_COUNT)
+        DX12CubeApp(uint32_t width, uint32_t height, std::wstring_view title) : 
+            m_frameBuffer(FRAME_COUNT, m_Window->GetWidth(), m_Window->GetHeight(), DXGI_FORMAT_R8G8B8A8_UNORM)
         {
             m_Window = LS::BuildWindow(width, height, title);
             m_settings.Width = width;
             m_settings.Height = height;
             m_settings.FeatureLevel = D3D_FEATURE_LEVEL_12_0;
             m_settings.Hwnd = (HWND)m_Window->GetHandleToWindow();
-            m_device = std::make_unique<LS::Platform::Dx12::DeviceD3D12>(m_settings);
+            m_device = std::make_unique<LS::Platform::Dx12::DeviceD3D12>();
         }
         ~DX12CubeApp() = default;
 
@@ -391,7 +392,7 @@ bool gt::dx12::DX12CubeApp::CreateDevice()
     flags |= DXGI_CREATE_FACTORY_DEBUG;
 #endif
 
-    auto factory = LS::Win32::CreateFactory(flags).value();
+    auto factory = LS::Win32::CreateDXGIFactory2(flags).value();
     auto hr = factory.As(&m_pFactory);
     LS::Utils::ThrowIfFailed(hr, "Failed to obtain IDXGIFactory4 interface");
     // Find the best graphics card (best performing one, with single GPU systems, this should be the default)
@@ -403,8 +404,9 @@ bool gt::dx12::DX12CubeApp::CreateDevice()
     }
 
     WRL::ComPtr<IDXGIAdapter1> adapter = adapterOptional.value();
-
-    if (!m_device->CreateDevice(adapter))
+    WRL::ComPtr<IDXGIAdapter> ad1;
+    adapter.As(&ad1);
+    if (!m_device->CreateDevice(ad1))
     {
         //std::cout << "Failed to create the DX12 Device class.\n";
         return false;
@@ -658,7 +660,7 @@ void gt::dx12::DX12CubeApp::CreateSwapchain()
     HWND hwnd = reinterpret_cast<HWND>(window->GetHandleToWindow());
 
     // Setup swap chain
-    DXGI_SWAP_CHAIN_DESC1 swapchainDesc1{};
+    /*DXGI_SWAP_CHAIN_DESC1 swapchainDesc1{};
     swapchainDesc1.BufferCount = FRAME_COUNT;
     swapchainDesc1.Width = window->GetWidth();
     swapchainDesc1.Height = window->GetHeight();
@@ -670,9 +672,9 @@ void gt::dx12::DX12CubeApp::CreateSwapchain()
     swapchainDesc1.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
     swapchainDesc1.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
     swapchainDesc1.Scaling = DXGI_SCALING_STRETCH;
-    swapchainDesc1.Stereo = FALSE;
+    swapchainDesc1.Stereo = FALSE;*/
 
-    auto result = m_frameBuffer.InitializeFrameBuffer(m_pFactory, m_directQueue.GetCommandQueue().Get(), hwnd, swapchainDesc1, m_heapRtv.GetHeapStartCpu(), m_device->GetDevice().Get());
+    auto result = m_frameBuffer.Initialize(m_pFactory, m_directQueue.GetCommandQueue().Get(), hwnd, m_heapRtv.GetHeapStartCpu(), m_device->GetDevice().Get());
     if (!result)
     {
         LS::Utils::ThrowIfFailed(E_FAIL, "Failed to initialize the frame buffer");

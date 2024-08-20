@@ -22,7 +22,7 @@ export namespace LS::Platform::Dx12
     {
     public:
         CommandQueueDx12(D3D12_COMMAND_LIST_TYPE type);
-        CommandQueueDx12(const WRL::ComPtr<ID3D12Device4>& pDevice, D3D12_COMMAND_LIST_TYPE type, uint32_t queueSize = 0);
+        CommandQueueDx12(ID3D12Device* pDevice, D3D12_COMMAND_LIST_TYPE type, uint32_t queueSize = 0);
         ~CommandQueueDx12();
 
         CommandQueueDx12(const CommandQueueDx12&) = delete;
@@ -31,7 +31,7 @@ export namespace LS::Platform::Dx12
         CommandQueueDx12(CommandQueueDx12&& other) = default;
         CommandQueueDx12& operator=(CommandQueueDx12&& other) = default;
 
-        [[nodiscard]] auto Initialize(ID3D12Device4* pDevice) noexcept -> LS::System::ErrorCode;
+        [[nodiscard]] auto Initialize(ID3D12Device* pDevice) noexcept -> LS::System::ErrorCode;
         [[nodiscard]] auto ExecuteCommandList() -> uint64_t;
         void WaitForGpu(uint64_t fenceValue, std::chrono::milliseconds duration = std::chrono::milliseconds::max());
         void WaitForGpuEx(uint64_t fenceValue, HANDLE* handles, DWORD count, std::chrono::milliseconds duration = std::chrono::milliseconds::max());
@@ -59,7 +59,7 @@ export namespace LS::Platform::Dx12
         using CommandQueue = std::vector<CommandListDx12*>;
         
         CommandQueue                            m_queue;
-        WRL::ComPtr<ID3D12Device4>              m_pDevice;
+        WRL::ComPtr<ID3D12Device>               m_pDevice;
         WRL::ComPtr<ID3D12CommandQueue>         m_pCommandQueue;
         WRL::ComPtr<ID3D12Fence>                m_pFence;
 
@@ -88,23 +88,12 @@ m_fenceValue(0)
 
 }
 
-CommandQueueDx12::CommandQueueDx12(const WRL::ComPtr<ID3D12Device4>& pDevice, D3D12_COMMAND_LIST_TYPE type, uint32_t queueSize /*= 100*/) : m_pDevice(pDevice),
+CommandQueueDx12::CommandQueueDx12(ID3D12Device* pDevice, D3D12_COMMAND_LIST_TYPE type, uint32_t queueSize /*= 0*/) : m_pDevice(pDevice),
 m_commListType(type),
 m_fenceValue(0)
 {
-    D3D12_COMMAND_QUEUE_DESC desc = {};
-    desc.Type = type;
-    desc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
-    desc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
-    desc.NodeMask = 0;
-
-    auto hr = m_pDevice->CreateCommandQueue(&desc, IID_PPV_ARGS(&m_pCommandQueue));
-    LS::Utils::ThrowIfFailed(hr, "Failed to create command queue in CommandQueueDx12 ctor");
-
-    hr = m_pDevice->CreateFence(m_fenceValue, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_pFence));
-    LS::Utils::ThrowIfFailed(hr, "Failed to create fence in CommandQueueDx12 ctor");
-
-    m_fenceEvent = ::CreateEvent(NULL, FALSE, FALSE, NULL);
+    const auto ec = Initialize(pDevice);
+    assert(ec && ec.Message().data());
     assert(m_fenceEvent && "Failed to create fence event handle.");
 }
 
@@ -113,7 +102,7 @@ CommandQueueDx12::~CommandQueueDx12()
     Shutdown();
 }
 
-auto CommandQueueDx12::Initialize(ID3D12Device4* pDevice) noexcept -> LS::System::ErrorCode
+auto CommandQueueDx12::Initialize(ID3D12Device* pDevice) noexcept -> LS::System::ErrorCode
 {
     D3D12_COMMAND_QUEUE_DESC desc = {};
     desc.Type = m_commListType;

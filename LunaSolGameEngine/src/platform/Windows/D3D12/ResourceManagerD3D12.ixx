@@ -52,7 +52,6 @@ export namespace LS::Platform::Dx12
         D3D12_VIEWPORT                  m_windowViewport;
         WRL::ComPtr<IDXGISwapChain4>    m_pSwapChain;
 
-
         // Device Dependent Resources
         WRL::ComPtr<ID3D12Device9>      m_pDevice;
         WRL::ComPtr<ID3D12Debug5>       m_pDebug;

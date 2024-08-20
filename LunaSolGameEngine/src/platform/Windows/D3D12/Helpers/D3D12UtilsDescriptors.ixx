@@ -11,7 +11,6 @@ import Win32.Utils;
 
 export namespace LS::Platform::Dx12
 {
-
     constexpr auto CreateDescriptorHeap(ID3D12Device* device, const D3D12_DESCRIPTOR_HEAP_DESC& descriptor, ID3D12DescriptorHeap* heap) noexcept -> HRESULT
     {
         assert(device);

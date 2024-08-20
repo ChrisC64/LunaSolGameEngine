@@ -3,12 +3,12 @@ module;
 #include <Windows.h>
 #include <d3d12.h>
 #include <dxgi1_6.h>
-#include <stdint.h>
 #include <wrl/client.h>
 #include <d3dcompiler.h>
 #include <directx/d3dx12.h>
 #include <DirectXMath.h>
 #include <d3dx12.h>
+#include <stdint.h>
 
 export module DX12.SimpleWindow;
 
@@ -39,20 +39,27 @@ namespace gt::dx12
     export class SimpleWindow : public LS::LSApp
     {
     public:
-        SimpleWindow(uint32_t width, uint32_t height) : m_frameBuffer(NUM_OF_FRAMES)
+        SimpleWindow(uint32_t width, uint32_t height) : LSApp(width, height, L"Simple Window"),
+            m_settingsDx12(),
+            m_frameBuffer(NUM_OF_FRAMES,
+                m_Window->GetWidth(), m_Window->GetHeight(),
+                DXGI_FORMAT_R8G8B8A8_UNORM,
+                DXGI_SWAP_EFFECT_FLIP_DISCARD,
+                DXGI_SCALING_NONE,
+                DXGI_ALPHA_MODE_UNSPECIFIED,
+                DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT)
         {
-            m_Window = LS::BuildWindow(width, height, L"Simple Window");
-            m_settings.Width = width;
-            m_settings.Height = height;
-            m_settings.FeatureLevel = D3D_FEATURE_LEVEL_12_0;
-            m_settings.Hwnd = (HWND)m_Window->GetHandleToWindow();
-            m_device = std::make_unique<LS::Platform::Dx12::DeviceD3D12>(m_settings);
+            m_settingsDx12.Width = m_Window->GetWidth();
+            m_settingsDx12.Height = m_Window->GetHeight();
+            m_settingsDx12.Hwnd = (HWND)m_Window->GetHandleToWindow();
+
+            m_device = std::make_unique<LS::Platform::Dx12::DeviceD3D12>();
 
             UINT flag = 0;
 #ifdef _DEBUG
             flag = (UINT)DXGI_CREATE_FACTORY_DEBUG;
 #endif
-            auto factory = LS::Win32::CreateFactory(flag).value();
+            auto factory = LS::Win32::CreateDXGIFactory2(flag).value();
 
             LS::Utils::ThrowIfFailed(factory.As(&m_pFactory), "Failed to create DXGI Factory");
         }
@@ -68,14 +75,14 @@ namespace gt::dx12
         WRL::ComPtr<IDXGIFactory4> m_pFactory;
         WRL::ComPtr<IDXGIAdapter1> m_pAdapter;
         LS::Platform::Dx12::DescriptorHeapDx12 m_heapRtv{ D3D12_DESCRIPTOR_HEAP_TYPE_RTV, NUM_OF_FRAMES };
-        LS::Platform::Dx12::DescriptorHeapDx12 m_heapSrv{D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE };
+        LS::Platform::Dx12::DescriptorHeapDx12 m_heapSrv{ D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE };
         uint64_t m_fenceValue;
 
         // My stuff to replace above // 
         LS::Ref<LS::Platform::Dx12::DeviceD3D12> m_device;
         LS::Ref<LS::Platform::Dx12::CommandQueueDx12> m_queue;
         LS::Ref<LS::Platform::Dx12::CommandListDx12> m_commandList;
-        LS::Platform::Dx12::D3D12Settings m_settings{};
+        LS::Platform::Dx12::D3D12Settings m_settingsDx12{};
         LS::Platform::Dx12::FrameBufferDxgi m_frameBuffer;
 
         [[nodiscard]] bool LoadPipeline();
@@ -121,7 +128,7 @@ void gt::dx12::SimpleWindow::Run()
             currWidth = m_Window->GetWidth();
             currHeight = m_Window->GetHeight();
         }
-        
+
         OnRender();
         OnUpdate();
     }
@@ -131,7 +138,7 @@ void gt::dx12::SimpleWindow::Run()
 
 bool gt::dx12::SimpleWindow::LoadPipeline()
 {
-    auto adapterOptional = LS::Win32::GetHardwareAdapter(m_pFactory.Get(), true);
+    auto adapterOptional = LS::Win32::GetHardwareAdapter(m_pFactory.Get());
     if (!adapterOptional)
     {
         std::cout << "Failed to obtain adapter with hardware requirement.\n";
@@ -157,44 +164,26 @@ bool gt::dx12::SimpleWindow::LoadPipeline()
     auto type = D3D12_COMMAND_LIST_TYPE_DIRECT;
     // TODO: Create an "Initialize" state to pass the device and setup these objects
     // instead of just in the default constructor
-    m_queue = std::make_unique<LS::Platform::Dx12::CommandQueueDx12>(device4, type);
+    m_queue = std::make_unique<LS::Platform::Dx12::CommandQueueDx12>(m_device->GetDevice().Get(), type);
     m_commandList = std::make_unique<LS::Platform::Dx12::CommandListDx12>(device4.Get(), type, "main command list");
 
-    // Setup swap chain
-    const auto& window = m_Window;
-    HWND hwnd = reinterpret_cast<HWND>(window->GetHandleToWindow());
-
-    DXGI_SWAP_CHAIN_DESC1 swapchainDesc1{};
-    swapchainDesc1.BufferCount = NUM_OF_FRAMES;
-    swapchainDesc1.Width = window->GetWidth();
-    swapchainDesc1.Height = window->GetHeight();
-    swapchainDesc1.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-    swapchainDesc1.Flags = DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
-    swapchainDesc1.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    swapchainDesc1.SampleDesc.Count = 1;
-    swapchainDesc1.SampleDesc.Quality = 0;
-    swapchainDesc1.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
-    swapchainDesc1.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
-    swapchainDesc1.Scaling = DXGI_SCALING_STRETCH;
-    swapchainDesc1.Stereo = FALSE;
-
-    // Create the swap chain //
-
     // Create Descriptor Heaps for RTV/SRV // 
-
     // This is the RTV descriptor heap (render target view)
-    {
-        m_heapRtv.Initialize(device.Get());
-    }
+    m_heapRtv.Initialize(device.Get());
 
     // Constant Buffer View/Shader Resource View/Unordered Access View types (this one is just the SRV)
-    {
-        m_heapSrv.Initialize(device.Get());
-    }
+    m_heapSrv.Initialize(device.Get());
 
+    // Create the swap chain //
     // Since we are using an HWND (Win32) system, we can create the swapchain for HWND 
     {
-        auto result = m_frameBuffer.InitializeFrameBuffer(m_pFactory, m_queue->GetCommandQueue().Get(), hwnd, swapchainDesc1, m_heapRtv.GetHeapStartCpu(), m_device->GetDevice().Get());
+        // Setup swap chain
+        const auto& window = m_Window;
+        HWND hwnd = reinterpret_cast<HWND>(window->GetHandleToWindow());
+
+        auto result = m_frameBuffer.Initialize(m_pFactory,
+            m_queue->GetCommandQueue().Get(), hwnd,
+            m_heapRtv.GetHeapStartCpu(), m_device->GetDevice().Get());
         if (!result)
         {
             std::cout << result.Message();

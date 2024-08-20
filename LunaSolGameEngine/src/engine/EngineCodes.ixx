@@ -115,20 +115,28 @@ export namespace LS
 
         public:
 
-            constexpr ErrorCode(ENGINE_CODE code, std::string_view msg) noexcept 
+            constexpr ErrorCode(ENGINE_CODE code, std::string_view msg) noexcept
                 : ErrCategory(FindCategory(code)),
                 Code(code),
                 ErrorMsg(msg)
             {}
+
+            constexpr ErrorCode(std::string_view msg, ENGINE_CODE code = ENGINE_CODE::LS_ERROR) noexcept
+                : ErrCategory(FindCategory(code)),
+                Code(code),
+                ErrorMsg(msg)
+            {
+            }
 
             [[nodiscard]] ErrorCode& operator=(const ErrorCode&) noexcept = default;
             [[nodiscard]] ErrorCode& operator=(ErrorCode&&) noexcept = default;
             [[nodiscard]] ErrorCode(const ErrorCode&) noexcept = default;
             [[nodiscard]] ErrorCode(ErrorCode&&) noexcept = default;
             
+            //TODO: Maybe consider changing to just const char* and Msg instead of Message
             auto Message() const noexcept -> const std::string_view
             {
-                return ErrorMsg.data();
+                return ErrorMsg;
             }
 
             constexpr operator bool() const

@@ -28,7 +28,7 @@ export namespace LS::Platform::Dx12
             if (FAILED(hr))
             {
                 const auto msg = LS::Win32::HrToString(hr);
-                return LS::System::CreateFailCode(msg);
+                return LS::System::ErrorCode(msg);
             }
             m_descriptorSize = pDevice->GetDescriptorHandleIncrementSize(m_desc.Type);
             return LS::System::CreateSuccessCode();
