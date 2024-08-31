@@ -44,9 +44,9 @@ export namespace LS::Platform::Dx12
             return m_frame.Get();
         }
         
-        [[nodiscard]] auto GetDescriptorHandle() const noexcept -> D3D12_CPU_DESCRIPTOR_HANDLE
+        [[nodiscard]] auto GetDescriptorHandle() const noexcept -> const D3D12_CPU_DESCRIPTOR_HANDLE*
         {
-            return m_descHandle;
+            return &m_descHandle;
         }
 
         void InitFrame(IDXGISwapChain* pSwapChain, UINT pos) noexcept

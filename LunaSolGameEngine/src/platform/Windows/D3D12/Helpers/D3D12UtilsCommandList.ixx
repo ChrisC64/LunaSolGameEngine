@@ -84,7 +84,7 @@ export namespace LS::Platform::Dx12
      * @param fenceEvent The event to fire off after completion
      * @param duration How long to wait for the event before not abandoning
     */
-    inline void WaitForFenceValue(WRL::ComPtr<ID3D12Fence>& fence, uint64_t fenceValue, HANDLE fenceEvent,
+    inline void WaitForFenceValue(const WRL::ComPtr<ID3D12Fence>& fence, uint64_t fenceValue, HANDLE fenceEvent,
         std::chrono::milliseconds duration = std::chrono::milliseconds::max()) noexcept
     {
         //TODO: If UINT_MAX then we have a DEVICE_REMOVED issue, need to address that scenario
@@ -110,7 +110,7 @@ export namespace LS::Platform::Dx12
      * @param events The additional events to wait for among the fence event
      * @param duration How long to wait for the event before not abandoning
     */
-    inline void WaitForFenceValueMany(WRL::ComPtr<ID3D12Fence>& fence, uint64_t fenceValue, HANDLE fenceEvent, const std::vector<HANDLE>& events,
+    inline void WaitForFenceValueMany(const WRL::ComPtr<ID3D12Fence>& fence, uint64_t fenceValue, HANDLE fenceEvent, const std::vector<HANDLE>& events,
         std::chrono::milliseconds duration = std::chrono::milliseconds::max()) noexcept
     {
         if (fence->GetCompletedValue() < fenceValue)

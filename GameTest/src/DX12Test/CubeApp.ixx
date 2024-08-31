@@ -169,8 +169,8 @@ namespace gt::dx12
 
         // pipeline objects
         WRL::ComPtr<ID3D12Resource>                             m_texture = nullptr;
-        WRL::ComPtr<ID3D12Resource> m_cubeVb;
-        D3D12_VERTEX_BUFFER_VIEW m_cubeVbView;
+        WRL::ComPtr<ID3D12Resource>                             m_cubeVb;
+        D3D12_VERTEX_BUFFER_VIEW                                m_cubeVbView;
 
         WRL::ComPtr<ID3D12Resource> m_cubeIb;
         D3D12_INDEX_BUFFER_VIEW m_cubeIbView;
@@ -674,7 +674,7 @@ void gt::dx12::DX12CubeApp::CreateSwapchain()
     swapchainDesc1.Scaling = DXGI_SCALING_STRETCH;
     swapchainDesc1.Stereo = FALSE;*/
 
-    auto result = m_frameBuffer.Initialize(m_pFactory, m_directQueue.GetCommandQueue().Get(), hwnd, m_heapRtv.GetHeapStartCpu(), m_device->GetDevice().Get());
+    auto result = m_frameBuffer.Initialize(m_pFactory, m_directQueue.GetCommandQueue().Get(), hwnd, m_device->GetDevice().Get());
     if (!result)
     {
         LS::Utils::ThrowIfFailed(E_FAIL, "Failed to initialize the frame buffer");
@@ -721,7 +721,7 @@ void gt::dx12::DX12CubeApp::SetupState()
 {
     auto frame = m_frameBuffer.GetCurrentFrameAsPtr();
     const D3D12_CPU_DESCRIPTOR_HANDLE dsv = m_heapDsv.GetHeapStartCpu();
-    const D3D12_CPU_DESCRIPTOR_HANDLE rtv = frame->GetDescriptorHandle();
+    const D3D12_CPU_DESCRIPTOR_HANDLE rtv = *(frame->GetDescriptorHandle());
 
     m_commandList->TransitionResource(frame->GetFrame().Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
     m_commandList->SetRenderTarget(rtv, &dsv);
@@ -731,7 +731,7 @@ void gt::dx12::DX12CubeApp::SetupState()
     m_commandList->SetViewports(1, &m_viewport);
     m_commandList->SetScissorRects(1, &m_scissorRect);
 
-    m_commandList->Clear(m_clearColor, rtv);
+    m_commandList->Clear(m_clearColor);
     m_commandList->ClearDepthStencil(dsv, m_depthStencilValue.Depth, m_depthStencilValue.Stencil);
     m_commandList->SetPipelineState(m_cubePipelineState.Get());
     m_commandList->SetGraphicsRootSignature(m_cubeRootSignature.Get());
@@ -821,7 +821,7 @@ void gt::dx12::DX12CubeApp::UpdateBufferResource(WRL::ComPtr<ID3D12GraphicsComma
 bool gt::dx12::DX12CubeApp::LoadContent()
 {
     // Upload vertex buffer data //
-    m_copyCommandList->ResetCommandList();
+    m_copyCommandList->Begin();
     auto commandList = m_copyCommandList->GetCommandList();
     Microsoft::WRL::ComPtr<ID3D12Device4> device4;
     auto hr = m_device->GetDevice().As(&device4);
@@ -978,13 +978,13 @@ void gt::dx12::DX12CubeApp::DemoRun()
         m_cubeProjMat = XMMatrixPerspectiveFovLH(XMConvertToRadians(m_fov), aspectRatio, 0.1f, 100.0f);
 
         // Draw Cycle // 
-        m_commandList->ResetCommandList();
+        m_commandList->Begin();
 
         SetupState();
         Update();
         auto frame = m_frameBuffer.GetCurrentFrameAsPtr();
         m_commandList->TransitionResource(frame->GetFrame().Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
-        m_commandList->Close();
+        m_commandList->End();
         m_directQueue.QueueCommand(m_commandList.get());
         const auto fenceValue = m_directQueue.ExecuteCommandList();
         if (auto result = m_frameBuffer.Present(); !result)

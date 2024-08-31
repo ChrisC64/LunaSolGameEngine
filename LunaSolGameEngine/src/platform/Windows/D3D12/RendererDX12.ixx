@@ -11,14 +11,22 @@ module;
 
 export module D3D12Lib.RendererDX12;
 import <cstdint>;
+import <unordered_map>;
+import <stdexcept>;
 
 import Engine.LSWindow;
 import Engine.LSDevice;
 import Engine.LSCamera;
 import Engine.EngineCodes;
 import Engine.Defines;
+import Engine.Logger;
 
-import D3D12Lib;
+import D3D12Lib.CommandListDx12;
+import D3D12Lib.CommandQueueD3D12;
+import D3D12Lib.Device;
+import D3D12Lib.DescriptorHeapDx12;
+import D3D12Lib.FrameBufferDxgi;
+import D3D12Lib.FrameDx12;
 import Win32.Utils;
 import Win32.ComUtils;
 import DXGIHelper;
@@ -52,7 +60,7 @@ export namespace LS::Platform::Dx12
     class RendererDX12
     {
     public:
-        RendererDX12(uint32_t width, uint32_t height, uint32_t frameCount = 2) noexcept;
+        RendererDX12(uint32_t width, uint32_t height, uint32_t frameCount = 2, const LSWindowBase* window = nullptr) noexcept;
         ~RendererDX12() = default;
 
         RendererDX12& operator=(const RendererDX12&) = delete;
@@ -61,25 +69,43 @@ export namespace LS::Platform::Dx12
         RendererDX12(RendererDX12&&) = default;
         RendererDX12& operator=(RendererDX12&&) = default;
 
-        [[nodiscard]]
-        auto Initialize(const LSWindowBase* window) noexcept ->LS::System::ErrorCode;
-        // Clear(float* rgba) -> void
-        // BeginDraw();
+        // Interface Design -- Sorta //
+        // void ClearRenderTarget(const CommandListDx12& cl, const std::array<float, 4>& clearColor);
+        //void BeginDraw() const;
         // EndDraw();
         // LoadShader(filepath) -> LS::System::ErrorCode;
         // LoadMesh(filepath) -> LS::System::ErrorCode;
-    private:
-        //D3D12Settings             m_settings;
+
+        auto CreateCommandList(D3D12_COMMAND_LIST_TYPE type, std::string_view name) const -> Nullable<CommandListDx12>;
+        void QueueCommand(CommandListDx12* const commandlist);
+        void FlushCommands() noexcept;
+        auto Resize(uint32_t width, uint32_t height) noexcept -> LS::System::ErrorCode;
+        void WaitOnNextFrame();
+        void WaitForPrevFrame();
+        auto ExecuteCommands() noexcept -> LS::System::ErrorCode;
+
+    private: // Members //
         RendererState                           m_state = RendererState::UNINITIALIZED;
         uint64_t                                m_fenceValue = 0;
-        LS::Platform::Dx12::DescriptorHeapDx12  m_heapRtv;
-        LS::Platform::Dx12::DescriptorHeapDx12  m_heapSrv;
         FrameBufferDxgi                         m_frameBuffer;
         DeviceD3D12                             m_device;
         WRL::ComPtr<IDXGIFactory4>              m_pFactory;
         WRL::ComPtr<IDXGIAdapter1>              m_pAdapter;
-        CommandListDx12                         m_commandList;
         CommandQueueDx12                        m_queue;
+
+    private: // Functions //
+        [[nodiscard]] auto Initialize(const LSWindowBase* window) noexcept ->LS::System::ErrorCode;
+
+    public:
+        auto GetFrameBufferConst() const noexcept -> const FrameBufferDxgi&
+        {
+            return m_frameBuffer;
+        }
+
+        auto GetFrameBuffer() noexcept -> FrameBufferDxgi&
+        {
+            return m_frameBuffer;
+        }
     };
 }
 
@@ -87,7 +113,7 @@ module : private;
 
 using namespace LS::Platform::Dx12;
 
-RendererDX12::RendererDX12(uint32_t width, uint32_t height, uint32_t frameCount) noexcept : m_frameBuffer(frameCount,
+RendererDX12::RendererDX12(uint32_t width, uint32_t height, uint32_t frameCount, const LSWindowBase* window /*= nullptr*/) noexcept : m_frameBuffer(frameCount,
     width, height,
     DXGI_FORMAT_R8G8B8A8_UNORM,
     DXGI_SWAP_EFFECT_FLIP_DISCARD,
@@ -96,11 +122,14 @@ RendererDX12::RendererDX12(uint32_t width, uint32_t height, uint32_t frameCount)
     DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT),
     m_device(),
     m_pFactory(),
-    m_heapRtv{ D3D12_DESCRIPTOR_HEAP_TYPE_RTV, frameCount },
-    m_heapSrv{ D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE },
-    m_commandList(D3D12_COMMAND_LIST_TYPE_DIRECT, "main_cl"),
     m_queue(D3D12_COMMAND_LIST_TYPE_DIRECT)
 {
+    if (const auto ec = Initialize(window); !ec)
+    {
+        throw std::runtime_error(ec.Message().data());
+    }
+
+    m_state = RendererState::INITIALIZED;
 }
 
 auto RendererDX12::Initialize(const LSWindowBase* window) noexcept -> LS::System::ErrorCode
@@ -115,15 +144,13 @@ auto RendererDX12::Initialize(const LSWindowBase* window) noexcept -> LS::System
         return LS::System::ErrorCode("Failed to create DXGI Factory");
     }
 
-    HRESULT hr = factory.As(&m_pFactory);
-    hr = factory.As(&m_pFactory);
-    if (FAILED(hr))
+    if (HRESULT hr = factory.As(&m_pFactory); FAILED(hr))
     {
         const auto msg = LS::Win32::HrToString(hr);
         return LS::System::ErrorCode(msg);
     }
 
-    const auto adapterOptional = LS::Win32::GetHardwareAdapter(m_pFactory.Get());
+    auto adapterOptional = LS::Win32::GetHardwareAdapter(m_pFactory.Get());
     if (!adapterOptional)
     {
         return LS::System::ErrorCode("Failed to obtain adapter with hardware requirement.");
@@ -131,20 +158,7 @@ auto RendererDX12::Initialize(const LSWindowBase* window) noexcept -> LS::System
 
     m_pAdapter = adapterOptional.value();
 
-    auto ec = m_device.CreateDevice(m_pAdapter);
-    if (!ec)
-    {
-        return ec;
-    }
-
-    ec = m_heapRtv.Initialize(m_device.GetDevice().Get());
-    if (!ec)
-    {
-        return ec;
-    }
-
-    ec = m_heapSrv.Initialize(m_device.GetDevice().Get());
-    if (!ec)
+    if (const auto ec = m_device.CreateDevice(m_pAdapter); !ec)
     {
         return ec;
     }
@@ -157,32 +171,69 @@ auto RendererDX12::Initialize(const LSWindowBase* window) noexcept -> LS::System
         return LS::System::ErrorCode("Failed to to create ID3D12Device4 interface.");
     }
 
-    ec = m_queue.Initialize(m_device.GetDevice().Get());
-    if (!ec)
-    {
-        return ec;
-    }
-
-    ec = m_commandList.Initialize(device4.Get());
-    if (!ec)
+    if (const auto ec = m_queue.Initialize(m_device.GetDevice().Get()); !ec)
     {
         return ec;
     }
 
     HWND hwnd = reinterpret_cast<HWND>(window->GetHandleToWindow());
-    ec = m_frameBuffer.Initialize(m_pFactory,
+    if (const auto ec = m_frameBuffer.Initialize(m_pFactory,
         m_queue.GetCommandQueue().Get(),
         hwnd,
-        m_heapRtv.GetHeapStartCpu(),
-        m_device.GetDevice().Get());
-
-    if (!ec)
+        m_device.GetDevice().Get()); !ec)
     {
         return ec;
     }
+
     //TODO: Make optional or another setting, for now don't allow ALT+ENTER fullscreen swap
     m_pFactory->MakeWindowAssociation(hwnd, DXGI_MWA_NO_ALT_ENTER);
 
     m_state = RendererState::INITIALIZED;
-    return ec;
+    return LS::System::CreateSuccessCode();
+}
+
+auto RendererDX12::CreateCommandList(D3D12_COMMAND_LIST_TYPE type, std::string_view name) const -> Nullable<CommandListDx12>
+{
+    WRL::ComPtr<ID3D12Device4> device4;
+    const auto device = m_device.GetDevice();
+    const auto deviceHr = device.As(&device4);
+    if (FAILED(deviceHr))
+    {
+        LS::Log::TraceError("Failed to to create ID3D12Device4 interface.");
+        return std::nullopt;
+    }
+
+    return CommandListDx12(device4.Get(), type, name);
+}
+
+void RendererDX12::QueueCommand(CommandListDx12* const commandlist)
+{
+    m_queue.QueueCommand(commandlist);
+}
+
+void RendererDX12::FlushCommands() noexcept
+{
+    m_queue.Flush();
+}
+
+auto RendererDX12::Resize(uint32_t width, uint32_t height) noexcept -> LS::System::ErrorCode
+{
+    FlushCommands();
+    return m_frameBuffer.ResizeFrames(width, height, m_device.GetDevice().Get());
+}
+
+void RendererDX12::WaitOnNextFrame()
+{
+    m_frameBuffer.WaitOnFrameBuffer();
+}
+
+void LS::Platform::Dx12::RendererDX12::WaitForPrevFrame()
+{
+    m_queue.WaitForGpu(m_fenceValue);
+}
+
+auto LS::Platform::Dx12::RendererDX12::ExecuteCommands() noexcept -> LS::System::ErrorCode
+{
+    m_fenceValue = m_queue.ExecuteCommandList();
+    return m_frameBuffer.Present();
 }

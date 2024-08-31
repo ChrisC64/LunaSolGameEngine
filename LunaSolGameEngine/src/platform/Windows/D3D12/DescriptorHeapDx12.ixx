@@ -4,7 +4,7 @@ module;
 #include <wrl/client.h>
 #include <cstdint>
 export module D3D12Lib.DescriptorHeapDx12;
-
+import <stdexcept>;
 import Engine.EngineCodes;
 import Win32.ComUtils;
 import Win32.Utils;

@@ -40,12 +40,12 @@ export namespace LS::Platform::Dx12
         void QueueCommands(std::vector<LS::Platform::Dx12::CommandListDx12*> commands) noexcept;
         void QueueCommand(LS::Platform::Dx12::CommandListDx12* const command) noexcept;
 
-        [[nodiscard]] auto GetCommandQueue() const noexcept -> WRL::ComPtr<ID3D12CommandQueue>
+        [[nodiscard]] auto GetCommandQueue() const noexcept -> const WRL::ComPtr<ID3D12CommandQueue>&
         {
             return m_pCommandQueue;
         }
         
-        [[nodiscard]] auto GetFence() const noexcept -> WRL::ComPtr<ID3D12Fence>
+        [[nodiscard]] auto GetFence() const noexcept -> const WRL::ComPtr<ID3D12Fence>&
         {
             return m_pFence;
         }
