@@ -56,6 +56,7 @@ namespace gt::dx12
 
         LS::Platform::Dx12::RendererDX12 m_renderer;
         LS::Platform::Dx12::CommandListDx12 m_commandList;
+        LS::Platform::Dx12::CommandListDx12 m_cl2;
 
         [[nodiscard]] bool LoadPipeline();
         void LoadAssets();
@@ -73,6 +74,7 @@ auto gt::dx12::SimpleWindow::Initialize(LS::SharedRef<LS::LSCommandArgs> args) -
 {
     auto type = D3D12_COMMAND_LIST_TYPE_DIRECT;
     m_commandList = m_renderer.CreateCommandList(type, "main_cl").value();
+    m_cl2 = m_renderer.CreateCommandList(type, "cl2").value();
 
     LoadAssets();
     return LS::System::CreateSuccessCode();
@@ -121,18 +123,27 @@ void gt::dx12::SimpleWindow::LoadAssets()
 
 void gt::dx12::SimpleWindow::PopulateCommandList()
 {
-    const LS::Platform::Dx12::FrameDx12& frame = m_renderer.GetFrameBuffer().GetCurrentFrame();
-    m_commandList.BeginFrame(frame);
+    const LS::Platform::Dx12::FrameBufferDxgi& framebuffer = m_renderer.GetFrameBuffer();
+    //const LS::Platform::Dx12::FrameDx12& frame = m_renderer.GetFrameBuffer().GetCurrentFrame();
+    //TODO: Memory leak happens when using this command (better investigate why)
+    m_commandList.BeginFrame(framebuffer);
+    //m_commandList.BeginFrame(frame);
     m_commandList.Clear({ 0.0f, 0.12f, 0.34f, 1.0f });
     m_commandList.EndFrame();
     m_renderer.QueueCommand(&m_commandList);
+
+    //m_cl2.BeginFrame(framebuffer);
+    //m_cl2.BeginFrame(frame);
+    //m_cl2.Clear({ 0.0, 1.f, 0.0f, 1.0f });
+    //m_cl2.EndFrame();
+    //m_renderer.QueueCommand(&m_cl2);
 }
 
 void gt::dx12::SimpleWindow::OnRender()
 {
     PopulateCommandList();
-    m_renderer.ExecuteCommands();
-    m_renderer.WaitForPrevFrame();
+    const auto fence = m_renderer.ExecuteCommands();
+    m_renderer.WaitForCommands(fence);
 }
 
 void gt::dx12::SimpleWindow::OnDestroy()

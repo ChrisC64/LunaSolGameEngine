@@ -98,7 +98,7 @@ int main(int argc, char* argv[])
 #else // I know I don't need this, but wondering if maybe I just should consider supporting this?
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
-    auto app = CreateApp(4);
+    auto app = CreateApp(2);
     auto appcode = app->Initialize(nullptr);
     if (!appcode)
     {

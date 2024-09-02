@@ -21,6 +21,64 @@ namespace WRL = Microsoft::WRL;
 
 export namespace LS::Platform::Dx12
 {
+    class FrameContext
+    {
+        std::vector<uint64_t> m_fences;
+        std::vector<WRL::ComPtr<ID3D12CommandAllocator>> m_allocs;
+
+    public:
+        constexpr explicit FrameContext(size_t size)
+        {
+            m_fences.reserve(size);
+            m_allocs.reserve(size);
+        }
+        ~FrameContext() = default;
+
+        FrameContext(const FrameContext&) noexcept = delete;
+        FrameContext(FrameContext&&) noexcept = default;
+
+        FrameContext& operator=(const FrameContext&) noexcept = delete;
+        FrameContext& operator=(FrameContext&&) noexcept = default;
+
+
+        void Resize(size_t size)
+        {
+            m_fences.resize(size);
+            m_allocs.resize(size);
+        }
+
+        constexpr auto GetFence(size_t index) const -> uint64_t
+        {
+            return m_fences.at(index);
+        }
+        
+        constexpr auto GetAllocator(size_t index) const -> const WRL::ComPtr<ID3D12CommandAllocator>&
+        {
+            return m_allocs.at(index);
+        }
+
+        constexpr void SetFenceValue(size_t index, uint64_t fenceValue)
+        {
+            m_fences.emplace(std::begin(m_fences) + index, fenceValue);
+        }
+
+        void SetAllocator(size_t index, WRL::ComPtr<ID3D12CommandAllocator>& alloc)
+        {
+            m_allocs.emplace(std::begin(m_allocs) + index, alloc);
+        }
+
+        constexpr void IncrementFence(size_t index)
+        {
+            m_fences.at(index)++;
+        }
+
+        constexpr auto GetSize() const noexcept -> size_t
+        {
+            assert(m_fences.size() == m_allocs.size() && "The sizes for allocators and fences do not match for this Frame Context");
+            return m_fences.size();
+        }
+    };
+
     class FrameBufferDxgi
     {
     public:
@@ -47,6 +105,7 @@ export namespace LS::Platform::Dx12
                 .AlphaMode = alphaMode,
                 .Flags = flags };
         }
+        ~FrameBufferDxgi();
 
         FrameBufferDxgi(const FrameBufferDxgi&) noexcept = default;
         FrameBufferDxgi(FrameBufferDxgi&&) noexcept = default;
@@ -58,14 +117,14 @@ export namespace LS::Platform::Dx12
             HWND hwnd,ID3D12Device* device,
             DXGI_SWAP_CHAIN_FULLSCREEN_DESC* fullscreenDesc = nullptr, 
             IDXGIOutput* dxgiOutput = nullptr) -> LS::System::ErrorCode;
-        [[nodiscard]] auto GetCurrentFrameAsRef() const noexcept -> const FrameDx12&;
-        [[nodiscard]] auto GetCurrentFrameAsPtr() const noexcept -> const FrameDx12*;
+
         [[nodiscard]] auto GetCurrentFrame() const noexcept -> const FrameDx12&;
         [[nodiscard]] auto GetFrameAt(uint32_t pos) const -> const FrameDx12*;
         [[nodiscard]] auto GetCurrentIndex() const -> uint64_t;
         [[nodiscard]] auto GetTotalFrames() const -> uint64_t;
-        [[nodiscard]] auto GetFrameLatencyWaitable() const -> HANDLE;
-        [[nodiscard]] auto Present() const -> LS::System::ErrorCode;
+        [[nodiscard]] auto GetFrameLatencyCount() const noexcept -> size_t;
+        [[nodiscard]] auto Present() const -> HRESULT;
+        
         void EnableVsync() noexcept;
         void DisableVsync() noexcept;
         [[nodiscard]] auto ResizeFrames(uint32_t width, uint32_t height,
@@ -81,6 +140,7 @@ export namespace LS::Platform::Dx12
         WRL::ComPtr<IDXGIFactory2>               m_pFactory;
         std::vector<FrameDx12>                   m_frames;
         DescriptorHeapDx12                       m_heapRtv;
+        HANDLE                                   m_handle;
 
         void BuildFrames(D3D12_CPU_DESCRIPTOR_HANDLE rtvHeapStart, ID3D12Device* device) noexcept;
 
@@ -90,7 +150,12 @@ export namespace LS::Platform::Dx12
 module : private;
 using namespace LS::Platform::Dx12;
 
-[[nodiscard]] auto FrameBufferDxgi::Initialize(Microsoft::WRL::ComPtr<IDXGIFactory2> pFactory, ID3D12CommandQueue* commandQueue,
+LS::Platform::Dx12::FrameBufferDxgi::~FrameBufferDxgi()
+{
+    CloseHandle(m_handle);
+}
+
+auto FrameBufferDxgi::Initialize(Microsoft::WRL::ComPtr<IDXGIFactory2> pFactory, ID3D12CommandQueue* commandQueue,
     HWND hwnd,
     ID3D12Device* device,
     DXGI_SWAP_CHAIN_FULLSCREEN_DESC* fullscreenDesc /*= nullptr*/, IDXGIOutput* dxgiOutput /*= nullptr*/) -> LS::System::ErrorCode
@@ -112,33 +177,11 @@ using namespace LS::Platform::Dx12;
     }
 
     BuildFrames(m_heapRtv.GetHeapStartCpu(), device);
+    m_handle = m_pSwapChain->GetFrameLatencyWaitableObject();
     return LS::System::CreateSuccessCode();
 }
-// When we resize the frame buffer, these would be obsolete, right? I perhaps
-// should consider how these are shared. A pointer would be nullified, but a reference?
-// That would cause UB if the reference held on by another is no longer existing. 
-// Maybe a pointer to the frame should be used, easier and clearer to state "This could
-// be null at some point, check it..." though a weak_ptr also implies and enforces that
-// so maybe I just use those with shared_ptr initialized in the array, but that 
-// leaves me with three allocated pointers in some memory land, and does it make sense? 
-/**
- * @brief Get the frame at index, if out of range, will throw exception
- * @param pos index starts at 0 to n - 1 frames given to frame buffer
- * @return @link LS::Platform::Dx12::FrameDx12
-*/
-[[nodiscard]] auto FrameBufferDxgi::GetCurrentFrameAsRef() const noexcept -> const FrameDx12&
-{
-    const auto pos = GetCurrentIndex();
-    return m_frames.at(pos);
-}
 
-[[nodiscard]] auto FrameBufferDxgi::GetCurrentFrameAsPtr() const noexcept -> const FrameDx12*
-{
-    const auto pos = GetCurrentIndex();
-    return &m_frames.at(pos);
-}
-
-[[nodiscard]] auto FrameBufferDxgi::GetCurrentFrame() const noexcept -> const FrameDx12&
+auto FrameBufferDxgi::GetCurrentFrame() const noexcept -> const FrameDx12&
 {
     const auto pos = GetCurrentIndex();
     return m_frames.at(pos);
@@ -149,7 +192,7 @@ using namespace LS::Platform::Dx12;
  * @param pos Backbuffer frame to obtain
  * @return Frame if available otherwise throws std::out_of_range exception
 */
-[[nodiscard]] auto FrameBufferDxgi::GetFrameAt(uint32_t pos) const -> const FrameDx12*
+auto FrameBufferDxgi::GetFrameAt(uint32_t pos) const -> const FrameDx12*
 {
     if (pos >= m_frames.size())
     {
@@ -163,7 +206,7 @@ using namespace LS::Platform::Dx12;
  * @brief The current frame buffer's back buffer index
  * @return
 */
-[[nodiscard]] auto FrameBufferDxgi::GetCurrentIndex() const -> uint64_t
+auto FrameBufferDxgi::GetCurrentIndex() const -> uint64_t
 {
     return m_pSwapChain->GetCurrentBackBufferIndex();
 }
@@ -172,31 +215,26 @@ using namespace LS::Platform::Dx12;
  * @brief The number of frames that have been presented up to this point
  * @return Number of frames presented to the front of the swap chain
 */
-[[nodiscard]] auto FrameBufferDxgi::GetTotalFrames() const -> uint64_t
+auto FrameBufferDxgi::GetTotalFrames() const -> uint64_t
 {
     return m_frameIndex;
 }
 
-[[nodiscard]] auto FrameBufferDxgi::GetFrameLatencyWaitable() const -> HANDLE
+auto FrameBufferDxgi::GetFrameLatencyCount() const noexcept -> size_t
 {
-    return m_pSwapChain->GetFrameLatencyWaitableObject();
+    return m_frames.size();
 }
 
-[[nodiscard]] auto FrameBufferDxgi::Present() const -> LS::System::ErrorCode
+auto FrameBufferDxgi::Present() const -> HRESULT
 {
     // TODO: Clear whole screen, maybe later can optimize to clear a part of the screen
     // using this. 
     static const DXGI_PRESENT_PARAMETERS params{ .DirtyRectsCount = 0,
     .pDirtyRects = NULL, .pScrollRect = NULL, .pScrollOffset = NULL };
 
-    auto hr = m_pSwapChain->Present1(m_syncInterval, 0, &params);
-    if (FAILED(hr))
-    {
-        return LS::System::CreateFailCode(LS::Win32::HrToString(hr));
-    }
-
+    const auto hr = m_pSwapChain->Present1(m_syncInterval, 0, &params);
     ++m_frameIndex;
-    return LS::System::CreateSuccessCode();
+    return hr;
 }
 
 void FrameBufferDxgi::EnableVsync() noexcept
@@ -237,7 +275,7 @@ void FrameBufferDxgi::CleanupFrames() noexcept
     m_frames.resize(m_swapChainDesc.BufferCount);
 }
 
-[[nodiscard]] auto FrameBufferDxgi::ResizeFrames(uint32_t width, uint32_t height,
+auto FrameBufferDxgi::ResizeFrames(uint32_t width, uint32_t height,
     ID3D12Device* device) noexcept -> LS::System::ErrorCode
 {
     CleanupFrames();
@@ -255,7 +293,7 @@ void FrameBufferDxgi::CleanupFrames() noexcept
 
 void FrameBufferDxgi::WaitOnFrameBuffer() noexcept
 {
-    auto result = WaitForSingleObjectEx(m_pSwapChain->GetFrameLatencyWaitableObject(), 1000, true);
+    auto result = WaitForSingleObjectEx(m_handle, 1000, true);
     //TODO: implement error handling
     switch (result)
     {

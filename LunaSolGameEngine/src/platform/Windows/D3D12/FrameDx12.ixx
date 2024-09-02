@@ -29,21 +29,11 @@ export namespace LS::Platform::Dx12
             return m_frame;
         }
 
-        [[nodiscard]] auto GetFrameRef() const noexcept -> const Microsoft::WRL::ComPtr<ID3D12Resource>&
+        [[nodiscard]] auto GetFrameConst() const noexcept -> const Microsoft::WRL::ComPtr<ID3D12Resource>&
         {
             return m_frame;
         }
 
-        [[nodiscard]] auto GetFramePtr() const noexcept -> const ID3D12Resource*
-        {
-            return m_frame.Get();
-        }
-        
-        [[nodiscard]] auto GetFramePtr() noexcept -> ID3D12Resource*
-        {
-            return m_frame.Get();
-        }
-        
         [[nodiscard]] auto GetDescriptorHandle() const noexcept -> const D3D12_CPU_DESCRIPTOR_HANDLE*
         {
             return &m_descHandle;

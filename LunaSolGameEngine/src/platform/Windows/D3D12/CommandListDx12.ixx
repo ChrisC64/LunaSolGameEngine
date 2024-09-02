@@ -22,7 +22,7 @@ export namespace LS::Platform::Dx12
     public:
         CommandListDx12() = default;
         CommandListDx12(D3D12_COMMAND_LIST_TYPE type, std::string_view name);
-        CommandListDx12(ID3D12Device4* pDevice, D3D12_COMMAND_LIST_TYPE type, std::string_view name);
+        CommandListDx12(ID3D12Device4* pDevice, D3D12_COMMAND_LIST_TYPE type, std::string_view name, const FrameContext* fc);
         ~CommandListDx12() = default;
         // Copy //
         CommandListDx12(const CommandListDx12&) = delete;
@@ -33,12 +33,12 @@ export namespace LS::Platform::Dx12
 
         auto Initialize(ID3D12Device4* pDevice) noexcept -> LS::System::ErrorCode;
 
-        auto GetFenceValue() const noexcept -> uint64_t
+        auto GetCommandList() const noexcept -> WRL::ComPtr<ID3D12GraphicsCommandList>
         {
-            return m_fenceValue;
+            return m_pCommandList;
         }
 
-        auto GetCommandList() const noexcept -> WRL::ComPtr<ID3D12GraphicsCommandList>
+        auto GetCommandListConst() const noexcept -> const WRL::ComPtr<ID3D12GraphicsCommandList>&
         {
             return m_pCommandList;
         }
@@ -53,13 +53,9 @@ export namespace LS::Platform::Dx12
             return m_name;
         }
 
-        void IncrementFenceValue() noexcept
-        {
-            m_fenceValue++;
-        }
-
         void Begin() noexcept;
         void BeginFrame(const FrameDx12& frame) noexcept;
+        void BeginFrame(const FrameBufferDxgi& frameBuffer) noexcept;
         void End() noexcept;
         void EndFrame() noexcept;
         void Clear(std::array<float, 4> clearColor) noexcept;
@@ -82,11 +78,11 @@ export namespace LS::Platform::Dx12
 
     private:
         D3D12_COMMAND_LIST_TYPE m_type;
-        uint64_t m_fenceValue;
         WRL::ComPtr<ID3D12GraphicsCommandList> m_pCommandList;
         WRL::ComPtr<ID3D12CommandAllocator> m_pAllocator;
         std::string m_name;
         const FrameDx12* m_currentFrame = nullptr;
+        const FrameContext* m_fc = nullptr;
     };
 }
 
@@ -101,19 +97,20 @@ import Win32.Utils;
 
 using namespace LS::Platform::Dx12;
 
-CommandListDx12::CommandListDx12(D3D12_COMMAND_LIST_TYPE type, std::string_view name) : m_type(type),
-m_fenceValue(0),
-m_pCommandList(nullptr),
-m_pAllocator(nullptr),
-m_name(name)
+CommandListDx12::CommandListDx12(D3D12_COMMAND_LIST_TYPE type, std::string_view name)
+    : m_type(type),
+    m_pCommandList(nullptr),
+    m_pAllocator(nullptr),
+    m_name(name)
 {
 }
 
-CommandListDx12::CommandListDx12(ID3D12Device4* pDevice, D3D12_COMMAND_LIST_TYPE type, std::string_view name) : m_type(type),
-m_fenceValue(0),
-m_pCommandList(nullptr),
-m_pAllocator(nullptr),
-m_name(name)
+CommandListDx12::CommandListDx12(ID3D12Device4* pDevice, D3D12_COMMAND_LIST_TYPE type, std::string_view name, const FrameContext* fc)
+    : m_type(type),
+    m_pCommandList(nullptr),
+    m_pAllocator(nullptr),
+    m_name(name),
+    m_fc(fc)
 {
     pDevice->CreateCommandList1(0, type, D3D12_COMMAND_LIST_FLAG_NONE, IID_PPV_ARGS(&m_pCommandList));
     assert(m_pCommandList && "Failed to create command list");
@@ -153,15 +150,29 @@ void CommandListDx12::Begin() noexcept
     //LS::Utils::ThrowIfFailed(m_pCommandList->Reset(m_pAllocator.Get(), nullptr), std::format("Failed to reset command allocator: {}", m_name.c_str()));
 }
 
-void LS::Platform::Dx12::CommandListDx12::BeginFrame(const FrameDx12& frame) noexcept
+void CommandListDx12::BeginFrame(const FrameDx12& frame) noexcept
 {
     Begin();
+    SetRenderTarget(frame);
+}
+
+void CommandListDx12::BeginFrame(const FrameBufferDxgi& frameBuffer) noexcept
+{
+    const FrameDx12& frame = frameBuffer.GetCurrentFrame();
+    const auto index = frameBuffer.GetCurrentIndex();
+
+    if (FAILED(m_fc->GetAllocator(index)->Reset()))
+    {
+        return;
+    }
+    m_pCommandList->Reset(m_fc->GetAllocator(index).Get(), nullptr);
     SetRenderTarget(frame);
 }
 
 void CommandListDx12::End() noexcept
 {
     m_pCommandList->Close();
+    m_currentFrame = nullptr;
     //LS::Utils::ThrowIfFailed(m_pCommandList->Close(), std::format("Failed to close command list: {}", m_name.c_str()));
 }
 
@@ -173,7 +184,7 @@ void LS::Platform::Dx12::CommandListDx12::EndFrame() noexcept
 
 void CommandListDx12::Clear(std::array<float, 4> clearColor) noexcept
 {
-    assert(m_currentFrame && "No frame was set, did you forget to SetRenderTarget()");
+    assert(m_currentFrame && "No frame was set, did you forget to BeginFrame() or SetRenderTarget()");
     m_pCommandList->ClearRenderTargetView(*(m_currentFrame->GetDescriptorHandle()), clearColor.data(), 0, nullptr);
 }
 

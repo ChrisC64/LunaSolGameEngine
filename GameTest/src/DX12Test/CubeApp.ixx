@@ -650,8 +650,8 @@ void gt::dx12::DX12CubeApp::CreateCommandQueue()
         LS::Utils::ThrowIfFailed(E_FAIL, cec.Message());
     }
 
-    m_commandList = std::make_unique<LS::Platform::Dx12::CommandListDx12>(device4.Get(), D3D12_COMMAND_LIST_TYPE_DIRECT, "main command list");
-    m_copyCommandList = std::make_unique<LS::Platform::Dx12::CommandListDx12>(device4.Get(), D3D12_COMMAND_LIST_TYPE_COPY, "copy command list");
+    //m_commandList = std::make_unique<LS::Platform::Dx12::CommandListDx12>(device4.Get(), D3D12_COMMAND_LIST_TYPE_DIRECT, "main command list");
+    //m_copyCommandList = std::make_unique<LS::Platform::Dx12::CommandListDx12>(device4.Get(), D3D12_COMMAND_LIST_TYPE_COPY, "copy command list");
 }
 
 void gt::dx12::DX12CubeApp::CreateSwapchain()
@@ -719,11 +719,11 @@ void gt::dx12::DX12CubeApp::CreateDescriptors()
 
 void gt::dx12::DX12CubeApp::SetupState()
 {
-    auto frame = m_frameBuffer.GetCurrentFrameAsPtr();
+    auto frame = m_frameBuffer.GetCurrentFrame();
     const D3D12_CPU_DESCRIPTOR_HANDLE dsv = m_heapDsv.GetHeapStartCpu();
-    const D3D12_CPU_DESCRIPTOR_HANDLE rtv = *(frame->GetDescriptorHandle());
+    const D3D12_CPU_DESCRIPTOR_HANDLE rtv = *(frame.GetDescriptorHandle());
 
-    m_commandList->TransitionResource(frame->GetFrame().Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+    m_commandList->TransitionResource(frame.GetFrame().Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
     m_commandList->SetRenderTarget(rtv, &dsv);
 
     m_commandList->SetVertexBuffers(0, 1, &m_cubeVbView);
@@ -982,8 +982,8 @@ void gt::dx12::DX12CubeApp::DemoRun()
 
         SetupState();
         Update();
-        auto frame = m_frameBuffer.GetCurrentFrameAsPtr();
-        m_commandList->TransitionResource(frame->GetFrame().Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+        auto frame = m_frameBuffer.GetCurrentFrame();
+        m_commandList->TransitionResource(frame.GetFrame().Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
         m_commandList->End();
         m_directQueue.QueueCommand(m_commandList.get());
         const auto fenceValue = m_directQueue.ExecuteCommandList();

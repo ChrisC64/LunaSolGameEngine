@@ -60,7 +60,7 @@ export namespace LS::Platform::Dx12
     class RendererDX12
     {
     public:
-        RendererDX12(uint32_t width, uint32_t height, uint32_t frameCount = 2, const LSWindowBase* window = nullptr) noexcept;
+        RendererDX12(uint32_t width, uint32_t height, uint32_t frameCount = 2, const LSWindowBase* window = nullptr);
         ~RendererDX12() = default;
 
         RendererDX12& operator=(const RendererDX12&) = delete;
@@ -76,22 +76,34 @@ export namespace LS::Platform::Dx12
         // LoadShader(filepath) -> LS::System::ErrorCode;
         // LoadMesh(filepath) -> LS::System::ErrorCode;
 
-        auto CreateCommandList(D3D12_COMMAND_LIST_TYPE type, std::string_view name) const -> Nullable<CommandListDx12>;
+        [[nodiscard]]
+        auto CreateCommandList(D3D12_COMMAND_LIST_TYPE type, std::string_view name) const->Nullable<CommandListDx12>;
+
         void QueueCommand(CommandListDx12* const commandlist);
         void FlushCommands() noexcept;
+
+        [[nodiscard]]
         auto Resize(uint32_t width, uint32_t height) noexcept -> LS::System::ErrorCode;
+
         void WaitOnNextFrame();
-        void WaitForPrevFrame();
-        auto ExecuteCommands() noexcept -> LS::System::ErrorCode;
+        /**
+         * @brief Waits for the given commands to finish. When you call @link RendererDX12::ExecuteCommands
+         * the function returns a value that you need to pass back to l
+         * @param commandsValue
+         */
+        void WaitForCommands(uint64_t commandFence) noexcept;
+
+        [[nodiscard]]
+        auto ExecuteCommands() -> uint64_t;
 
     private: // Members //
-        RendererState                           m_state = RendererState::UNINITIALIZED;
-        uint64_t                                m_fenceValue = 0;
-        FrameBufferDxgi                         m_frameBuffer;
-        DeviceD3D12                             m_device;
         WRL::ComPtr<IDXGIFactory4>              m_pFactory;
         WRL::ComPtr<IDXGIAdapter1>              m_pAdapter;
+        RendererState                           m_state = RendererState::UNINITIALIZED;
+        FrameBufferDxgi                         m_frameBuffer;
+        DeviceD3D12                             m_device;
         CommandQueueDx12                        m_queue;
+        FrameContext                            m_frameContext;
 
     private: // Functions //
         [[nodiscard]] auto Initialize(const LSWindowBase* window) noexcept ->LS::System::ErrorCode;
@@ -113,16 +125,18 @@ module : private;
 
 using namespace LS::Platform::Dx12;
 
-RendererDX12::RendererDX12(uint32_t width, uint32_t height, uint32_t frameCount, const LSWindowBase* window /*= nullptr*/) noexcept : m_frameBuffer(frameCount,
-    width, height,
-    DXGI_FORMAT_R8G8B8A8_UNORM,
-    DXGI_SWAP_EFFECT_FLIP_DISCARD,
-    DXGI_SCALING_NONE,
-    DXGI_ALPHA_MODE_UNSPECIFIED,
-    DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT),
+RendererDX12::RendererDX12(uint32_t width, uint32_t height, uint32_t frameCount, const LSWindowBase* window /*= nullptr*/)
+    : m_frameBuffer(frameCount,
+        width, height,
+        DXGI_FORMAT_R8G8B8A8_UNORM,
+        DXGI_SWAP_EFFECT_FLIP_DISCARD,
+        DXGI_SCALING_NONE,
+        DXGI_ALPHA_MODE_UNSPECIFIED,
+        DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT),
     m_device(),
     m_pFactory(),
-    m_queue(D3D12_COMMAND_LIST_TYPE_DIRECT)
+    m_queue(D3D12_COMMAND_LIST_TYPE_DIRECT),
+    m_frameContext(frameCount)
 {
     if (const auto ec = Initialize(window); !ec)
     {
@@ -188,6 +202,19 @@ auto RendererDX12::Initialize(const LSWindowBase* window) noexcept -> LS::System
     //TODO: Make optional or another setting, for now don't allow ALT+ENTER fullscreen swap
     m_pFactory->MakeWindowAssociation(hwnd, DXGI_MWA_NO_ALT_ENTER);
 
+    for (auto i = 0u; i < m_frameBuffer.GetFrameLatencyCount(); ++i)
+    {
+        m_frameContext.SetFenceValue(i, 0);
+        WRL::ComPtr<ID3D12CommandAllocator> alloc;
+        HRESULT hr = device4->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&alloc));
+        if (FAILED(hr))
+        {
+            const std::string msg = LS::Win32::HrToString(hr);
+            return LS::System::ErrorCode(msg);
+        }
+        m_frameContext.SetAllocator(i, alloc);
+    }
+
     m_state = RendererState::INITIALIZED;
     return LS::System::CreateSuccessCode();
 }
@@ -203,7 +230,7 @@ auto RendererDX12::CreateCommandList(D3D12_COMMAND_LIST_TYPE type, std::string_v
         return std::nullopt;
     }
 
-    return CommandListDx12(device4.Get(), type, name);
+    return CommandListDx12(device4.Get(), type, name, &m_frameContext);
 }
 
 void RendererDX12::QueueCommand(CommandListDx12* const commandlist)
@@ -227,13 +254,22 @@ void RendererDX12::WaitOnNextFrame()
     m_frameBuffer.WaitOnFrameBuffer();
 }
 
-void LS::Platform::Dx12::RendererDX12::WaitForPrevFrame()
+void RendererDX12::WaitForCommands(uint64_t commandFence) noexcept
 {
-    m_queue.WaitForGpu(m_fenceValue);
+    m_queue.WaitForGpu(commandFence);
 }
 
-auto LS::Platform::Dx12::RendererDX12::ExecuteCommands() noexcept -> LS::System::ErrorCode
+auto RendererDX12::ExecuteCommands() -> uint64_t
 {
-    m_fenceValue = m_queue.ExecuteCommandList();
-    return m_frameBuffer.Present();
+    const uint64_t fence = m_queue.ExecuteCommandList();
+    const auto index = m_frameBuffer.GetCurrentIndex();
+    m_frameContext.SetFenceValue(index, fence);
+    HRESULT hr = m_frameBuffer.Present();
+    if (FAILED(hr))
+    {
+        const std::string msg = LS::Win32::HrToString(hr);
+        throw std::runtime_error(msg.c_str());
+    }
+
+    return fence;
 }

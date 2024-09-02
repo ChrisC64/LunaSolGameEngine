@@ -125,6 +125,10 @@ export namespace LS::Platform::Dx12
 
             std::vector<HANDLE> objects(events.size() + 1);
             objects[0] = fenceEvent;
+            /*for (size_t i = 0; i < objects.size(); ++i)
+            {
+                objects[i + 1] = events[i];
+            }*/
 
             auto p = 1u;
             for (auto& e : events)
@@ -142,7 +146,7 @@ export namespace LS::Platform::Dx12
      * @param pQueue The queue to signal to
      * @param pFence A fence to pass into this command queue
      * @param fenceValue The current value to be incremented and pass as the signal to the GPU
-     * @return A fence value that should be signaled by the CPU to assure all processes by the GPU are no longer "in-flight"
+     * @return The fence value the GPU will send when it finishes the commands
     */
     [[nodiscard]] inline auto Signal(WRL::ComPtr<ID3D12CommandQueue>& pQueue, WRL::ComPtr<ID3D12Fence>& pFence,
         const uint64_t fenceValue) noexcept -> uint64_t
@@ -157,6 +161,25 @@ export namespace LS::Platform::Dx12
         }
 
         return fenceValueForSignal;
+    }
+    
+    /**
+     * @brief Same as Signal but increments the value of fenceValue through reference
+     * @param pQueue The queue to send off the signal to
+     * @param pFence The fence for this queue
+     * @param fenceValue The new value to wait on this signal for
+     */
+    [[nodiscard]] inline void Signal2(WRL::ComPtr<ID3D12CommandQueue>& pQueue, WRL::ComPtr<ID3D12Fence>& pFence,
+        uint64_t& fenceValue) noexcept 
+    {
+        ++fenceValue;
+        const auto hr = pQueue->Signal(pFence.Get(), fenceValue);
+
+        if (FAILED(hr))
+        {
+            const auto msg = Win32::HrToString(hr);
+            LS_LOG_ERROR(std::format("An error occurred when signaling the fence value: {}", msg));
+        }
     }
 
     /**
