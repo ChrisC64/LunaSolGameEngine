@@ -59,7 +59,8 @@ export namespace LS::Platform::Dx12
 
         constexpr void SetFenceValue(size_t index, uint64_t fenceValue)
         {
-            m_fences.emplace(std::begin(m_fences) + index, fenceValue);
+            m_fences[index] = fenceValue;
+            //m_fences.emplace(std::begin(m_fences) + index, fenceValue);
         }
 
         void SetAllocator(size_t index, WRL::ComPtr<ID3D12CommandAllocator>& alloc)

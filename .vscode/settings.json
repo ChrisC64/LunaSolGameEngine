@@ -1,0 +1,9 @@
+{
+    "C_Cpp.errorSquiggles": "enabled",
+    "C_Cpp.intelliSenseEngineFallback": "enabled",
+    "files.associations": {
+        "*.ixx": "cpp"
+    },
+    "cmake.sourceDirectory": "E:/Repo/LunaSolGameEngine/vcpkg_installed/x64-windows/x64-windows/share/vcpkg-cmake-get-vars/cmake_get_vars",
+    "C_Cpp.default.compilerPath": "cl.exe"
+}
