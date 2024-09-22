@@ -15,18 +15,35 @@ export namespace LS
 
     enum class WINDOW_EVENT : int32_t
     {
-        LOST_FOCUS = 0, // @brief window is no longer active window
+        UNKNOWN = 0,
+        LOST_FOCUS, // @brief window is no longer active window
         GAIN_FOCUS, // @brief window is active 
         LEAVE_WINDOW, // @brief cursor moves out of window region
         ENTER_WINDOW, // @brief cursor has moved back into window region
         CLOSE_WINDOW, // @brief the window has been closed
+        SHUTDOWN_WINDOW,//@brief window is receiving a shutdown (i.e. user ALT+F4)
         MINIMIZED_WINDOW, //@brief the window has been minimized
         RESTORED_WINDOW, //@brief the window has been restored from minimized
         MAXIMIZED_WINDOW, //@brief the window has been maximized
+        CREATED,
         WINDOW_RESIZE_START, //@brief the start of a window resize event
         WINDOW_RESIZE_END, //@brief the window has been resized
         WINDOW_MOVE_START, //@brief the window is being moved
         WINDOW_MOVE_END, //@brief the window has finished moving
+        PAINT, //@brief window received a paint comman
+        MOUSE_LBUTTON_DOWN,
+        MOUSE_MBUTTON_DOWN,
+        MOUSE_RBUTTON_DOWN,
+        MOUSE_LBUTTON_UP,
+        MOUSE_MBUTTON_UP,
+        MOUSE_RBUTTON_UP,
+        MOUSE_MOVE,
+        MOUSE_LEAVE,
+        MOUSE_HOVER,
+        MOUSE_WHEEL,
+        KEYDOWN,
+        KEYUP,
+        WINDOW_EVENT_SIZE
     };
 
     /**
@@ -94,6 +111,7 @@ export namespace LS
           * @brief Continuously poll for events in this window's event queue.
         */
         virtual void PollEvent() noexcept = 0;
+        virtual auto PollEvent2() noexcept -> WINDOW_EVENT = 0;
 
         /**
          * @brief Set the cursor to be hidden or visible to the user.

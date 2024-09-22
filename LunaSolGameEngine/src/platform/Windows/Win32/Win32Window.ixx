@@ -20,7 +20,7 @@ export namespace LS::Win32
     class Win32Window final : public LS::LSWindowBase
     {
     public:
-        
+
         Win32Window(uint32_t width, uint32_t height, std::wstring_view title) noexcept
             : LS::LSWindowBase(width, height, title)
         {
@@ -34,6 +34,7 @@ export namespace LS::Win32
         void Show() noexcept final;
         void Close() noexcept final;
         void PollEvent() noexcept final;
+        auto PollEvent2() noexcept -> WINDOW_EVENT final;
         void SetCursorVisible(bool isVisible) noexcept final;
         void SetCursorClamp(bool isClamped) noexcept final;
         LRESULT HandleWinMessage(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam);
@@ -43,7 +44,7 @@ export namespace LS::Win32
             return m_hwnd;
         }
 
-        HWND Hwnd() const
+        const HWND Hwnd() const
         {
             return m_hwnd;
         }
@@ -82,6 +83,7 @@ export namespace LS::Win32
         void UnbindCursor();
         void HideCursor();
         void RevealCursor();
+        auto TranslateWinMsg(UINT message, WPARAM wparam, LPARAM lparam) const noexcept -> WINDOW_EVENT;
     };
 }
 
@@ -142,6 +144,16 @@ namespace LS::Win32
         }
     }
 
+    auto Win32Window::PollEvent2() noexcept -> WINDOW_EVENT
+    {
+        if (PeekMessage(&m_msg, NULL, 0, 0, PM_REMOVE))
+        {
+            auto event = TranslateWinMsg(m_msg);
+            TranslateMessage(&m_msg);
+            DispatchMessage(&m_msg);
+        }
+    }
+
     void Win32Window::SetCursorVisible(bool isVisible) noexcept
     {
         if (isVisible)
@@ -188,6 +200,7 @@ namespace LS::Win32
         {
         case (WM_NCCREATE):
         {
+            break;
         }
         case (WM_PAINT):
         {
@@ -563,5 +576,74 @@ namespace LS::Win32
     void Win32Window::RevealCursor()
     {
         ShowCursor(true);
+    }
+
+    auto Win32Window::TranslateWinMsg(UINT message, WPARAM wparam, LPARAM lparam) const noexcept -> WINDOW_EVENT
+    {
+        using enum class LS::WINDOW_EVENT;
+        switch (message)
+        {
+        case (WM_NCCREATE):
+            return CREATED;
+        case (WM_PAINT):
+            return PAINT;
+        case (WM_CLOSE):
+            return CLOSE_WINDOW;
+        case(WM_DESTROY):
+            return SHUTDOWN_WINDOW;
+        case(WM_KEYDOWN):
+            return KEYDOWN;
+        case (WM_KEYUP):
+            return KEYUP;
+        case(WM_LBUTTONDOWN):
+            return MOUSE_LBUTTON_DOWN;
+        case(WM_MBUTTONDOWN):
+            return MOUSE_MBUTTON_DOWN;
+        case(WM_RBUTTONDOWN):
+            return MOUSE_RBUTTON_DOWN;
+        case(WM_LBUTTONUP):
+            return MOUSE_LBUTTON_UP;
+        case(WM_MBUTTONUP):
+            return MOUSE_MBUTTON_UP;
+        case(WM_RBUTTONUP):
+            return MOUSE_RBUTTON_UP;
+        case(WM_MOUSEMOVE):
+            return MOUSE_MOVE;
+        case(WM_MOUSELEAVE):
+            return MOUSE_LEAVE;
+        case(WM_MOUSEHOVER):
+            return MOUSE_HOVER;
+        case(WM_MOUSEWHEEL):
+            return MOUSE_WHEEL;
+        case(WM_SIZE):
+        {
+            if (wparam == SIZE_MAXIMIZED)
+            {
+                return MAXIMIZED_WINDOW;
+            }
+            else if (wparam == SIZE_MINIMIZED)
+            {
+                return MINIMIZED_WINDOW;
+            }
+            else if (wparam == SIZE_RESTORED)
+            {
+                return RESTORED_WINDOW;
+            }
+
+            return WINDOW_RESIZE_END;
+        }
+        case (WM_SIZING):
+            return WINDOW_RESIZE_START;
+        case (WM_ENTERSIZEMOVE):
+            return WINDOW_MOVE_START;
+        case (WM_EXITSIZEMOVE):
+            return WINDOW_MOVE_END;
+        case (WM_KILLFOCUS):
+            return LOST_FOCUS;
+        case (WM_SETFOCUS):
+            return GAIN_FOCUS;
+        default:
+            return UNKNOWN;
+        }
     }
 }
