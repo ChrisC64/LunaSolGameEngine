@@ -8,13 +8,13 @@ export namespace LS::Input
      */
     enum class MODIFIERS : int16_t
     {
-        CTRL,
-        ALT,
-        SHIFT,
-        CTRL_ALT,
-        CTRL_SHIFT,
-        CTRL_ALT_SHIFT,
-        ALT_SHIFT
+        CTRL = 0x1,
+        ALT = 0x2,
+        SHIFT = 0x4,
+        CTRL_ALT = CTRL | ALT,
+        CTRL_SHIFT = CTRL | SHIFT,
+        CTRL_ALT_SHIFT = CTRL | ALT | SHIFT,
+        ALT_SHIFT = ALT | SHIFT
     };
 
     /***
@@ -22,8 +22,8 @@ export namespace LS::Input
      */
     enum class STATE : int8_t
     {
-        PRESS,
-        RELEASE,
+        RELEASE = 0,
+        PRESS = 1,
     };
 
     /***
@@ -32,7 +32,7 @@ export namespace LS::Input
     enum class KEYBOARD : int32_t
     {
         // DEFAULT STATE //
-        NONE,
+        NONE = 0,
         // Alphabet
         A, B, C, D, E, F, G, H, I, J,
         K, L, M, N, O, P, Q, R, S, T,
@@ -65,7 +65,7 @@ export namespace LS::Input
     /***
      * @brief Input from the Mouse
      */
-    enum class MOUSE_BUTTON : uint8_t
+    enum class MOUSE_BUTTON : uint32_t
     {
         NONE = 0x0,
         LMB = 1 << 1, // @brief Left mouse button

@@ -278,13 +278,13 @@ auto gt::dx11::DX11CubeApp::Initialize(SharedRef<LS::LSCommandArgs> args) -> LS:
     ib = ibResult.value_or(max);
 
     // Camera Buffers //
-    const auto viewResult = m_bufferCache.CreateConstantBuffer(&(g_camera.View), sizeof(g_camera.View), m_renderer.GetDevice());
+    const auto viewResult = m_bufferCache.CreateConstantBuffer(&(g_camera.View), m_renderer.GetDevice());
     view = viewResult.value_or(max);
 
-    const auto projResult = m_bufferCache.CreateConstantBuffer(&(g_camera.Projection), sizeof(g_camera.Projection), m_renderer.GetDevice());
+    const auto projResult = m_bufferCache.CreateConstantBuffer(&(g_camera.Projection), m_renderer.GetDevice());
     proj = projResult.value_or(max);
 
-    const auto mvpResult = m_bufferCache.CreateConstantBuffer(&(g_camera.Mvp), sizeof(g_camera.Mvp), m_renderer.GetDevice());
+    const auto mvpResult = m_bufferCache.CreateConstantBuffer(&(g_camera.Mvp), m_renderer.GetDevice());
     mvp = mvpResult.value_or(max);
 
     LS::Log::TraceDebug(L"Buffers created!!");
@@ -314,7 +314,7 @@ auto gt::dx11::DX11CubeApp::Initialize(SharedRef<LS::LSCommandArgs> args) -> LS:
     g_objIndices.clear();
     g_objIndices.insert(g_objIndices.begin(), mesh.Indices.begin(), mesh.Indices.end());
 
-    const auto objVbResult = m_bufferCache.CreateVertexBuffer(tvd.data(), sizeof(Vertex) * tvd.size(), m_renderer.GetDevice());
+    const auto objVbResult = m_bufferCache.CreateVertexBuffer<Vertex>(tvd, m_renderer.GetDevice());
     obj_vb = objVbResult.value_or(max);
 
     // Index Buffer //

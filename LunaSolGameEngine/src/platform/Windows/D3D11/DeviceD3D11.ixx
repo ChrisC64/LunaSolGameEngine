@@ -3,7 +3,6 @@ module;
 #include <memory>
 #include <span>
 #include <cassert>
-
 #include <wrl/client.h>
 #include <d3d11_4.h>
 
@@ -36,10 +35,7 @@ export namespace LS::Win32
         [[nodiscard]] auto CreateDepthStencilState(const D3D11_DEPTH_STENCIL_DESC& depthStencilDesc, ID3D11DepthStencilState** ppDepthStencilState) noexcept -> HRESULT;
         [[nodiscard]] auto CreateBlendState(const D3D11_BLEND_DESC& blendDesc, ID3D11BlendState** ppBlendState) noexcept -> HRESULT;
         [[nodiscard]] auto CreateBuffer(const D3D11_BUFFER_DESC* pDesc, const D3D11_SUBRESOURCE_DATA* pInitialData, ID3D11Buffer** ppBuffer) noexcept -> HRESULT;
-        [[nodiscard]] auto CreateVertexBuffer(const void* pData, uint32_t byteWidth, ID3D11Buffer** ppBuffer, D3D11_USAGE usage = D3D11_USAGE::D3D11_USAGE_DEFAULT, uint32_t cpuAccess = 0, uint32_t miscFlags = 0, uint32_t structureByteStride = 0) noexcept -> HRESULT;
-        [[nodiscard]] auto CreateIndexBuffer(const void* pData, uint32_t bytes, ID3D11Buffer** ppBuffer, D3D11_USAGE usage = D3D11_USAGE::D3D11_USAGE_DEFAULT, uint32_t cpuAccess = 0, uint32_t miscFlags = 0, uint32_t structureByteStride = 0) noexcept -> HRESULT;
-        [[nodiscard]] auto CreateConstantBuffer(const void* pData, uint32_t byteWidth, ID3D11Buffer** ppBuffer, D3D11_USAGE usage = D3D11_USAGE::D3D11_USAGE_DEFAULT, uint32_t cpuAccess = 0, uint32_t miscFlags = 0, uint32_t structureByteStride = 0) noexcept -> HRESULT;
-
+        
         [[nodiscard]] auto GetDevice() const noexcept -> WRL::ComPtr<ID3D11Device5>;
         [[nodiscard]] auto GetImmediateContext() const noexcept -> WRL::ComPtr<ID3D11DeviceContext4>;
         [[nodiscard]] auto GetIDXGDevice1() const noexcept -> Nullable<WRL::ComPtr<IDXGIDevice1>>;
@@ -56,6 +52,7 @@ export namespace LS::Win32
         WRL::ComPtr<ID3D11DeviceContext4>               m_pImmediateContext = nullptr;
         WRL::ComPtr<ID3D11Debug>                        m_pDebug = nullptr;
         D3D_FEATURE_LEVEL                               m_featureLevel{};
+
     };
 }
 
@@ -266,28 +263,6 @@ auto DeviceD3D11::CreateBuffer(const D3D11_BUFFER_DESC* pDesc, const D3D11_SUBRE
     }
 
     return m_pDevice->CreateBuffer(pDesc, pInitialData, ppBuffer);
-}
-
-auto LS::Win32::DeviceD3D11::CreateVertexBuffer(const void* pData, uint32_t byteWidth, ID3D11Buffer** ppBuffer,
-    D3D11_USAGE usage, uint32_t cpuAccess, uint32_t miscFlags, uint32_t structureByteStride) noexcept -> HRESULT
-{
-    assert(m_pDevice);
-
-    return CreateVertexBufferD3D11(m_pDevice.Get(), ppBuffer, pData, byteWidth, usage, cpuAccess, miscFlags, structureByteStride);
-}
-
-auto LS::Win32::DeviceD3D11::CreateIndexBuffer(const void* pData, uint32_t bytes, ID3D11Buffer** ppBuffer, D3D11_USAGE usage, uint32_t cpuAccess, uint32_t miscFlags, uint32_t structureByteStride) noexcept -> HRESULT
-{
-    assert(m_pDevice);
-
-    return CreateIndexBufferD3D11(m_pDevice.Get(), ppBuffer, pData, bytes, usage, cpuAccess, miscFlags, structureByteStride);;
-}
-
-auto LS::Win32::DeviceD3D11::CreateConstantBuffer(const void* pData, uint32_t byteWidth, ID3D11Buffer** ppBuffer, D3D11_USAGE usage, uint32_t cpuAccess, uint32_t miscFlags, uint32_t structureByteStride) noexcept -> HRESULT
-{
-    assert(m_pDevice);
-
-    return CreateConstantBufferD3D11(m_pDevice.Get(), ppBuffer, pData, byteWidth, usage, cpuAccess, miscFlags, structureByteStride);
 }
 
 auto DeviceD3D11::GetDevice() const noexcept -> Microsoft::WRL::ComPtr<ID3D11Device5>

@@ -98,7 +98,7 @@ export namespace gt::dx11
 
         int DrawMethodSelection = 0;
         int DssSelection = 0;
-        float m_moveSpeed = 0.025f;
+        float m_moveSpeed = 0.25f;
         void CompileShaders();
         void CreateBuffers();
 
@@ -365,20 +365,20 @@ void gt::dx11::ImGuiDx11::CreateBuffers()
     const auto vbResult = m_bufferCache.CreateVertexBuffer(m_cube.Verts.data(), m_cube.Verts.size() * sizeof(m_cube.Verts[0]), m_renderer.GetDevice());
     vbKey = vbResult.value_or(max);
     //TODO: Need to implement better solution to obtaining object data (pointer to) and size
-    const auto floorResult = m_bufferCache.CreateVertexBuffer(g_floor.data(), g_floor.size() * sizeof(g_floor[0]), m_renderer.GetDevice());
+    const auto floorResult = m_bufferCache.CreateVertexBuffer<LS::Vec3<float>>(g_floor, m_renderer.GetDevice());
     floorKey = floorResult.value_or(max);
 
     const auto ibResult = m_bufferCache.CreateIndexBuffer(m_cube.Indices, m_renderer.GetDevice());
     ibKey = ibResult.value_or(max);
 
     // Camera Buffers //
-    const auto viewResult = m_bufferCache.CreateConstantBuffer(&(m_camera.View), sizeof(m_camera.View), m_renderer.GetDevice());
+    const auto viewResult = m_bufferCache.CreateConstantBuffer(&(m_camera.View), m_renderer.GetDevice());
     viewKey = viewResult.value_or(max);
 
-    const auto projResult = m_bufferCache.CreateConstantBuffer(&(m_camera.Projection), sizeof(m_camera.Projection), m_renderer.GetDevice());
+    const auto projResult = m_bufferCache.CreateConstantBuffer(&(m_camera.Projection), m_renderer.GetDevice());
     projKey = projResult.value_or(max);
 
-    const auto mvpResult = m_bufferCache.CreateConstantBuffer(&(m_camera.Mvp), sizeof(m_camera.Mvp), m_renderer.GetDevice());
+    const auto mvpResult = m_bufferCache.CreateConstantBuffer(&(m_camera.Mvp), m_renderer.GetDevice());
     mvpKey = mvpResult.value_or(max);
 
     LS::Log::TraceDebug(L"Buffers created for Cube (DearDx11)!!");

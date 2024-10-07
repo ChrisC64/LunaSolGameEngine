@@ -106,7 +106,7 @@ void ResourceManagerD3D12::CreateWindowSizeDependentResources() noexcept
 {
 }
 
-void ResourceManagerD3D12::CreateSwapChain(const Win32Window* window) noexcept
+void ResourceManagerD3D12::CreateSwapChain(const LS::Win32::Win32Window* window) noexcept
 {
     assert(window);
     assert(m_pFactoryDxgi);

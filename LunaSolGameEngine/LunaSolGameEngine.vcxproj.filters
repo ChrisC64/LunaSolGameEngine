@@ -33,9 +33,6 @@
     <ClCompile Include="src\data\MathTypes.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\data\Resource.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\data\serialize\AssimpLoader.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>

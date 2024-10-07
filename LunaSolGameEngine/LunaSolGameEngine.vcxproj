@@ -191,7 +191,6 @@ xcopy /f /d /y $(IntDir) $(SolutionDir)build\$(Platform)\$(Configuration)\bin\</
     <ClCompile Include="src\data\DataTypes.ixx" />
     <ClCompile Include="src\data\LSDataLib.ixx" />
     <ClCompile Include="src\data\MathTypes.ixx" />
-    <ClCompile Include="src\data\Resource.ixx" />
     <ClCompile Include="src\data\serialize\AssimpLoader.ixx" />
     <ClCompile Include="src\data\serialize\WavefrontObj.ixx" />
     <ClCompile Include="src\engine\EngineInput.ixx" />

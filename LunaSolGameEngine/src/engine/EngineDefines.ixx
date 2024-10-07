@@ -9,6 +9,16 @@ import <array>;
 
 export namespace LS
 {
+    // Integer Types Defines //
+    using u8 = uint8_t;
+    using u16 = uint16_t;
+    using u32 = uint32_t;
+    using u64 = uint64_t;
+    using i8 = int8_t;
+    using i16 = int16_t;
+    using i32 = int32_t;
+    using i64 = int64_t;
+
     //////////////
     // Typedefs //
     //////////////
@@ -97,10 +107,10 @@ export namespace LS::Colors
     {
         float R, G, B, A;
         RGBA() = default;
-        RGBA(float r, float g, float b, float a) : R(r), G(g), B(b), A(a)
+        explicit constexpr RGBA(float r, float g, float b, float a) : R(r), G(g), B(b), A(a)
         {}
 
-        RGBA(uint8_t r, uint8_t g, uint8_t b, uint8_t a) : R(r / 255.0f), G(g / 255.0f), B(b / 255.0f), A(a / 255.0f)
+        explicit constexpr RGBA(uint8_t r, uint8_t g, uint8_t b, uint8_t a) : R(r / 255.0f), G(g / 255.0f), B(b / 255.0f), A(a / 255.0f)
         {}
 
         RGBA(const RGBA& other) : R(other.R), G(other.G), B(other.B), A(other.A)
@@ -110,11 +120,16 @@ export namespace LS::Colors
         {
             return R == rhs.R && G == rhs.G && B == rhs.B && A == rhs.A;
         }
+        
+        bool operator!=(const RGBA& rhs) noexcept
+        {
+            return !(*this == rhs);
+        }
     };
 
-    constexpr std::array<float, 4> RED = { 1.0f, 0.0f, 0.0f, 1.0f };
-    constexpr std::array<float, 4> GREEN = { 0.0f, 1.0f, 0.0f, 1.0f };
-    constexpr std::array<float, 4> BLUE = { 0.0f, 0.0f, 1.0f, 1.0f };
-    constexpr std::array<float, 4> BLACK = { 0.0f, 0.0f, 0.0f, 1.0f };
-    constexpr std::array<float, 4> WHITE = { 1.0f, 1.0f, 1.0f, 1.0f };
+    constexpr RGBA RED{ 1.0f, 0.0f, 0.0f, 1.0f };
+    constexpr RGBA GREEN{ 0.0f, 1.0f, 0.0f, 1.0f };
+    constexpr RGBA BLUE{ 0.0f, 0.0f, 1.0f, 1.0f };
+    constexpr RGBA BLACK{ 0.0f, 0.0f, 0.0f, 1.0f };
+    constexpr RGBA WHITE{ 1.0f, 1.0f, 1.0f, 1.0f };
 }

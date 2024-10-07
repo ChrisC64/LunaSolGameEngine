@@ -27,10 +27,9 @@ export namespace LS::Platform::Dx12
         std::vector<WRL::ComPtr<ID3D12CommandAllocator>> m_allocs;
 
     public:
-        constexpr explicit FrameContext(size_t size)
+        constexpr explicit FrameContext(size_t size) : m_fences(size),
+            m_allocs(size)
         {
-            m_fences.reserve(size);
-            m_allocs.reserve(size);
         }
         ~FrameContext() = default;
 
