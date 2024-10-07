@@ -25,7 +25,7 @@ export namespace LS::Win32
      * @param flags DXGI_CREATE_FLAGS
      * @return @link Nullable object of a IDXGIFactory7 instance (see module @link LSdataTypes.ixx)
     */
-    [[nodiscard]] auto CreateFactory(UINT flags = 0u) noexcept -> Nullable<WRL::ComPtr<IDXGIFactory2>>;
+    [[nodiscard]] auto CreateDXGIFactory2(UINT flags = 0u) noexcept -> Nullable<WRL::ComPtr<IDXGIFactory2>>;
 
     /**
      * @brief Create a swapchain for the DX12 implementation (requires factory and command queue)
@@ -52,7 +52,7 @@ export namespace LS::Win32
     */
     [[nodiscard]] auto EnumerateDisplayAdapters(IDXGIFactory1* const pFactory) noexcept -> std::vector<WRL::ComPtr<IDXGIAdapter4>>;
 
-    [[nodiscard]] auto GetHardwareAdapter(IDXGIFactory1* const pFactory, bool useHighPerformance) noexcept -> Nullable<WRL::ComPtr<IDXGIAdapter1>>;
+    [[nodiscard]] auto GetHardwareAdapter(IDXGIFactory1* const pFactory, bool useHighPerformance = true) noexcept -> Nullable<WRL::ComPtr<IDXGIAdapter1>>;
 
     [[nodiscard]] auto GetWarpAdapter(IDXGIFactory1* const pFactory) noexcept -> Nullable<WRL::ComPtr<IDXGIAdapter>>;
 
@@ -69,7 +69,11 @@ export namespace LS::Win32
     void LogAdapterOutput(IDXGIAdapter* const adapter) noexcept;
     void LogOutputDisplayModes(IDXGIOutput* const output, DXGI_FORMAT format) noexcept;
 
-    // Returns a DXGI HRESULT into a LS::System::ErrorCode
+    /**
+     * @brief Returns the given HRESULT error code as an error message
+     * @param hr 
+     * @return associated error message to the HRESULT error code for DXGI
+     */
     constexpr auto HResultToDxgiError(HRESULT hr) noexcept -> const char*;
 }
 
@@ -77,7 +81,7 @@ module : private;
 
 using namespace LS::Win32;
 
-auto LS::Win32::CreateFactory(UINT flags) noexcept -> Nullable<Microsoft::WRL::ComPtr<IDXGIFactory2>>
+auto LS::Win32::CreateDXGIFactory2(UINT flags) noexcept -> Nullable<Microsoft::WRL::ComPtr<IDXGIFactory2>>
 {
     WRL::ComPtr<IDXGIFactory2> pOut;
     auto result = CreateDXGIFactory2(flags, IID_PPV_ARGS(&pOut));
@@ -173,7 +177,7 @@ auto LS::Win32::EnumerateDisplayAdapters(IDXGIFactory1* const pFactory) noexcept
     return out;
 }
 
-auto LS::Win32::GetHardwareAdapter(IDXGIFactory1 * const pFactory, bool useHighPerformance) noexcept -> Nullable<WRL::ComPtr<IDXGIAdapter1>>
+auto LS::Win32::GetHardwareAdapter(IDXGIFactory1 * const pFactory, bool useHighPerformance /*= true*/) noexcept -> Nullable<WRL::ComPtr<IDXGIAdapter1>>
 {
     WRL::ComPtr<IDXGIAdapter1> adapter;
 
@@ -346,7 +350,7 @@ void LS::Win32::LogOutputDisplayModes(IDXGIOutput* const output, DXGI_FORMAT for
     }
 }
 
-auto HResultToDxgiError(HRESULT hr) noexcept -> const char*
+constexpr auto HResultToDxgiError(HRESULT hr) noexcept -> const char*
 {
     using namespace LS::System;
 

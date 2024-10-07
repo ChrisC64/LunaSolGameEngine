@@ -8,7 +8,10 @@ module;
 #include <wrl/client.h>
 
 export module D3D12Lib.CommandListDx12;
+import <cassert>;
 import Engine.EngineCodes;
+import D3D12Lib.FrameBufferDxgi;
+import D3D12Lib.FrameDx12;
 
 namespace WRL = Microsoft::WRL;
 
@@ -17,18 +20,25 @@ export namespace LS::Platform::Dx12
     class CommandListDx12
     {
     public:
+        CommandListDx12() = default;
         CommandListDx12(D3D12_COMMAND_LIST_TYPE type, std::string_view name);
-        CommandListDx12(ID3D12Device4* pDevice, D3D12_COMMAND_LIST_TYPE type, std::string_view name);
+        CommandListDx12(ID3D12Device4* pDevice, D3D12_COMMAND_LIST_TYPE type, std::string_view name, const FrameContext* fc);
         ~CommandListDx12() = default;
+        // Copy //
+        CommandListDx12(const CommandListDx12&) = delete;
+        CommandListDx12& operator=(const CommandListDx12&) = delete;
+        // Move // 
+        CommandListDx12(CommandListDx12&&) = default;
+        CommandListDx12& operator=(CommandListDx12&&) = default;
 
         auto Initialize(ID3D12Device4* pDevice) noexcept -> LS::System::ErrorCode;
 
-        auto GetFenceValue() const noexcept -> uint64_t
+        auto GetCommandList() const noexcept -> WRL::ComPtr<ID3D12GraphicsCommandList>
         {
-            return m_fenceValue;
+            return m_pCommandList;
         }
 
-        auto GetCommandList() const noexcept -> WRL::ComPtr<ID3D12GraphicsCommandList>
+        auto GetCommandListConst() const noexcept -> const WRL::ComPtr<ID3D12GraphicsCommandList>&
         {
             return m_pCommandList;
         }
@@ -43,14 +53,12 @@ export namespace LS::Platform::Dx12
             return m_name;
         }
 
-        void IncrementFenceValue() noexcept
-        {
-            m_fenceValue++;
-        }
-
-        void ResetCommandList() noexcept;
-        void Close() noexcept;
-        void Clear(const std::array<float, 4>& clearColor, const D3D12_CPU_DESCRIPTOR_HANDLE rtv) noexcept;
+        void Begin() noexcept;
+        void BeginFrame(const FrameDx12& frame) noexcept;
+        void BeginFrame(const FrameBufferDxgi& frameBuffer) noexcept;
+        void End() noexcept;
+        void EndFrame() noexcept;
+        void Clear(std::array<float, 4> clearColor) noexcept;
         void ClearDepthStencil(const D3D12_CPU_DESCRIPTOR_HANDLE dsv, float clearValue = 1.0f, uint8_t stencilValue = 255);
         void TransitionResource(ID3D12Resource* resource, D3D12_RESOURCE_STATES before, D3D12_RESOURCE_STATES after);
         void SetRenderTarget(D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle, const D3D12_CPU_DESCRIPTOR_HANDLE* depthStencilHandle = nullptr) noexcept;
@@ -64,14 +72,18 @@ export namespace LS::Platform::Dx12
         void SetGraphicsRoot32BitConstant(uint32_t rootParamIndx, uint32_t srcData, uint32_t destOffsetIn32BitValues) noexcept;
         void SetGraphicsRoot32BitConstants(uint32_t rootParamIndx, uint32_t num32BitValueToSet, const void* pData, uint32_t destOffsetIn32BitValues) noexcept;
         void DrawIndexedInstanced(uint32_t indexCountPerInstance, uint32_t instanceCount, uint32_t startIndexLocation = 0u, int32_t  baseVertexLocation = 0u, uint32_t startInstanceLocation = 0u) noexcept;
-    private:
 
+        void SetRenderTarget(const FrameDx12& frame, const D3D12_CPU_DESCRIPTOR_HANDLE* depthStencilHandle = nullptr) noexcept;
+        void FinishFrame() noexcept;
+
+    private:
         D3D12_COMMAND_LIST_TYPE m_type;
-        uint64_t m_fenceValue;
         WRL::ComPtr<ID3D12GraphicsCommandList> m_pCommandList;
         WRL::ComPtr<ID3D12CommandAllocator> m_pAllocator;
         std::string m_name;
-    };   
+        const FrameDx12* m_currentFrame = nullptr;
+        const FrameContext* m_fc = nullptr;
+    };
 }
 
 module : private;
@@ -85,19 +97,20 @@ import Win32.Utils;
 
 using namespace LS::Platform::Dx12;
 
-CommandListDx12::CommandListDx12(D3D12_COMMAND_LIST_TYPE type, std::string_view name) : m_type(type),
-m_fenceValue(0),
-m_pCommandList(nullptr),
-m_pAllocator(nullptr),
-m_name(std::move(name))
+CommandListDx12::CommandListDx12(D3D12_COMMAND_LIST_TYPE type, std::string_view name)
+    : m_type(type),
+    m_pCommandList(nullptr),
+    m_pAllocator(nullptr),
+    m_name(name)
 {
 }
 
-CommandListDx12::CommandListDx12(ID3D12Device4* pDevice, D3D12_COMMAND_LIST_TYPE type, std::string_view name) : m_type(type),
-m_fenceValue(0),
-m_pCommandList(nullptr),
-m_pAllocator(nullptr),
-m_name(std::move(name))
+CommandListDx12::CommandListDx12(ID3D12Device4* pDevice, D3D12_COMMAND_LIST_TYPE type, std::string_view name, const FrameContext* fc)
+    : m_type(type),
+    m_pCommandList(nullptr),
+    m_pAllocator(nullptr),
+    m_name(name),
+    m_fc(fc)
 {
     pDevice->CreateCommandList1(0, type, D3D12_COMMAND_LIST_FLAG_NONE, IID_PPV_ARGS(&m_pCommandList));
     assert(m_pCommandList && "Failed to create command list");
@@ -128,7 +141,7 @@ auto CommandListDx12::Initialize(ID3D12Device4* pDevice) noexcept -> LS::System:
     return LS::System::CreateSuccessCode();
 }
 
-void CommandListDx12::ResetCommandList() noexcept
+void CommandListDx12::Begin() noexcept
 {
     m_pAllocator->Reset();
     m_pCommandList->Reset(m_pAllocator.Get(), nullptr);
@@ -137,15 +150,42 @@ void CommandListDx12::ResetCommandList() noexcept
     //LS::Utils::ThrowIfFailed(m_pCommandList->Reset(m_pAllocator.Get(), nullptr), std::format("Failed to reset command allocator: {}", m_name.c_str()));
 }
 
-void CommandListDx12::Close() noexcept
+void CommandListDx12::BeginFrame(const FrameDx12& frame) noexcept
+{
+    Begin();
+    SetRenderTarget(frame);
+}
+
+void CommandListDx12::BeginFrame(const FrameBufferDxgi& frameBuffer) noexcept
+{
+    const FrameDx12& frame = frameBuffer.GetCurrentFrame();
+    const auto index = frameBuffer.GetCurrentIndex();
+
+    if (FAILED(m_fc->GetAllocator(index)->Reset()))
+    {
+        return;
+    }
+    m_pCommandList->Reset(m_fc->GetAllocator(index).Get(), nullptr);
+    SetRenderTarget(frame);
+}
+
+void CommandListDx12::End() noexcept
 {
     m_pCommandList->Close();
+    m_currentFrame = nullptr;
     //LS::Utils::ThrowIfFailed(m_pCommandList->Close(), std::format("Failed to close command list: {}", m_name.c_str()));
 }
 
-void CommandListDx12::Clear(const std::array<float, 4>& clearColor, const D3D12_CPU_DESCRIPTOR_HANDLE rtv) noexcept
+void LS::Platform::Dx12::CommandListDx12::EndFrame() noexcept
 {
-    m_pCommandList->ClearRenderTargetView(rtv, clearColor.data(), 0, nullptr);
+    FinishFrame();
+    End();
+}
+
+void CommandListDx12::Clear(std::array<float, 4> clearColor) noexcept
+{
+    assert(m_currentFrame && "No frame was set, did you forget to BeginFrame() or SetRenderTarget()");
+    m_pCommandList->ClearRenderTargetView(*(m_currentFrame->GetDescriptorHandle()), clearColor.data(), 0, nullptr);
 }
 
 void CommandListDx12::ClearDepthStencil(const D3D12_CPU_DESCRIPTOR_HANDLE dsv, float clearValue, uint8_t stencilValue)
@@ -212,4 +252,17 @@ void CommandListDx12::SetGraphicsRoot32BitConstants(uint32_t rootParamIndx, uint
 void CommandListDx12::DrawIndexedInstanced(uint32_t indexCountPerInstance, uint32_t instanceCount, uint32_t startIndexLocation /*= 0*/, int32_t baseVertexLocation /*= 0*/, uint32_t startInstanceLocation /*= 0*/) noexcept
 {
     m_pCommandList->DrawIndexedInstanced(indexCountPerInstance, instanceCount, startIndexLocation, baseVertexLocation, startInstanceLocation);
+}
+
+void CommandListDx12::SetRenderTarget(const FrameDx12& frame, const D3D12_CPU_DESCRIPTOR_HANDLE* depthStencilHandle /*= nullptr*/) noexcept
+{
+    m_currentFrame = &frame;
+    TransitionResource(m_currentFrame->GetFrame().Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+    m_pCommandList->OMSetRenderTargets(1, m_currentFrame->GetDescriptorHandle(), FALSE, depthStencilHandle);
+}
+
+void LS::Platform::Dx12::CommandListDx12::FinishFrame() noexcept
+{
+    assert(m_currentFrame && "No frame was set, did you forget to call SetRenderTarget");
+    TransitionResource(m_currentFrame->GetFrame().Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 }

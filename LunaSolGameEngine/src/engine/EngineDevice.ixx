@@ -356,7 +356,7 @@ namespace LS
      * @param type The device type to create (Hardware or Software rendering)
      * @return
      */
-    export auto CreateDeviceSettings(uint32_t width, uint32_t height, DEVICE_API apiType, bool vSynceEnabled = false,
+    export constexpr auto CreateDeviceSettings(uint32_t width, uint32_t height, DEVICE_API apiType, bool vSynceEnabled = false,
         uint32_t backBufferSize = 2, uint32_t fpsTarget = 60,
         PIXEL_COLOR_FORMAT pixelFormat = PIXEL_COLOR_FORMAT::RGBA8_UNORM,
         DEVICE_TYPE type = DEVICE_TYPE::HARDWARE) -> LSDeviceSettings

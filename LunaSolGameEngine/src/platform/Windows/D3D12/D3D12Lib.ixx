@@ -16,3 +16,4 @@ export import D3D12Lib.CommandQueueD3D12;
 export import D3D12Lib.DescriptorHeapDx12;
 export import D3D12Lib.FrameDx12;
 export import D3D12Lib.FrameBufferDxgi;
+export import D3D12Lib.RendererDX12;

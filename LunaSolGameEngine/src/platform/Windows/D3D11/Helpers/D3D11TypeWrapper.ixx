@@ -149,7 +149,7 @@ export namespace LS
             return D3D11_USAGE_IMMUTABLE;
         case DYNAMIC:
             return D3D11_USAGE_DYNAMIC;
-        case COPY_ONLY:
+        case STAGING:
             return D3D11_USAGE_STAGING;
         default:
             throw std::runtime_error("Unable to support unknown buffer usage\n");

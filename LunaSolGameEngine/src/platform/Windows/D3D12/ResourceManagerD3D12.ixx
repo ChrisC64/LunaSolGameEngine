@@ -52,7 +52,6 @@ export namespace LS::Platform::Dx12
         D3D12_VIEWPORT                  m_windowViewport;
         WRL::ComPtr<IDXGISwapChain4>    m_pSwapChain;
 
-
         // Device Dependent Resources
         WRL::ComPtr<ID3D12Device9>      m_pDevice;
         WRL::ComPtr<ID3D12Debug5>       m_pDebug;
@@ -107,7 +106,7 @@ void ResourceManagerD3D12::CreateWindowSizeDependentResources() noexcept
 {
 }
 
-void ResourceManagerD3D12::CreateSwapChain(const Win32Window* window) noexcept
+void ResourceManagerD3D12::CreateSwapChain(const LS::Win32::Win32Window* window) noexcept
 {
     assert(window);
     assert(m_pFactoryDxgi);

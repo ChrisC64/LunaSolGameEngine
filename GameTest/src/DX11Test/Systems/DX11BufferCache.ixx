@@ -212,9 +212,9 @@ export namespace LS::Platform::Dx11
 
         template<class T>
         [[nodiscard]]
-        auto CreateConstantBuffer(const T* data, size_t size, ID3D11Device* pDevice) noexcept -> Nullable<Key>
+        auto CreateConstantBuffer(const T* data, ID3D11Device* pDevice) noexcept -> Nullable<Key>
         {
-            const auto ibOpt = LS::Platform::Dx11::CreateConstantBuffer(pDevice, data, size);
+            const auto ibOpt = LS::Platform::Dx11::CreateConstantBuffer(pDevice, data);
             if (!ibOpt)
             {
                 return std::nullopt;
@@ -234,6 +234,20 @@ export namespace LS::Platform::Dx11
             }
             
             return Insert(ibOpt.value());
+        }
+
+        template<class T>
+        [[nodiscard]]
+        auto CreateVertexBuffer(const std::span<T> data, ID3D11Device* pDevice) noexcept -> Nullable<Key>
+        {
+            return CreateVertexBuffer(data.data(), data.size_bytes(), pDevice);
+        }
+        
+        template<class T>
+        [[nodiscard]]
+        auto CreateVertexBuffer(const std::span<const T> data, ID3D11Device* pDevice) noexcept -> Nullable<Key>
+        {
+            return CreateVertexBuffer(data.data(), data.size_bytes(), pDevice);
         }
 
     private:

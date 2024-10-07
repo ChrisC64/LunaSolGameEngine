@@ -38,7 +38,7 @@ export namespace LS::Platform::Dx12
     class DeviceD3D12
     {
     public:
-        DeviceD3D12(const D3D12Settings& settings);
+        DeviceD3D12() = default;
         ~DeviceD3D12() = default;
 
         /**
@@ -57,9 +57,9 @@ export namespace LS::Platform::Dx12
             return m_pDevice->GetNodeCount();
         }
 
-        [[nodiscard]] auto GetSettings() const noexcept -> D3D12Settings
+        [[nodiscard]] auto GetFeatureLevel() const noexcept -> D3D_FEATURE_LEVEL
         {
-            return m_settings;
+            return m_featureLevel;
         }
 
         [[nodiscard]] auto SwapchainWaitableHandle() const noexcept -> HANDLE
@@ -70,11 +70,6 @@ export namespace LS::Platform::Dx12
         [[nodiscard]] auto GetDevice() const noexcept -> WRL::ComPtr<ID3D12Device>
         {
             return m_pDevice;
-        }
-
-        [[nodiscard]] auto GetFeatureValidator() const noexcept -> CD3DX12FeatureSupport
-        {
-            return m_featureSupport;
         }
 
     private:
@@ -88,7 +83,7 @@ export namespace LS::Platform::Dx12
         void PrintDisplayAdapters();
         
         // Objects of Class // 
-        D3D12Settings                   m_settings;
+        D3D_FEATURE_LEVEL               m_featureLevel;
         HWND                            m_hwnd;
 
         // ComPtr Objects // 
@@ -96,8 +91,6 @@ export namespace LS::Platform::Dx12
         WRL::ComPtr<ID3D12Debug>        m_pDebug = nullptr;
         WRL::ComPtr<IDXGISwapChain2>    m_pSwapChain = nullptr;
         WRL::ComPtr<IDXGIFactory7>      m_pFactoryDxgi = nullptr;
-        CD3DX12FeatureSupport           m_featureSupport;
-
     };
 }
 
@@ -125,10 +118,6 @@ public:
 private:
     const HRESULT m_hr;
 };
-
-DeviceD3D12::DeviceD3D12(const D3D12Settings& settings) : m_settings(settings)
-{
-}
 
 auto DeviceD3D12::CreateDevice(WRL::ComPtr<IDXGIAdapter> displayAdpater /* = nullptr*/) noexcept -> LS::System::ErrorCode
 {
@@ -173,7 +162,7 @@ auto DeviceD3D12::CreateDevice(WRL::ComPtr<IDXGIAdapter> displayAdpater /* = nul
         displayAdpater = adapter.value();
     }
 
-    hr = D3D12CreateDevice(displayAdpater.Get(), m_settings.FeatureLevel, IID_PPV_ARGS(&m_pDevice));
+    hr = D3D12CreateDevice(displayAdpater.Get(), D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&m_pDevice));
     if (FAILED(hr))
     {
         auto string = HrToString(hr);
@@ -181,15 +170,15 @@ auto DeviceD3D12::CreateDevice(WRL::ComPtr<IDXGIAdapter> displayAdpater /* = nul
         Log::TraceError(std::format(L"Failed to create device. Error Code: {}", wstring));
         return LS::System::CreateFailCode(std::format("Failed to create device. Error Code: {}", string));
     }
-
-    if (FAILED(m_featureSupport.Init(m_pDevice.Get())))
+    CD3DX12FeatureSupport featureSupport;
+    if (FAILED(featureSupport.Init(m_pDevice.Get())))
     {
         return LS::System::CreateFailCode("Failed to create feature support validator.");
     }
 
     // Find the Max Feature Leavel and create the device to support it
-    m_settings.FeatureLevel = m_featureSupport.MaxSupportedFeatureLevel();
-    hr = D3D12CreateDevice(displayAdpater.Get(), m_settings.FeatureLevel, IID_PPV_ARGS(&m_pDevice));
+    m_featureLevel = featureSupport.MaxSupportedFeatureLevel();
+    hr = D3D12CreateDevice(displayAdpater.Get(), m_featureLevel, IID_PPV_ARGS(&m_pDevice));
     if (FAILED(hr))
     {
         auto hrString = HrToString(hr);
@@ -304,7 +293,7 @@ auto DeviceD3D12::FindCompatDisplay(std::span<WRL::ComPtr<IDXGIAdapter4>> adapte
 {
     for (auto adapter : adapters)
     {
-        if (SUCCEEDED(D3D12CreateDevice(adapter.Get(), m_settings.FeatureLevel, __uuidof(ID3D12Device), nullptr)))
+        if (SUCCEEDED(D3D12CreateDevice(adapter.Get(), m_featureLevel, __uuidof(ID3D12Device), nullptr)))
         {
             return adapter;
         }
