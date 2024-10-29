@@ -244,6 +244,7 @@ xcopy /f /d /y $(IntDir) $(SolutionDir)build\$(Platform)\$(Configuration)\bin\</
     <ClCompile Include="src\platform\Windows\D3D12\FrameBufferDxgi.ixx" />
     <ClCompile Include="src\platform\Windows\DXGI\DXGISwapChain.ixx" />
     <ClCompile Include="src\platform\Windows\Win32\ComUtils.ixx" />
+    <ClCompile Include="src\platform\Windows\Win32\Win32App.ixx" />
     <ClCompile Include="src\platform\Windows\Win32\Win32Utils.ixx" />
     <ClCompile Include="src\platform\Windows\Win32\Win32Window.ixx" />
     <ClCompile Include="src\platform\Windows\WindowsLib.ixx" />

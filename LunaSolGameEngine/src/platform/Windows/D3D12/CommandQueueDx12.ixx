@@ -52,7 +52,7 @@ export namespace LS::Platform::Dx12
         }
 
     private:
-        using CommandQueue = std::vector<const CommandListDx12*>;
+        using CommandQueue = std::queue<const CommandListDx12*>;
         
         CommandQueue                            m_queue;
         WRL::ComPtr<ID3D12Device>               m_pDevice;
@@ -64,6 +64,7 @@ export namespace LS::Platform::Dx12
         D3D12_COMMAND_LIST_TYPE                 m_commListType;
 
         void Shutdown() noexcept;
+        void ClearQueue(CommandQueue& queue);
     };
 }
 
@@ -76,6 +77,13 @@ import D3D12Lib.D3D12Utils.Commands;
 
 namespace WRL = Microsoft::WRL;
 using namespace LS::Platform::Dx12;
+
+void CommandQueueDx12::ClearQueue(CommandQueue& queue)
+{
+    for(; !queue.empty(); queue.pop())
+    { 
+    }
+}
 
 CommandQueueDx12::CommandQueueDx12(D3D12_COMMAND_LIST_TYPE type) : m_commListType(type),
 m_pDevice(nullptr),
@@ -128,9 +136,9 @@ auto CommandQueueDx12::ExecuteCommandList() -> uint64_t
     // Execute the command lists
     std::vector<ID3D12CommandList*> commands(m_queue.size());
 
-    for (auto i = 0u; i < m_queue.size(); ++i)
+    for (auto i = 0; !m_queue.empty(); m_queue.pop(), ++i)
     {
-        commands[i] = m_queue[i]->GetCommandListConst().Get();
+        commands[i] = m_queue.front()->GetCommandListConst().Get();
     }
 
     m_pCommandQueue->ExecuteCommandLists(static_cast<UINT>(commands.size()), commands.data());
@@ -143,39 +151,39 @@ auto CommandQueueDx12::ExecuteCommandList() -> uint64_t
 void CommandQueueDx12::WaitForGpu(uint64_t fenceValue, std::chrono::milliseconds duration) noexcept
 {
     WaitForFenceValue(m_pFence, fenceValue, m_fenceEvent, duration);
-    m_queue.clear();
+    ClearQueue(m_queue);
 }
 
 void CommandQueueDx12::WaitForGpuEx(uint64_t fenceValue, HANDLE* handles, DWORD count, std::chrono::milliseconds duration) noexcept
 {
     const std::vector<HANDLE> waitables(handles, handles + count);
     WaitForFenceValueMany(m_pFence, fenceValue, m_fenceEvent, waitables, duration);
-    m_queue.clear();
+    ClearQueue(m_queue);
 }
 
 void CommandQueueDx12::Flush() noexcept
 {
     m_fenceValue = LS::Platform::Dx12::Flush(m_pCommandQueue, m_pFence, m_fenceValue, m_fenceEvent);
-    m_queue.clear();
+    ClearQueue(m_queue);
 }
 
 void CommandQueueDx12::FlushAndWaitMany(const std::vector<HANDLE>& handles) noexcept
 {
     m_fenceValue = LS::Platform::Dx12::FlushAndWaitForMany(m_pCommandQueue, m_pFence, m_fenceValue, m_fenceEvent, handles);
-    m_queue.clear();
+    ClearQueue(m_queue);
 }
 
 void CommandQueueDx12::QueueCommands(std::span<LS::Platform::Dx12::CommandListDx12*> commands) noexcept
 {
     for (auto c : commands)
     {
-        m_queue.push_back(c);
+        m_queue.push(c);
     }
 }
 
 void CommandQueueDx12::QueueCommand(const LS::Platform::Dx12::CommandListDx12* const command) noexcept
 {
-    m_queue.push_back(command);
+    m_queue.push(command);
 }
 
 void CommandQueueDx12::Shutdown() noexcept

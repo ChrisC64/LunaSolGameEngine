@@ -20,7 +20,6 @@ export namespace LS::Win32
     class Win32Window final : public LS::LSWindowBase
     {
     public:
-        
         Win32Window(uint32_t width, uint32_t height, std::wstring_view title) noexcept
             : LS::LSWindowBase(width, height, title)
         {

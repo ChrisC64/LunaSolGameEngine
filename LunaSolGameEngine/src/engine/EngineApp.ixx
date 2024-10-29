@@ -51,6 +51,8 @@ namespace LS
 
     export enum class APP_STATE
     {
+        UNINITIALIZED,
+        INITIALIZED,
         START,
         RUNNING,
         PAUSED,

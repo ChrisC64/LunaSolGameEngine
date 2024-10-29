@@ -61,6 +61,7 @@ export namespace LS::Platform::Dx12
     {
     public:
         RendererDX12(uint32_t width, uint32_t height, uint32_t frameCount = 2, const LSWindowBase* window = nullptr);
+        RendererDX12(uint32_t width, uint32_t height, uint32_t frameCount = 2, HWND window = nullptr);
         ~RendererDX12() = default;
 
         RendererDX12& operator=(const RendererDX12&) = delete;
@@ -96,6 +97,20 @@ export namespace LS::Platform::Dx12
         [[nodiscard]]
         auto ExecuteCommands() -> uint64_t;
 
+        /**
+         * @brief Assigns and sets the command allocator for this command list. The command list must be closed and finished 
+         * before another command list can be assigned with this current frame buffer's command allocator. 
+         * @param commandList The command list to ready for usage. 
+         */
+        void BeginCommandList(CommandListDx12& commandList);
+
+        /**
+         * @brief Closes the command list, allowing the command allocator in use to be used with another in-flight command list.
+         * @param commandList 
+         */
+        void EndCommandList(CommandListDx12& commandList);
+
+
     private: // Members //
         WRL::ComPtr<IDXGIFactory4>              m_pFactory;
         WRL::ComPtr<IDXGIAdapter1>              m_pAdapter;
@@ -106,7 +121,11 @@ export namespace LS::Platform::Dx12
         FrameContext                            m_frameContext;
 
     private: // Functions //
-        [[nodiscard]] auto Initialize(const LSWindowBase* window) noexcept ->LS::System::ErrorCode;
+        [[nodiscard]] 
+        auto Initialize(const LSWindowBase* window) noexcept -> LS::System::ErrorCode;
+        
+        [[nodiscard]] 
+        auto Initialize(HWND hwnd) noexcept -> LS::System::ErrorCode;
 
     public:
         auto GetFrameBufferConst() const noexcept -> const FrameBufferDxgi&
@@ -146,7 +165,34 @@ RendererDX12::RendererDX12(uint32_t width, uint32_t height, uint32_t frameCount,
     m_state = RendererState::INITIALIZED;
 }
 
+LS::Platform::Dx12::RendererDX12::RendererDX12(uint32_t width, uint32_t height, uint32_t frameCount, HWND window)
+    : m_frameBuffer(frameCount,
+        width, height,
+        DXGI_FORMAT_R8G8B8A8_UNORM,
+        DXGI_SWAP_EFFECT_FLIP_DISCARD,
+        DXGI_SCALING_NONE,
+        DXGI_ALPHA_MODE_UNSPECIFIED,
+        DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT),
+    m_device(),
+    m_pFactory(),
+    m_queue(D3D12_COMMAND_LIST_TYPE_DIRECT),
+    m_frameContext(frameCount)
+{
+    if (const auto ec = Initialize(window); !ec)
+    {
+        throw std::runtime_error(ec.Message().data());
+    }
+
+    m_state = RendererState::INITIALIZED;
+}
+
 auto RendererDX12::Initialize(const LSWindowBase* window) noexcept -> LS::System::ErrorCode
+{
+    HWND hwnd = reinterpret_cast<HWND>(window->GetHandleToWindow());
+    return Initialize(hwnd);
+}
+
+auto LS::Platform::Dx12::RendererDX12::Initialize(HWND hwnd) noexcept -> LS::System::ErrorCode
 {
     UINT flag = 0;
 #ifdef _DEBUG
@@ -189,8 +235,7 @@ auto RendererDX12::Initialize(const LSWindowBase* window) noexcept -> LS::System
     {
         return ec;
     }
-
-    HWND hwnd = reinterpret_cast<HWND>(window->GetHandleToWindow());
+    
     if (const auto ec = m_frameBuffer.Initialize(m_pFactory,
         m_queue.GetCommandQueue().Get(),
         hwnd,
@@ -230,7 +275,7 @@ auto RendererDX12::CreateCommandList(D3D12_COMMAND_LIST_TYPE type, std::string_v
         return std::nullopt;
     }
 
-    return CommandListDx12(device4.Get(), type, name, &m_frameContext);
+    return CommandListDx12(device4.Get(), type, name);
 }
 
 void RendererDX12::QueueCommand(CommandListDx12* const commandlist)
@@ -272,4 +317,18 @@ auto RendererDX12::ExecuteCommands() -> uint64_t
     }
 
     return fence;
+}
+
+void LS::Platform::Dx12::RendererDX12::BeginCommandList(CommandListDx12& commandList)
+{
+    const FrameDx12& frame = m_frameBuffer.GetCurrentFrame();
+
+    WRL::ComPtr<ID3D12CommandAllocator>& alloc = m_frameContext.GetAllocator(m_frameBuffer.GetCurrentIndex());
+    LS::Utils::ThrowIfFailed(alloc->Reset(), "The command list failed to reset.");
+    commandList.BeginFrame(frame, alloc);
+}
+
+void LS::Platform::Dx12::RendererDX12::EndCommandList(CommandListDx12& commandList)
+{
+    commandList.EndFrame();
 }

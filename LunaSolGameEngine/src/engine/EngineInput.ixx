@@ -8,6 +8,7 @@ export namespace LS::Input
      */
     enum class MODIFIERS : int16_t
     {
+        NONE = 0,
         CTRL = 0x1,
         ALT = 0x2,
         SHIFT = 0x4,
@@ -119,8 +120,18 @@ export namespace LS::Input
     };
 
     // TYPEDEFS //
+    
+    using LSOnKeyboardDown = std::function<void(KEYBOARD input)>;
+    using LSOnKeyboardUp = std::function<void(KEYBOARD input)>;
+    using LSOnMouseDown = std::function<void(const InputMouseDown& input)>;
+    using LSOnMouseUp = std::function<void(const InputMouseUp& input)>;
+    
+    // Maybe Replacing everything with newer callbacks here //
+    using LSOnKeyboardInput = std::function<void(KEYBOARD input, MODIFIERS mods, STATE action)>;
+    using LSOnMouseInput = std::function<void(MOUSE_BUTTON input, MODIFIERS mods, STATE action)>;
+    using LSOnMouseWheelScroll = std::function<void(const InputMouseWheelScroll& input)>;
     /**
-    * @brief The cursor move callback function signature. Returns coordinates 
+    * @brief The cursor move callback function signature. Returns coordinates
     * based on the Window's coordinate system with top left/top right being 0,0
     * to the screen's WIDTH/HEIGHT
     *
@@ -134,9 +145,7 @@ export namespace LS::Input
     */
     using LSOnMouseMove = std::function<void(uint32_t x, uint32_t y)>;
 
-    using LSOnKeyboardDown = std::function<void(KEYBOARD input)>;
-    using LSOnKeyboardUp = std::function<void(KEYBOARD input)>;
-    using LSOnMouseDown = std::function<void(const InputMouseDown& input)>;
-    using LSOnMouseUp = std::function<void(const InputMouseUp& input)>;
-    using LSOnMouseWheelScroll = std::function<void(const InputMouseWheelScroll& input)>;
+    // Relative to screen coordinates with top/left as 0,0
+    using LSOnMouseMove2 = std::function<void(double x, double y)>;
+    using LSOnMouseWheel = std::function<void(double x, double y)>;
 }
