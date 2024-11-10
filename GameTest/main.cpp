@@ -126,26 +126,18 @@ int main(int argc, char* argv[])
 
     auto renderFrame = [&]()
         {
-            //TODO: I've been away for so long, why did I want to separate the renderer and our frame buffer?
-            // Either way, this looks weird and makes no sense, do I want to separate some of the objects here?
-            // if so, what does the command list want then? What is the goal here?
-            // It is to do some commands, and those commands should be on a particular render target (frame buffer)
-            // right?
-            //const LS::Platform::Dx12::FrameBufferDxgi& framebuffer = renderer.GetFrameBuffer();
             renderer.BeginCommandList(commandList);
             commandList.Clear({ 0.0f, 0.12f, 0.34f, 1.0f });
             renderer.EndCommandList(commandList);
             renderer.QueueCommand(&commandList);
         };
     
-    
     while (IsAppRunning())
     {
         PollApp();
-        renderer.WaitOnNextFrame();
+        renderer.BeginFrame();
         renderFrame();
-        const auto fence = renderer.ExecuteCommands();
-        renderer.WaitForCommands(fence);
+        renderer.PresentFrame();
     }
     Shutdown();
 }

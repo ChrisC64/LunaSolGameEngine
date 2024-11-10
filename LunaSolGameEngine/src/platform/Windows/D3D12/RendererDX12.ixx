@@ -13,6 +13,7 @@ export module D3D12Lib.RendererDX12;
 import <cstdint>;
 import <unordered_map>;
 import <stdexcept>;
+import <vector>;
 
 import Engine.LSWindow;
 import Engine.LSDevice;
@@ -97,6 +98,8 @@ export namespace LS::Platform::Dx12
         [[nodiscard]]
         auto ExecuteCommands() -> uint64_t;
 
+        void BeginFrame();
+        void PresentFrame();
         /**
          * @brief Assigns and sets the command allocator for this command list. The command list must be closed and finished 
          * before another command list can be assigned with this current frame buffer's command allocator. 
@@ -109,7 +112,6 @@ export namespace LS::Platform::Dx12
          * @param commandList 
          */
         void EndCommandList(CommandListDx12& commandList);
-
 
     private: // Members //
         WRL::ComPtr<IDXGIFactory4>              m_pFactory;
@@ -317,6 +319,35 @@ auto RendererDX12::ExecuteCommands() -> uint64_t
     }
 
     return fence;
+}
+
+void LS::Platform::Dx12::RendererDX12::BeginFrame()
+{
+    // wait for frame buffer to finish presenting if it's not already
+    m_frameBuffer.WaitOnFrameBuffer(); 
+    // Get Current Index and Fence
+    const auto currFrame = m_frameBuffer.GetCurrentIndex();
+    const auto fence = m_frameContext.GetFence(currFrame);
+    // Check if Fence is complete, and if it isn't, wait for queue to finish before 
+    // we begin work on our next frame
+    if (!m_queue.IsFenceComplete(fence))
+    {
+        m_queue.WaitForGpu(fence);//blocks until GPU is complete
+    }
+
+}
+
+void LS::Platform::Dx12::RendererDX12::PresentFrame()
+{
+    const uint64_t fence = m_queue.ExecuteCommandList();
+    const auto index = m_frameBuffer.GetCurrentIndex();
+    m_frameContext.SetFenceValue(index, fence);
+    HRESULT hr = m_frameBuffer.Present();
+    if (FAILED(hr))
+    {
+        const std::string msg = LS::Win32::HrToString(hr);
+        throw std::runtime_error(msg.c_str());
+    }
 }
 
 void LS::Platform::Dx12::RendererDX12::BeginCommandList(CommandListDx12& commandList)
