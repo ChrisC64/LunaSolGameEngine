@@ -204,6 +204,9 @@
     <ClCompile Include="src\platform\Windows\D3D12\RendererDX12.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\platform\Windows\Win32\Win32App.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\engine\EngineLogDefines.h">

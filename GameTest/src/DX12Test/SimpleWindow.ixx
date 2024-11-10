@@ -126,10 +126,10 @@ void gt::dx12::SimpleWindow::PopulateCommandList()
     const LS::Platform::Dx12::FrameBufferDxgi& framebuffer = m_renderer.GetFrameBuffer();
     //const LS::Platform::Dx12::FrameDx12& frame = m_renderer.GetFrameBuffer().GetCurrentFrame();
     //TODO: Memory leak happens when using this command (better investigate why)
-    m_commandList.BeginFrame(framebuffer);
+    m_renderer.BeginCommandList(m_commandList);
     //m_commandList.BeginFrame(frame);
     m_commandList.Clear({ 0.0f, 0.12f, 0.34f, 1.0f });
-    m_commandList.EndFrame();
+    m_renderer.EndCommandList(m_commandList);
     m_renderer.QueueCommand(&m_commandList);
 
     //m_cl2.BeginFrame(framebuffer);

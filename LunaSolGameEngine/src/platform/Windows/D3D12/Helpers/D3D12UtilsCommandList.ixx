@@ -1,6 +1,6 @@
 /**
- * @brief This file contains multiple ways to operate on and utilize the various 
- * CommandQueues and CommandList objects for DirectX12. 
+ * @brief This file contains multiple ways to operate on and utilize the various
+ * CommandQueues and CommandList objects for DirectX12.
 */
 module;
 #include <d3d12.h>
@@ -88,20 +88,21 @@ export namespace LS::Platform::Dx12
         std::chrono::milliseconds duration = std::chrono::milliseconds::max()) noexcept
     {
         //TODO: If UINT_MAX then we have a DEVICE_REMOVED issue, need to address that scenario
-        if (fence->GetCompletedValue() < fenceValue)
+        if (fence->GetCompletedValue() >= fenceValue)
         {
-            const auto hr = fence->SetEventOnCompletion(fenceValue, fenceEvent);
-
-            if (FAILED(hr))
-            {
-                const auto msg = Win32::HrToString(hr);
-                LS_LOG_ERROR(std::format("An error occurred when trying to set an Event On Completion: {}", hr));
-            }
-
-            ::WaitForSingleObject(fenceEvent, static_cast<DWORD>(duration.count()));
+            return;
         }
+        const auto hr = fence->SetEventOnCompletion(fenceValue, fenceEvent);
+
+        if (FAILED(hr))
+        {
+            const auto msg = Win32::HrToString(hr);
+            LS_LOG_ERROR(std::format("An error occurred when trying to set an Event On Completion: {}", hr));
+        }
+
+        ::WaitForSingleObject(fenceEvent, static_cast<DWORD>(duration.count()));
     }
-    
+
     /**
      * @brief Waits for the fence value and fires off the Fence Event when it is reached
      * @param fence The fence to associate with the event
@@ -113,32 +114,34 @@ export namespace LS::Platform::Dx12
     inline void WaitForFenceValueMany(const WRL::ComPtr<ID3D12Fence>& fence, uint64_t fenceValue, HANDLE fenceEvent, const std::vector<HANDLE>& events,
         std::chrono::milliseconds duration = std::chrono::milliseconds::max()) noexcept
     {
-        if (fence->GetCompletedValue() < fenceValue)
+        if (fence->GetCompletedValue() >= fenceValue)
         {
-            const auto hr = fence->SetEventOnCompletion(fenceValue, fenceEvent);
-
-            if (FAILED(hr))
-            {
-                const auto msg = Win32::HrToString(hr);
-                LS_LOG_ERROR(std::format("An error occurred when trying to set an Event On Completion: {}", hr));
-            }
-
-            std::vector<HANDLE> objects(events.size() + 1);
-            objects[0] = fenceEvent;
-            /*for (size_t i = 0; i < objects.size(); ++i)
-            {
-                objects[i + 1] = events[i];
-            }*/
-
-            auto p = 1u;
-            for (auto& e : events)
-            {
-                objects[p] = e;
-                p++;
-            }
-
-            ::WaitForMultipleObjects(static_cast<DWORD>(objects.size()), objects.data(), TRUE, static_cast<DWORD>(duration.count()));
+            return;
         }
+
+        const auto hr = fence->SetEventOnCompletion(fenceValue, fenceEvent);
+
+        if (FAILED(hr))
+        {
+            const auto msg = Win32::HrToString(hr);
+            LS_LOG_ERROR(std::format("An error occurred when trying to set an Event On Completion: {}", hr));
+        }
+
+        std::vector<HANDLE> objects(events.size() + 1);
+        objects[0] = fenceEvent;
+        /*for (size_t i = 0; i < objects.size(); ++i)
+        {
+            objects[i + 1] = events[i];
+        }*/
+
+        auto p = 1u;
+        for (auto& e : events)
+        {
+            objects[p] = e;
+            p++;
+        }
+
+        ::WaitForMultipleObjects(static_cast<DWORD>(objects.size()), objects.data(), TRUE, static_cast<DWORD>(duration.count()));
     }
 
     /**
@@ -146,13 +149,12 @@ export namespace LS::Platform::Dx12
      * @param pQueue The queue to signal to
      * @param pFence A fence to pass into this command queue
      * @param fenceValue The current value to be incremented and pass as the signal to the GPU
-     * @return The fence value the GPU will send when it finishes the commands
+     * @return The next fence value the GPU will send when it finishes the commands
     */
     [[nodiscard]] inline auto Signal(WRL::ComPtr<ID3D12CommandQueue>& pQueue, WRL::ComPtr<ID3D12Fence>& pFence,
-        const uint64_t fenceValue) noexcept -> uint64_t
+        uint64_t fenceValue) noexcept -> uint64_t
     {
-        uint64_t fenceValueForSignal = fenceValue + 1;
-        const auto hr = pQueue->Signal(pFence.Get(), fenceValueForSignal);
+        const auto hr = pQueue->Signal(pFence.Get(), fenceValue + 1);
 
         if (FAILED(hr))
         {
@@ -160,17 +162,17 @@ export namespace LS::Platform::Dx12
             LS_LOG_ERROR(std::format("An error occurred when signaling the fence value: {}", msg));
         }
 
-        return fenceValueForSignal;
+        return ++fenceValue;
     }
-    
+
     /**
      * @brief Same as Signal but increments the value of fenceValue through reference
      * @param pQueue The queue to send off the signal to
      * @param pFence The fence for this queue
-     * @param fenceValue The new value to wait on this signal for
+     * @param fenceValue The next value for the fence to check on completion
      */
     [[nodiscard]] inline void Signal2(WRL::ComPtr<ID3D12CommandQueue>& pQueue, WRL::ComPtr<ID3D12Fence>& pFence,
-        uint64_t& fenceValue) noexcept 
+        uint64_t& fenceValue) noexcept
     {
         ++fenceValue;
         const auto hr = pQueue->Signal(pFence.Get(), fenceValue);
@@ -199,7 +201,7 @@ export namespace LS::Platform::Dx12
 
         return fenceValueForSignal;
     }
-    
+
     /**
      * @brief Tries to "flush" the command queue by immediately signaling the queue and then waiting for the event to finish
      * @param pQueue The command queue to "flush"
@@ -219,9 +221,9 @@ export namespace LS::Platform::Dx12
     }
 
     /**
-     * @brief Notifies the GPU that the following resources are ready to begin their transitions. 
+     * @brief Notifies the GPU that the following resources are ready to begin their transitions.
      * @param pCommList The Command list to use
-     * @param barriers The barrier(s) to use 1 or more. 
+     * @param barriers The barrier(s) to use 1 or more.
     */
     inline void TransitionTo(ID3D12GraphicsCommandList* pCommList, std::span<D3D12_RESOURCE_BARRIER> barriers)
     {

@@ -821,7 +821,7 @@ void gt::dx12::DX12CubeApp::UpdateBufferResource(WRL::ComPtr<ID3D12GraphicsComma
 bool gt::dx12::DX12CubeApp::LoadContent()
 {
     // Upload vertex buffer data //
-    m_copyCommandList->Begin();
+    //m_copyCommandList->Begin();
     auto commandList = m_copyCommandList->GetCommandList();
     Microsoft::WRL::ComPtr<ID3D12Device4> device4;
     auto hr = m_device->GetDevice().As(&device4);
@@ -978,7 +978,7 @@ void gt::dx12::DX12CubeApp::DemoRun()
         m_cubeProjMat = XMMatrixPerspectiveFovLH(XMConvertToRadians(m_fov), aspectRatio, 0.1f, 100.0f);
 
         // Draw Cycle // 
-        m_commandList->Begin();
+        //m_commandList->Begin();
 
         SetupState();
         Update();

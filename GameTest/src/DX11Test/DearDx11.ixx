@@ -237,12 +237,15 @@ void gt::dx11::ImGuiDx11::Run()
         ImGui::Text("Target FPS: %.6f", fps.count());
         ImGui::Text("FPS (actual): %u", framesPerSecond);
         ImGui::Text("Frame Index: %u", m_renderer.GetFrameIndex());
+
         ImGui::BeginListBox("DM", ImVec2(300.0f, 50.0f));
         ImGui::ListBox("Draw Method", &DrawMethodSelection, items, 2);
         ImGui::EndListBox();
+        
         ImGui::BeginListBox("DSS", ImVec2(300.0f, 100.0f));
         ImGui::ListBox("Depth Stencil State", &DssSelection, dssItems, 6);
         ImGui::EndListBox();
+        
         ImGui::End();
 
         Draw();

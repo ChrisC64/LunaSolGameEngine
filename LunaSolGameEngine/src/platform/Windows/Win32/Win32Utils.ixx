@@ -8,6 +8,7 @@ module;
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
 #include <Windows.h> 
+#include <windowsx.h>
 export module Win32.Utils;
 import Engine.Input;
 import Engine.Logger;
@@ -237,5 +238,85 @@ export namespace LS::Win32
         default:
             return false;
         }
+    }
+
+    [[nodiscard]]
+    LS::Input::MODIFIERS GetModKeys()
+    {
+        using namespace LS::Input;
+        using enum MODIFIERS;
+        auto press = 0x8000;
+        const auto B_ALT = 0x1;
+        const auto B_CTRL = 0x2;
+        const auto B_SHIFT = 0x4;
+        const auto MASK = B_ALT | B_CTRL | B_SHIFT;
+        char modState = 0;
+        // ALT
+        if (GetAsyncKeyState(VK_MENU) & press)
+        {
+            modState = B_ALT;
+        }
+        if (GetAsyncKeyState(VK_CONTROL) & press)
+        {
+            modState |= B_CTRL;
+        }
+        if (GetAsyncKeyState(VK_SHIFT) & press)
+        {
+            modState |= B_SHIFT;
+        }
+
+        if ((modState & MASK) == (B_ALT | B_CTRL | B_SHIFT))
+            return CTRL_ALT_SHIFT;
+        if ((modState & MASK) == (B_ALT | B_CTRL ))
+            return CTRL_ALT;
+        if ((modState & MASK) == (B_CTRL | B_SHIFT))
+            return CTRL_SHIFT;
+        if ((modState & MASK) == (B_ALT | B_SHIFT))
+            return ALT_SHIFT;
+        if ((modState & MASK) == B_ALT)
+            return ALT;
+        if ((modState & MASK) == B_SHIFT)
+            return SHIFT;
+        if ((modState & MASK) == B_CTRL)
+            return CTRL;
+        return NONE;
+    }
+
+    [[nodiscard]]
+    LS::Input::MOUSE_BUTTON ToMouseButton(UINT msg)
+    {
+        using enum LS::Input::MOUSE_BUTTON;
+        switch (msg)
+        {
+        case WM_LBUTTONDOWN:
+            return LMB;
+        case WM_MBUTTONDOWN:
+            return MMB;
+        case WM_RBUTTONDOWN:
+            return RMB;
+        default:
+            return NONE;
+        }
+    }
+
+    void GetScreenCoordinates(LPARAM lparam, int& x, int& y)
+    {
+        x = GET_X_LPARAM(lparam);
+        y = GET_Y_LPARAM(lparam);
+    }
+
+    void GetNormalizedClientCoords(HWND hwnd, LPARAM lparam, double& x, double& y)
+    {
+        RECT rect;
+        if (!GetClientRect(hwnd, &rect))
+        {
+            x = -1.0;
+            y = -1.0;
+            return;
+        }
+        int a, b;
+        GetScreenCoordinates(lparam, a, b);
+        x = a / (double)rect.right;
+        y = b / (double)rect.bottom;
     }
 }

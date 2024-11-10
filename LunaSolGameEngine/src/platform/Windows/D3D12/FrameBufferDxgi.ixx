@@ -55,6 +55,11 @@ export namespace LS::Platform::Dx12
         {
             return m_allocs.at(index);
         }
+        
+        constexpr auto GetAllocator(size_t index) -> WRL::ComPtr<ID3D12CommandAllocator>&
+        {
+            return m_allocs.at(index);
+        }
 
         constexpr void SetFenceValue(size_t index, uint64_t fenceValue)
         {
