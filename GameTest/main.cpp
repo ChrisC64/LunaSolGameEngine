@@ -78,7 +78,7 @@ constexpr uint32_t SCREEN_HEIGHT = 1080;
 //}
 
 #ifdef _DEBUG
-import Platform.Win32App;
+
 int main(int argc, char* argv[])
 {
     /*std::filesystem::path file = std::filesystem::current_path().string() + "log.txt";
@@ -131,7 +131,19 @@ int main(int argc, char* argv[])
             renderer.EndCommandList(commandList);
             renderer.QueueCommand(&commandList);
         };
-    
+
+    //TODO: I want to do this following concept as:
+    // 1. Create a builder (mayber as unique pointer even)
+    // 2. Use builder to "build" root parameters
+    // 3. Supply builder to the Renderer for it to then obtain the root parameters built
+    // and have the Renderer create the root signature it needs based off the information. 
+    //auto params = LS::Platform::Dx12::CreateRootParamBuilder(3)
+    //    .CreateCbvParam(0, 0, D3D12_ROOT_DESCRIPTOR_FLAGS::D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_PIXEL)
+    //    ->CreateCbvParam(1, 0, D3D12_ROOT_DESCRIPTOR_FLAGS::D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, D3D12_SHADER_VISIBILITY::D3D12_SHADER_VISIBILITY_PIXEL)
+    //    ->GetParams();
+    //
+    //auto rootSignature = LS::Platform::Dx12::CreateRootSignature(renderer.GetDevice())
+
     while (IsAppRunning())
     {
         PollApp();

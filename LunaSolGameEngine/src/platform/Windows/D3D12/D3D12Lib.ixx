@@ -9,6 +9,7 @@ export import D3D12Lib.D3D12Common;
 export import D3D12Lib.Utils;
 export import D3D12Lib.D3D12Utils.Descriptors;
 export import D3D12Lib.D3D12Utils.Commands;
+export import D3D12Lib.D3D12Utils.Pipeline;
 export import D3D12Lib.Device;
 export import D3D12Lib.ResourceManagerD3D12;
 export import D3D12Lib.CommandListDx12;

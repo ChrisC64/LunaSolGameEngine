@@ -243,31 +243,31 @@ auto LS::Win32::GetHwnd() -> HWND
     return g_AppInstance.MainWindow.Hwnd;
 }
 
-[[nodidscard]]
+[[nodiscard]]
 bool LS::Win32::IsKeyDown(LS::Input::KEYBOARD key)
 {
     return GetKeyState(ToWindowsKey(key)) & 0x8000;
 }
 
-[[nodidscard]]
+[[nodiscard]]
 bool LS::Win32::IsKeyDownAsync(LS::Input::KEYBOARD key)
 {
     return GetAsyncKeyState(ToWindowsKey(key)) & 0x8000;
 }
 
-[[nodidscard]]
+[[nodiscard]]
 bool LS::Win32::IsKeyUp(LS::Input::KEYBOARD key)
 {
     return !IsKeyDown(key);
 }
 
-[[nodidscard]]
+[[nodiscard]]
 bool LS::Win32::IsKeyUpAsync(LS::Input::KEYBOARD key)
 {
     return !IsKeyDownAsync(key);
 }
 
-[[nodidscard]]
+[[nodiscard]]
 bool LS::Win32::IsAppRunning()
 {
     return g_AppInstance.State != LS::APP_STATE::CLOSED;

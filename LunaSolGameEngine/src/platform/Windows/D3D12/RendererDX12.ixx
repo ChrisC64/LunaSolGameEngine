@@ -324,7 +324,7 @@ auto RendererDX12::ExecuteCommands() -> uint64_t
 void LS::Platform::Dx12::RendererDX12::BeginFrame()
 {
     // wait for frame buffer to finish presenting if it's not already
-    m_frameBuffer.WaitOnFrameBuffer(); 
+    m_frameBuffer.WaitOnFrameBuffer();
     // Get Current Index and Fence
     const auto currFrame = m_frameBuffer.GetCurrentIndex();
     const auto fence = m_frameContext.GetFence(currFrame);
@@ -332,16 +332,16 @@ void LS::Platform::Dx12::RendererDX12::BeginFrame()
     // we begin work on our next frame
     if (!m_queue.IsFenceComplete(fence))
     {
-        m_queue.WaitForGpu(fence);//blocks until GPU is complete
+        // Blocks CPU to wait for GPU 
+        m_queue.WaitForGpu(fence);
     }
-
 }
 
 void LS::Platform::Dx12::RendererDX12::PresentFrame()
 {
-    const uint64_t fence = m_queue.ExecuteCommandList();
+    const uint64_t nextFenceValue = m_queue.ExecuteCommandList();
     const auto index = m_frameBuffer.GetCurrentIndex();
-    m_frameContext.SetFenceValue(index, fence);
+    m_frameContext.SetFenceValue(index, nextFenceValue);
     HRESULT hr = m_frameBuffer.Present();
     if (FAILED(hr))
     {

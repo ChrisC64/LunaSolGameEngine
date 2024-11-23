@@ -8,4 +8,5 @@ export import DXGIHelper;
 export import Win32.ComUtils;
 export import Win32.Utils;
 export import Platform.Win32Window;
+export import Platform.Win32App;
 #endif
