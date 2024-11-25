@@ -7,11 +7,10 @@ module;
 #include <cassert>
 #include <span>
 #include <format>
+#include <chrono>
 #include <wrl/client.h>
 #include <d3dx12/d3dx12_barriers.h>
-#include <chrono>
 #include "engine/EngineLogDefines.h"
-#include <chrono>
 //NOMINMAX doesn't seem to work here. Though this might be because of std
 #ifdef min
 #undef min
@@ -88,7 +87,9 @@ export namespace LS::Platform::Dx12
         std::chrono::milliseconds duration = std::chrono::milliseconds::max()) noexcept
     {
         //TODO: If UINT_MAX then we have a DEVICE_REMOVED issue, need to address that scenario
-        if (fence->GetCompletedValue() >= fenceValue)
+        const auto lastCompleted = fence->GetCompletedValue();
+
+        if (lastCompleted >= fenceValue)
         {
             return;
         }
@@ -114,12 +115,14 @@ export namespace LS::Platform::Dx12
     inline void WaitForFenceValueMany(const WRL::ComPtr<ID3D12Fence>& fence, uint64_t fenceValue, HANDLE fenceEvent, const std::vector<HANDLE>& events,
         std::chrono::milliseconds duration = std::chrono::milliseconds::max()) noexcept
     {
-        if (fence->GetCompletedValue() >= fenceValue)
+        const auto lastCompleted = fence->GetCompletedValue();
+
+        if (lastCompleted >= fenceValue)
         {
             return;
         }
 
-        const auto hr = fence->SetEventOnCompletion(fenceValue, fenceEvent);
+        const auto hr = fence->SetEventOnCompletion(fenceValue - 1, fenceEvent);
 
         if (FAILED(hr))
         {
@@ -154,7 +157,7 @@ export namespace LS::Platform::Dx12
     [[nodiscard]] inline auto Signal(WRL::ComPtr<ID3D12CommandQueue>& pQueue, WRL::ComPtr<ID3D12Fence>& pFence,
         uint64_t fenceValue) noexcept -> uint64_t
     {
-        const auto hr = pQueue->Signal(pFence.Get(), fenceValue + 1);
+        const auto hr = pQueue->Signal(pFence.Get(), fenceValue);
 
         if (FAILED(hr))
         {
@@ -174,8 +177,8 @@ export namespace LS::Platform::Dx12
     [[nodiscard]] inline void Signal2(WRL::ComPtr<ID3D12CommandQueue>& pQueue, WRL::ComPtr<ID3D12Fence>& pFence,
         uint64_t& fenceValue) noexcept
     {
-        ++fenceValue;
         const auto hr = pQueue->Signal(pFence.Get(), fenceValue);
+        ++fenceValue;
 
         if (FAILED(hr))
         {

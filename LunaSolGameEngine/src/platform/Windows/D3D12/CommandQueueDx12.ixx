@@ -11,6 +11,8 @@ module;
 
 export module D3D12Lib.CommandQueueD3D12;
 import <span>;
+import <thread>;
+import <mutex>;
 
 import D3D12Lib.CommandListDx12;
 import Engine.EngineCodes;
@@ -33,6 +35,10 @@ export namespace LS::Platform::Dx12
         CommandQueueDx12& operator=(CommandQueueDx12&& other) = default;
 
         [[nodiscard]] auto Initialize(ID3D12Device* pDevice) noexcept -> LS::System::ErrorCode;
+        /**
+         * @brief Submits work to the GPU
+         * @return The new fence value that is associated to this command queue's work.
+         */
         [[nodiscard]] auto ExecuteCommandList() -> uint64_t;
         void WaitForGpu(uint64_t fenceValue, std::chrono::milliseconds duration = std::chrono::milliseconds::max()) noexcept;
         void WaitForGpuEx(uint64_t fenceValue, HANDLE* handles, DWORD count, std::chrono::milliseconds duration = std::chrono::milliseconds::max()) noexcept;
@@ -62,9 +68,9 @@ export namespace LS::Platform::Dx12
         WRL::ComPtr<ID3D12Fence>                m_pFence;
 
         HANDLE                                  m_fenceEvent;
-        uint64_t                                m_lastCompletedFenceValue;
+        uint64_t                                m_fenceValue;
         D3D12_COMMAND_LIST_TYPE                 m_commListType;
-
+        std::mutex                              m_queueMutex;
         void PollForCurrentFenceValue();
         void Shutdown() noexcept;
         void ClearQueue(CommandQueue& queue);
@@ -83,6 +89,7 @@ using namespace LS::Platform::Dx12;
 
 void CommandQueueDx12::ClearQueue(CommandQueue& queue)
 {
+    const std::lock_guard<std::mutex> lock(m_queueMutex);
     for(; !queue.empty(); queue.pop())
     { 
     }
@@ -90,14 +97,14 @@ void CommandQueueDx12::ClearQueue(CommandQueue& queue)
 
 CommandQueueDx12::CommandQueueDx12(D3D12_COMMAND_LIST_TYPE type) : m_commListType(type),
 m_pDevice(nullptr),
-m_lastCompletedFenceValue(0)
+m_fenceValue(0)
 {
 
 }
 
 CommandQueueDx12::CommandQueueDx12(ID3D12Device* pDevice, D3D12_COMMAND_LIST_TYPE type) : m_pDevice(pDevice),
 m_commListType(type),
-m_lastCompletedFenceValue(0)
+m_fenceValue(0)
 {
     const auto ec = Initialize(pDevice);
     assert(ec && ec.Message().data());
@@ -124,7 +131,7 @@ auto CommandQueueDx12::Initialize(ID3D12Device* pDevice) noexcept -> LS::System:
     }
 
     hr = pDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_pFence));
-    m_lastCompletedFenceValue++;
+    m_fenceValue++;
     if (FAILED(hr))
     {
         return LS::System::CreateFailCode("Failed to create fence in CommandQueueDx12::Initialize");
@@ -148,35 +155,36 @@ auto CommandQueueDx12::ExecuteCommandList() -> uint64_t
     m_pCommandQueue->ExecuteCommandLists(static_cast<UINT>(commands.size()), commands.data());
 
     // Obtain the signal and set it to return to the user
-    Signal2(m_pCommandQueue, m_pFence, m_lastCompletedFenceValue);
-    return m_lastCompletedFenceValue;
+    ::Signal2(m_pCommandQueue, m_pFence, m_fenceValue);
+    return m_fenceValue;
 }
 
 void CommandQueueDx12::WaitForGpu(uint64_t fenceValue, std::chrono::milliseconds duration) noexcept
 {
-    WaitForFenceValue(m_pFence, fenceValue, m_fenceEvent, duration);
+    ::WaitForFenceValue(m_pFence, fenceValue, m_fenceEvent, duration);
 }
 
 void CommandQueueDx12::WaitForGpuEx(uint64_t fenceValue, HANDLE* handles, DWORD count, std::chrono::milliseconds duration) noexcept
 {
     const std::vector<HANDLE> waitables(handles, handles + count);
-    WaitForFenceValueMany(m_pFence, fenceValue, m_fenceEvent, waitables, duration);
+    ::WaitForFenceValueMany(m_pFence, fenceValue, m_fenceEvent, waitables, duration);
 }
 
 void CommandQueueDx12::Flush() noexcept
 {
-    m_lastCompletedFenceValue = ::Flush(m_pCommandQueue, m_pFence, m_lastCompletedFenceValue, m_fenceEvent);
+    m_fenceValue = ::Flush(m_pCommandQueue, m_pFence, m_fenceValue, m_fenceEvent);
     ClearQueue(m_queue);
 }
 
 void CommandQueueDx12::FlushAndWaitMany(const std::vector<HANDLE>& handles) noexcept
 {
-    m_lastCompletedFenceValue = FlushAndWaitForMany(m_pCommandQueue, m_pFence, m_lastCompletedFenceValue, m_fenceEvent, handles);
+    m_fenceValue = ::FlushAndWaitForMany(m_pCommandQueue, m_pFence, m_fenceValue, m_fenceEvent, handles);
     ClearQueue(m_queue);
 }
 
 void CommandQueueDx12::QueueCommands(std::span<CommandListDx12*> commands) noexcept
 {
+    const std::lock_guard<std::mutex> lock(m_queueMutex);
     for (auto c : commands)
     {
         m_queue.push(c);
@@ -185,6 +193,7 @@ void CommandQueueDx12::QueueCommands(std::span<CommandListDx12*> commands) noexc
 
 void CommandQueueDx12::QueueCommand(const CommandListDx12* const command) noexcept
 {
+    const std::lock_guard<std::mutex> lock(m_queueMutex);
     m_queue.push(command);
 }
 
@@ -196,15 +205,15 @@ void CommandQueueDx12::Shutdown() noexcept
 
 void CommandQueueDx12::PollForCurrentFenceValue()
 {
-    m_lastCompletedFenceValue = std::max(m_lastCompletedFenceValue, m_pFence->GetCompletedValue());
+    m_fenceValue = std::max(m_fenceValue, m_pFence->GetCompletedValue());
 }
 
 [[nodiscard]] bool CommandQueueDx12::IsFenceComplete(uint64_t fenceValue)
 {
-    if (fenceValue > m_lastCompletedFenceValue)
+    if (fenceValue > m_fenceValue)
     {
         PollForCurrentFenceValue();
     }
 
-    return fenceValue <= m_lastCompletedFenceValue;
+    return fenceValue <= m_fenceValue;
 }

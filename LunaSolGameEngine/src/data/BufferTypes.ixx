@@ -11,10 +11,6 @@ import Engine.Defines;
 
 export namespace LS
 {
-    //TODO: Add constraints to this... because I don't know what but I'm sure I"ll think of some later!
-    // 1. Should be the object type (not pointers)
-    // 2. Should be constructible by default without params
-    // 3. Should also allow for empty constructed objects (like an array)
     template<class TObject>
     class LSBuffer
     {

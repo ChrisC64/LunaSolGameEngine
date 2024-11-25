@@ -1,13 +1,14 @@
 module;
-#include <string>
-#include <span>
 #include <d3d12.h>
 #include <d3dx12\d3dx12.h>
 #include <directxtk12\BufferHelpers.h>
 #include <directxtk12\DirectXHelpers.h>
 #include <wrl\client.h>
-#include <format>
+
 export module D3D12Lib.Utils;
+import <string>;
+import <span>;
+import <format>;
 
 import Engine.EngineCodes;
 import Engine.Defines;

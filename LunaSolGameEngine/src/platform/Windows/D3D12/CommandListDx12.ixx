@@ -67,6 +67,7 @@ export namespace LS::Platform::Dx12
         void SetGraphicsRoot32BitConstant(uint32_t rootParamIndx, uint32_t srcData, uint32_t destOffsetIn32BitValues) noexcept;
         void SetGraphicsRoot32BitConstants(uint32_t rootParamIndx, uint32_t num32BitValueToSet, const void* pData, uint32_t destOffsetIn32BitValues) noexcept;
         void DrawIndexedInstanced(uint32_t indexCountPerInstance, uint32_t instanceCount, uint32_t startIndexLocation = 0u, int32_t  baseVertexLocation = 0u, uint32_t startInstanceLocation = 0u) noexcept;
+        void DrawInstances(uint32_t vertexCountPerInstance, uint32_t instanceCount, uint32_t startIndexLocation = 0, int32_t startVertexLocation = 0) noexcept;
 
         void SetRenderTarget(const FrameDx12& frame, const D3D12_CPU_DESCRIPTOR_HANDLE* depthStencilHandle = nullptr) noexcept;
         void FinishFrame() noexcept;
@@ -219,6 +220,11 @@ void CommandListDx12::SetGraphicsRoot32BitConstants(uint32_t rootParamIndx, uint
 void CommandListDx12::DrawIndexedInstanced(uint32_t indexCountPerInstance, uint32_t instanceCount, uint32_t startIndexLocation /*= 0*/, int32_t baseVertexLocation /*= 0*/, uint32_t startInstanceLocation /*= 0*/) noexcept
 {
     m_pCommandList->DrawIndexedInstanced(indexCountPerInstance, instanceCount, startIndexLocation, baseVertexLocation, startInstanceLocation);
+}
+
+void CommandListDx12::DrawInstances(uint32_t vertexCountPerInstance, uint32_t instanceCount, uint32_t startIndexLocation, int32_t startVertexLocation ) noexcept
+{
+    m_pCommandList->DrawInstanced(vertexCountPerInstance, instanceCount, startVertexLocation, startIndexLocation);
 }
 
 void CommandListDx12::SetRenderTarget(const FrameDx12& frame, const D3D12_CPU_DESCRIPTOR_HANDLE* depthStencilHandle /*= nullptr*/) noexcept

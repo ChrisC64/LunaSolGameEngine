@@ -32,7 +32,7 @@ PS_INPUT main(uint pos : SV_VertexID)
 	}
 	else if (pos == 4)// Bottom Right
 	{
-		oPos = float4(1.0f, 1.0f, 0.0f, 0.0f);
+		oPos = float4(1.0f, 1.0f, 0.0f, 1.0f);
 		uv = float2(1.0f, 1.0f);
 	}
 	else if (pos == 5)// Bottom Left
@@ -44,7 +44,7 @@ PS_INPUT main(uint pos : SV_VertexID)
 	PS_INPUT psInput;
 	psInput.Pos = oPos;
 	psInput.Uv = uv;
-	psInput.Color = float4(1.0f, 0.0f, 0.0f, 1.0f);
+	psInput.Color = float4(1.0f, 0.20f, 0.30f, 1.0f);
 
 	return psInput;
 }

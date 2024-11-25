@@ -15,7 +15,6 @@ export namespace LS
 
     public:
 
-        //TODO: Build an interface Device/Context as they will be needed to create the pipeline state
         virtual ~IPipelineFactory() = default;
 
         [[nodiscard]] virtual auto CreatePipelineState(const PipelineDescriptor& pipeline, std::string_view guid) noexcept -> LS::System::ErrorCode = 0;

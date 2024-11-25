@@ -171,13 +171,14 @@ export namespace LS
         return out;
     }
 
-    struct LSShaderFile
+    struct CompileShaderOpts
     {
-        SHADER_TYPE             m_shaderType;//@brief Shader type
-        std::filesystem::path   m_filePath{};//@brief The file's path
-        std::filesystem::path   m_includePath{ "." };//@brief The directory to look at for include (default to current directory of file)
-        std::string             m_entryPoint{ "main" }; //@brief The main entry point into the shader (if not main)
-        std::string             m_shaderTarget{};//@brief The target profile to compile in
+        SHADER_TYPE             ShaderType;//@brief Shader type
+        std::filesystem::path   FilePath{};//@brief The file's path
+        std::filesystem::path   IncludeDir{ "." };//@brief The directory to look at for include (default to current directory of file)
+        std::string             EntryPoint{ "main" }; //@brief The main entry point into the shader (if not main)
+        std::string             Target{}; //@brief The target profile to compile in
+        std::vector<std::string>CompileFlags;
     };
 
     /**
