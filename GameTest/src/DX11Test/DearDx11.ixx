@@ -367,7 +367,6 @@ void gt::dx11::ImGuiDx11::CreateBuffers()
     uint32_t max = 0xFFFFFFFF;
     const auto vbResult = m_bufferCache.CreateVertexBuffer(m_cube.Verts.data(), m_cube.Verts.size() * sizeof(m_cube.Verts[0]), m_renderer.GetDevice());
     vbKey = vbResult.value_or(max);
-    //TODO: Need to implement better solution to obtaining object data (pointer to) and size
     const auto floorResult = m_bufferCache.CreateVertexBuffer<LS::Vec3<float>>(g_floor, m_renderer.GetDevice());
     floorKey = floorResult.value_or(max);
 

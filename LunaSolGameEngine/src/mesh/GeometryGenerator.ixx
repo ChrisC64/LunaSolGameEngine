@@ -161,8 +161,6 @@ export namespace LS::Geo::Generator
         requires LS::IsNumerical<T>
     [[nodiscard]] constexpr auto CreateCubeVertsAndIndices(T size) -> std::pair<std::array<Vec3<T>, 8>, std::array<uint32_t, 36>>
     {
-        //TODO: This call causes an issue when I try to make consteval. Wonder what the difference betweent his
-        // and the CreateQuadVertsAndIndices() is that it won't let me?
         const auto verts = CreateCubeVertices(size);
         constexpr auto indices = CreateCubeIndexArray();
 

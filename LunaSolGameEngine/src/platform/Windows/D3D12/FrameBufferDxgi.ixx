@@ -16,6 +16,7 @@ import D3D12Lib.DescriptorHeapDx12;
 import Engine.EngineCodes;
 import Win32.ComUtils;
 import Win32.Utils;
+import LSDataLib;
 
 namespace WRL = Microsoft::WRL;
 
@@ -63,13 +64,12 @@ export namespace LS::Platform::Dx12
 
         constexpr void SetFenceValue(size_t index, uint64_t fenceValue)
         {
-            m_fences[index] = fenceValue;
-            //m_fences.emplace(std::begin(m_fences) + index, fenceValue);
+            m_fences.at(index) = fenceValue;
         }
 
         void SetAllocator(size_t index, WRL::ComPtr<ID3D12CommandAllocator>& alloc)
         {
-            m_allocs.emplace(std::begin(m_allocs) + index, alloc);
+            m_allocs.at(index) = alloc;
         }
 
         constexpr void IncrementFence(size_t index)
@@ -129,13 +129,21 @@ export namespace LS::Platform::Dx12
         [[nodiscard]] auto GetTotalFrames() const -> uint64_t;
         [[nodiscard]] auto GetFrameLatencyCount() const noexcept -> size_t;
         [[nodiscard]] auto Present() const -> HRESULT;
-        
+
+        void SetFps(uint32_t fps);
         void EnableVsync() noexcept;
         void DisableVsync() noexcept;
         [[nodiscard]] auto ResizeFrames(uint32_t width, uint32_t height,
             ID3D12Device* device) noexcept -> LS::System::ErrorCode;
         void CleanupFrames() noexcept;
         void WaitOnFrameBuffer() noexcept;
+
+        auto GetDimensions() -> LS::Vec2U
+        {
+            uint32_t width, height;
+            m_pSwapChain->GetSourceSize(&width, &height);
+            return {.x = width, .y = height };
+        }
 
     private:
         DXGI_SWAP_CHAIN_DESC1                    m_swapChainDesc;
@@ -146,7 +154,7 @@ export namespace LS::Platform::Dx12
         std::vector<FrameDx12>                   m_frames;
         DescriptorHeapDx12                       m_heapRtv;
         HANDLE                                   m_handle;
-
+        uint32_t                                 m_fpsTarget = 0;
         void BuildFrames(D3D12_CPU_DESCRIPTOR_HANDLE rtvHeapStart, ID3D12Device* device) noexcept;
 
     };
@@ -232,14 +240,17 @@ auto FrameBufferDxgi::GetFrameLatencyCount() const noexcept -> size_t
 
 auto FrameBufferDxgi::Present() const -> HRESULT
 {
-    // TODO: Clear whole screen, maybe later can optimize to clear a part of the screen
-    // using this. 
     static const DXGI_PRESENT_PARAMETERS params{ .DirtyRectsCount = 0,
     .pDirtyRects = NULL, .pScrollRect = NULL, .pScrollOffset = NULL };
 
     const auto hr = m_pSwapChain->Present1(m_syncInterval, 0, &params);
     ++m_frameIndex;
     return hr;
+}
+
+void LS::Platform::Dx12::FrameBufferDxgi::SetFps(uint32_t fps)
+{
+    m_fpsTarget = fps;
 }
 
 void FrameBufferDxgi::EnableVsync() noexcept

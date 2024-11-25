@@ -161,8 +161,6 @@ auto LS::Win32::EnumerateDisplayAdapters(IDXGIFactory1* const pFactory) noexcept
 
         if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
         {
-            // Don't select the Basic Render Driver adapter.
-            //TODO: Maybe add optional support for software adapter types 
             continue;
         }
 

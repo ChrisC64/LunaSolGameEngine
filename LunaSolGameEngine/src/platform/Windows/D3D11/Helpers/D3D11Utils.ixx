@@ -353,8 +353,7 @@ export namespace LS::Win32
         return vertexElems;
     }
 
-    //TODO: Make better - handle cases for value 0 isn't used for things like POSITION/TEXCOORD because 0 is implied
-    //Just redo this wohle thing, I think we cand o this better.
+    //TODO: Use reflection library instead
     inline auto FindSemanticIndex(std::string_view semanticName) noexcept -> uint32_t
     {
         uint32_t offset = 0;

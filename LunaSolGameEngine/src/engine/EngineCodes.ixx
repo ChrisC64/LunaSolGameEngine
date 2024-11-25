@@ -133,7 +133,6 @@ export namespace LS
             [[nodiscard]] ErrorCode(const ErrorCode&) noexcept = default;
             [[nodiscard]] ErrorCode(ErrorCode&&) noexcept = default;
             
-            //TODO: Maybe consider changing to just const char* and Msg instead of Message
             auto Message() const noexcept -> const std::string_view
             {
                 return ErrorMsg;

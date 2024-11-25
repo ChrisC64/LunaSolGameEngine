@@ -28,6 +28,7 @@ import D3D12Lib.Device;
 import D3D12Lib.DescriptorHeapDx12;
 import D3D12Lib.FrameBufferDxgi;
 import D3D12Lib.FrameDx12;
+import D3D12Lib.D3D12Utils.Pipeline;
 import Win32.Utils;
 import Win32.ComUtils;
 import DXGIHelper;
@@ -44,6 +45,20 @@ import DXGIHelper;
  */
 
 namespace WRL = Microsoft::WRL;
+
+namespace LS::Platform::Dx12
+{
+    /**
+     * @brief A pair between a view and the resource
+     * @tparam T The View type to use
+     */
+    template<class T>
+    struct RVPair
+    {
+        Microsoft::WRL::ComPtr<ID3D12Resource> Resource;
+        T View;
+    };
+}
 
 export namespace LS::Platform::Dx12
 {
@@ -101,17 +116,24 @@ export namespace LS::Platform::Dx12
         void BeginFrame();
         void PresentFrame();
         /**
-         * @brief Assigns and sets the command allocator for this command list. The command list must be closed and finished 
-         * before another command list can be assigned with this current frame buffer's command allocator. 
-         * @param commandList The command list to ready for usage. 
+         * @brief Assigns and sets the command allocator for this command list. The command list must be closed and finished
+         * before another command list can be assigned with this current frame buffer's command allocator.
+         * @param commandList The command list to ready for usage.
          */
         void BeginCommandList(CommandListDx12& commandList);
+        void BeginCommandList(CommandListDx12& commandList, uint32_t stateId);
 
         /**
          * @brief Closes the command list, allowing the command allocator in use to be used with another in-flight command list.
-         * @param commandList 
+         * @param commandList
          */
         void EndCommandList(CommandListDx12& commandList);
+
+        auto BuildPipelineState(Dx12PsoBuilder& builder) -> LS::Nullable<size_t>;
+
+        auto CreateVertexBuffer(const void* pData, size_t size, size_t stride) -> LS::Nullable<size_t>;
+
+        auto SetVertexBuffer(uint32_t vbId, CommandListDx12& commandList, uint32_t slot = 0);
 
     private: // Members //
         WRL::ComPtr<IDXGIFactory4>              m_pFactory;
@@ -121,12 +143,14 @@ export namespace LS::Platform::Dx12
         DeviceD3D12                             m_device;
         CommandQueueDx12                        m_queue;
         FrameContext                            m_frameContext;
-
+        std::unordered_map<size_t, Microsoft::WRL::ComPtr<ID3D12PipelineState>> m_pipelines;
+        std::unordered_map<size_t, RVPair<D3D12_VERTEX_BUFFER_VIEW>> m_vertexBuffers;
+        WRL::ComPtr<ID3D12RootSignature>        m_rootSignature;
     private: // Functions //
-        [[nodiscard]] 
+        [[nodiscard]]
         auto Initialize(const LSWindowBase* window) noexcept -> LS::System::ErrorCode;
-        
-        [[nodiscard]] 
+
+        [[nodiscard]]
         auto Initialize(HWND hwnd) noexcept -> LS::System::ErrorCode;
 
     public:
@@ -167,7 +191,7 @@ RendererDX12::RendererDX12(uint32_t width, uint32_t height, uint32_t frameCount,
     m_state = RendererState::INITIALIZED;
 }
 
-LS::Platform::Dx12::RendererDX12::RendererDX12(uint32_t width, uint32_t height, uint32_t frameCount, HWND window)
+RendererDX12::RendererDX12(uint32_t width, uint32_t height, uint32_t frameCount, HWND window)
     : m_frameBuffer(frameCount,
         width, height,
         DXGI_FORMAT_R8G8B8A8_UNORM,
@@ -194,7 +218,7 @@ auto RendererDX12::Initialize(const LSWindowBase* window) noexcept -> LS::System
     return Initialize(hwnd);
 }
 
-auto LS::Platform::Dx12::RendererDX12::Initialize(HWND hwnd) noexcept -> LS::System::ErrorCode
+auto RendererDX12::Initialize(HWND hwnd) noexcept -> LS::System::ErrorCode
 {
     UINT flag = 0;
 #ifdef _DEBUG
@@ -237,7 +261,7 @@ auto LS::Platform::Dx12::RendererDX12::Initialize(HWND hwnd) noexcept -> LS::Sys
     {
         return ec;
     }
-    
+
     if (const auto ec = m_frameBuffer.Initialize(m_pFactory,
         m_queue.GetCommandQueue().Get(),
         hwnd,
@@ -321,7 +345,7 @@ auto RendererDX12::ExecuteCommands() -> uint64_t
     return fence;
 }
 
-void LS::Platform::Dx12::RendererDX12::BeginFrame()
+void RendererDX12::BeginFrame()
 {
     // wait for frame buffer to finish presenting if it's not already
     m_frameBuffer.WaitOnFrameBuffer();
@@ -337,7 +361,7 @@ void LS::Platform::Dx12::RendererDX12::BeginFrame()
     }
 }
 
-void LS::Platform::Dx12::RendererDX12::PresentFrame()
+void RendererDX12::PresentFrame()
 {
     const uint64_t nextFenceValue = m_queue.ExecuteCommandList();
     const auto index = m_frameBuffer.GetCurrentIndex();
@@ -350,7 +374,7 @@ void LS::Platform::Dx12::RendererDX12::PresentFrame()
     }
 }
 
-void LS::Platform::Dx12::RendererDX12::BeginCommandList(CommandListDx12& commandList)
+void RendererDX12::BeginCommandList(CommandListDx12& commandList)
 {
     const FrameDx12& frame = m_frameBuffer.GetCurrentFrame();
 
@@ -359,7 +383,86 @@ void LS::Platform::Dx12::RendererDX12::BeginCommandList(CommandListDx12& command
     commandList.BeginFrame(frame, alloc);
 }
 
-void LS::Platform::Dx12::RendererDX12::EndCommandList(CommandListDx12& commandList)
+void RendererDX12::BeginCommandList(CommandListDx12& commandList, uint32_t stateId)
+{
+    const FrameDx12& frame = m_frameBuffer.GetCurrentFrame();
+
+    WRL::ComPtr<ID3D12CommandAllocator>& alloc = m_frameContext.GetAllocator(m_frameBuffer.GetCurrentIndex());
+    LS::Utils::ThrowIfFailed(alloc->Reset(), "The command list failed to reset.");
+    commandList.Begin(alloc);
+    const auto state = m_pipelines[stateId];
+    commandList.SetPipelineState(state.Get());
+    commandList.SetGraphicsRootSignature(m_rootSignature.Get());
+    commandList.SetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    const auto dimensions = m_frameBuffer.GetDimensions();
+    CD3DX12_VIEWPORT viewport(0.0f, 0.0f, static_cast<float>(dimensions.x), static_cast<float>(dimensions.y));
+    CD3DX12_RECT scissorRect(0, 0, dimensions.x, dimensions.y);
+    commandList.SetScissorRects(1, &scissorRect);
+    commandList.SetViewports(1, &viewport);
+    commandList.SetRenderTarget(frame);
+}
+
+void RendererDX12::EndCommandList(CommandListDx12& commandList)
 {
     commandList.EndFrame();
+}
+
+auto RendererDX12::BuildPipelineState(Dx12PsoBuilder& builder) -> LS::Nullable<size_t>
+{
+    const auto pso = builder.BuildPSO(m_device.GetDevice().Get());
+    if (!pso)
+        return std::nullopt;
+
+    const auto id = m_pipelines.size() + 1;
+    m_pipelines[id] = pso;
+    m_rootSignature = builder.GetRootSignature();
+
+    return id;
+}
+//TODO: Should probably request a command list from the user, but for now will tie to same queue
+// or we could create our own internal upload queue. We'll see...
+auto RendererDX12::CreateVertexBuffer(const void* pData, size_t size, size_t stride) -> LS::Nullable<size_t>
+{
+    Microsoft::WRL::ComPtr<ID3D12Resource> buffer;
+    CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_UPLOAD);
+    CD3DX12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(size);
+    LS::Utils::ThrowIfFailed(m_device.GetDevice()->CreateCommittedResource(
+        &heapProps,
+        D3D12_HEAP_FLAG_NONE,
+        &resourceDesc,
+        D3D12_RESOURCE_STATE_GENERIC_READ,
+        nullptr,
+        IID_PPV_ARGS(&buffer)), "Failed to create committed resource.");
+
+    UINT8* pVertexDataBegin;
+    CD3DX12_RANGE readRange(0, 0);
+    HRESULT hr = buffer->Map(0, &readRange, reinterpret_cast<void**>(&pVertexDataBegin));
+    if (FAILED(hr))
+    {
+#ifdef _DEBUG
+        throw std::runtime_error("Failed to map buffer for writing.");
+#else
+        return std::nullopt;
+#endif
+    }
+
+    memcpy(pVertexDataBegin, pData, size);
+    buffer->Unmap(0, nullptr);
+    D3D12_VERTEX_BUFFER_VIEW view;
+    view.BufferLocation = buffer->GetGPUVirtualAddress();
+    view.StrideInBytes = stride;
+    view.SizeInBytes = size;
+
+    const auto id = m_vertexBuffers.size() + 1;
+    m_vertexBuffers[id] = RVPair<D3D12_VERTEX_BUFFER_VIEW>{ .Resource = buffer, .View = view };
+    return id;
+}
+
+auto RendererDX12::SetVertexBuffer(uint32_t vbId, CommandListDx12& commandList, uint32_t slot /*= 0*/)
+{
+    if (!m_vertexBuffers.contains(vbId))
+        return;
+    const auto vb = m_vertexBuffers[vbId];
+
+    commandList.SetVertexBuffers(slot, 1, &vb.View);
 }

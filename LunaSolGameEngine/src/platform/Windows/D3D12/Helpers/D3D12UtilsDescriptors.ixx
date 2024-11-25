@@ -1,14 +1,14 @@
 module;
 #include <d3d12.h>
 #include <dxgi1_6.h>
-#include <span>
-#include <cassert>
 #include <directx/d3dx12.h>
-#include <vector>
 #include "engine/EngineLogDefines.h"
 export module D3D12Lib.D3D12Utils.Descriptors;
 import Win32.Utils;
-
+import <span>;
+import <cassert>;
+import <vector>;
+// This module is intended to help users create Descriptoer Heaps and work with them. 
 export namespace LS::Platform::Dx12
 {
     constexpr auto CreateDescriptorHeap(ID3D12Device* device, const D3D12_DESCRIPTOR_HEAP_DESC& descriptor, ID3D12DescriptorHeap* heap) noexcept -> HRESULT
@@ -59,11 +59,6 @@ export namespace LS::Platform::Dx12
         return device->GetDescriptorHandleIncrementSize(type);
     }
     
-    //TODO: Create Helper Functions for creating the following:
-    // 2. Create Root Signatures
-    // 3. Create and configure root signatures
-    // 4. Descriptor Ranges
-
     /**
      * @brief Creates a render target view 
      * @param device Device object that will be used to create the RTVs

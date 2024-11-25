@@ -16,7 +16,7 @@ import Engine.Input;
 export namespace LS::Win32
 {
     using WndProcHandler = std::function<LRESULT(HWND, UINT, WPARAM, LPARAM)>;
-
+    //TODO: This is going to be deprecated and go away in favor of separation and newer app structure (might move to lib like SDL/RayLib or something)
     class Win32Window final : public LS::LSWindowBase
     {
     public:
@@ -169,11 +169,6 @@ namespace LS::Win32
     {
         if (!m_bIsOpen)
             return DefWindowProc(hwnd, message, wparam, lparam);
-        //TODO: For some reason the latest runs with MSVC makes this piece of code run when my std::function
-        // object is null and it passes this check. I don't recall if this ran before or after my VS updated
-        // probably after, so I'm guessing it broke it somehow. I'll check the code later, but I do want to redo this
-        // window stuff because I'd rather try and implement ImGui and be window agnostic a bit. I'd rather create
-        // a new library for Window management or something, but that will come later after my work on getting a basic
         // DX12 renderer setup
         LRESULT handled = 0;
         if (m_wndProcHandler)
@@ -266,7 +261,6 @@ namespace LS::Win32
         }
         case(WM_MOUSEHOVER):
         {
-            //TODO: Requires us to do some tracking to get this event. Look up MSDN for info
             if (m_onWindowEvent)
             {
                 m_onWindowEvent(LS::WINDOW_EVENT::ENTER_WINDOW);
@@ -278,8 +272,6 @@ namespace LS::Win32
             auto zDelta = GET_WHEEL_DELTA_WPARAM(wparam);
             int x;
             int y;
-            //TODO: Invalid, need to look up how to obtain coordinates correctly because the LPARAM
-            // looks lik it may not have the correct coordiantes
             GetScreenCoordinates(lparam, x, y);
             OnMouseWheelScroll(zDelta, x, y);
             break;
