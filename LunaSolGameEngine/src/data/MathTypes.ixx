@@ -62,9 +62,7 @@ export namespace LS
             return x >= rhs.x && y >= rhs.y;
         }
 
-        template<class T>
-            requires std::is_floating_point<T>
-        [[nodiscard]] constexpr auto operator<=>(const Vec2<T>& rhs) const noexcept
+        [[nodiscard]] constexpr auto operator<=> (const Vec2<T>& rhs) const noexcept requires std::is_floating_point_v<T>
         {
             if (IsGreater(x, rhs.x) && IsGreater(y, rhs.y) )
             {
@@ -138,9 +136,7 @@ export namespace LS
             return x >= rhs.x && y >= rhs.y && z >= rhs.z;
         }
 
-        template<class T>
-            requires std::is_floating_point<T>
-        [[nodiscard]] constexpr auto operator<=>(const Vec3<T>& rhs) const noexcept
+        [[nodiscard]] constexpr auto operator<=>(const Vec3<T>& rhs) const noexcept requires std::is_floating_point_v<T>
         {
             if (IsGreater(x, rhs.x) && IsGreater(y, rhs.y) && IsGreater(z, rhs.z))
             {
@@ -220,9 +216,7 @@ export namespace LS
             return x >= rhs.x && y >= rhs.y && z >= rhs.z && w >= rhs.w;
         }
 
-        template<class T>
-            requires std::is_floating_point<T>
-        [[nodiscard]] constexpr auto operator<=>(const Vec4<T>& rhs) const noexcept 
+        [[nodiscard]] constexpr auto operator<=>(const Vec4<T>& rhs) const noexcept requires std::is_floating_point_v<T>
         {
             if (IsGreater(x, rhs.x) && IsGreater(y, rhs.y) && IsGreater(z, rhs.z) && IsGreater(w, rhs.w))
             {
