@@ -15,202 +15,190 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\helper\PipelineFactory.cpp">
+    <ClCompile Include="mod\data\BufferTypes.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\data\BufferTypes.ixx">
+    <ClCompile Include="mod\engine\EngineDefines.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\engine\EngineDefines.ixx">
+    <ClCompile Include="mod\data\DataTypes.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\data\DataTypes.ixx">
+    <ClCompile Include="mod\data\LSDataLib.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\data\LSDataLib.ixx">
+    <ClCompile Include="mod\data\MathTypes.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\data\MathTypes.ixx">
+    <ClCompile Include="mod\data\serialize\AssimpLoader.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\data\serialize\AssimpLoader.ixx">
+    <ClCompile Include="mod\data\serialize\WavefrontObj.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\data\serialize\WavefrontObj.ixx">
+    <ClCompile Include="mod\engine\EngineInput.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\engine\EngineInput.ixx">
+    <ClCompile Include="mod\engine\EngineShader.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\engine\EngineShader.ixx">
+    <ClCompile Include="mod\data\TextureTypes.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\data\TextureTypes.ixx">
+    <ClCompile Include="mod\engine\Clock.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\engine\Clock.ixx">
+    <ClCompile Include="mod\engine\EngineApp.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\engine\EngineApp.ixx">
+    <ClCompile Include="mod\engine\EngineCamera.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\engine\EngineCamera.ixx">
+    <ClCompile Include="mod\engine\EngineCodes.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\engine\EngineCodes.ixx">
+    <ClCompile Include="mod\engine\EngineDevice.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\engine\EngineDevice.ixx">
+    <ClCompile Include="mod\engine\EngineLogger.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\engine\EngineLogger.ixx">
+    <ClCompile Include="mod\engine\EngineWindow.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\engine\EngineWindow.ixx">
+    <ClCompile Include="mod\engine\LSEngine.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\engine\LSEngine.ixx">
+    <ClCompile Include="mod\utils\StdUtils.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\utils\StdUtils.ixx">
+    <ClCompile Include="mod\utils\Util.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\utils\Util.ixx">
+    <ClCompile Include="mod\platform\Windows\WindowsLib.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\platform\Windows\WindowsLib.ixx">
+    <ClCompile Include="mod\platform\Windows\Win32\Win32Window.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\platform\Windows\Win32\Win32Window.ixx">
+    <ClCompile Include="mod\platform\Windows\Win32\ComUtils.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\platform\Windows\Win32\ComUtils.ixx">
+    <ClCompile Include="mod\platform\Windows\Win32\Win32Utils.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\platform\Windows\Win32\Win32Utils.ixx">
+    <ClCompile Include="mod\platform\Windows\D3D11\D3D11Lib.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\platform\Windows\D3D11\D3D11Lib.ixx">
+    <ClCompile Include="mod\platform\Windows\D3D11\DeviceD3D11.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\platform\Windows\D3D11\DeviceD3D11.ixx">
+    <ClCompile Include="mod\platform\Windows\D3D11\RenderD3D11.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\platform\Windows\D3D11\PipelineFactoryD3D11.ixx">
+    <ClCompile Include="mod\platform\Windows\D3D11\RenderFuncs.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\platform\Windows\D3D11\RenderD3D11.ixx">
+    <ClCompile Include="mod\platform\Windows\D3D12\Helpers\D3D12Utils.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\platform\Windows\D3D11\RenderFuncs.ixx">
+    <ClCompile Include="mod\platform\Windows\D3D12\Helpers\D3D12UtilsCommandList.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\platform\Windows\D3D12\Helpers\D3D12Utils.ixx">
+    <ClCompile Include="mod\platform\Windows\D3D12\Helpers\D3D12UtilsDescriptors.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\platform\Windows\D3D12\Helpers\D3D12UtilsCommandList.ixx">
+    <ClCompile Include="mod\platform\Windows\D3D12\CommandListDx12.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\platform\Windows\D3D12\Helpers\D3D12UtilsDescriptors.ixx">
+    <ClCompile Include="mod\platform\Windows\D3D12\CommandQueueDx12.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\platform\Windows\D3D12\CommandListDx12.ixx">
+    <ClCompile Include="mod\platform\Windows\D3D12\D3D12Common.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\platform\Windows\D3D12\CommandQueueDx12.ixx">
+    <ClCompile Include="mod\platform\Windows\D3D12\D3D12Lib.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\platform\Windows\D3D12\D3D12Common.ixx">
+    <ClCompile Include="mod\platform\Windows\D3D12\DescriptorHeapDx12.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\platform\Windows\D3D12\D3D12Lib.ixx">
+    <ClCompile Include="mod\platform\Windows\D3D12\DeviceD3D12.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\platform\Windows\D3D12\DescriptorHeapDx12.ixx">
+    <ClCompile Include="mod\platform\Windows\D3D12\FrameDx12.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\platform\Windows\D3D12\DeviceD3D12.ixx">
+    <ClCompile Include="mod\platform\Windows\DirectX\DirectXCommon.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\platform\Windows\D3D12\FrameDx12.ixx">
+    <ClCompile Include="mod\platform\Windows\DirectX\DXCamera.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\platform\Windows\DirectX\DirectXCommon.ixx">
+    <ClCompile Include="mod\platform\Windows\DirectX\DXCameraController.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\platform\Windows\DirectX\DXCamera.ixx">
+    <ClCompile Include="mod\platform\Windows\DirectX\DXMatrixUtils.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\platform\Windows\DirectX\DXCameraController.ixx">
+    <ClCompile Include="mod\platform\Windows\D3D12\ResourceManagerD3D12.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\platform\Windows\DirectX\DXMatrixUtils.ixx">
+    <ClCompile Include="mod\platform\Windows\DXGI\DXGIHelper.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\platform\Windows\D3D12\ResourceManagerD3D12.ixx">
+    <ClCompile Include="mod\platform\Windows\D3D12\FrameBufferDxgi.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\platform\Windows\DXGI\DXGIHelper.ixx">
+    <ClCompile Include="mod\platform\Windows\D3D11\Helpers\D3D11HelperStates.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\platform\Windows\D3D12\FrameBufferDxgi.ixx">
+    <ClCompile Include="mod\platform\Windows\D3D11\Helpers\D3D11MemoryHelper.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\platform\Windows\D3D11\Helpers\D3D11HelperStates.ixx">
+    <ClCompile Include="mod\platform\Windows\D3D11\Helpers\D3D11TypeWrapper.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\platform\Windows\D3D11\Helpers\D3D11MemoryHelper.ixx">
+    <ClCompile Include="mod\platform\Windows\D3D11\Helpers\D3D11Utils.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\platform\Windows\D3D11\Helpers\D3D11TypeWrapper.ixx">
+    <ClCompile Include="mod\helper\IOHelper.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\platform\Windows\D3D11\Helpers\D3D11Utils.ixx">
+    <ClCompile Include="mod\helper\LSCommonTypes.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\helper\IOHelper.ixx">
+    <ClCompile Include="mod\math\GeometryMath.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\helper\LSCommonTypes.ixx">
+    <ClCompile Include="mod\math\MathLib.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\helper\PipelineFactory.ixx">
+    <ClCompile Include="mod\math\MatrixMath.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\math\GeometryMath.ixx">
+    <ClCompile Include="mod\mesh\GeometryGenerator.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\math\MathLib.ixx">
+    <ClCompile Include="mod\platform\Windows\D3D11\RenderCommandD3D11.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\math\MatrixMath.ixx">
+    <ClCompile Include="mod\platform\Windows\D3D11\ShaderD3D11.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\mesh\GeometryGenerator.ixx">
+    <ClCompile Include="mod\platform\Windows\DXGI\DXGISwapChain.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\platform\Windows\D3D11\RenderCommandD3D11.ixx">
+    <ClCompile Include="mod\platform\Windows\D3D12\RendererDX12.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\platform\Windows\D3D11\ShaderD3D11.ixx">
+    <ClCompile Include="mod\platform\Windows\Win32\Win32App.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\engine\Renderer.ixx">
+    <ClCompile Include="mod\platform\Windows\DirectX\D3DCompiler.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\platform\Windows\DXGI\DXGISwapChain.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\platform\Windows\D3D12\RendererDX12.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\platform\Windows\Win32\Win32App.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\platform\Windows\DirectX\D3DCompiler.ixx">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\platform\Windows\D3D12\Helpers\D3D12UtilsPipeline.ixx">
+    <ClCompile Include="mod\platform\Windows\D3D12\Helpers\D3D12UtilsPipeline.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

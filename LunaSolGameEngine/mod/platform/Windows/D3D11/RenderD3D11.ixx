@@ -11,10 +11,8 @@ import Engine.LSWindow;
 import Engine.LSDevice;
 import Engine.EngineCodes;
 import Engine.Defines;
-import D3D11.PipelineFactory;
 import D3D11.Device;
 import D3D11.Utils;
-import D3D11.PipelineFactory;
 import D3D11.RenderFuncD3D11;
 import D3D11.MemoryHelper;
 import Win32.ComUtils;
@@ -61,7 +59,6 @@ export namespace LS::Win32
         // Class Members // 
         [[nodiscard]]
         auto Initialize() noexcept -> LS::System::ErrorCode;
-        void SetPipeline(const PipelineStateDX11* state) noexcept;
         void Shutdown() noexcept;
         void AttachToWindow(LS::LSWindowBase* window) noexcept;
 
@@ -242,103 +239,12 @@ auto LS::Win32::RenderD3D11::Initialize() noexcept -> LS::System::ErrorCode
     return LS::System::CreateSuccessCode();
 }
 
-void RenderD3D11::SetPipeline(const PipelineStateDX11* state) noexcept
-{
-    assert(state && "state cannot be null");
-    if (!state)
-        return;
-
-    auto context = m_device.GetImmediateContext();
-
-    const auto findStrides = [&state]() -> std::tuple<std::vector<uint32_t>, std::vector<uint32_t>, std::vector<ID3D11Buffer*>>
-        {
-            std::vector<uint32_t> offsets;
-            std::vector<uint32_t> strides;
-            std::vector<ID3D11Buffer*> buffers;
-            for (const auto& b : state->VertexBuffers)
-            {
-                offsets.emplace_back(0);
-                strides.emplace_back(b.BufferDesc.StructureByteStride);
-                buffers.emplace_back(b.Buffer.Get());
-            }
-
-            return { offsets, strides, buffers };
-        };
-
-    // Input Assembler Stage Setup //
-    const auto [s, o, b] = findStrides();
-    context->IASetVertexBuffers(0, static_cast<UINT>(state->VertexBuffers.size()), b.data(), s.data(), o.data());
-
-    if (state->IndexBuffer.Buffer)
-    {
-        context->IASetIndexBuffer(state->IndexBuffer.Buffer.Get(), DXGI_FORMAT_R32_UINT, 0);
-    }
-
-    context->IASetInputLayout(state->InputLayout.Get());
-    context->IASetPrimitiveTopology(state->PrimitiveTopology);
-
-    // Load Shaders //
-    assert(state->VertexShader && "A vertex shader cannot be null");
-    context->VSSetShader(state->VertexShader.Get(), nullptr, 0);
-    assert(state->PixelShader && "A pixel shader cannot be null");
-    context->PSSetShader(state->PixelShader.Get(), nullptr, 0);
-
-    if (state->GeometryShader)
-    {
-        context->GSSetShader(state->GeometryShader.Get(), nullptr, 0);
-    }
-
-    if (state->HullShader)
-    {
-        context->HSSetShader(state->HullShader.Get(), nullptr, 0);
-    }
-
-    if (state->DomainShader)
-    {
-        context->DSSetShader(state->DomainShader.Get(), nullptr, 0);
-    }
-
-    if (state->ComputeShader)
-    {
-        context->CSSetShader(state->ComputeShader.Get(), nullptr, 0);
-    }
-
-    // Load Shader Buffers //
-
-    // Load Output Merger States //
-    context->OMSetBlendState(state->BlendState.State.Get(), state->BlendState.BlendFactor, state->BlendState.SampleMask);
-
-    const auto findRTs = [&state]() -> std::vector<ID3D11RenderTargetView*>
-        {
-            std::vector<ID3D11RenderTargetView*> views;
-            for (int i = 0; i < D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT; ++i)
-            {
-                if (!state->RTStage.RTViews[i])
-                    break;
-                views.emplace_back(state->RTStage.RTViews[i].Get());
-            }
-
-            return views;
-        };
-    const auto rts = findRTs();
-    
-    if (!state->DSStage.State)
-    {
-        context->OMSetDepthStencilState(nullptr, state->DSStage.StencilRef);
-    }
-    else
-    {
-        context->OMSetDepthStencilState(state->DSStage.State.Get(), state->DSStage.StencilRef);
-    }
-}
-
 void RenderD3D11::Shutdown() noexcept
 {
 }
 
 void RenderD3D11::AttachToWindow(LS::LSWindowBase* window) noexcept
 {
-
 }
 
 auto LS::Win32::RenderD3D11::GetDevice() const noexcept -> ID3D11Device*

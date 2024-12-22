@@ -27,7 +27,7 @@ export namespace LS::IO
     /**
      * @brief Flags for describing how a file should be opened
     */
-    enum class FileOpenFlags : uint16_t
+    enum class FileFlags : uint16_t
     {
         Append = 0x1,//@brief add to the end of the file
         Binary = 0x2,//@brief open as a binary file
