@@ -3,8 +3,7 @@ module;
 #include <array>
 #include <string_view>
 #include <string>
-#include <d3d12.h>
-#include <d3dx12.h>
+#include <directx/d3dx12.h>
 #include <wrl/client.h>
 
 export module D3D12Lib.CommandListDx12;

@@ -1,6 +1,5 @@
 module;
-#include <d3d12.h>
-#include <d3dx12\d3dx12.h>
+#include <directx/d3dx12.h>
 #include <directxtk12\BufferHelpers.h>
 #include <directxtk12\DirectXHelpers.h>
 #include <wrl\client.h>

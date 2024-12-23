@@ -1,7 +1,6 @@
 module;
-#include <d3d12.h>
-#include <dxgi1_6.h>
 #include <directx/d3dx12.h>
+#include <dxgi1_6.h>
 #include "engine/EngineLogDefines.h"
 export module D3D12Lib.D3D12Utils.Descriptors;
 import Win32.Utils;

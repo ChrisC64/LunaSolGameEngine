@@ -1,8 +1,8 @@
 module;
+#include <directx/d3dx12.h>
 #include <filesystem>
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
-#include <d3d12.h>
 #include <dxgi1_6.h>
 #include <stdint.h>
 #include <array>
@@ -11,7 +11,6 @@ module;
 #include <algorithm>
 #include <wrl/client.h>
 #include <d3dcompiler.h>
-#include <directx/d3dx12.h>
 #include <thread>
 #include <optional>
 #include <stdexcept>
@@ -20,7 +19,6 @@ module;
 #include <semaphore>
 #include <functional>
 #include <DirectXMath.h>
-#include <d3dx12.h>
 #include <format>
 export module CubeApp;
 

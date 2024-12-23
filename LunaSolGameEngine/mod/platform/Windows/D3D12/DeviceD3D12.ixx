@@ -1,5 +1,5 @@
 module;
-#include <d3d12.h>
+#include <directx/d3dx12.h>
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include <wrl/client.h>
@@ -11,7 +11,6 @@ module;
 #include <string_view>
 #include <array>
 #include <cstdint>
-#include <d3dx12.h>
 
 #pragma comment(lib, "dxguid.lib")
 

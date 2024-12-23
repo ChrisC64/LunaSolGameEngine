@@ -9,7 +9,7 @@ module;
 #include <format>
 #include <chrono>
 #include <wrl/client.h>
-#include <d3dx12/d3dx12_barriers.h>
+#include <directx/d3dx12_barriers.h>
 #include "engine/EngineLogDefines.h"
 //NOMINMAX doesn't seem to work here. Though this might be because of std
 #ifdef min

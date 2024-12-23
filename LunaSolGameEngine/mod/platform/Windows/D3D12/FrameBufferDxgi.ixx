@@ -1,7 +1,7 @@
 module;
 #include <dxgi1_6.h>
 #include <d3d12.h>
-#include <d3dx12_root_signature.h>
+#include <directx/d3dx12_root_signature.h>
 #include <wrl/client.h>
 
 export module D3D12Lib.FrameBufferDxgi;
