@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.28)
 # add_library(win32_mod)
 
 target_sources(${PROJECT_NAME} PUBLIC
-    FILE_SET CXX_MODULES 
+    FILE_SET win32_module TYPE CXX_MODULES 
     FILES
         ComUtils.ixx
         Win32App.ixx
