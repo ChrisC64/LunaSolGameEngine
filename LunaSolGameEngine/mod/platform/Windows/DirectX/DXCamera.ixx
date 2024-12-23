@@ -1,6 +1,6 @@
 module;
 #include <compare>
-#include <directxmath/DirectXMath.h>
+#include <DirectXMath.h>
 export module DirectXCommon.DXCamera;
 
 import LSDataLib;
