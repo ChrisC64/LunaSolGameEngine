@@ -14,6 +14,60 @@ I am also planning to make some tutorial videos on how I constructed this all ov
 # Tools and Requirements
 
 For now I'm planning to utilize C++ 20 modules, and as of now, MSVC seems to have the most well-rounded support for modules over the others as of this writing. With that said, I'm compiling this with MSVC and Visual Studio 2022. There are some libraries I use with vcpkg and nuget. Outside the DirectX SDKs (11 and 12) I also utilize Assimp right now and did have fmt but currently just use the std::fmt. Remnants of it may remain, but I think I removed all fmt includes with std's fmt. I currently don't have a build system setup, but I'm learning how to utilize cmake for it as it seems to have support for modules compared to some of the others. Hopefully I could put that in some day, otherwise I should make an MSVC build script at least. 
+I have now added some partial CMake support. Partial meaning that the LunaSolEngine project (main framework) should compile. The other project (GameTest) is currently not supported. This is because I want to change trajectory a little to more simpler stand alone
+projects that I can compile in one or a few files for demonstration purposes and then use this project in another project. So the goal would be to learn and hopefully make changes to the API to accomdate some simpler setups easily, before going full into the project mode I want to later. 
+
+## New - Builds with CMake and Vcpkg (could probably swap with tweaks of your own to another package manager)
+- Requires CMake 3.28 [CMake](https://cmake.org/)
+- Requires Vcpkg [Github](https://github.com/microsoft/vcpkg)
+# CMake Integration (Partial)
+As mentioned above, only the LunaSolProject will build. I use Vcpkg as my package manager. To build you'll need both. 
+Follow the directions on how to install to your system before moving forward.
+
+## Vcpkg - First Things
+Vcpkg is used in manifest mode here, which is what we'll go with. This requires you to make a `CMakeUsersPreset.json` file 
+inside `{RootDir}/LunaSolGameEngine`
+
+A sample below is given to show what is needed:
+```
+{
+    "version": 8,
+    "configurePresets": [
+        {
+            "name": "windows-x64-debug",
+            "description": "Builds Windows X64 in debug mode",
+            "inherits": [
+                "windows-x64"
+            ],
+            "environment": {
+                "VCPKG_ROOT": "path/to/vcpkg"
+            },
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+                "VCPKG_INSTALLED_DIR": "{path/to/vcpkg_installed}",
+                "VCPKG_MANIFEST_DIR": "{path/to/vcpkg.json}"
+            }
+        }
+    ]
+}
+```
+
+If you copy and paste the above, just simply set the variables:
+1. VCPKG_ROOT - directory to where you have your vcpkg downloaded and where the vcpkg.exe is located
+1. VCPKG_INSTALLED_DIR - This is where you have your installs. If you're using manfiest and want to install locally, omit this, or give the path to where you installed your libraries. 
+1. VCPKG_MANIFEST_DIR - Path to the `vcpkg.jsgon` this is located in the project's root directory for now, because it's shared with GameTest project. So `../` should suffice for now.
+
+## CMAKE Build 
+This only builds with MSVC right now and with Windows x64. I'm working to expand later when I'll try to test and build this with GCC/Clang later.
+After all is set and done with the `CMakeUserPresets.json` you should be able to run cmake as follows:
+
+1. Open your shell to the `{RootDir}/LunaSolEngine` where the top level `CMakeLists.txt` file should be for this project
+1. Create a folder named `build` in LunaSolEngine folder - `{RootDir}/LunaSolEngine/build` (take care to note this project will be LunaSolEngine as root, it so it should be LunaSolEngine/LunaSolEngine/build)
+1. From `{RootDir}LunaSolEngine` Run `cmake -B build -S . --preset windows-x64-debug`
+1. From `{RootDir}LunaSolEngine`  Run `cmake --build build`
+
+Hopefully everything works out and this builds!
 
 ## C++ 20 Baseline - Using Modules
 I want to try and build a new project with modules. I expect this to be a learning experience and over time this will be updated as I go. 
