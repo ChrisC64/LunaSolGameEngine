@@ -248,3 +248,4 @@ ModelManifest.xml
 # VCPKG installs
 /vcpkg_installed
 LunaSolGameEngine/CMakeUserPresets.json
+LunaSolGameEngine/vcpkg_installed
