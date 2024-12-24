@@ -3,8 +3,8 @@ module;
 #define NOMINMAX
 #include <Windows.h>
 #include <wrl/client.h>
-#include <directxmath/DirectXMath.h>
-#include <directxmath/DirectXColors.h>
+#include <DirectXMath.h>
+#include <DirectXColors.h>
 #include <dxgi1_6.h>
 #include <d3d11_4.h>
 #include "assimp/Importer.hpp"

@@ -1,0 +1,31 @@
+{
+    "version": 8,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 28,
+        "patch": 0
+    },
+    "configurePresets": [
+        {
+            "name": "base",
+            "description": "The base setup for build and install directory settings",
+            "hidden": true,
+            "binaryDir": "${sourceDir}/build/${presetName}"
+        },
+        {
+            "name": "windows-x64",
+            "hidden": true,
+            "description": "Sets x64 windows environment",
+            "inherits": [
+                "base"
+            ],
+            "architecture": {
+                "value": "x64",
+                "strategy": "external"
+            },
+            "cacheVariables": {
+                "CMAKE_CXX_COMPILER": "cl"
+            }
+        }
+    ]
+}
