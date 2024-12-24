@@ -13,14 +13,18 @@ add_subdirectory(inc)
 add_subdirectory(mod)
 
 set(COMPILER_FLAGS 
-    $<$<CXX_COMPILER_ID:MSVC>: W4 MP GS Zc:wchar_t Zc:forscope> 
-    $<$<NOT:$<CXX_COMPILER_ID:MSVC>>: Wall>
+    $<$<CXX_COMPILER_ID:MSVC>:/W4;/MP;/GS;/Zc:wchar_t;/Zc:forScope>
+    $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall>
     )
 
 if (WIN32)
+
+target_compile_options(${PROJECT_NAME} PRIVATE ${COMPILER_FLAGS} 
+    $<$<CONFIG:Debug>:/Od> $<$<CONFIG:Release>:/O2>
+    )
 target_compile_definitions(${PROJECT_NAME} PRIVATE 
-    $<$<CONFIG:Debug>:_DEBUG Od> $<$<CONFIG:Release>: O2> 
-    LS_WIN32_BUILD _UNICODE UNICODE ${COMPILER_FLAGS}
+    LS_WIN32_BUILD _UNICODE UNICODE MP
+    $<$<CONFIG:Debug>:_DEBUG>
     )
 endif()
 
