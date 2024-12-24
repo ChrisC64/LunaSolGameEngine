@@ -2,7 +2,6 @@ module;
 #include <string>
 #include <string_view>
 #include <format>
-#include <fmt/format.h>
 #include <d3d11_4.h>
 #include <stdexcept>
 #include <wrl/client.h>
@@ -78,7 +77,7 @@ export namespace LS::Utils
         {
             const std::string msg = LS::Win32::HrToString(hr);
             const std::string str = std::string(std::move(s));
-            const std::string err = fmt::format("{} {}", str, msg);
+            const std::string err = std::format("{} {}", str, msg);
             throw std::runtime_error(err);
         }
     }

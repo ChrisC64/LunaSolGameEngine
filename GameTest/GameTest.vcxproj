@@ -150,7 +150,7 @@
     <ClCompile>
       <WarningLevel>Level4</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>LSE_WINDOWS_BUILD;_DEBUG;_CONSOLE;%(PreprocessorDefinitions);LS_WINDOWS_BUILD</PreprocessorDefinitions>
+      <PreprocessorDefinitions>LSE_WIN32_BUILD;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>$(ProjectDir)vendor\imgui\backends\;$(ProjectDir)vendor\imgui\;$(SolutionDir)LunaSolGameEngine\inc\;$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>

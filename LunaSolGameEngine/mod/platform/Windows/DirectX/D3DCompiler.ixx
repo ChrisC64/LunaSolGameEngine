@@ -7,7 +7,7 @@ export module DirectXCommon.D3DCompiler;
 import <filesystem>;
 import <cstdint>;
 import <cstddef>;
-import <fmt/format.h>;
+import <format>;
 import <vector>;
 
 import Helper.IO;

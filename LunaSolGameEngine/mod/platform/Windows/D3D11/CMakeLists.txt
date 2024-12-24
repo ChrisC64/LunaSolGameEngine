@@ -18,8 +18,10 @@ target_sources(${PROJECT_NAME} PUBLIC
         D3D11Lib.ixx
         DeviceD3D11.ixx
         RenderCommandD3D11.ixx
+        RenderD3D11.ixx
         RenderFuncs.ixx
-        ShaderD3D11.ixx)
+        ShaderD3D11.ixx
+        )
 
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
 target_include_directories(${PROJECT_NAME} 

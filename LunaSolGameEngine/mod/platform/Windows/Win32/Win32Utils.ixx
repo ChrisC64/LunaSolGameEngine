@@ -2,8 +2,7 @@ module;
 #include <string>
 #include <filesystem>
 #include <array>
-#include <fmt/format.h>
-#include <fmt/xchar.h>
+#include <format>
 #include <cassert>
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
@@ -17,12 +16,12 @@ export namespace LS::Win32
 {
     [[nodiscard]] inline std::string HrToString(HRESULT hr)
     {
-        return fmt::format("HRESULT of {:#x}", static_cast<UINT>(hr));
+        return std::format("HRESULT of {:#x}", static_cast<UINT>(hr));
     }
 
     [[nodiscard]] inline std::wstring HrToWString(HRESULT hr)
     {
-        return fmt::format(L"HRESULT of {:#x}", static_cast<UINT>(hr));
+        return std::format(L"HRESULT of {:#x}", static_cast<UINT>(hr));
     }
 
     [[nodiscard]] inline HANDLE CreateEventHandler(LPCWSTR name = nullptr, BOOL isManualReset = FALSE, BOOL isSignaled = FALSE) noexcept
