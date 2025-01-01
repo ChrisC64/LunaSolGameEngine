@@ -12,9 +12,6 @@
 
 #include <Windows.h>
 #include <windowsx.h>
-#include <processenv.h>
-#include <shellapi.h>
-#include <d3dcompiler.h>
 
 import LSEngine;
 
