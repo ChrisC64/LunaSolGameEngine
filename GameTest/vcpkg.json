@@ -1,0 +1,8 @@
+{
+  "dependencies": [
+    "assimp",
+    "directx-headers",
+    "directxtk",
+    "directxtk12"
+  ]
+}

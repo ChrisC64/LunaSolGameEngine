@@ -249,3 +249,5 @@ ModelManifest.xml
 /vcpkg_installed
 LunaSolGameEngine/CMakeUserPresets.json
 LunaSolGameEngine/vcpkg_installed
+GameTest/CMakeUserPresets.json
+GameTest/vcpkg_installed
