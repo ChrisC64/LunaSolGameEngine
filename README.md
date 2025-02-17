@@ -11,15 +11,28 @@ Most of my focus with this engine will be predmoninantly based on 3D graphics. M
 
 I am also planning to make some tutorial videos on how I constructed this all over time 😅
 
+# Visual Studio and VCPKG
+To get started, follow the directions from [MSDN](https://learn.microsoft.com/en-us/vcpkg/get_started/get-started-msbuild?pivots=shell-powershell). 
+Step 1 should be all you need if you've already got Visual Studio set up.
+
+1. Simply clone: `git clone https://github.com/microsoft/vcpkg.git`
+1. Run the bootstrap: `cd vcpkg; .\bootstrap-vcpkg.bat`
+1. Integrate install: `.\vcpkg.exe integrate install`
+
 # Tools and Requirements
 
-For now I'm planning to utilize C++ 20 modules, and as of now, MSVC seems to have the most well-rounded support for modules over the others as of this writing. With that said, I'm compiling this with MSVC and Visual Studio 2022. There are some libraries I use with vcpkg and nuget. Outside the DirectX SDKs (11 and 12) I also utilize Assimp right now and did have fmt but currently just use the std::fmt. Remnants of it may remain, but I think I removed all fmt includes with std's fmt. I currently don't have a build system setup, but I'm learning how to utilize cmake for it as it seems to have support for modules compared to some of the others. Hopefully I could put that in some day, otherwise I should make an MSVC build script at least. 
-I have now added some partial CMake support. Partial meaning that the LunaSolEngine project (main framework) should compile. The other project (GameTest) is currently not supported. This is because I want to change trajectory a little to more simpler stand alone
-projects that I can compile in one or a few files for demonstration purposes and then use this project in another project. So the goal would be to learn and hopefully make changes to the API to accomdate some simpler setups easily, before going full into the project mode I want to later. 
+This project plans to use and build with C++ modules. I've only currently tested on MSVC but am looking to move towards
+building with other compilers too. I for now am setting up the project structure to be a bit less reliant on Visual Studio solutions
+and moving towards making CMAKE builds a thing as well. Given that, right now, this project is expected to build best with
+Visual Studio and MSVC for the time being. 
 
-## New - Builds with CMake and Vcpkg (could probably swap with tweaks of your own to another package manager)
+I have removed the use of Nuget and now am relying on vcpkg as my package manager due to its integration with CMAKE and Visual Studio 
+being what I am most familiar with. 
+
+## Building with CMAKE and VCPKG - Where to Get/Minimum Version support 
 - Requires CMake 3.28 [CMake](https://cmake.org/)
-- Requires Vcpkg [Github](https://github.com/microsoft/vcpkg)
+- Requires Vcpkg [Github](https://github.com/microsoft/vcpkg)  
+
 # CMake Integration (Partial)
 As mentioned above, only the LunaSolProject will build. I use Vcpkg as my package manager. To build you'll need both. 
 Follow the directions on how to install to your system before moving forward.
@@ -70,12 +83,18 @@ After all is set and done with the `CMakeUserPresets.json` you should be able to
 Hopefully everything works out and this builds!
 
 ## C++ 20 Baseline - Using Modules
-I want to try and build a new project with modules. I expect this to be a learning experience and over time this will be updated as I go. 
-So with that said, what I am planning to do with modules is utilize:
-* Named Modules `e.g. export module foobar`
-* Module Partition `e.g. export module foobar:bah`
-* Private Module Fragments `module : private;`
-* Global Module Fragment
+I am working on building this project utilizing modules, especially for the main library. Demos and 
+other tests may use the traditional file formats, but overall I am not focused on maintaining specific rules
+for test projects in how they're configured or built, just what they demonstrate. For now, files with the `.ixx` extension
+are the module files, due to them being the defaulted name when creating them in Visual Studio. I may opt to name them in the 
+future something else, but for now this is not going to change.
+
+With modules, I am going to work on a few rules for the following below:
+
+* Named Modules `e.g. export module foobar` - These will be both the name of the file and the module itself. 
+* Module Partition `e.g. export module foobar:bah` - I'm not expecting to use these much, but rules would be dot seperator for any partitions so the example would be Foobar.Bah.ixx
+* Private Module Fragments `module : private;` - Support for this isn't there in all compilers, and I may move from using this, but for now they exist within the same file. I do not seperate implementations in a seperate file.
+* Global Module Fragment - Used for `#include` and other preprocessor statements.
 
 ### Goals for Module Usage
 

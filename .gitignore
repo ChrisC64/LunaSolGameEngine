@@ -3,7 +3,10 @@
 [Oo]ut/
 .vs/
 .vscode/
+*.user
+*.stamp
+
 
 # VCPKG installs
-/vcpkg_installed
-LunaSolGameEngine/CMakeUserPresets.json
+LunaSolGameEngine/vcpkg_installed/
+GameTest/vcpkg_installed/
