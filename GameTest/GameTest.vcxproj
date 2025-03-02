@@ -183,6 +183,14 @@ xcopy /f /d /y $(IntDir) $(SolutionDir)out\$(Platform)\$(Configuration)\bin\</Co
     <FxCompile>
       <ShaderModel>5.0</ShaderModel>
     </FxCompile>
+    <PreBuildEvent>
+      <Command>xcopy $(SolutionDir)LunaSolGameEngine\build\$(Platform)\$(Configuration)\LunaSolGameEngine.lib $(OutDir)
+xcopy $(SolutionDir)LunaSolGameEngine\build\$(Platform)\$(Configuration)\LunaSolGameEngine.pdb $(OutDir)
+xcopy $(SolutionDir)LunaSolGameEngine\build\$(Platform)\$(Configuration)\LunaSolGameEngine.idb $(OutDir)</Command>
+    </PreBuildEvent>
+    <PreBuildEvent>
+      <Message>Copy .lib file(s) from LunaSolGameEngine</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -195,6 +203,7 @@ xcopy /f /d /y $(IntDir) $(SolutionDir)out\$(Platform)\$(Configuration)\bin\</Co
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>$(ProjectDir)vendor\imgui\backends\;$(ProjectDir)vendor\imgui\;$(SolutionDir)LunaSolGameEngine\inc\;$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
+      <ScanSourceForModuleDependencies>true</ScanSourceForModuleDependencies>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -207,6 +216,11 @@ xcopy /f /d /y $(IntDir) $(SolutionDir)out\$(Platform)\$(Configuration)\bin\</Co
     <FxCompile>
       <ShaderModel>5.0</ShaderModel>
     </FxCompile>
+    <PreBuildEvent>
+      <Command>xcopy $(SolutionDir)LunaSolGameEngine\build\$(Platform)\$(Configuration)\LunaSolGameEngine.lib $(OutDir)
+xcopy $(SolutionDir)LunaSolGameEngine\build\$(Platform)\$(Configuration)\LunaSolGameEngine.pdb $(OutDir)</Command>
+      <Message>Copy files to from library's build folder to our output directory</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ProjectReference Include="..\LunaSolGameEngine\LunaSolGameEngine.vcxproj">
