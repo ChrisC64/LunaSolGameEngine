@@ -18,7 +18,7 @@
     <ClCompile Include="mod\data\BufferTypes.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="mod\engine\EngineDefines.ixx">
+    <ClCompile Include="mod\engine\EngineTypes.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="mod\data\DataTypes.ixx">

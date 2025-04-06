@@ -9,14 +9,11 @@ module;
 #include <windowsx.h>
 export module Platform.Win32App;
 
-import Engine.App;
-import Engine.EngineCodes;
 import Engine.Input;
 import Engine.LSWindow;
 import Engine.Logger;
 import Engine.Defines;
 
-import Platform.Win32Window;
 import <functional>;
 
 export namespace LS::Win32
@@ -27,21 +24,36 @@ export namespace LS::Win32
     // Managing windows created
     // Providing translation layer between Win32 Messages and Application Messages
     void InitApp(u32 width, u32 height, const wchar_t* title);
-    [[nodiscard]] bool IsAppRunning();
     void Shutdown();
-    void PollApp();
+    auto PollApp() -> LS::APP_STATE;
     void CloseWindow();
     void SetCustomWndProc(WndProcHandler handler);
     void ShowMessageBox(const wchar_t* msg, const wchar_t* title);
     void RegisterMouseMove(LS::Input::LSOnMouseMove2 callback);
     void RegisterMouseInput(LS::Input::LSOnMouseInput callback);
     void RegisterKeyboardInput(LS::Input::LSOnKeyboardInput callback);
+    void GetWindowSize(uint32_t& width, uint32_t& height);
 
     [[nodiscard]] auto GetHwnd() -> HWND;
     [[nodiscard]] bool IsKeyDown(LS::Input::KEYBOARD key);
     [[nodiscard]] bool IsKeyDownAsync(LS::Input::KEYBOARD key);
     [[nodiscard]] bool IsKeyUp(LS::Input::KEYBOARD key);
     [[nodiscard]] bool IsKeyUpAsync(LS::Input::KEYBOARD key);
+
+    struct AppWin32
+    {
+        HINSTANCE Instance{};
+        WNDCLASSEX WndClass{};
+        MSG Msg;
+        HWND Hwnd{};
+        WndProcHandler WndProcHandler{};
+    };
+
+    AppWin32 g_AppInstance{};
+    LS::Input::LSOnMouseMove g_AppMouseMove;
+    LS::Input::LSOnKeyboardInput g_AppKeyboardInput;
+    LS::Input::LSOnMouseInput g_AppMouseInput;
+    LS::Input::LSOnMouseWheel g_AppMouseWheel;
 }
 
 module : private;
@@ -51,27 +63,6 @@ import <format>;
 import Win32.Utils;
 
 using namespace LS::Win32;
-
-struct Window
-{
-    HWND Hwnd;
-};
-
-struct App
-{
-    HINSTANCE Instance{};
-    WNDCLASSEX WndClass{};
-    MSG Msg;
-    Window MainWindow{};
-    WndProcHandler WndProcHandler{};
-    LS::APP_STATE State = LS::APP_STATE::UNINITIALIZED;
-};
-
-static App g_AppInstance{};
-static LS::Input::LSOnMouseMove2 g_AppMouseMove;
-static LS::Input::LSOnKeyboardInput g_AppKeyboardInput;
-static LS::Input::LSOnMouseInput g_AppMouseInput;
-static LS::Input::LSOnMouseWheel g_AppMouseWheel;
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
@@ -120,8 +111,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
     case WM_MOUSEMOVE:
         if (g_AppMouseMove)
         {
-            double x, y;
-            GetNormalizedClientCoords(g_AppInstance.MainWindow.Hwnd, lparam, x, y);
+            uint32_t x, y;
+            x = (uint32_t)GET_X_LPARAM(lparam);
+            y = (uint32_t)GET_Y_LPARAM(lparam);
             g_AppMouseMove(x, y);
         }
         break;
@@ -185,31 +177,29 @@ void LS::Win32::InitApp(u32 width, u32 height, const wchar_t* title)
         throw std::runtime_error("Failed to create the window");
     }
 
-    g_AppInstance.MainWindow.Hwnd = hwnd;
+    g_AppInstance.Hwnd = hwnd;
     ShowWindow(hwnd, SW_SHOW);
-
-    g_AppInstance.State = LS::APP_STATE::INITIALIZED;
 }
 
 void LS::Win32::Shutdown()
 {
-    g_AppInstance.State = LS::APP_STATE::CLOSED;
     UnregisterClass(g_AppInstance.WndClass.lpszClassName, g_AppInstance.WndClass.hInstance);
 }
 
-void LS::Win32::PollApp()
+auto LS::Win32::PollApp() -> LS::APP_STATE
 {
     if (PeekMessage(&g_AppInstance.Msg, NULL, 0, 0, PM_REMOVE))
     {
         TranslateMessage(&g_AppInstance.Msg);
         DispatchMessage(&g_AppInstance.Msg);
     }
+    using enum LS::APP_STATE;
+    return g_AppInstance.Msg.message == WM_QUIT ? QUIT : RUNNING;
 }
 
 void LS::Win32::CloseWindow()
 {
-    DestroyWindow(g_AppInstance.MainWindow.Hwnd);
-    g_AppInstance.State = LS::APP_STATE::CLOSED;
+    DestroyWindow(g_AppInstance.Hwnd);
 }
 
 void LS::Win32::SetCustomWndProc(WndProcHandler handler)
@@ -219,7 +209,7 @@ void LS::Win32::SetCustomWndProc(WndProcHandler handler)
 
 void LS::Win32::ShowMessageBox(const wchar_t* msg, const wchar_t* title)
 {
-    MessageBox(g_AppInstance.MainWindow.Hwnd, msg, title, 0);
+    MessageBox(g_AppInstance.Hwnd, msg, title, 0);
 }
 
 void LS::Win32::RegisterMouseMove(LS::Input::LSOnMouseMove2 callback)
@@ -237,10 +227,18 @@ void LS::Win32::RegisterKeyboardInput(LS::Input::LSOnKeyboardInput callback)
     g_AppKeyboardInput = callback;
 }
 
+void LS::Win32::GetWindowSize(uint32_t& width, uint32_t& height)
+{
+    RECT rect;
+    GetClientRect(g_AppInstance.Hwnd, &rect);
+    width = rect.right - rect.left;
+    height = rect.bottom - rect.top;
+}
+
 [[nodiscard]]
 auto LS::Win32::GetHwnd() -> HWND
 {
-    return g_AppInstance.MainWindow.Hwnd;
+    return g_AppInstance.Hwnd;
 }
 
 [[nodiscard]]
@@ -265,10 +263,4 @@ bool LS::Win32::IsKeyUp(LS::Input::KEYBOARD key)
 bool LS::Win32::IsKeyUpAsync(LS::Input::KEYBOARD key)
 {
     return !IsKeyDownAsync(key);
-}
-
-[[nodiscard]]
-bool LS::Win32::IsAppRunning()
-{
-    return g_AppInstance.State != LS::APP_STATE::CLOSED;
 }

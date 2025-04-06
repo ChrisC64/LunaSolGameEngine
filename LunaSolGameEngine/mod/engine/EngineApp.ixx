@@ -17,6 +17,11 @@ import Engine.EngineCodes;
 import Engine.Defines;
 import Engine.Input;
 
+#ifdef LS_WIN32_BUILD
+import Platform.Win32App;
+#endif//LS_WIN32_BUILD
+
+//TODO: I'll be removing this 
 export namespace LS::Global
 {
     //TODO: Not sure I like this, let's consider altering later
@@ -29,45 +34,31 @@ export namespace LS::Global
 namespace LS
 {
     export using LSCommandArgs = std::vector<std::string>;
-    export auto ParseCommands(int argc, char* argv[]) noexcept -> SharedRef<LSCommandArgs>;
-    export auto ParseCommands(std::string_view args) noexcept -> SharedRef<LSCommandArgs>;
+    //export auto ParseCommands(int argc, char* argv[]) noexcept -> SharedRef<LSCommandArgs>;
+    //export auto ParseCommands(std::string_view args) noexcept -> SharedRef<LSCommandArgs>;
 
     /**
      * @brief Creates the device with the supported rendering type
      * @param api @link LS::DEVICE_API type to use
      * @return A device pointer or std::nullopt if not supported.
     */
-    export auto BuildDevice(DEVICE_API api) noexcept -> Nullable<Ref<ILSDevice>>;
+    //export auto BuildDevice(DEVICE_API api) noexcept -> Nullable<Ref<ILSDevice>>;
 
-    /**
-     * @brief Builds a window for display
-     * @param width the width of the window
-     * @param height the height of the window
-     * @param title the title to give the window
-    */
-    export auto BuildWindow(uint32_t width, uint32_t height, std::wstring_view title) noexcept -> Ref<LSWindowBase>;
-
-    export class LSApp;
-
-    export enum class APP_STATE
+    export class LSApp
     {
-        UNINITIALIZED,
-        INITIALIZED,
-        START,
-        RUNNING,
-        PAUSED,
-        CLOSED
-    };
-
-    class LSApp
-    {
-    public:
-        LSApp()
+    private:
+        LSApp(uint32_t width, uint32_t height, std::wstring_view title)
         {
-            m_Window = BuildWindow(600, 600, L"LS Application");
+            BaseInit();
+#ifdef LS_WIN32_BUILD
+            Win32::InitApp(width, height, title.data());
+#endif//LS_WIN32_BUILD
         }
 
-        virtual ~LSApp() = default;
+    public:
+        static LSApp CreateApp(uint32_t width, uint32_t height, std::wstring_view title);
+
+        ~LSApp();
 
         LSApp(const LSApp&) = delete;
         LSApp& operator=(const LSApp&) = delete;
@@ -75,63 +66,63 @@ namespace LS
         LSApp(LSApp&&) = default;
         LSApp& operator=(LSApp&&) = default;
 
-        [[nodiscard]] virtual auto Initialize([[maybe_unused]] SharedRef<LSCommandArgs> args = nullptr) -> System::ErrorCode = 0;
-        virtual void Run() = 0;
+        void RegisterMouseMove(LS::Input::LSOnMouseMove callback);
+        void RegisterKeybaordInput(LS::Input::LSOnKeyboardInput callback);
+        //[[nodiscard]] auto Initialize([[maybe_unused]] SharedRef<LSCommandArgs> args = nullptr) -> System::ErrorCode;
+        [[nodiscard]] bool IsRunning();
+        void PollEvent();
+        [[nodiscard]] void* GetWindow();
+        void GetWindowSize(uint32_t& width, uint32_t& height);
+#ifdef LS_WIN32_BUILD
+        void SetCustomWndProc(Win32::WndProcHandler wndProcCallback);
+#endif//LS_WIN32_BUILD
 
     protected:
-        LSApp(uint32_t width, uint32_t height, std::wstring_view title);
-
-        Ref<LSWindowBase> m_Window;
-        APP_STATE m_State;
+        APP_STATE m_state;
         std::filesystem::path m_appDir;
-        void RegisterKeyboardInput(Input::LSOnKeyboardDown onKeyDown, Input::LSOnKeyboardUp onKeyUp);
-        void RegisterMouseInput(Input::LSOnMouseDown onMouseDown, Input::LSOnMouseUp onMouseUp, Input::LSOnMouseWheelScroll mouseWheel, Input::LSOnMouseMove cursorMove);
-        void BaseInit();
 
     private:
+        void BaseInit();
         void FindAppDir();
     };
-
-    export template<class T, class... Args>
-        requires std::derived_from<T, LS::LSApp>
-    auto CreateApp(Args&&... args) -> LS::Ref<LS::LSApp>
-    {
-        LS::Ref<LS::LSApp> out = std::make_unique<T>(args...);
-        return out;
-    }
 }
 
 module : private;
 
-import D3D11Lib;
-import Platform.Win32Window;
+#ifdef LS_WIN32_BUILD
 import Win32.Utils;
+import D3D11Lib;
+#endif//LS_WIN32_BUILD
 
 namespace LS
 {
-    LSApp::LSApp(uint32_t width, uint32_t height, std::wstring_view title)
+    LSApp::~LSApp()
     {
-        BaseInit();
-        m_Window = BuildWindow(width, height, title);
+#ifdef LS_WIN32_BUILD
+        Win32::Shutdown();
+#endif
     }
 
-    void LS::LSApp::RegisterKeyboardInput(Input::LSOnKeyboardDown onKeyDown, Input::LSOnKeyboardUp onKeyUp)
+    LSApp LSApp::CreateApp(uint32_t width, uint32_t height, std::wstring_view title)
     {
-        m_Window->RegisterKeyboardDown(onKeyDown);
-        m_Window->RegisterKeyboardUp(onKeyUp);
+        LSApp app(width, height, title);
+        return app;
     }
 
-    void LS::LSApp::RegisterMouseInput(Input::LSOnMouseDown onMouseDown, Input::LSOnMouseUp onMouseUp, Input::LSOnMouseWheelScroll mouseWheel, Input::LSOnMouseMove cursorMove)
+    void LSApp::RegisterMouseMove(Input::LSOnMouseMove callback)
     {
-        m_Window->RegisterMouseDown(onMouseDown);
-        m_Window->RegisterMouseUp(onMouseUp);
-        m_Window->RegisterMouseWheel(mouseWheel);
-        m_Window->RegisterMouseMoveCallback(cursorMove);
+        Win32::g_AppMouseMove = callback;
+    }
+
+    void LSApp::RegisterKeybaordInput(Input::LSOnKeyboardInput callback)
+    {
+        Win32::g_AppKeyboardInput = callback;
     }
 
     void LSApp::BaseInit()
     {
         FindAppDir();
+        m_state = LS::APP_STATE::INITIALIZED;
     }
 
     void LSApp::FindAppDir()
@@ -141,7 +132,40 @@ namespace LS
 #endif
     }
 
-    auto ParseCommands(int argc, char* argv[]) noexcept -> SharedRef<LSCommandArgs>
+    bool LSApp::IsRunning()
+    {
+        return m_state != LS::APP_STATE::QUIT;
+    }
+
+    void LSApp::PollEvent()
+    {
+#ifdef LS_WIN32_BUILD
+        m_state = Win32::PollApp();
+#endif//LS_WIN32_BUILD
+    }
+
+    void* LSApp::GetWindow()
+    {
+#ifdef LS_WIN32_BUILD
+        return (void*)Win32::g_AppInstance.Hwnd;
+#endif//LS_WIN32_BUILD
+    }
+
+    void LSApp::GetWindowSize(uint32_t& width, uint32_t& height)
+    {
+#ifdef LS_WIN32_BUILD
+        Win32::GetWindowSize(width, height);
+#endif//LS_WIN32_BUILD
+    }
+
+#ifdef LS_WIN32_BUILD
+    void LSApp::SetCustomWndProc(Win32::WndProcHandler wndProcCallback)
+    {
+        Win32::g_AppInstance.WndProcHandler = wndProcCallback;
+    }
+#endif//LS_WIN32_BUILD
+
+    /*auto ParseCommands(int argc, char* argv[]) noexcept -> SharedRef<LSCommandArgs>
     {
         SharedRef<LSCommandArgs> commandArgs = std::make_shared<LSCommandArgs>();
         for (int i = 0; i < argc; ++i)
@@ -167,9 +191,9 @@ namespace LS
         }
 
         return commandArgs;
-    }
+    }*/
 
-    auto BuildDevice(DEVICE_API api) noexcept -> Nullable<Ref<ILSDevice>>
+    /*auto BuildDevice(DEVICE_API api) noexcept -> Nullable<Ref<ILSDevice>>
     {
         using enum DEVICE_API;
         switch (api)
@@ -183,10 +207,6 @@ namespace LS
         default:
             return std::nullopt;
         }
-    }
+    }*/
 
-    auto BuildWindow(uint32_t width, uint32_t height, std::wstring_view title) noexcept -> Ref<LSWindowBase>
-    {
-        return std::make_unique<LS::Win32::Win32Window>(width, height, title);
-    }
 }

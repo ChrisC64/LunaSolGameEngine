@@ -39,32 +39,29 @@ int main(int argc, char* argv[])
     LS::Log::TraceWarn(L"WARNING!! Boss approaching!");
     LS::Log::Flush();*/
     using namespace LS::Win32;
-    InitApp(SCREEN_WIDTH, SCREEN_HEIGHT, L"My new app!");
-    LS::Platform::Dx12::RendererDX12 renderer(SCREEN_WIDTH, SCREEN_HEIGHT, 2, LS::Win32::GetHwnd());
+    auto app = LS::LSApp::CreateApp(SCREEN_WIDTH, SCREEN_HEIGHT, L"LS App");
+    LS::Platform::Dx12::RendererDX12 renderer(SCREEN_WIDTH, SCREEN_HEIGHT, 2, (HWND)app.GetWindow());
 
-    SetCustomWndProc([](HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
-        {
-            switch (msg)
-            {
-            case WM_LBUTTONUP:
-                std::cout << "LMB Released!\n";
-                //LS::Win32::ShowMessageBox(L"Hello MB", L"Message Box Approved");
-                return (LRESULT)0;
-            }
-            return DefWindowProc(hwnd, msg, wparam, lparam);
-        }
-    );
+    //app.SetCustomWndProc([](HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+    //    {
+    //        switch (msg)
+    //        {
+    //        case WM_LBUTTONUP:
+    //            std::cout << "LMB Released!\n";
+    //            //LS::Win32::ShowMessageBox(L"Hello MB", L"Message Box Approved");
+    //            return (LRESULT)0;
+    //        }
+    //        return DefWindowProc(hwnd, msg, wparam, lparam);
+    //    }
+    //);
 
-    RegisterMouseMove([](double x, double y)
+    app.RegisterMouseMove([](uint32_t x, uint32_t y)
         {
             std::cout << std::format("X: {}, Y: {}\n", x, y);
         });
 
-    //TODO: I want to do this following concept as:
-    // 1. Create a builder (mayber as unique pointer even)
-    // 2. Use builder to "build" root parameters
-    // 3. Supply builder to the Renderer for it to then obtain the root parameters built
-    // and have the Renderer create the root signature it needs based off the information. 
+    //TODO: Just load the shader passed in to LoadShader(std::filesystem::path) and any additional params required
+    // Returns an optional object that is the ID of the shader that was compiled. 
     LS::Platform::Dx12::Dx12PsoBuilder builder(0, 1);
     LS::DX::InitCompilerTools();
 
@@ -74,9 +71,10 @@ int main(int argc, char* argv[])
 
     const auto vsData = LS::DX::DxcLoadFile(vsPath).value();
     const auto psData = LS::DX::DxcLoadFile(psPath).value();
-
+    
     builder.LoadShader(vsData, LS::SHADER_TYPE::VERTEX);
     builder.LoadShader(psData, LS::SHADER_TYPE::PIXEL);
+    // Create input layout and supply the given ID to use its compiled data
     auto& ilBuilder = builder.GetInputLayoutBuilder();
     ilBuilder.AddElement("POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0);
 
@@ -110,15 +108,16 @@ int main(int argc, char* argv[])
             renderer.EndCommandList(commandList);
             renderer.QueueCommand(&commandList);
         };
-
-    while (IsAppRunning())
+    uint32_t currWidth, currHeight;
+    app.GetWindowSize(currWidth, currHeight);
+    //TODO: Implement a working resize event
+    while (app.IsRunning())
     {
-        PollApp();
+        app.PollEvent();
         renderer.BeginFrame();
         renderFrame();
         renderer.PresentFrame();
     }
-    Shutdown();
 }
 #else
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)

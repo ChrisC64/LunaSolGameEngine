@@ -201,7 +201,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="mod\data\BufferTypes.ixx" />
-    <ClCompile Include="mod\engine\EngineDefines.ixx" />
+    <ClCompile Include="mod\engine\EngineTypes.ixx" />
     <ClCompile Include="mod\data\DataTypes.ixx" />
     <ClCompile Include="mod\data\LSDataLib.ixx" />
     <ClCompile Include="mod\data\MathTypes.ixx" />

@@ -184,9 +184,9 @@ xcopy /f /d /y $(IntDir) $(SolutionDir)out\$(Platform)\$(Configuration)\bin\</Co
       <ShaderModel>5.0</ShaderModel>
     </FxCompile>
     <PreBuildEvent>
-      <Command>xcopy $(SolutionDir)LunaSolGameEngine\build\$(Platform)\$(Configuration)\LunaSolGameEngine.lib $(OutDir)
-xcopy $(SolutionDir)LunaSolGameEngine\build\$(Platform)\$(Configuration)\LunaSolGameEngine.pdb $(OutDir)
-xcopy $(SolutionDir)LunaSolGameEngine\build\$(Platform)\$(Configuration)\LunaSolGameEngine.idb $(OutDir)</Command>
+      <Command>xcopy $(SolutionDir)LunaSolGameEngine\build\$(Platform)\$(Configuration)\LunaSolGameEngine.lib $(OutDir) /D /Y
+xcopy $(SolutionDir)LunaSolGameEngine\build\$(Platform)\$(Configuration)\LunaSolGameEngine.pdb $(OutDir) /D /Y
+xcopy $(SolutionDir)LunaSolGameEngine\build\$(Platform)\$(Configuration)\LunaSolGameEngine.idb $(OutDir) /D /Y</Command>
     </PreBuildEvent>
     <PreBuildEvent>
       <Message>Copy .lib file(s) from LunaSolGameEngine</Message>
@@ -217,8 +217,8 @@ xcopy $(SolutionDir)LunaSolGameEngine\build\$(Platform)\$(Configuration)\LunaSol
       <ShaderModel>5.0</ShaderModel>
     </FxCompile>
     <PreBuildEvent>
-      <Command>xcopy $(SolutionDir)LunaSolGameEngine\build\$(Platform)\$(Configuration)\LunaSolGameEngine.lib $(OutDir)
-xcopy $(SolutionDir)LunaSolGameEngine\build\$(Platform)\$(Configuration)\LunaSolGameEngine.pdb $(OutDir)</Command>
+      <Command>xcopy $(SolutionDir)LunaSolGameEngine\build\$(Platform)\$(Configuration)\LunaSolGameEngine.lib $(OutDir) /D /Y
+xcopy $(SolutionDir)LunaSolGameEngine\build\$(Platform)\$(Configuration)\LunaSolGameEngine.pdb $(OutDir) /D /Y</Command>
       <Message>Copy files to from library's build folder to our output directory</Message>
     </PreBuildEvent>
   </ItemDefinitionGroup>

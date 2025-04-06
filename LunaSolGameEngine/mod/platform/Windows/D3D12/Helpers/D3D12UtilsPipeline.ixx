@@ -56,7 +56,7 @@ export namespace LS::Platform::Dx12
             m_inputLayout.reserve(count);
         }
 
-        auto AddElement(LPCSTR semanticName, UINT semanticIndex, DXGI_FORMAT format, UINT inputSlot, UINT alignedByteOffset, D3D12_INPUT_CLASSIFICATION inputSlotClass, UINT instanceDataStepRate) -> InputLayoutBuilder* const;
+        void AddElement(LPCSTR semanticName, UINT semanticIndex, DXGI_FORMAT format, UINT inputSlot, UINT alignedByteOffset, D3D12_INPUT_CLASSIFICATION inputSlotClass, UINT instanceDataStepRate);
 
         auto GetLayout() -> std::vector<D3D12_INPUT_ELEMENT_DESC>
         {
@@ -463,7 +463,7 @@ auto RootParamBuilder::CreateConstantsParam(uint32_t num32BitValues, uint32_t sh
 }
 
 // Input Layout Builder //
-auto InputLayoutBuilder::AddElement(LPCSTR semanticName, UINT semanticIndex, DXGI_FORMAT format, UINT inputSlot, UINT alignedByteOffset, D3D12_INPUT_CLASSIFICATION inputSlotClass, UINT instanceDataStepRate) -> InputLayoutBuilder* const
+void InputLayoutBuilder::AddElement(LPCSTR semanticName, UINT semanticIndex, DXGI_FORMAT format, UINT inputSlot, UINT alignedByteOffset, D3D12_INPUT_CLASSIFICATION inputSlotClass, UINT instanceDataStepRate)
 {
     D3D12_INPUT_ELEMENT_DESC desc{ 
         .SemanticName = semanticName, .SemanticIndex = semanticIndex, 
@@ -471,7 +471,6 @@ auto InputLayoutBuilder::AddElement(LPCSTR semanticName, UINT semanticIndex, DXG
         .InputSlotClass = inputSlotClass, .InstanceDataStepRate = instanceDataStepRate
     };
     m_inputLayout.emplace_back(desc);
-    return this;
 }
 
 auto Dx12PsoBuilder::BuildPSO(ID3D12Device* pDevice) -> Microsoft::WRL::ComPtr<ID3D12PipelineState>

@@ -78,7 +78,8 @@ export namespace LS
         UNLOCKED,
         LOCKED
     };
-
+    // TODO: Going to change this, because it's not great having all these vectors
+    // owning the data. I want the data to be more of a view to pass around quicker
     struct MeshData
     {
         std::string Name;

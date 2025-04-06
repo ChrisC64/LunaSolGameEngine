@@ -47,7 +47,7 @@ namespace WRL = Microsoft::WRL;
 namespace LS::Platform::Dx12
 {
     /**
-     * @brief A pair between a view and the resource
+     * @brief A pair between a resource and its view
      * @tparam T The View type to use
      */
     template<class T>
@@ -76,7 +76,7 @@ export namespace LS::Platform::Dx12
     public:
         RendererDX12(uint32_t width, uint32_t height, uint32_t frameCount = 2, const LSWindowBase* window = nullptr);
         RendererDX12(uint32_t width, uint32_t height, uint32_t frameCount = 2, HWND window = nullptr);
-        ~RendererDX12() = default;
+        ~RendererDX12();
 
         RendererDX12& operator=(const RendererDX12&) = delete;
         RendererDX12(const RendererDX12&) = delete;
@@ -208,6 +208,11 @@ RendererDX12::RendererDX12(uint32_t width, uint32_t height, uint32_t frameCount,
     }
 
     m_state = RendererState::INITIALIZED;
+}
+
+RendererDX12::~RendererDX12()
+{
+    FlushCommands();
 }
 
 auto RendererDX12::Initialize(const LSWindowBase* window) noexcept -> LS::System::ErrorCode
@@ -448,8 +453,8 @@ auto RendererDX12::CreateVertexBuffer(const void* pData, size_t size, size_t str
     buffer->Unmap(0, nullptr);
     D3D12_VERTEX_BUFFER_VIEW view;
     view.BufferLocation = buffer->GetGPUVirtualAddress();
-    view.StrideInBytes = stride;
-    view.SizeInBytes = size;
+    view.StrideInBytes = static_cast<UINT>(stride);
+    view.SizeInBytes = static_cast<UINT>(size);
 
     const auto id = m_vertexBuffers.size() + 1;
     m_vertexBuffers[id] = RVPair<D3D12_VERTEX_BUFFER_VIEW>{ .Resource = buffer, .View = view };
