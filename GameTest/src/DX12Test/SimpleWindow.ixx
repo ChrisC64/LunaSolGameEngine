@@ -103,7 +103,7 @@ void gt::dx12::SimpleWindow::Run()
 
         OnRender();
         OnUpdate();
-    }
+    } 
 
     OnDestroy();
 }

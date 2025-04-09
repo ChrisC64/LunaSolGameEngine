@@ -16,6 +16,7 @@ import <mutex>;
 
 import D3D12Lib.CommandListDx12;
 import Engine.EngineCodes;
+import Win32.Utils;
 
 namespace WRL = Microsoft::WRL;
 
@@ -137,7 +138,7 @@ auto CommandQueueDx12::Initialize(ID3D12Device* pDevice) noexcept -> LS::System:
         return LS::System::CreateFailCode("Failed to create fence in CommandQueueDx12::Initialize");
     }
 
-    m_fenceEvent = CreateEventEx(nullptr, TEXT("CommandQueue_FenceEvent"), false, EVENT_ALL_ACCESS);
+    m_fenceEvent = Win32::CreateEventHandler(TEXT("CommandQueue_FenceEvent"));
     assert(m_fenceEvent && "Failed to create fence event handle.");
     return LS::System::CreateSuccessCode();
 }

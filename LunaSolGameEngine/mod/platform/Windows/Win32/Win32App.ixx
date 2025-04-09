@@ -231,6 +231,8 @@ void LS::Win32::GetWindowSize(uint32_t& width, uint32_t& height)
 {
     RECT rect;
     GetClientRect(g_AppInstance.Hwnd, &rect);
+    /*GetWindowRect(g_AppInstance.Hwnd, &rect);
+    AdjustWindowRectEx(&rect, WS_OVERLAPPEDWINDOW, false, 0);*/
     width = rect.right - rect.left;
     height = rect.bottom - rect.top;
 }

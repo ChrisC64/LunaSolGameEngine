@@ -27,8 +27,8 @@ import <string>;
 import <filesystem>;
 import <string_view>;
 
-constexpr uint32_t SCREEN_WIDTH = 1920;
-constexpr uint32_t SCREEN_HEIGHT = 1080;
+constexpr uint32_t SCREEN_WIDTH = 800;
+constexpr uint32_t SCREEN_HEIGHT = 600;
 
 #ifdef _DEBUG
 int main(int argc, char* argv[])
@@ -108,12 +108,20 @@ int main(int argc, char* argv[])
             renderer.EndCommandList(commandList);
             renderer.QueueCommand(&commandList);
         };
-    uint32_t currWidth, currHeight;
-    app.GetWindowSize(currWidth, currHeight);
+    LS::Vec2U currSize = app.GetWindowSize();
     //TODO: Implement a working resize event
     while (app.IsRunning())
     {
         app.PollEvent();
+        LS::Vec2U newSize = app.GetWindowSize();
+        if (currSize != newSize)
+        {
+            if (auto result = renderer.Resize(newSize.x, newSize.y); !result)
+            {
+                throw std::runtime_error("Failed to resize frame buffer.");
+            }
+            currSize = newSize;
+        }
         renderer.BeginFrame();
         renderFrame();
         renderer.PresentFrame();

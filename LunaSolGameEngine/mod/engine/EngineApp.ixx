@@ -17,6 +17,8 @@ import Engine.EngineCodes;
 import Engine.Defines;
 import Engine.Input;
 
+import LSDataLib;
+
 #ifdef LS_WIN32_BUILD
 import Platform.Win32App;
 #endif//LS_WIN32_BUILD
@@ -72,7 +74,7 @@ namespace LS
         [[nodiscard]] bool IsRunning();
         void PollEvent();
         [[nodiscard]] void* GetWindow();
-        void GetWindowSize(uint32_t& width, uint32_t& height);
+        Vec2U GetWindowSize();
 #ifdef LS_WIN32_BUILD
         void SetCustomWndProc(Win32::WndProcHandler wndProcCallback);
 #endif//LS_WIN32_BUILD
@@ -151,10 +153,12 @@ namespace LS
 #endif//LS_WIN32_BUILD
     }
 
-    void LSApp::GetWindowSize(uint32_t& width, uint32_t& height)
+    Vec2U LSApp::GetWindowSize()
     {
 #ifdef LS_WIN32_BUILD
+        uint32_t width, height;
         Win32::GetWindowSize(width, height);
+        return Vec2U{ .x = width, .y = height };
 #endif//LS_WIN32_BUILD
     }
 

@@ -319,6 +319,9 @@ void RendererDX12::FlushCommands() noexcept
 
 auto RendererDX12::Resize(uint32_t width, uint32_t height) noexcept -> LS::System::ErrorCode
 {
+    const auto currFrame = m_frameBuffer.GetCurrentIndex();
+    const auto fence = m_frameContext.GetFence(currFrame);
+    m_queue.WaitForGpu(fence);
     FlushCommands();
     return m_frameBuffer.ResizeFrames(width, height, m_device.GetDevice().Get());
 }

@@ -81,18 +81,19 @@ export namespace LS::Platform::Dx12
      * @param fence The fence to associate with the event
      * @param fenceValue The value to wait for (check Signal to retrieve this value)
      * @param fenceEvent The event to fire off after completion
-     * @param duration How long to wait for the event before not abandoning
+     * @param duration How long to wait for the event before not abandoning, if set to max, it will fire as soon as the event is finished
     */
     inline void WaitForFenceValue(const WRL::ComPtr<ID3D12Fence>& fence, uint64_t fenceValue, HANDLE fenceEvent,
-        std::chrono::milliseconds duration = std::chrono::milliseconds::max()) noexcept
+        std::chrono::milliseconds duration = std::chrono::milliseconds(0)) noexcept
     {
         //TODO: If UINT_MAX then we have a DEVICE_REMOVED issue, need to address that scenario
         const auto lastCompleted = fence->GetCompletedValue();
 
         if (lastCompleted >= fenceValue)
         {
-            return;
+            return;// The job was completed, no need to wait for the event
         }
+
         const auto hr = fence->SetEventOnCompletion(fenceValue, fenceEvent);
 
         if (FAILED(hr))
@@ -100,8 +101,12 @@ export namespace LS::Platform::Dx12
             const auto msg = Win32::HrToString(hr);
             LS_LOG_ERROR(std::format("An error occurred when trying to set an Event On Completion: {}", hr));
         }
-
-        ::WaitForSingleObject(fenceEvent, static_cast<DWORD>(duration.count()));
+        if (duration == std::chrono::milliseconds::max())
+        {
+            ::WaitForSingleObjectEx(fenceEvent, INFINITE, FALSE);
+            return;
+        }
+        ::WaitForSingleObjectEx(fenceEvent, static_cast<DWORD>(duration.count()), FALSE);
     }
 
     /**
@@ -132,10 +137,6 @@ export namespace LS::Platform::Dx12
 
         std::vector<HANDLE> objects(events.size() + 1);
         objects[0] = fenceEvent;
-        /*for (size_t i = 0; i < objects.size(); ++i)
-        {
-            objects[i + 1] = events[i];
-        }*/
 
         auto p = 1u;
         for (auto& e : events)
@@ -143,7 +144,8 @@ export namespace LS::Platform::Dx12
             objects[p] = e;
             p++;
         }
-
+        if (duration == std::chrono::milliseconds::max())
+            duration = std::chrono::milliseconds(INFINITE);
         ::WaitForMultipleObjects(static_cast<DWORD>(objects.size()), objects.data(), TRUE, static_cast<DWORD>(duration.count()));
     }
 
@@ -157,6 +159,7 @@ export namespace LS::Platform::Dx12
     [[nodiscard]] inline auto Signal(WRL::ComPtr<ID3D12CommandQueue>& pQueue, WRL::ComPtr<ID3D12Fence>& pFence,
         uint64_t fenceValue) noexcept -> uint64_t
     {
+        ++fenceValue;
         const auto hr = pQueue->Signal(pFence.Get(), fenceValue);
 
         if (FAILED(hr))
@@ -165,7 +168,7 @@ export namespace LS::Platform::Dx12
             LS_LOG_ERROR(std::format("An error occurred when signaling the fence value: {}", msg));
         }
 
-        return ++fenceValue;
+        return fenceValue;
     }
 
     /**
@@ -177,8 +180,8 @@ export namespace LS::Platform::Dx12
     [[nodiscard]] inline void Signal2(WRL::ComPtr<ID3D12CommandQueue>& pQueue, WRL::ComPtr<ID3D12Fence>& pFence,
         uint64_t& fenceValue) noexcept
     {
-        const auto hr = pQueue->Signal(pFence.Get(), fenceValue);
         ++fenceValue;
+        const auto hr = pQueue->Signal(pFence.Get(), fenceValue);
 
         if (FAILED(hr))
         {
@@ -200,7 +203,7 @@ export namespace LS::Platform::Dx12
     {
         uint64_t fenceValueForSignal = Signal(pQueue, pFence, fenceValue);
 
-        WaitForFenceValue(pFence, fenceValueForSignal, fenceEvent);
+        WaitForFenceValue(pFence, fenceValueForSignal, fenceEvent, std::chrono::milliseconds::max());
 
         return fenceValueForSignal;
     }
