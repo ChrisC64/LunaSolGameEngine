@@ -71,8 +71,8 @@ namespace LS
         void RegisterMouseMove(LS::Input::LSOnMouseMove callback);
         void RegisterKeybaordInput(LS::Input::LSOnKeyboardInput callback);
         //[[nodiscard]] auto Initialize([[maybe_unused]] SharedRef<LSCommandArgs> args = nullptr) -> System::ErrorCode;
-        [[nodiscard]] bool IsRunning();
-        void PollEvent();
+        bool IsRunning();
+        auto PollEvent() -> LS::APP_STATE;
         [[nodiscard]] void* GetWindow();
         Vec2U GetWindowSize();
 #ifdef LS_WIN32_BUILD
@@ -136,13 +136,15 @@ namespace LS
 
     bool LSApp::IsRunning()
     {
-        return m_state != LS::APP_STATE::QUIT;
+#ifdef LS_WIN32_BUILD
+        return Win32::g_AppInstance.IsClosing != 1;
+#endif
     }
 
-    void LSApp::PollEvent()
+    auto LSApp::PollEvent() -> LS::APP_STATE
     {
 #ifdef LS_WIN32_BUILD
-        m_state = Win32::PollApp();
+        return Win32::PollApp();
 #endif//LS_WIN32_BUILD
     }
 

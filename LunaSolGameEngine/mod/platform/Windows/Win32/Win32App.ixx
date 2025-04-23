@@ -34,6 +34,7 @@ export namespace LS::Win32
     void RegisterKeyboardInput(LS::Input::LSOnKeyboardInput callback);
     void GetWindowSize(uint32_t& width, uint32_t& height);
 
+    [[nodiscard]] auto TranslateAppState(MSG msg) -> LS::APP_STATE;
     [[nodiscard]] auto GetHwnd() -> HWND;
     [[nodiscard]] bool IsKeyDown(LS::Input::KEYBOARD key);
     [[nodiscard]] bool IsKeyDownAsync(LS::Input::KEYBOARD key);
@@ -44,9 +45,9 @@ export namespace LS::Win32
     {
         HINSTANCE Instance{};
         WNDCLASSEX WndClass{};
-        MSG Msg;
         HWND Hwnd{};
         WndProcHandler WndProcHandler{};
+        BOOL IsClosing = FALSE;
     };
 
     AppWin32 g_AppInstance{};
@@ -73,25 +74,26 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
     {
     case WM_CLOSE:
     {
+        g_AppInstance.IsClosing = TRUE;
         CloseWindow();
-        break;
+        return 0;
     }
+    case WM_QUIT:
+        return 0;
     case WM_DESTROY:
-        PostQuitMessage(0);
-        Shutdown();
-        break;
+        return 0;
     case WM_KEYDOWN:
         if (g_AppKeyboardInput)
         {
             g_AppKeyboardInput(ToLSKey(wparam), GetModKeys(), LS::Input::STATE::PRESS);
         }
-        break;
+        return 0;
     case WM_KEYUP:
         if (g_AppKeyboardInput)
         {
             g_AppKeyboardInput(ToLSKey(wparam), GetModKeys(), LS::Input::STATE::RELEASE);
         }
-        break;
+        return 0;
     case WM_LBUTTONDOWN:
     case WM_MBUTTONDOWN:
     case WM_RBUTTONDOWN:
@@ -99,7 +101,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
         {
             g_AppMouseInput(ToMouseButton(msg), GetModKeys(), LS::Input::STATE::PRESS);
         }
-        break;
+        return 0;
     case WM_LBUTTONUP:
     case WM_MBUTTONUP:
     case WM_RBUTTONUP:
@@ -107,7 +109,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
         {
             g_AppMouseInput(ToMouseButton(msg), GetModKeys(), LS::Input::STATE::RELEASE);
         }
-        break;
+        return 0;
     case WM_MOUSEMOVE:
         if (g_AppMouseMove)
         {
@@ -116,9 +118,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
             y = (uint32_t)GET_Y_LPARAM(lparam);
             g_AppMouseMove(x, y);
         }
-        break;
+        return 0;
+    default:
+        return DefWindowProc(hwnd, msg, wparam, lparam);
     }
-    return DefWindowProc(hwnd, msg, wparam, lparam);
 }
 
 void LS::Win32::InitApp(u32 width, u32 height, const wchar_t* title)
@@ -179,6 +182,7 @@ void LS::Win32::InitApp(u32 width, u32 height, const wchar_t* title)
 
     g_AppInstance.Hwnd = hwnd;
     ShowWindow(hwnd, SW_SHOW);
+    g_AppInstance.IsClosing = FALSE;
 }
 
 void LS::Win32::Shutdown()
@@ -188,18 +192,19 @@ void LS::Win32::Shutdown()
 
 auto LS::Win32::PollApp() -> LS::APP_STATE
 {
-    if (PeekMessage(&g_AppInstance.Msg, NULL, 0, 0, PM_REMOVE))
+    MSG msg;
+    if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
     {
-        TranslateMessage(&g_AppInstance.Msg);
-        DispatchMessage(&g_AppInstance.Msg);
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
     }
-    using enum LS::APP_STATE;
-    return g_AppInstance.Msg.message == WM_QUIT ? QUIT : RUNNING;
+    return TranslateAppState(msg);
 }
 
 void LS::Win32::CloseWindow()
 {
-    DestroyWindow(g_AppInstance.Hwnd);
+    PostQuitMessage(0);
+    //DestroyWindow(g_AppInstance.Hwnd);
 }
 
 void LS::Win32::SetCustomWndProc(WndProcHandler handler)
@@ -235,6 +240,26 @@ void LS::Win32::GetWindowSize(uint32_t& width, uint32_t& height)
     AdjustWindowRectEx(&rect, WS_OVERLAPPEDWINDOW, false, 0);*/
     width = rect.right - rect.left;
     height = rect.bottom - rect.top;
+}
+
+auto LS::Win32::TranslateAppState(MSG msg) -> LS::APP_STATE
+{
+    using enum LS::APP_STATE;
+    switch (msg.message)
+    {
+    case WM_DESTROY:
+    case WM_QUIT:
+    case WM_CLOSE:
+        return QUIT;
+    case WM_CREATE:
+        return INITIALIZED;
+    case WM_MOVE:
+        return SUSPEND;
+    case WM_SIZE:
+        return SUSPEND;
+    default:
+        return RUNNING;
+    }
 }
 
 [[nodiscard]]

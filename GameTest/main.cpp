@@ -71,7 +71,7 @@ int main(int argc, char* argv[])
 
     const auto vsData = LS::DX::DxcLoadFile(vsPath).value();
     const auto psData = LS::DX::DxcLoadFile(psPath).value();
-    
+
     builder.LoadShader(vsData, LS::SHADER_TYPE::VERTEX);
     builder.LoadShader(psData, LS::SHADER_TYPE::PIXEL);
     // Create input layout and supply the given ID to use its compiled data
@@ -110,9 +110,13 @@ int main(int argc, char* argv[])
         };
     LS::Vec2U currSize = app.GetWindowSize();
     //TODO: Implement a working resize event
+
     while (app.IsRunning())
     {
-        app.PollEvent();
+        auto state = app.PollEvent();
+        if (state == LS::APP_STATE::QUIT)
+            break;
+
         LS::Vec2U newSize = app.GetWindowSize();
         if (currSize != newSize)
         {
