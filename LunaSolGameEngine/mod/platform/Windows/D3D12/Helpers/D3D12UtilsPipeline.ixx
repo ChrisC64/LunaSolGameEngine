@@ -213,6 +213,21 @@ export namespace LS::Platform::Dx12
             LoadShader(compiled, type);
         }
 
+        auto CompileShaderDxc(std::filesystem::path filepath, LS::SHADER_TYPE type, const wchar_t* entryPoint, const wchar_t* target)
+        {
+            const auto result = LS::DX::DxcCompileFile(filepath, entryPoint, target);
+            if (!result)
+            {
+#ifdef _DEBUG
+                throw std::runtime_error(std::format("Failed to compile file: {}", filepath.string()).c_str());
+#endif
+                return;
+            }
+
+            const auto compiled = result.value();
+            LoadShader(compiled, type);
+        }
+
         /**
          * @brief Compile the shader based on the supplied shader options
          * @param options Options for the compiler

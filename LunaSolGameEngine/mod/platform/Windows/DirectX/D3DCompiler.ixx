@@ -82,67 +82,85 @@ export namespace LS::DX
         return outData;
     }
 
-//    auto DxcCompileFile(std::filesystem::path file, const wchar_t* entryPoint, const wchar_t* target, const std::vector<LPCWSTR>& args = {}) -> LS::Nullable<std::vector<std::byte>>
-//    {
-//        if (!IsDxcToolsReady())
-//            InitDxcCompiler();
-//
-//        std::vector<LPCWSTR> compileArgs
-//        {
-//            L"-E",
-//            entryPoint,
-//            L"-T",
-//            target,
-//#ifdef _DEBUG
-//            DXC_ARG_DEBUG,
-//            DXC_ARG_SKIP_OPTIMIZATIONS,
-//#endif
-//        };
-//
-//        for (auto a : args)
-//        {
-//            compileArgs.push_back(a);
-//        }
-//
-//        Microsoft::WRL::ComPtr<IDxcBlobEncoding> data;
-//        HRESULT hr = g_dxcUtils->LoadFile(file.wstring().c_str(), NULL, &data);
-//        if (FAILED(hr))
-//        {
-//            return std::nullopt;
-//        }
-//
-//        DxcBuffer sourceBuffer
-//        {
-//            .Ptr = data->GetBufferPointer(),
-//            .Size = data->GetBufferSize(),
-//            .Encoding = DXC_CP_ACP
-//        };
-//
-//        Microsoft::WRL::ComPtr<IDxcResult> pResult;
-//        hr = g_dxcCompiler->Compile(&sourceBuffer, compileArgs.data(), (uint32_t)compileArgs.size(), nullptr, IID_PPV_ARGS(&pResult));
-//        if (FAILED(hr))
-//        {
-//            Microsoft::WRL::ComPtr<IDxcBlobUtf16> pErrors;
-//            pResult->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(&pErrors), nullptr);
-//            const LPCWSTR errorMessage = pErrors->GetStringPointer();
-//            OutputDebugString(errorMessage);
-//            return std::nullopt;
-//        }
-//        // Get the shader binary //
-//        Microsoft::WRL::ComPtr<IDxcBlob> pShaderOut;
-//        Microsoft::WRL::ComPtr<IDxcBlobUtf16> pShaderName;
-//        pResult->GetOutput(DXC_OUT_OBJECT, IID_PPV_ARGS(&pShaderOut), &pShaderName);
-//        if (!pShaderOut)
-//        {
-//            OutputDebugString(std::format(L"Failed to get shader data: {}", file.wstring()).c_str());
-//            return std::nullopt;
-//        }
-//
-//        std::byte* begin = reinterpret_cast<std::byte*>(pShaderOut->GetBufferPointer());
-//        std::vector<std::byte> outData(begin, begin + pShaderOut->GetBufferSize());
-//
-//        return outData;
-//    }
+    auto DxcCompileFile(std::filesystem::path file, const wchar_t* entryPoint, const wchar_t* target, const std::vector<LPCWSTR>& args = {}) -> LS::Nullable<std::vector<std::byte>>
+    {
+        if (!IsDxcToolsReady())
+            InitDxcCompiler();
+        if (!std::filesystem::exists(file))
+        {
+            OutputDebugString(std::format(L"The file does not exist: {}", file.wstring()).c_str());
+        }
+        std::vector<LPCWSTR> compileArgs
+        {
+            L"-E",
+            entryPoint,
+            L"-T",
+            target,
+#ifdef _DEBUG
+            DXC_ARG_DEBUG,
+            DXC_ARG_SKIP_OPTIMIZATIONS,
+#endif
+        };
+
+        for (auto a : args)
+        {
+            compileArgs.push_back(a);
+        }
+
+        Microsoft::WRL::ComPtr<IDxcBlobEncoding> data;
+        HRESULT hr = g_dxcUtils->LoadFile(file.wstring().c_str(), NULL, &data);
+        if (FAILED(hr))
+        {
+            return std::nullopt;
+        }
+
+        DxcBuffer sourceBuffer
+        {
+            .Ptr = data->GetBufferPointer(),
+            .Size = data->GetBufferSize(),
+            .Encoding = DXC_CP_ACP
+        };
+
+        Microsoft::WRL::ComPtr<IDxcResult> pResult;
+        hr = g_dxcCompiler->Compile(&sourceBuffer, compileArgs.data(), (uint32_t)compileArgs.size(), nullptr, IID_PPV_ARGS(&pResult));
+        if (FAILED(hr))
+        {
+            Microsoft::WRL::ComPtr<IDxcBlobUtf16> pErrors;
+            pResult->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(&pErrors), nullptr);
+            const LPCWSTR errorMessage = pErrors->GetStringPointer();
+            OutputDebugString(errorMessage);
+            return std::nullopt;
+        }
+
+        // Get the shader binary //
+        Microsoft::WRL::ComPtr<IDxcBlob> pShaderOut;
+        Microsoft::WRL::ComPtr<IDxcBlobUtf16> pShaderName;
+        if (!pResult->HasOutput(DXC_OUT_OBJECT))
+        {
+            OutputDebugString(L"There is no DXC out object to obtain.");
+        }
+
+        Microsoft::WRL::ComPtr<IDxcBlobEncoding> pError;
+        if (pResult->GetErrorBuffer(&pError))
+        {
+            const std::string errorMsg = std::string((const char*)pError->GetBufferPointer(), pError->GetBufferSize());
+            OutputDebugStringA(errorMsg.c_str());
+        }
+
+        pResult->GetResult(&pShaderOut);
+
+        //pResult->GetOutput(DXC_OUT_OBJECT, IID_PPV_ARGS(&pShaderOut), &pShaderName);
+        if (!pShaderOut)
+        {
+            OutputDebugString(std::format(L"Failed to get shader data: {}", file.wstring()).c_str());
+            return std::nullopt;
+        }
+
+        std::byte* begin = reinterpret_cast<std::byte*>(pShaderOut->GetBufferPointer());
+        std::vector<std::byte> outData((std::byte*)begin, (std::byte*)begin + pShaderOut->GetBufferSize());
+
+        return outData;
+    }
 
     auto FxcCompileShader(std::filesystem::path path, const char* entryPoint, const char* target, uint32_t compileFlags = 0, D3D_SHADER_MACRO* defines = nullptr, ID3DInclude* include = nullptr) -> CompileResult
     {
