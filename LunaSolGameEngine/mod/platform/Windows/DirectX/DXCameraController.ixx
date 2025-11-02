@@ -4,7 +4,7 @@ module;
 export module DirectXCommon.DXCameraController;
 
 import DirectXCommon.DXCamera;
-import LSDataLib;
+import LSDataTypes;
 import MathLib;
 
 using namespace DirectX;

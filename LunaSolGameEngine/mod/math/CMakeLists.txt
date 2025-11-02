@@ -5,7 +5,7 @@ message(STATUS "--- In Folder: ${CMAKE_CURRENT_SOURCE_DIR}")
 target_sources(${PROJECT_NAME} PUBLIC
     FILE_SET math_module TYPE CXX_MODULES 
     FILES
-        GeometryMath.ixx
+        MathConstants.ixx
         MathLib.ixx
         MatrixMath.ixx
     )

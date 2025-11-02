@@ -18,13 +18,13 @@
     <ClCompile Include="mod\data\BufferTypes.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="mod\engine\EngineTypes.ixx">
+    <ClCompile Include="mod\engine\Defines.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="mod\data\DataTypes.ixx">
+    <ClCompile Include="mod\data\ResourceTypes.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="mod\data\LSDataLib.ixx">
+    <ClCompile Include="mod\data\LSDataTypes.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="mod\data\MathTypes.ixx">
@@ -36,10 +36,10 @@
     <ClCompile Include="mod\data\serialize\WavefrontObj.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="mod\engine\EngineInput.ixx">
+    <ClCompile Include="mod\engine\Input.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="mod\engine\EngineShader.ixx">
+    <ClCompile Include="mod\engine\Shader.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="mod\data\TextureTypes.ixx">
@@ -48,22 +48,22 @@
     <ClCompile Include="mod\engine\Clock.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="mod\engine\EngineApp.ixx">
+    <ClCompile Include="mod\engine\App.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="mod\engine\EngineCamera.ixx">
+    <ClCompile Include="mod\engine\Camera.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="mod\engine\EngineCodes.ixx">
+    <ClCompile Include="mod\engine\Codes.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="mod\engine\EngineDevice.ixx">
+    <ClCompile Include="mod\engine\Device.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="mod\engine\EngineLogger.ixx">
+    <ClCompile Include="mod\engine\Logger.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="mod\engine\EngineWindow.ixx">
+    <ClCompile Include="mod\engine\Window.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="mod\engine\LSEngine.ixx">
@@ -168,7 +168,7 @@
     <ClCompile Include="mod\helper\LSCommonTypes.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="mod\math\GeometryMath.ixx">
+    <ClCompile Include="mod\math\MathConstants.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="mod\math\MathLib.ixx">

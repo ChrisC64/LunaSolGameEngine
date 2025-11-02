@@ -13,7 +13,7 @@ export import Engine.Input;
 
 // Objects not pertaining to engine but could, generic tools that are for all platforms
 export import Clock;
-export import LSDataLib;
+export import LSDataTypes;
 export import Helper.IO;
 export import Helper.LSCommonTypes;
 export import MathLib;

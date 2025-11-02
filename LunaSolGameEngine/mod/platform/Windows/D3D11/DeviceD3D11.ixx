@@ -7,7 +7,7 @@ module;
 #include <d3d11_4.h>
 
 export module D3D11.Device;
-import LSDataLib;
+import LSDataTypes;
 import Engine.LSDevice;
 import Engine.LSWindow;
 import Engine.Defines;
@@ -66,7 +66,7 @@ import D3D11.Utils;
 import D3D11.LSTypeWrapper;
 import Win32.ComUtils;
 import Engine.Logger;
-import LSDataLib;
+import LSDataTypes;
 
 namespace WRL = Microsoft::WRL;
 

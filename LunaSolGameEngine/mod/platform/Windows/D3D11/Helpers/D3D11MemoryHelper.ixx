@@ -11,7 +11,7 @@ module;
 #include <wrl/client.h>
 #include "engine/EngineLogDefines.h"
 export module D3D11.MemoryHelper;
-import LSDataLib;
+import LSDataTypes;
 import Engine.Logger;
 import Engine.EngineCodes;
 import Engine.Defines;

@@ -6,7 +6,7 @@ export module D3D12Lib.ResourceManagerD3D12;
 
 import D3D12Lib.D3D12Common;
 import Platform.Win32Window;
-import LSDataLib;
+import LSDataTypes;
 import Engine.Defines;
 
 namespace WRL = Microsoft::WRL;

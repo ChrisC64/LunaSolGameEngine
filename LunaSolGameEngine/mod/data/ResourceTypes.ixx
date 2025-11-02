@@ -3,7 +3,7 @@ module;
 #include <string>
 #include <memory>
 #include <vector>
-export module LSDataLib:DataTypes;
+export module LSDataTypes:ResourceTypes;
 // A list of common data types to define here for use within the engine itself
 import :MathTypes;
 

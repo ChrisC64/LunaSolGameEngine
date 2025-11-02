@@ -17,7 +17,7 @@ import Engine.EngineCodes;
 import Engine.Defines;
 import Engine.Input;
 
-import LSDataLib;
+import LSDataTypes;
 
 #ifdef LS_WIN32_BUILD
 import Platform.Win32App;
@@ -137,7 +137,7 @@ namespace LS
     bool LSApp::IsRunning()
     {
 #ifdef LS_WIN32_BUILD
-        return Win32::g_AppInstance.IsClosing != 1;
+        return Win32::g_AppInstance.IsClosing == false;
 #endif
     }
 

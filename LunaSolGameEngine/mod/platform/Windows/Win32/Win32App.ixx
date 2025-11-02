@@ -47,7 +47,7 @@ export namespace LS::Win32
         WNDCLASSEX WndClass{};
         HWND Hwnd{};
         WndProcHandler WndProcHandler{};
-        BOOL IsClosing = FALSE;
+        bool IsClosing = false;
     };
 
     AppWin32 g_AppInstance{};
@@ -74,7 +74,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
     {
     case WM_CLOSE:
     {
-        g_AppInstance.IsClosing = TRUE;
+        g_AppInstance.IsClosing = false;
         CloseWindow();
         return 0;
     }
@@ -182,7 +182,7 @@ void LS::Win32::InitApp(u32 width, u32 height, const wchar_t* title)
 
     g_AppInstance.Hwnd = hwnd;
     ShowWindow(hwnd, SW_SHOW);
-    g_AppInstance.IsClosing = FALSE;
+    g_AppInstance.IsClosing = false;
 }
 
 void LS::Win32::Shutdown()

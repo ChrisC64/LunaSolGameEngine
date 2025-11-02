@@ -10,3 +10,4 @@
 # VCPKG installs
 LunaSolGameEngine/vcpkg_installed/
 GameTest/vcpkg_installed/
+vcpkg_installed

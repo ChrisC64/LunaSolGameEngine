@@ -16,7 +16,7 @@ import Engine.Defines;
 import Helper.LSCommonTypes;
 
 import Win32.ComUtils;
-import LSDataLib;
+import LSDataTypes;
 
 namespace WRL = Microsoft::WRL;
 

@@ -44,12 +44,12 @@ import DXGIHelper;
 
 namespace WRL = Microsoft::WRL;
 
-namespace LS::Platform::Dx12
+export namespace LS::Platform::Dx12
 {
     /**
-     * @brief A pair between a resource and its view
-     * @tparam T The View type to use
-     */
+    * @brief A pair between a resource and its view
+    * @tparam T The View type to use
+    */
     template<class T>
     struct ResourceDX
     {
@@ -57,10 +57,7 @@ namespace LS::Platform::Dx12
         T View;
         UINT8* pDataBegin;
     };
-}
 
-export namespace LS::Platform::Dx12
-{
     enum class RendererState
     {
         UNINITIALIZED,// @brief Created, but hasn't been correctly setup
@@ -131,9 +128,9 @@ export namespace LS::Platform::Dx12
         auto BuildPipelineState(Dx12PsoBuilder& builder) -> LS::Nullable<size_t>;
 
         auto CreateVertexBuffer(const void* pData, size_t size, size_t stride) -> LS::Nullable<size_t>;
-        auto CreateConstantBuffer(const void* pData, size_t size) -> LS::Nullable<size_t>;
+        auto CreateConstantBuffer(const void* pData, uint32_t size) -> LS::Nullable<uint64_t>;
 
-        auto SetVertexBuffer(uint32_t vbId, CommandListDx12& commandList, uint32_t slot = 0);
+        void SetVertexBuffer(uint32_t vbId, CommandListDx12& commandList, uint32_t slot = 0);
         void UpdateVertexData(size_t id, const void* pData, size_t length);
         void UpdateCbData(size_t id, const void* pData, size_t length);
 
@@ -148,6 +145,7 @@ export namespace LS::Platform::Dx12
         std::unordered_map<size_t, Microsoft::WRL::ComPtr<ID3D12PipelineState>> m_pipelines;
         std::unordered_map<size_t, ResourceDX<D3D12_VERTEX_BUFFER_VIEW>> m_vertexBuffers;
         std::unordered_map<size_t, ResourceDX<D3D12_CONSTANT_BUFFER_VIEW_DESC>> m_constantBuffers;
+        std::vector<WRL::ComPtr<ID3D12DescriptorHeap>> m_cbvHeaps;
         WRL::ComPtr<ID3D12RootSignature>        m_rootSignature;
     private: // Functions //
         [[nodiscard]]
@@ -391,7 +389,7 @@ void RendererDX12::BeginCommandList(CommandListDx12& commandList)
 
     WRL::ComPtr<ID3D12CommandAllocator>& alloc = m_frameContext.GetAllocator(m_frameBuffer.GetCurrentIndex());
     LS::Utils::ThrowIfFailed(alloc->Reset(), "The command list failed to reset.");
-    commandList.BeginFrame(frame, alloc);
+    commandList.BeginFrame(frame, alloc, nullptr);
 }
 
 void RendererDX12::BeginCommandList(CommandListDx12& commandList, uint32_t stateId)
@@ -400,10 +398,11 @@ void RendererDX12::BeginCommandList(CommandListDx12& commandList, uint32_t state
 
     WRL::ComPtr<ID3D12CommandAllocator>& alloc = m_frameContext.GetAllocator(m_frameBuffer.GetCurrentIndex());
     LS::Utils::ThrowIfFailed(alloc->Reset(), "The command list failed to reset.");
-    commandList.Begin(alloc);
-    const auto state = m_pipelines[stateId];
-    commandList.SetPipelineState(state.Get());
+    commandList.Begin(alloc, m_pipelines[stateId]);
+    //commandList.SetPipelineState(state.Get());
     commandList.SetGraphicsRootSignature(m_rootSignature.Get());
+    commandList.SetDescriptorHeaps(m_cbvHeaps);
+    commandList.SetGraphicsRootDescriptorTable(0, m_cbvHeaps[0]->GetGPUDescriptorHandleForHeapStart());
     commandList.SetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     const auto dimensions = m_frameBuffer.GetDimensions();
     CD3DX12_VIEWPORT viewport(0.0f, 0.0f, static_cast<float>(dimensions.x), static_cast<float>(dimensions.y));
@@ -469,7 +468,7 @@ auto RendererDX12::CreateVertexBuffer(const void* pData, size_t size, size_t str
     return id;
 }
 
-auto LS::Platform::Dx12::RendererDX12::CreateConstantBuffer(const void* pData, size_t size) -> LS::Nullable<size_t>
+auto LS::Platform::Dx12::RendererDX12::CreateConstantBuffer(const void* pData, uint32_t size) -> LS::Nullable<uint64_t>
 {
     Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> cbvHeap;
 
@@ -506,12 +505,13 @@ auto LS::Platform::Dx12::RendererDX12::CreateConstantBuffer(const void* pData, s
     memcpy(pDataBegin, pData, size);
 
 
-    const auto id = m_constantBuffers.size() + 1;
+    const uint64_t id = m_constantBuffers.size() + 1;
     m_constantBuffers[id] = ResourceDX<D3D12_CONSTANT_BUFFER_VIEW_DESC>{ .Resource = buffer, .View = cbvDesc, .pDataBegin = pDataBegin };
+    m_cbvHeaps.push_back(cbvHeap);
     return id;
 }
 
-auto RendererDX12::SetVertexBuffer(uint32_t vbId, CommandListDx12& commandList, uint32_t slot /*= 0*/)
+void RendererDX12::SetVertexBuffer(uint32_t vbId, CommandListDx12& commandList, uint32_t slot /*= 0*/)
 {
     if (!m_vertexBuffers.contains(vbId))
         return;

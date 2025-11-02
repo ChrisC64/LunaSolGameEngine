@@ -1,6 +1,6 @@
-export module LSDataLib;
+export module LSDataTypes;
 
-export import :DataTypes;
+export import :ResourceTypes;
 export import :TextureTypes;
 export import :MathTypes;
 export import :BufferTypes;

@@ -1,0 +1,27 @@
+{
+  "version": 8,
+  "configurePresets": [
+    {
+      "name": "x64-debug",
+      "description": "Builds Windows X64 in DEBUG mode",
+      "inherits": [
+        "win-x64-base",
+        "vcpkg"
+      ],
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "x64-release",
+      "description": "Builds Windows X64 in RELEASE mode",
+      "inherits": [
+        "win-x64-base",
+        "vcpkg"
+      ],
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    }
+  ]
+}

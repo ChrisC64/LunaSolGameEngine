@@ -1,5 +1,5 @@
 export module MathLib:MatrixMath;
-import LSDataLib;
+import LSDataTypes;
 
 export namespace LS::Math
 {

@@ -3,7 +3,7 @@ module;
 #include <string>
 export module GeometryGenerator;
 import Engine.Defines;
-import LSDataLib;
+import LSDataTypes;
 import <vector>;
 
 namespace LS::Geo::Generator::Detail

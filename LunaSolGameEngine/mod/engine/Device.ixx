@@ -13,7 +13,7 @@ import Engine.LSWindow;
 import Engine.EngineCodes;
 import Engine.Shader;
 import Engine.Defines;
-import LSDataLib;
+import LSDataTypes;
 import Util.StdUtils;
 
 namespace LS

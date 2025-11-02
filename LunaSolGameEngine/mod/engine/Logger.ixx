@@ -13,7 +13,7 @@ module;
 export module Engine.Logger;
 
 import Engine.EngineCodes;
-import LSDataLib;
+import LSDataTypes;
 import Engine.Defines;
 
 export namespace LS::Log

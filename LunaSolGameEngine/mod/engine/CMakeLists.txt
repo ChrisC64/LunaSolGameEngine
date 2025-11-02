@@ -5,17 +5,17 @@ message(STATUS "--- In Folder: ${CMAKE_CURRENT_SOURCE_DIR}")
 target_sources(${PROJECT_NAME} PUBLIC
     FILE_SET engine_module TYPE CXX_MODULES 
     FILES
+        App.ixx
+        Camera.ixx
         Clock.ixx
-        EngineApp.ixx
-        EngineCamera.ixx
-        EngineCodes.ixx
-        EngineDefines.ixx
-        EngineDevice.ixx
-        EngineInput.ixx
-        EngineLogger.ixx
-        EngineShader.ixx
-        EngineWindow.ixx
+        Codes.ixx
+        Defines.ixx
+        Device.ixx
+        Input.ixx
+        Logger.ixx
         LSEngine.ixx
+        Shader.ixx
+        Window.ixx
     )
 
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)

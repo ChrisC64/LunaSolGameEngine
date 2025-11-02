@@ -3,7 +3,7 @@ module;
 #include <DirectXMath.h>
 export module DirectXCommon.DXCamera;
 
-import LSDataLib;
+import LSDataTypes;
 import MathLib;
 
 using namespace DirectX;

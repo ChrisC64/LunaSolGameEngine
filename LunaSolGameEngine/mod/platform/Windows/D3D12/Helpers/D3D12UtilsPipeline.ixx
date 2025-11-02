@@ -11,6 +11,37 @@ import Helper.IO;
 import Engine.Shader;
 import DirectXCommon.D3DCompiler;
 
+export namespace LS
+{
+    enum class DESCRIPTOR_RANGE_FLAGS
+    {
+        NONE = 0,
+        DATA_VOLATILE = 0x2,
+        DATA_STATIC_WHILE_SET_AT_EXECUTE = 0x4,
+        DATA_STATIC = 0x8
+    };
+
+    enum SHADER_VISIBILITY
+    {
+        VISIBILITY_ALL = 0,
+        VISIBILITY_VERTEX = 1,
+        VISIBILITY_HULL = 2,
+        VISIBILITY_DOMAIN = 3,
+        VISIBILITY_GEOMETRY = 4,
+        VISIBILITY_PIXEL = 5,
+        VISIBILITY_AMPLIFICATION = 6,
+        VISIBILITY_MESH = 7
+    };
+
+    enum class DESCRIPTOR_RANGE_TYPE
+    {
+        SRV = 0,
+        UAV = (SRV + 1),
+        CBV = (UAV + 1),
+        SAMPLER = (CBV + 1)
+    };
+}
+
 // This module is intended for helping in build up the necessary components to construct a PSO
 export namespace LS::Platform::Dx12
 {
@@ -18,31 +49,52 @@ export namespace LS::Platform::Dx12
     {
     private:
         std::vector<D3D12_ROOT_PARAMETER1> m_rootParams;
+        std::vector<D3D12_DESCRIPTOR_RANGE1> m_ranges;
 
     public:
-        explicit RootParamBuilder(uint32_t paramCount) : m_rootParams()
+        explicit RootParamBuilder(uint32_t paramCount) : m_rootParams(),
+            m_ranges{}
         {
             m_rootParams.reserve(paramCount);
         }
 
         auto CreateCbvParam(uint32_t shaderRegister, uint32_t registerSpace,
-            D3D12_ROOT_DESCRIPTOR_FLAGS flags, D3D12_SHADER_VISIBILITY shaderVis) -> RootParamBuilder* const;
+            DESCRIPTOR_RANGE_FLAGS flags, SHADER_VISIBILITY shaderVis) -> RootParamBuilder&;
 
-        auto CreateSrvParam(uint32_t shaderRegister, uint32_t registerSpace,
-            D3D12_ROOT_DESCRIPTOR_FLAGS flags, D3D12_SHADER_VISIBILITY shaderVis) -> RootParamBuilder* const;
+        auto BeginDescriptorRange(uint32_t count) -> RootParamBuilder&;
 
-        auto CreateUavParam(uint32_t shaderRegister, uint32_t registerSpace,
-            D3D12_ROOT_DESCRIPTOR_FLAGS flags, D3D12_SHADER_VISIBILITY shaderVis) -> RootParamBuilder* const;
-
-        auto CreateDescTableParam(std::span<D3D12_DESCRIPTOR_RANGE1> descRanges,
-            D3D12_SHADER_VISIBILITY shaderVis) -> RootParamBuilder* const;
-
-        auto CreateConstantsParam(uint32_t num32BitValues, uint32_t shaderRegister, uint32_t registerSpace, D3D12_SHADER_VISIBILITY shaderVis) -> RootParamBuilder* const;
+        auto CreateDescRange(DESCRIPTOR_RANGE_TYPE rangeType,
+            UINT numDescriptors, UINT baseShaderRegister, 
+            UINT registerSpace = 0, DESCRIPTOR_RANGE_FLAGS flags = DESCRIPTOR_RANGE_FLAGS::NONE,
+            UINT offsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND) -> RootParamBuilder&;
+        
+        auto EndDescriptorRange(uint32_t rootParamIndex, LS::SHADER_VISIBILITY visibility);
 
         auto GetParams() -> std::vector<D3D12_ROOT_PARAMETER1>
         {
             return m_rootParams;
         }
+
+        auto GetDescriptorRanges() -> std::vector<D3D12_DESCRIPTOR_RANGE1>
+        {
+            return m_ranges;
+        }
+
+    private:
+
+        auto CreateCbvParam(uint32_t shaderRegister, uint32_t registerSpace,
+            D3D12_ROOT_DESCRIPTOR_FLAGS flags, D3D12_SHADER_VISIBILITY shaderVis) -> RootParamBuilder&;
+
+        auto CreateSrvParam(uint32_t shaderRegister, uint32_t registerSpace,
+            D3D12_ROOT_DESCRIPTOR_FLAGS flags, D3D12_SHADER_VISIBILITY shaderVis) -> RootParamBuilder&;
+
+        auto CreateUavParam(uint32_t shaderRegister, uint32_t registerSpace,
+            D3D12_ROOT_DESCRIPTOR_FLAGS flags, D3D12_SHADER_VISIBILITY shaderVis) -> RootParamBuilder&;
+
+        auto CreateDescTableParam(std::span<D3D12_DESCRIPTOR_RANGE1> descRanges,
+            D3D12_SHADER_VISIBILITY shaderVis) -> RootParamBuilder&;
+
+        auto CreateConstantsParam(uint32_t num32BitValues, uint32_t shaderRegister, uint32_t registerSpace, D3D12_SHADER_VISIBILITY shaderVis) -> RootParamBuilder&;
     };
 
     class InputLayoutBuilder
@@ -101,7 +153,7 @@ export namespace LS::Platform::Dx12
             m_psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
         }
 
-        auto GetRootParamBuiler() -> RootParamBuilder&
+        auto GetRootParamBuilder() -> RootParamBuilder&
         {
             return m_rpBuilder;
         }
@@ -337,7 +389,7 @@ namespace LS::Platform::Dx12
         return rootSignature;
     }
 
-    auto CreateDescriptorRange1(D3D12_DESCRIPTOR_RANGE_TYPE type, uint32_t numDescriptors, uint32_t baseShaderRegister,
+    auto CreateDescriptorRange(D3D12_DESCRIPTOR_RANGE_TYPE type, uint32_t numDescriptors, uint32_t baseShaderRegister,
         uint32_t registerSpace, uint32_t offset) -> D3D12_DESCRIPTOR_RANGE
     {
         return CD3DX12_DESCRIPTOR_RANGE(type, numDescriptors, baseShaderRegister, registerSpace, offset);
@@ -396,7 +448,6 @@ namespace LS::Platform::Dx12
         CD3DX12_ROOT_PARAMETER1 rp;
         rp.InitAsConstantBufferView(shaderRegister, registerSpace, flags, shaderVis);
         return rp;
-
     }
 
     auto CreateRoot1ParamAsSRV(uint32_t shaderRegister, uint32_t registerSpace,
@@ -405,7 +456,6 @@ namespace LS::Platform::Dx12
         CD3DX12_ROOT_PARAMETER1 rp;
         rp.InitAsShaderResourceView(shaderRegister, registerSpace, flags, shaderVis);
         return rp;
-
     }
 
     auto CreateRoot1ParamAsUAV(uint32_t shaderRegister, uint32_t registerSpace,
@@ -432,49 +482,79 @@ namespace LS::Platform::Dx12
     }
 }
 
-
 module : private;
 
 using namespace LS::Platform::Dx12;
 
+auto RootParamBuilder::CreateCbvParam(uint32_t shaderRegister, uint32_t registerSpace, DESCRIPTOR_RANGE_FLAGS flags, SHADER_VISIBILITY shaderVis) -> RootParamBuilder&
+{
+    return CreateCbvParam(shaderRegister, registerSpace, (D3D12_ROOT_DESCRIPTOR_FLAGS)flags, (D3D12_SHADER_VISIBILITY)shaderVis);
+}
+
+auto LS::Platform::Dx12::RootParamBuilder::BeginDescriptorRange(uint32_t count) -> RootParamBuilder&
+{
+    m_ranges.reserve(count);
+    return *this;
+}
+
+auto RootParamBuilder::CreateDescRange(DESCRIPTOR_RANGE_TYPE rangeType, UINT numDescriptors, UINT baseShaderRegister, UINT registerSpace, DESCRIPTOR_RANGE_FLAGS flags, UINT offsetInDescriptorsFromTableStart)  -> RootParamBuilder&
+{
+    auto descRange = CreateDescriptorRange1((D3D12_DESCRIPTOR_RANGE_TYPE)rangeType, numDescriptors, baseShaderRegister, registerSpace, (D3D12_DESCRIPTOR_RANGE_FLAGS)flags, offsetInDescriptorsFromTableStart);
+    m_ranges.push_back(descRange);
+    return *this;
+}
+
+auto LS::Platform::Dx12::RootParamBuilder::EndDescriptorRange(uint32_t rootParamIndex, LS::SHADER_VISIBILITY visibility)
+{
+    if (rootParamIndex > m_rootParams.size() - 1)
+    {
+        OutputDebugString(std::format(L"Root Param Index: {} is out of bounds from given root Params: {}", rootParamIndex, m_rootParams.size()).c_str());
+        return;
+    }
+    
+    CD3DX12_ROOT_PARAMETER1 rp;
+    rp.InitAsDescriptorTable(m_ranges.size(), m_ranges.data(), (D3D12_SHADER_VISIBILITY)visibility);
+    m_rootParams.insert(m_rootParams.begin() + rootParamIndex, rp);
+}
+
 // Root Param Builder // 
 auto RootParamBuilder::CreateCbvParam(uint32_t shaderRegister, uint32_t registerSpace,
-    D3D12_ROOT_DESCRIPTOR_FLAGS flags, D3D12_SHADER_VISIBILITY shaderVis) -> RootParamBuilder * const
+    D3D12_ROOT_DESCRIPTOR_FLAGS flags, D3D12_SHADER_VISIBILITY shaderVis) -> RootParamBuilder&
 {
     const auto rp = ::CreateRoot1ParamAsCBV(shaderRegister, registerSpace, flags, shaderVis);
     m_rootParams.push_back(rp);
-    return this;
+    return *this;
 }
 
 auto RootParamBuilder::CreateSrvParam(uint32_t shaderRegister, uint32_t registerSpace,
-    D3D12_ROOT_DESCRIPTOR_FLAGS flags, D3D12_SHADER_VISIBILITY shaderVis) -> RootParamBuilder * const
+    D3D12_ROOT_DESCRIPTOR_FLAGS flags, D3D12_SHADER_VISIBILITY shaderVis) -> RootParamBuilder&
 {
     const auto rp = ::CreateRoot1ParamAsCBV(shaderRegister, registerSpace, flags, shaderVis);
     m_rootParams.push_back(rp);
-    return this;
+    return *this;
 }
 
 auto RootParamBuilder::CreateUavParam(uint32_t shaderRegister, uint32_t registerSpace,
-    D3D12_ROOT_DESCRIPTOR_FLAGS flags, D3D12_SHADER_VISIBILITY shaderVis) -> RootParamBuilder * const
+    D3D12_ROOT_DESCRIPTOR_FLAGS flags, D3D12_SHADER_VISIBILITY shaderVis) -> RootParamBuilder&
 {
     const auto rp = ::CreateRoot1ParamAsCBV(shaderRegister, registerSpace, flags, shaderVis);
     m_rootParams.push_back(rp);
-    return this;
+    return *this;
 }
 
 auto RootParamBuilder::CreateDescTableParam(std::span<D3D12_DESCRIPTOR_RANGE1> descRanges,
-    D3D12_SHADER_VISIBILITY shaderVis) -> RootParamBuilder * const
+    D3D12_SHADER_VISIBILITY shaderVis) -> RootParamBuilder&
 {
     const auto rp = ::CreateRoot1ParamAsDescTable(descRanges, shaderVis);
     m_rootParams.push_back(rp);
-    return this;
+    return *this;
 }
 
-auto RootParamBuilder::CreateConstantsParam(uint32_t num32BitValues, uint32_t shaderRegister, uint32_t registerSpace, D3D12_SHADER_VISIBILITY shaderVis) -> RootParamBuilder * const
+auto RootParamBuilder::CreateConstantsParam(uint32_t num32BitValues, uint32_t shaderRegister, uint32_t registerSpace, D3D12_SHADER_VISIBILITY shaderVis) -> RootParamBuilder&
 {
     const auto rp = ::CreateRoot1ParamAsConstants(num32BitValues, shaderRegister, registerSpace, shaderVis);
     m_rootParams.push_back(rp);
-    return this;
+    return *this;
 }
 
 // Input Layout Builder //
@@ -493,12 +573,19 @@ auto Dx12PsoBuilder::BuildPSO(ID3D12Device* pDevice) -> Microsoft::WRL::ComPtr<I
     if (!pDevice)
         return nullptr;
 
-    const auto rootParams = m_rpBuilder.GetParams();
+    auto rootParams = m_rpBuilder.GetParams();
+
+    D3D12_ROOT_SIGNATURE_FLAGS rootSignatureFlags =
+        D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
+        D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
+        D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
+        D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS |
+        D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS;
 
     m_rootSignature = CreateRootSignature(pDevice, 
-        std::span<D3D12_ROOT_PARAMETER1>{}, 
+        rootParams, 
         std::span<D3D12_STATIC_SAMPLER_DESC>{}, 
-        D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+        rootSignatureFlags);
 
     m_psoDesc.pRootSignature = m_rootSignature.Get();
     const auto& il = m_ilBuilder.GetLayout();

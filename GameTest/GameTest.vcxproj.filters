@@ -90,4 +90,7 @@
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <CopyFileToFolders Include="shaders\shader_cb.hlsl" />
+  </ItemGroup>
 </Project>

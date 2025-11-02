@@ -16,7 +16,7 @@ import <array>;
 import <span>;
 import <limits>;
 import Win32.ComUtils;
-import LSDataLib;
+import LSDataTypes;
 import Engine.LSDevice;
 import Engine.Defines;
 

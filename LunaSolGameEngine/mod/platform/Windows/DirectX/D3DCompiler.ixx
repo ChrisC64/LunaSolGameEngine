@@ -157,7 +157,10 @@ export namespace LS::DX
         }
 
         std::byte* begin = reinterpret_cast<std::byte*>(pShaderOut->GetBufferPointer());
-        std::vector<std::byte> outData((std::byte*)begin, (std::byte*)begin + pShaderOut->GetBufferSize());
+        std::vector<std::byte> outData;
+        outData.reserve(pShaderOut->GetBufferSize());
+        OutputDebugString(std::format(L"Shader Size: {}", pShaderOut->GetBufferSize()).c_str());
+        //std::copy(pShaderOut->GetBufferPointer(), pShaderOut->GetBufferPointer() + pShaderOut->GetBufferSize(), std::back_inserter(outData));
 
         return outData;
     }

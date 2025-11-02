@@ -78,7 +78,7 @@ export namespace LS
     template <class T>
     concept DestructibleNoThrow = std::is_nothrow_destructible_v<T>;
 
-    using LSWindowHandle = void*  ;
+    using LSWindowHandle = void*;
 
     struct Rect
     {

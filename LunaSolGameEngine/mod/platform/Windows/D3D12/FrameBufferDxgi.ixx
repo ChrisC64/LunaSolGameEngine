@@ -16,7 +16,7 @@ import D3D12Lib.DescriptorHeapDx12;
 import Engine.EngineCodes;
 import Win32.ComUtils;
 import Win32.Utils;
-import LSDataLib;
+import LSDataTypes;
 
 namespace WRL = Microsoft::WRL;
 
@@ -161,6 +161,7 @@ export namespace LS::Platform::Dx12
 }
 
 module : private;
+
 using namespace LS::Platform::Dx12;
 
 LS::Platform::Dx12::FrameBufferDxgi::~FrameBufferDxgi()

@@ -5,7 +5,7 @@ module;
 #include <stdexcept>
 export module D3D11.LSTypeWrapper;
 
-import LSDataLib;
+import LSDataTypes;
 import Engine.LSDevice;
 import Engine.Shader;
 

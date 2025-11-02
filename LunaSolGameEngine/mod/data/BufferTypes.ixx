@@ -4,8 +4,8 @@ module;
 #include <unordered_map>
 #include <format>
 #include <optional>
-export module LSDataLib:BufferTypes;
-import :DataTypes;
+export module LSDataTypes:BufferTypes;
+import :ResourceTypes;
 import Engine.EngineCodes;
 import Engine.Defines;
 

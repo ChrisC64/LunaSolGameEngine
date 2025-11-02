@@ -7,9 +7,9 @@ target_sources(${PROJECT_NAME} PUBLIC
     FILE_SET data_module TYPE CXX_MODULES 
     FILES
         BufferTypes.ixx
-        DataTypes.ixx
-        LSDataLib.ixx
+        LSDataTypes.ixx
         MathTypes.ixx
+        ResourceTypes.ixx
         TextureTypes.ixx
     )
 

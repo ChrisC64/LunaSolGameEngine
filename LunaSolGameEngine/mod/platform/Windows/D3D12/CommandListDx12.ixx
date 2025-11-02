@@ -47,9 +47,9 @@ export namespace LS::Platform::Dx12
             return m_name;
         }
 
-        void Begin(const WRL::ComPtr<ID3D12CommandAllocator>& commandAllocator);
-        void BeginFrame(const FrameDx12& frame, const WRL::ComPtr<ID3D12CommandAllocator>& commandAllocator);
-        void BeginFrame(const FrameBufferDxgi& frameBuffer, const WRL::ComPtr<ID3D12CommandAllocator>& commandAllocator);
+        void Begin(const WRL::ComPtr<ID3D12CommandAllocator>& commandAllocator, WRL::ComPtr<ID3D12PipelineState> pipelineState);
+        void BeginFrame(const FrameDx12& frame, const WRL::ComPtr<ID3D12CommandAllocator>& commandAllocator, WRL::ComPtr<ID3D12PipelineState> pipelineState);
+        void BeginFrame(const FrameBufferDxgi& frameBuffer, const WRL::ComPtr<ID3D12CommandAllocator>& commandAllocator, WRL::ComPtr<ID3D12PipelineState> pipelineState);
         void End() noexcept;
         void EndFrame() noexcept;
         void Clear(std::array<float, 4> clearColor) noexcept;
@@ -65,6 +65,8 @@ export namespace LS::Platform::Dx12
         void SetScissorRects(uint32_t numRects, const D3D12_RECT* rects) noexcept;
         void SetGraphicsRoot32BitConstant(uint32_t rootParamIndx, uint32_t srcData, uint32_t destOffsetIn32BitValues) noexcept;
         void SetGraphicsRoot32BitConstants(uint32_t rootParamIndx, uint32_t num32BitValueToSet, const void* pData, uint32_t destOffsetIn32BitValues) noexcept;
+        void SetDescriptorHeaps(const std::vector<Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>> & heaps) noexcept;
+        void SetGraphicsRootDescriptorTable(UINT rootParameterIndex, D3D12_GPU_DESCRIPTOR_HANDLE baseDescriptor) noexcept;
         void DrawIndexedInstanced(uint32_t indexCountPerInstance, uint32_t instanceCount, uint32_t startIndexLocation = 0u, int32_t  baseVertexLocation = 0u, uint32_t startInstanceLocation = 0u) noexcept;
         void DrawInstances(uint32_t vertexCountPerInstance, uint32_t instanceCount, uint32_t startIndexLocation = 0, int32_t startVertexLocation = 0) noexcept;
 
@@ -78,8 +80,7 @@ export namespace LS::Platform::Dx12
         const FrameDx12* m_currentFrame = nullptr;
     };
 }
-
-module : private;
+module:private;
 
 import <cstdint>;
 import <cassert>;
@@ -119,21 +120,21 @@ auto CommandListDx12::Initialize(ID3D12Device4* pDevice) noexcept -> LS::System:
     return LS::System::CreateSuccessCode();
 }
 
-void CommandListDx12::Begin(const WRL::ComPtr<ID3D12CommandAllocator>& commandAllocator)
+void CommandListDx12::Begin(const WRL::ComPtr<ID3D12CommandAllocator>& commandAllocator, WRL::ComPtr<ID3D12PipelineState> pipelineState)
 {
-    LS::Utils::ThrowIfFailed(m_pCommandList->Reset(commandAllocator.Get(), nullptr), std::format("Failed to reset command allocator: {}", m_name.c_str()));
+    LS::Utils::ThrowIfFailed(m_pCommandList->Reset(commandAllocator.Get(), pipelineState ? pipelineState.Get() : nullptr), std::format("Failed to reset command allocator: {}", m_name.c_str()));
 }
 
-void CommandListDx12::BeginFrame(const FrameDx12& frame, const WRL::ComPtr<ID3D12CommandAllocator>& commandAllocator)
+void CommandListDx12::BeginFrame(const FrameDx12& frame, const WRL::ComPtr<ID3D12CommandAllocator>& commandAllocator, WRL::ComPtr<ID3D12PipelineState> pipelineState)
 {
-    Begin(commandAllocator);
+    Begin(commandAllocator, pipelineState);
     SetRenderTarget(frame);
 }
 
-void CommandListDx12::BeginFrame(const FrameBufferDxgi& frameBuffer, const WRL::ComPtr<ID3D12CommandAllocator>& commandAllocator)
+void CommandListDx12::BeginFrame(const FrameBufferDxgi& frameBuffer, const WRL::ComPtr<ID3D12CommandAllocator>& commandAllocator, WRL::ComPtr<ID3D12PipelineState> pipelineState)
 {
     const FrameDx12& frame = frameBuffer.GetCurrentFrame();
-    Begin(commandAllocator);
+    Begin(commandAllocator, pipelineState);
     SetRenderTarget(frame);
 }
 
@@ -214,6 +215,22 @@ void CommandListDx12::SetGraphicsRoot32BitConstant(uint32_t rootParamIndx, uint3
 void CommandListDx12::SetGraphicsRoot32BitConstants(uint32_t rootParamIndx, uint32_t num32BitValueToSet, const void* pData, uint32_t destOffsetIn32BitValues) noexcept
 {
     m_pCommandList->SetGraphicsRoot32BitConstants(rootParamIndx, num32BitValueToSet, pData, destOffsetIn32BitValues);
+}
+
+void CommandListDx12::SetDescriptorHeaps(const std::vector<Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>>& heaps) noexcept
+{
+    std::vector<ID3D12DescriptorHeap*> temp;
+    temp.reserve(heaps.size());
+    for (size_t i = 0; i < heaps.size(); i++)
+    {
+        temp.emplace_back(heaps[i].Get());
+    }
+    m_pCommandList->SetDescriptorHeaps(heaps.size(), temp.data());
+}
+
+void CommandListDx12::SetGraphicsRootDescriptorTable(UINT rootParameterIndex, D3D12_GPU_DESCRIPTOR_HANDLE baseDescriptor) noexcept
+{
+    m_pCommandList->SetGraphicsRootDescriptorTable(rootParameterIndex, baseDescriptor);
 }
 
 void CommandListDx12::DrawIndexedInstanced(uint32_t indexCountPerInstance, uint32_t instanceCount, uint32_t startIndexLocation /*= 0*/, int32_t baseVertexLocation /*= 0*/, uint32_t startInstanceLocation /*= 0*/) noexcept
